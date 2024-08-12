@@ -2,8 +2,8 @@
 
 ## Table of Contents
 
-1. [Overview](#Overview)
-2. [Features](#Features)
+1. [Overview](#overview)
+2. [Features](#features)
 3. [Folder Structure](#folder-structure)
 5. [API Documentation](#api-documentation)
 
@@ -22,6 +22,7 @@ The project is organized into the following main directories:
 - **Customer Capacity: Manages the number of customers that can be accommodated per day at each branch.
 - **Appointment Scheduling: Allows customers to book appointments at specific branches.
 - **Branch Address Management: Stores and manages the addresses of all branches.
+
 - **Employee Roles:** 
 - **Accountant: Manages financial transactions and records.
 - **Technical Director: Oversees technical operations and services.
@@ -29,8 +30,10 @@ The project is organized into the following main directories:
 - **Offline Receptionist: Handles in-person customer interactions and appointments.
 - **Admin: Manages overall system administration.
 - **Online Coordinator: Manages online customer interactions and coordination.
+
 - **Service Management:** 
 - **Service Details: Includes the service name, price, coordinator, rate, duration, and display status.
+
 - **Reservation** 
 - **Branch Selection: Customers can choose a branch for their reservation.
 - **Reservation Status: Tracks the status of reservations (e.g., pending, canceled, completed).
@@ -43,6 +46,7 @@ The project is organized into the following main directories:
 - **Login Time & Date: Tracks the time and date of the reservation.
 - **Services: Lists the services included in the reservation.
 - **Employee Assignment: Tracks which employee is responsible for the reservation.
+
 - **Status Reservation** 
 - **Pending: Reservation is awaiting confirmation.
 - **Canceled: Reservation has been canceled.
@@ -50,7 +54,9 @@ The project is organized into the following main directories:
 - **Done or Not: Tracks whether the service was successfully completed or not.
 
 ## Folder Structure
-`src/
+```
+{
+src/
 │
 ├── auth/
 │   ├── auth.controller.ts
@@ -174,4 +180,5 @@ The project is organized into the following main directories:
     ├── dto/
     ├── entities/
     └── interfaces/
-    `
+}
+```
