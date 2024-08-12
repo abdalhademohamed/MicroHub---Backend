@@ -66,8 +66,8 @@ src/
 │   │   ├── login.dto.ts
 │   ├── entities/
 │   │   └── auth.entity.ts
-│   └── strategies/
-│       └── jwt.strategy.ts
+│   
+│     
 │
 ├── branch/
 │   ├── branch.controller.ts
@@ -161,6 +161,7 @@ src/
 │   ├── guards/
 │   ├── interceptors/
 │   ├── pipes/
+|   ├── swagger 
 │   └── utils/
 │       ├── appError.ts
 │       └── helperFunctions.ts
