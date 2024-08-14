@@ -38,7 +38,15 @@ export class OrderService {
         await this.orderRepository.update(id, updateOrderDto);
         return await this.orderRepository.findOne({ where: {id} });
     }
+  
+    async remove(id: number) {
+        const order = await this.orderRepository.findOne({ where: { id } });
+        if (!order) {
+            throw new Error('Client not found');
+        }
+        return await this.orderRepository.remove(order);
+    }
 
+        
+    }
     
-
-}
