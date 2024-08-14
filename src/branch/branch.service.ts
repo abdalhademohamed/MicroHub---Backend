@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+/* eslint-disable prettier/prettier */
+import { Injectable, NotFoundException, HttpStatus, HttpException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Branch } from './entities/branch.entity';
@@ -13,8 +14,13 @@ export class BranchService {
   ) {}
 
   async create(createBranchDto: CreateBranchDto): Promise<Branch> {
-    const branch = this.branchRepository.create(createBranchDto);
-    return await this.branchRepository.save(branch);
+    try {
+      const branch = this.branchRepository.create(createBranchDto);
+      return await this.branchRepository.save(branch);
+
+    }catch(error){
+      throw new HttpException(error, HttpStatus.BAD_REQUEST);
+    } 
   }
 
   async findAll(): Promise<Branch[]> {
