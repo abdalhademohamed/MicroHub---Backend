@@ -1,35 +1,44 @@
-// branch service
-import { Injectable } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import Branch from './entities/branch.entity';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Branch } from './entities/branch.entity';
+import { CreateBranchDto } from './dto/create-branch.dto';
+import { UpdateBranchDto } from './dto/update-branch.dto';
 
 @Injectable()
 export class BranchService {
-    constructor(
-        @InjectRepository(Branch)
-        private readonly branchRepository: Repository<Branch>,
-    ) {}
+  constructor(
+    @InjectRepository(Branch)
+    private branchRepository: Repository<Branch>,
+  ) {}
 
-    async findOneById(id: number): Promise<Branch | undefined> {
-        return this.branchRepository.findOne({ where: { id } });
-    }
+  async create(createBranchDto: CreateBranchDto): Promise<Branch> {
+    const branch = this.branchRepository.create(createBranchDto);
+    return await this.branchRepository.save(branch);
+  }
 
-    async create(branch: Branch): Promise<Branch> {
-        return this.branchRepository.save(branch);
-    }
+  async findAll(): Promise<Branch[]> {
+    return await this.branchRepository.find();
+  }
 
-    async findAll(): Promise<Branch[]> {
-        return this.branchRepository.find();
+  async findOne(id: number): Promise<Branch> {
+    const branch = await this.branchRepository.findOne({ where: { id } });
+    if (!branch) {
+      throw new NotFoundException(`Branch with ID ${id} not found`);
     }
+    return branch;
+  }
 
-    async update(id: number, branch: Branch): Promise<Branch> {
-        await this.branchRepository.update(id, branch);
-        return this.branchRepository.findOne({ where: { id } });
-    }
+  async update(id: number, updateBranchDto: UpdateBranchDto): Promise<Branch> {
+    const branch = await this.findOne(id);
+    Object.assign(branch, updateBranchDto);
+    return await this.branchRepository.save(branch);
+  }
 
-    async delete(id: number): Promise<void> {
-        await this.branchRepository.delete(id);
+  async remove(id: number): Promise<void> {
+    const result = await this.branchRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Branch with ID ${id} not found`);
     }
-    
+  }
 }

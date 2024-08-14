@@ -1,43 +1,34 @@
-import { Controller, Post, Body, HttpException, HttpStatus, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { BranchService } from './branch.service';
-import { Branch } from './entities/branch.entity';
-import { CreateBranchDto } from './dto/createBranch.dto';
-import { UpdateBranchDto } from './dto/updateBranch.dto';
+import { CreateBranchDto } from './dto/create-branch.dto';
+import { UpdateBranchDto } from './dto/update-branch.dto';
 
-@Controller('branch')
+@Controller('branches')
 export class BranchController {
-    constructor(private readonly branchService: BranchService) {}
-   
-     @Get('findAll')
-    async findAll(): Promise<Branch[]> {
-        return this.branchService.findAll();
-    }
+  constructor(private readonly branchService: BranchService) {}
 
+  @Post()
+  create(@Body() createBranchDto: CreateBranchDto) {
+    return this.branchService.create(createBranchDto);
+  }
 
+  @Get()
+  findAll() {
+    return this.branchService.findAll();
+  }
 
-    @Post('create')
-    async create(@Body() createBranchDto: CreateBranchDto): Promise<Branch> {
-        const branch = new Branch();
-        branch.name = createBranchDto.name;
-        branch.location = createBranchDto.location;
-        branch.imageUrl = createBranchDto.imageUrl;
-        return this.branchService.create(branch);
-    }
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.branchService.findOne(+id);
+  }
 
-    @Put('update')
-    async update(@Body() updateBranchDto: UpdateBranchDto): Promise<Branch> {
-        const branch = new Branch();
-        branch.id = updateBranchDto.id;
-        branch.name = updateBranchDto.name;
-        branch.location = updateBranchDto.location;
-        branch.imageUrl = updateBranchDto.imageUrl;
-        return this.branchService.update(branch.id, branch);
-    }
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateBranchDto: UpdateBranchDto) {
+    return this.branchService.update(+id, updateBranchDto);
+  }
 
-    @Get('findOneById')
-    async findOneById(@Param('id') id: number): Promise<Branch | undefined> {
-        return this.branchService.findOneById(id);
-    }
-  
-
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.branchService.remove(+id);
+  }
 }
