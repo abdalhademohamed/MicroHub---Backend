@@ -1,3 +1,4 @@
+
 # Center Solution Book
 
 ## Table of Contents
@@ -11,6 +12,8 @@
 ## Overview
 
 The center solution system is designed to manage various aspects of a service center with multiple branches. It includes features for online registration, employee management, service offerings, reservations, and user management. The system also incorporates privilege levels to ensure secure access control.
+
+![easy-book relation schema](https://github.com/user-attachments/assets/c3b944f7-63d9-4fb4-b024-d17c6b0ae015)
 
 ## Features
 
