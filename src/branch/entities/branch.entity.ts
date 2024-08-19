@@ -1,10 +1,11 @@
+import { EmployeeEntity } from '../../employee/entities/employee.entity';
 import { ReservationEntity } from '../../reservation/entities/reservation.entity';
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 
 @Entity()
 export class BranchEntity {
   @PrimaryGeneratedColumn('uuid')
-  id: number;
+  id: string;
 
   @Column()
   name: string;
@@ -17,5 +18,8 @@ export class BranchEntity {
 
   @OneToMany(() => ReservationEntity, (ReservationEntity) => ReservationEntity.branch)  // Define the relationship
   reservations: ReservationEntity[];
+
+  @OneToMany(() => EmployeeEntity, (EmployeeEntity) => EmployeeEntity.branch)
+  employees: EmployeeEntity[];
   
 }
