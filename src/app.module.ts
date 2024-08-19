@@ -10,6 +10,8 @@ import { OfferModule } from './offer/offer.module';
 import { ServiceModule } from './service/service.module';
 import { ReservationModule } from './reservation/reservation.module';
 import { RootoshModule } from './rootosh/rootosh.module';
+import { EmployeeModule } from './employee/employee.module';
+import { PostionModule } from './postion/postion.module';
 
 
 @Module({
@@ -54,7 +56,9 @@ import { RootoshModule } from './rootosh/rootosh.module';
     OfferModule,
     ServiceModule,
     ReservationModule,
-    RootoshModule
+    RootoshModule,
+    EmployeeModule,
+    PostionModule
   ],
   controllers: [AppController],
   providers: [AppService],

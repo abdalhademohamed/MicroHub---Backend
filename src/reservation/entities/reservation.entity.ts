@@ -5,36 +5,38 @@ import { Entity, Column, ManyToOne, PrimaryGeneratedColumn, ManyToMany } from 't
 @Entity() // Specify table name if necessary
 export class ReservationEntity {
   @PrimaryGeneratedColumn('uuid')
-  id: number;
+  id: string;
 
   @Column()
-  clientCode: string;
+  country_Code: string; // Correct property name
 
   @Column()
-  phoneNumber: string;
+  phone_Number: string; // Correct property name
 
   @Column()
-  clientFullName: string;
+  client_FullName: string; // Correct property name
 
   @Column()
   day: number;
 
   @Column()
-  date: string;
-
-  @Column()
   month: number;
 
-  
+  @Column()
+  year: number;
 
   @Column('time')
-  reservationTimeFrom: string;
+  reservation_Time_From: string;
 
   @Column('time')
-  reservationTimeTo: string;
+  reservation_Time_To: string;
+
+  @Column({ type: 'text', nullable: true })
+  deposit_Content: string; // Correct property name
+
   @ManyToOne(() => BranchEntity, (branch) => branch.reservations)
   branch: BranchEntity;
-  
-  @ManyToMany(() => ServiceEntity, ServiceEntity => ServiceEntity.reservations)
-  services: ServiceEntity[]; // Updated to handle multiple services
+
+  @ManyToMany(() => ServiceEntity, (service) => service.reservations)
+  services: ServiceEntity[]; // Handle multiple services
 }

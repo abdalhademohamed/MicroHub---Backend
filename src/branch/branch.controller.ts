@@ -1,9 +1,9 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { BranchService } from './branch.service';
-import { CreateBranchDto } from './dto/create-branch.dto';
-import { UpdateBranchDto } from './dto/update-branch.dto';
+import { CreateBranchDto } from './dto/create.branch.dto';
+import { UpdateBranchDto } from './dto/update.branch.dto';
 import { BranchEntity } from './entities/branch.entity';
-import { PaginateResultDto } from './dto/paginate-result.dto';
+import { PaginateResultDto } from './dto/paginate.result.dto';
 import { ApiTags } from '@nestjs/swagger';
 
 

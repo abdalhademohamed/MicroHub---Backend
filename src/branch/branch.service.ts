@@ -3,12 +3,12 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { CreateBranchDto } from './dto/create-branch.dto';
-import { UpdateBranchDto } from './dto/update-branch.dto';
+import { CreateBranchDto } from './dto/create.branch.dto';
+import { UpdateBranchDto } from './dto/update.branch.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BranchEntity } from './entities/branch.entity';
-import { PaginateResultDto } from './dto/paginate-result.dto';
+import { PaginateResultDto } from './dto/paginate.result.dto';
 import { create } from 'domain';
 
 @Injectable()
