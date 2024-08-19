@@ -1,10 +1,10 @@
 import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { CreateEmployeeDto } from './dto/create-employee.dto';
-import { UpdateEmployeeDto } from './dto/update-employee.dto';
+import { CreateEmployeeDto } from './dto/create.employee.dto';
+import { UpdateEmployeeDto } from './dto/update.employee.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EmployeeEntity } from './entities/employee.entity';
-import { BranchEntity } from 'src/branch/entities/branch.entity';
-import { PositionEntity } from 'src/postion/entities/postion.entity';
+import { BranchEntity } from '../branch/entities/branch.entity';
+import { PositionEntity } from '../postion/entities/postion.entity';
 import { Repository } from 'typeorm';
 
 @Injectable()

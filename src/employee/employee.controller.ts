@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, InternalServerErrorException, Query, NotFoundException, Put } from '@nestjs/common';
 import { EmployeeService } from './employee.service';
-import { CreateEmployeeDto } from './dto/create-employee.dto';
-import { UpdateEmployeeDto } from './dto/update-employee.dto';
+import { CreateEmployeeDto } from './dto/create.employee.dto';
+import { UpdateEmployeeDto } from './dto/update.employee.dto';
 import { EmployeeEntity } from './entities/employee.entity';
 import { ApiTags } from '@nestjs/swagger';
 
