@@ -9,7 +9,7 @@ import { UpdateServiceDto } from './dto/update-service.dto';
 import { ServiceEntity } from './entities/service.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PaginateResultDto } from '../branch/dto/paginate-result.dto';
+import { PaginateResultDto } from '../branch/dto/paginate.result.dto';
 
 @Injectable()
 export class ServiceService {
