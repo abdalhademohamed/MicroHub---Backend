@@ -13,7 +13,7 @@ export class CreateBranchDto {
   location: string;  // Ensure this field is included and required
 
   @ApiProperty({ description: 'Image URL or path' })
-  @IsString()
-  @IsNotEmpty()
-  imageUrl: string;  // Ensure this field is included and required
+  // @IsString()
+  // @IsNotEmpty()
+  image?:string;  // Ensure this field is included and required
 }

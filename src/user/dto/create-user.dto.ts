@@ -8,7 +8,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { Roles } from '../utils/user.enum';
+import { Role } from '../utils/user.enum';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateUserDto {
@@ -39,8 +39,8 @@ export class CreateUserDto {
 
 
   @ApiProperty({ description: 'The role of the user' })
-  @IsEnum(Roles, { message: 'Role must be either ADMIN, USER, etc.' })
-  readonly role: Roles;
+  @IsEnum(Role, { message: 'Role must be either ADMIN, USER, etc.' })
+  readonly role: Role;
 
   readonly resetCode?: string;
 }

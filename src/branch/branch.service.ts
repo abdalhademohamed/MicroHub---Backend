@@ -10,16 +10,20 @@ import { Repository } from 'typeorm';
 import { BranchEntity } from './entities/branch.entity';
 import { PaginateResultDto } from './dto/paginate.result.dto';
 import { create } from 'domain';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 @Injectable()
 export class BranchService {
   constructor(
     @InjectRepository(BranchEntity)
     private readonly BranchRepository: Repository<BranchEntity>,
+    private readonly CloudinaryService: CloudinaryService,
+
+
   ) {}
 
   async createBranch(createBranchDto: CreateBranchDto): Promise<BranchEntity> {
-    const { name, location, imageUrl } = createBranchDto;
+    const { name, location, image } = createBranchDto;
   
     try {
       // Check if the branch already exists
@@ -34,7 +38,7 @@ export class BranchService {
       }
   
       // Create and save the new branch
-      const branch = this.BranchRepository.create({ name, location, imageUrl });
+      const branch = this.BranchRepository.create({ name, location, image });
       return await this.BranchRepository.save(branch);
     } catch (error) {
       // Handle specific errors
@@ -66,4 +70,10 @@ export class BranchService {
       totalPages: Math.ceil(total / limit),
     };
   }
+  async uploadImage(file: Express.Multer.File,folderName:string): Promise<string> {
+    const result = await this.CloudinaryService.uploadImage(file,folderName);
+    return result.url;  // Return the URL of the uploaded image
+  }
+
+  
 }
