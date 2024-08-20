@@ -7,9 +7,9 @@ export class RequestPasswordResetDto {
 }
 
 export class ResetPasswordDto {
-  @IsString()
-  @IsNotEmpty()
-  resetToken: string;
+  // @IsString()
+  // @IsNotEmpty()
+  // resetToken: string;
 
   @IsString()
   @IsNotEmpty()
