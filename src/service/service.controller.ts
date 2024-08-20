@@ -1,10 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Put, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Put, HttpCode, HttpStatus, UploadedFile, UseInterceptors, UseGuards } from '@nestjs/common';
 import { ServiceService } from './service.service';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { ServiceEntity } from './entities/service.entity';
 import { PaginateResultDto } from '../branch/dto/paginate.result.dto';
 import { ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { AccessTokenGuard } from 'src/auth/guards/accessToken.guard';
+import { RolesGuard } from 'src/auth/guards/role.guards';
+import { Role } from 'src/user/utils/user.enum';
+import { Roles } from 'src/auth/Roles.decorator';
 @ApiTags('service')
 
 @Controller('service')
@@ -12,15 +17,21 @@ export class ServiceController {
   constructor(private readonly serviceService: ServiceService) {}
 
 
-
+  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN)
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @UseInterceptors(FileInterceptor('image')) // Use the FileInterceptor to handle file uploads
   async createService(
-    @Body() createServiceDto: CreateServiceDto
+    @Body() createServiceDto: CreateServiceDto,
+    @UploadedFile() image: Express.Multer.File,
   ): Promise<ServiceEntity> {
-    return this.serviceService.createService(createServiceDto);
+    return await this.serviceService.createService(createServiceDto, image);
   }
-  
+
+
+  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN)
   @Get('sort')
   async getAllServices(
     @Query('page') page: number = 1,
@@ -32,6 +43,11 @@ export class ServiceController {
   }
 
 
+
+
+
+  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN)
   @Put(':id')
   async updateService(
     @Param('id') id: string,
@@ -41,6 +57,11 @@ export class ServiceController {
   }
 
 
+
+
+
+  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteService(

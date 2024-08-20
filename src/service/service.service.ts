@@ -10,19 +10,21 @@ import { ServiceEntity } from './entities/service.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PaginateResultDto } from '../branch/dto/paginate.result.dto';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Injectable()
 export class ServiceService {
   constructor(
     @InjectRepository(ServiceEntity)
     private readonly ServiceRepository: Repository<ServiceEntity>,
+    private readonly cloudinaryService: CloudinaryService, // Inject CloudinaryService
+
   ) {}
   async createService(
     createServiceDto: CreateServiceDto,
+    file: Express.Multer.File, // Accept the file as a parameter
   ): Promise<ServiceEntity> {
     // Check if a service with the same name exists
-    // Status Code: 409 Conflict
-
     const existingService = await this.ServiceRepository.findOne({
       where: [
         { arabic_Name: createServiceDto.arabic_Name },
@@ -37,18 +39,24 @@ export class ServiceService {
     }
 
     try {
+      // Upload the photo to Cloudinary
+      const folderName = 'services';
+      const uploadResult = await this.cloudinaryService.uploadImage(file, folderName);
+
       // Create and save the new service
-      const service = this.ServiceRepository.create(createServiceDto);
+      const service = this.ServiceRepository.create({
+        ...createServiceDto,
+        imageUrl: uploadResult.secure_url, // Save the image URL in the database
+      });
+
       return await this.ServiceRepository.save(service); // Returns status code 201 Created
     } catch (error) {
       // Handle unexpected errors
-      // 500 Internal Server Error
       throw new InternalServerErrorException(
         'An unexpected error occurred while creating the service.',
       );
     }
   }
-
   async getAllServices(
     page: number = 1,
     limit: number = 10,
@@ -91,7 +99,6 @@ export class ServiceService {
   async updateService(id: string, updateServiceDto: CreateServiceDto): Promise<ServiceEntity> {
     
     
-    console.log('service')
 
     try {
       // Attempt to preload the existing service with the given ID and updated DTO data

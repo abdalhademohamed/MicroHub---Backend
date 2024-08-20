@@ -1,39 +1,42 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsNumber, IsPositive, isUUID, IsUUID } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsPositive, isUUID, IsUUID, IsOptional, isString } from 'class-validator';
 
 export class CreateServiceDto {
   @ApiProperty({ description: 'The URL of the service image' })
-  @IsString()
-  @IsNotEmpty()
-  imageUrl: string;
+  
+  image?: string;
 
   @ApiProperty({ description: 'The name of the service in Arabic' })
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()  // If not always present
   arabic_Name: string;
 
   @ApiProperty({ description: 'The name of the service in English' })
-  @IsString()
-  @IsNotEmpty()
+  // @IsString()
+  @IsOptional()  // If not always present
   english_Name: string;
 
   @ApiProperty({ description: 'The price of the service' })
-  @IsNumber({}, { message: 'Price must be a number' })
-  @IsPositive({ message: 'Price must be a positive number' })
+  // @IsString()
+  // @IsPositive({ message: 'Price must be a positive number' })
+  @IsOptional()  // If not always present
   price: number;
 
   @ApiProperty({ description: 'The duration of the service in minutes' })
-  @IsNumber({}, { message: 'Duration must be a number' })
-  @IsPositive({ message: 'Duration must be a positive number' })
+  // @IsString()
+  // @IsPositive({ message: 'Duration must be a positive number' })
+  @IsOptional()  // If not always present
   duration_Mins: number;
 
   @ApiProperty({ description: 'The rootosh number of the service' })
-  @IsNumber({}, { message: 'Rootosh number must be a number' })
-  @IsPositive({ message: 'Rootosh number must be a positive number' })
+  // @IsString()
+  // @IsPositive({ message: 'Rootosh number must be a positive number' })
+  @IsOptional()  // If not always present
   rootosh_Number: number;
 
   @ApiProperty({ description: 'The number of months before the service expires' })
-  @IsNumber({}, { message: 'Months to expire must be a number' })
-  @IsPositive({ message: 'Months to expire must be a positive number' })
+  // @IsString()
+  // @IsPositive({ message: 'Months to expire must be a positive number' })
+  @IsOptional()  // If not always present
   months_To_Expire: number;
 }
