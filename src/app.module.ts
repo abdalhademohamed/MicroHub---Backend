@@ -12,6 +12,8 @@ import { ReservationModule } from './reservation/reservation.module';
 import { RootoshModule } from './rootosh/rootosh.module';
 import { EmployeeModule } from './employee/employee.module';
 import { PostionModule } from './postion/postion.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
+
 
 
 @Module({
@@ -58,7 +60,8 @@ import { PostionModule } from './postion/postion.module';
     ReservationModule,
     RootoshModule,
     EmployeeModule,
-    PostionModule
+    PostionModule,
+    CloudinaryModule
   ],
   controllers: [AppController],
   providers: [AppService],
