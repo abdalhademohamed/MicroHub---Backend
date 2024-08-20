@@ -10,7 +10,7 @@ import { ServiceEntity } from './entities/service.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PaginateResultDto } from '../branch/dto/paginate.result.dto';
-import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 @Injectable()
 export class ServiceService {

@@ -3,7 +3,7 @@ import { BranchService } from './branch.service';
 import { BranchController } from './branch.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BranchEntity } from './entities/branch.entity';
-import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([BranchEntity])],

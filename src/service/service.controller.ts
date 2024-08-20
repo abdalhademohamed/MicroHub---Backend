@@ -6,10 +6,10 @@ import { ServiceEntity } from './entities/service.entity';
 import { PaginateResultDto } from '../branch/dto/paginate.result.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { AccessTokenGuard } from 'src/auth/guards/accessToken.guard';
-import { RolesGuard } from 'src/auth/guards/role.guards';
-import { Role } from 'src/user/utils/user.enum';
-import { Roles } from 'src/auth/Roles.decorator';
+import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
+import { RolesGuard } from '../auth/guards/role.guards';
+import { Role } from '../user/utils/user.enum';
+import { Roles } from '../auth/Roles.decorator';
 @ApiTags('service')
 
 @Controller('service')

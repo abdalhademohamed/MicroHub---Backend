@@ -3,7 +3,7 @@ import { CreateRootoshDto } from './dto/create-rootosh.dto';
 import { UpdateRootoshDto } from './dto/update-rootosh.dto';
 import { RootoshEntity } from './entities/rootosh.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ServiceEntity } from 'src/service/entities/service.entity';
+import { ServiceEntity } from '../service/entities/service.entity';
 import { Repository } from 'typeorm';
 
 @Injectable()
