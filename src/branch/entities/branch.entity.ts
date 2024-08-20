@@ -14,7 +14,7 @@ export class BranchEntity {
   location: string;  // Ensure this is not nullable
 
   @Column()
-  imageUrl: string;  // Store the URL of the image uploaded to Cloudinary
+  image: string;  // Store the URL of the image uploaded to Cloudinary
 
   @OneToMany(() => ReservationEntity, (ReservationEntity) => ReservationEntity.branch)  // Define the relationship
   reservations: ReservationEntity[];
