@@ -5,12 +5,12 @@ import { UpdateBranchDto } from './dto/update.branch.dto';
 import { BranchEntity } from './entities/branch.entity';
 import { PaginateResultDto } from './dto/paginate.result.dto';
 import { ApiTags } from '@nestjs/swagger';
-import { RolesGuard } from 'src/auth/guards/role.guards';
-import { Roles } from 'src/auth/Roles.decorator';
-import { Role } from 'src/user/utils/user.enum';
-import { AccessTokenGuard } from 'src/auth/guards/accessToken.guard';
+import { RolesGuard } from '../auth/guards/role.guards';
+import { Roles } from '../auth/Roles.decorator';
+import { Role } from '../user/utils/user.enum';
+import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 
 @ApiTags('branch')

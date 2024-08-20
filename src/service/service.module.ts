@@ -3,7 +3,7 @@ import { ServiceService } from './service.service';
 import { ServiceController } from './service.controller';
 import { ServiceEntity } from './entities/service.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([ServiceEntity])],

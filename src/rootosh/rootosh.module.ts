@@ -3,7 +3,7 @@ import { RootoshService } from './rootosh.service';
 import { RootoshController } from './rootosh.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RootoshEntity } from './entities/rootosh.entity';
-import { ServiceEntity } from 'src/service/entities/service.entity';
+import { ServiceEntity } from '../service/entities/service.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([RootoshEntity,ServiceEntity]),],
