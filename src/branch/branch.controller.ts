@@ -22,14 +22,6 @@ export class BranchController {
 
 
 
-  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)  // Specify required roles
-  // @Post()
-  // async createBranch(@Body() createBranchDto: CreateBranchDto): Promise<BranchEntity> {
-  //   return await this.branchService.createBranch(createBranchDto);
-  // }
-
-
 
   @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN,Role.BRANCHMANAGER)
