@@ -13,7 +13,6 @@ import { RootoshModule } from './rootosh/rootosh.module';
 import { EmployeeModule } from './employee/employee.module';
 import { PostionModule } from './postion/postion.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
-import { CloudinaryService } from './cloudinary/cloudinary.service';
 import { CloudinaryProvider } from './cloudinary/cloudinary/cloudinary.provider';
 
 
