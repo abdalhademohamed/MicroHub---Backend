@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { ReservationEntity } from './entities/reservation.entity';
@@ -7,6 +7,7 @@ import { ServiceEntity } from '../service/entities/service.entity';
 import { CreateReservationDto } from './dto/create.reservation.dto';
 import { GetReservationsDto } from './dto/get.reservation.dto';
 import { UpdateReservationDto } from './dto/update.reservation.dto';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 
 @Injectable()
@@ -23,10 +24,15 @@ export class ReservationService {
     @InjectRepository(ServiceEntity)
     private readonly ServiceRepository: Repository<ServiceEntity>,
 
+
+    private readonly CloudinaryService: CloudinaryService,
+
+
   ) {}
 
   async createReservation(createReservationDto: CreateReservationDto): Promise<ReservationEntity> {
     const {
+      country_Code,
       phone_Number,
       client_FullName,
       day,
@@ -50,6 +56,8 @@ export class ReservationService {
      where: {
        id: In(serviceIds),
      },
+     relations: ['rootosh'], // Include the rootosh relationship
+
    });
     if (services.length !== serviceIds.length) {
       throw new NotFoundException('One or more services not found');
@@ -59,6 +67,7 @@ export class ReservationService {
 
     // Create the reservation
     const newReservation = this.ReservationRepository.create({
+      country_Code,
       phone_Number,
       client_FullName,
       day,
@@ -75,6 +84,7 @@ export class ReservationService {
       // Save the reservation
       return await this.ReservationRepository.save(newReservation);
     } catch (error) {
+      // console.log(error.stack)
       throw new InternalServerErrorException('Failed to create reservation');
     }
   }
@@ -157,4 +167,35 @@ export class ReservationService {
     // Delete the reservation
     await this.ReservationRepository.remove(reservation);
   }
+
+
+
+  async uploadImageAndAssociateWithReservation(
+    reservationId: string,
+    image: Express.Multer.File,
+    folderName:string
+  ): Promise<{ imageUrl: string }> {
+    if (!image) {
+      throw new BadRequestException('Photo is required');
+    }
+  
+    // Check if the reservation exists
+    const reservation = await this.ReservationRepository.findOne({where:{id:reservationId}});
+    if (!reservation) {
+      throw new NotFoundException(`Reservation with ID ${reservationId} not found.`);
+    }
+  
+   
+    // Logic to upload image to Cloudinary or another storage service
+    const uploadResult = await this.CloudinaryService.uploadImage(image, folderName);
+  
+    // Update the reservation entity with the image URL
+    reservation.deposit_Content = uploadResult.url;
+  
+    // Save the updated reservation
+    await this.ReservationRepository.save(reservation);
+  
+    return { imageUrl: uploadResult.url };
+  }
+  
 }
