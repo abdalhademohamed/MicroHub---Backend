@@ -19,12 +19,10 @@ export class GetReservationsDto {
 
   @ApiProperty()
   @IsOptional()
-  @IsPositive()
   page?: number;
 
   @ApiProperty()
   @IsOptional()
-  @IsPositive()
   limit?: number;
   
 }

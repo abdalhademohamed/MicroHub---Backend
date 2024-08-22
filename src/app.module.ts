@@ -13,6 +13,7 @@ import { RootoshModule } from './rootosh/rootosh.module';
 import { EmployeeModule } from './employee/employee.module';
 import { PostionModule } from './postion/postion.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { CloudinaryProvider } from './cloudinary/cloudinary/cloudinary.provider';
 
 
 
@@ -64,6 +65,6 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     CloudinaryModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService,CloudinaryProvider],
 })
 export class AppModule {}

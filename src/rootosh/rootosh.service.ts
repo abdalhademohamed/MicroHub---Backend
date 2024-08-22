@@ -37,11 +37,23 @@ export class RootoshService {
 
   }
 
-  async findAllRootosh(): Promise<RootoshEntity[]> {
-    return this.rootoshRepository.find({ relations: ['service'] });
-  }
+  async findAllRootosh(page: number, limit: number): Promise<{ data: RootoshEntity[], total: number, page: number, lastPage: number }> {
+    const [data, total] = await this.rootoshRepository.findAndCount({
+      relations: ['service'],
+      skip: (page - 1) * limit,
+      take: limit,
+    });
 
-  async findOneRootosh(id: number): Promise<RootoshEntity> {
+    const lastPage = Math.ceil(total / limit);
+
+    return {
+      data,
+      total,
+      page,
+      lastPage,
+    };
+  }
+  async findOneRootosh(id: string): Promise<RootoshEntity> {
     const rootosh = await this.rootoshRepository.findOne({
       where: { id },
       relations: ['service']
@@ -52,7 +64,7 @@ export class RootoshService {
     return rootosh;
   }
 
-  async updateRootosh(id: number, updateRootoshDto: UpdateRootoshDto): Promise<RootoshEntity> {
+  async updateRootosh(id: string, updateRootoshDto: UpdateRootoshDto): Promise<RootoshEntity> {
     const rootosh = await this.rootoshRepository.preload({
       id,
       ...updateRootoshDto,
@@ -78,7 +90,7 @@ export class RootoshService {
     }
   }
 
-  async removeRootosh(id: number): Promise<void> {
+  async removeRootosh(id: string): Promise<void> {
     const result = await this.rootoshRepository.delete(id);
     if (result.affected === 0) {
       throw new NotFoundException(`Rootosh with ID ${id} not found.`);

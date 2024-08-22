@@ -46,7 +46,6 @@ export class CreateReservationDto {
   reservation_Time_To: string;
 
   @ApiProperty()
-  @IsUUID()
   @IsNotEmpty()
   branch: BranchEntity 
 
