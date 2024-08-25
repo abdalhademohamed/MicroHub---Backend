@@ -4,10 +4,10 @@ import { RootoshEntity } from './entities/rootosh.entity';
 import { RootoshService } from './rootosh.service';
 import { UpdateRootoshDto } from './dto/update-rootosh.dto';
 import { ApiTags } from '@nestjs/swagger';
-import { Roles } from 'src/auth/Roles.decorator';
-import { AccessTokenGuard } from 'src/auth/guards/accessToken.guard';
-import { Role } from 'src/user/utils/user.enum';
-import { RolesGuard } from 'src/auth/guards/role.guards';
+import { Roles } from '../auth/Roles.decorator';
+import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
+import { Role } from '../user/utils/user.enum';
+import { RolesGuard } from '../auth/guards/role.guards';
 
 @ApiTags('rootosh')
 @Controller('rootosh')

@@ -1,5 +1,5 @@
-import { RootoshEntity } from 'src/rootosh/entities/rootosh.entity';
-import { ServiceEntity } from 'src/service/entities/service.entity';
+import { RootoshEntity } from '../../rootosh/entities/rootosh.entity';
+import { ServiceEntity } from '../../service/entities/service.entity';
 import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, JoinTable } from 'typeorm';
 
 @Entity() 
