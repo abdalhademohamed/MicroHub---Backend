@@ -7,9 +7,9 @@ import { ServiceEntity } from '../service/entities/service.entity';
 import { CreateReservationDto } from './dto/create.reservation.dto';
 import { GetReservationsDto } from './dto/get.reservation.dto';
 import { UpdateReservationDto } from './dto/update.reservation.dto';
-import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
-import { CustomerEntity } from 'src/customer/entities/customer.entity';
-import { CreateCustomerDto } from 'src/customer/dto/create-customer.dto';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { CustomerEntity } from '../customer/entities/customer.entity';
+import { CreateCustomerDto } from '../customer/dto/create-customer.dto';
 
 
 @Injectable()
