@@ -21,15 +21,15 @@ export class ReservationController {
   ) {}
 
 
-  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
-  // Create a new reservation
-  @Post()
-  async createReservation(
-    @Body() createReservationDto: CreateReservationDto,
-  ): Promise<ReservationEntity> {
-    return this.reservationService.createReservation(createReservationDto);
-  }
+  // @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  // @Roles(Role.SUPERADMIN)
+  // // Create a new reservation
+  // @Post()
+  // async createReservation(
+  //   @Body() createReservationDto: CreateReservationDto,
+  // ): Promise<ReservationEntity> {
+  //   return this.reservationService.createReservation(createReservationDto);
+  // }
 
 
   @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
@@ -70,19 +70,19 @@ export class ReservationController {
 
 
 
-  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
-  @Post('upload/:reservationId')
-  @UseInterceptors(FileInterceptor('image'))
-  async uploadImage(
-    @Param('reservationId') reservationId: string,
-    @UploadedFile() image: Express.Multer.File,
+  // @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  // @Roles(Role.SUPERADMIN)
+  // @Post('upload/:reservationId')
+  // @UseInterceptors(FileInterceptor('image'))
+  // async uploadImage(
+  //   @Param('reservationId') reservationId: string,
+  //   @UploadedFile() image: Express.Multer.File,
     
-  ): Promise<{ imageUrl: string }> {
-    const folderName = 'reservations'; // or any other dynamic name based on context
+  // ): Promise<{ imageUrl: string }> {
+  //   const folderName = 'reservations'; // or any other dynamic name based on context
 
-    return this.reservationService.uploadImageAndAssociateWithReservation(reservationId, image,folderName);
-  }
+  //   return this.reservationService.uploadImageAndAssociateWithReservation(reservationId, image,folderName);
+  // }
   
 
 }
