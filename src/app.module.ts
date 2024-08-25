@@ -17,6 +17,14 @@ import { CloudinaryProvider } from './cloudinary/cloudinary/cloudinary.provider'
 import { AcceptLanguageResolver, HeaderResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
 import { CustomerModule } from './customer/customer.module';
 import * as path from 'path';
+import { UserEntity } from './user/entities/user.entity';
+import { BranchEntity } from './branch/entities/branch.entity';
+import { CustomerEntity } from './customer/entities/customer.entity';
+import { EmployeeEntity } from './employee/entities/employee.entity';
+import { PositionEntity } from './postion/entities/postion.entity';
+import { ReservationEntity } from './reservation/entities/reservation.entity';
+import { ServiceEntity } from './service/entities/service.entity';
+import { RootoshEntity } from './rootosh/entities/rootosh.entity';
 
 
 
@@ -45,7 +53,8 @@ import * as path from 'path';
       username: process.env.DB_USER ,
       password: process.env.DB_PASSWORD ,
       database: process.env.DB_NAME ,
-      entities: ["dist/**/*.entity.js"], 
+      // entities: ["dist/**/*.entity.js"], 
+      entities:[UserEntity,BranchEntity,CustomerEntity,EmployeeEntity,PositionEntity,ReservationEntity,ServiceEntity,RootoshEntity],
       synchronize: true, // Set to false in production
       ssl: true, // Neon typically requires SSL connections
       extra: {
