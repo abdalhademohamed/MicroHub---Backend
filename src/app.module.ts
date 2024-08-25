@@ -3,7 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BranchModule } from './branch/branch.module';
 import { OfferModule } from './offer/offer.module';
@@ -14,6 +14,9 @@ import { EmployeeModule } from './employee/employee.module';
 import { PostionModule } from './postion/postion.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { CloudinaryProvider } from './cloudinary/cloudinary/cloudinary.provider';
+import { AcceptLanguageResolver, HeaderResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
+import { CustomerModule } from './customer/customer.module';
+import * as path from 'path';
 
 
 
@@ -53,6 +56,20 @@ import { CloudinaryProvider } from './cloudinary/cloudinary/cloudinary.provider'
 
 
     }),
+
+
+    I18nModule.forRoot({
+      fallbackLanguage: 'en',
+      loaderOptions: {
+        path: path.join(__dirname, '../src/i18n/'),
+        watch: true,
+      },
+      resolvers: [
+        { use: QueryResolver, options: ['lang'] },
+        AcceptLanguageResolver,
+        // new HeaderResolver(['x-lang']),
+      ],
+    }),
     AuthModule,
     UserModule,
     BranchModule,
@@ -62,7 +79,8 @@ import { CloudinaryProvider } from './cloudinary/cloudinary/cloudinary.provider'
     RootoshModule,
     EmployeeModule,
     PostionModule,
-    CloudinaryModule
+    CloudinaryModule,
+    CustomerModule
   ],
   controllers: [AppController],
   providers: [AppService,CloudinaryProvider],
