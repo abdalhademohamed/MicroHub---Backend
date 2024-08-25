@@ -17,19 +17,27 @@ export class ReservationEntity {
   client_FullName: string; // Correct property name
 
   @Column()
-  day: number;
+  day: number; // User's birthday day
 
   @Column()
-  month: number;
+  month: number; // User's birthday month
 
   @Column()
-  year: number;
+  year: number; // User's birthday year
 
-  @Column('time')
-  reservation_Time_From: string;
+  @Column()
+  reservationDay: number; // Day of reservation
+  @Column()
+  reservationMonth: number; // Month of reservation
+  @Column()
+  reservationYear: number; // Year of reservation
 
-  @Column('time')
-  reservation_Time_To: string;
+  @Column({ type: 'time' })
+  start_Time: string;
+
+  @Column({ type: 'time' })
+  end_Time: string;
+ 
 
   @Column({ type: 'text', nullable: true })
   deposit_Content: string; // Correct property name
