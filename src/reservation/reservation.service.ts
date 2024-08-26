@@ -104,17 +104,20 @@ export class ReservationService {
   }
 
   async registerOrLookupCustomer(createCustomerDto: CreateCustomerDto): Promise<CustomerEntity> {
-    const { countryCode, phoneNumber, fullName, day, month, year } = createCustomerDto;
+    const { countryCode, phoneNumber, fullName,
+       day, month, year 
+      } = createCustomerDto;
   
     // Check if customer exists by phone number
     let customer = await this.CustomerRepository.findOne({
       where: { phoneNumber },
-      relations: ['lastServices', 'lastRootoshes'] // Include relations
+      relations: ['lastServices', 'lastRootoshes'], // Ensure relation names are correct
     });
   
     if (!customer) {
       // Register new customer
-      customer = this.CustomerRepository.create({ countryCode, phoneNumber, fullName, day, month, year });
+      customer = this.CustomerRepository.create({ countryCode, phoneNumber, fullName,
+         day, month, year });
       await this.CustomerRepository.save(customer);
     }
   
@@ -123,7 +126,7 @@ export class ReservationService {
   async selectServices(servicesIds: string[]): Promise<ServiceEntity[]> {
     const services = await this.ServiceRepository.find({
       where: { id: In(servicesIds) }, // Ensure you're using the correct operator here
-      relations: ['rootoshes'], // Load the related rootoshes
+      relations: ['rootosh'], // Load the related rootoshes
     });
   
     if (services.length === 0) {
@@ -145,26 +148,46 @@ export class ReservationService {
   ): Promise<{ reservationDay: number; reservationMonth: number; reservationYear: number; start_Time: string; end_Time: string }> {
     const now = new Date();
     const branch = await this.BranchRepository.findOne({ where: { id: branchId }, relations: ['reservations'] });
-    
+  
     if (!branch) {
       throw new NotFoundException('Branch not found');
     }
-
-    const reservations = branch.reservations.sort((a, b) => 
-      new Date(a.year, a.month - 1, a.day, +a.start_Time.split(':')[0], +a.start_Time.split(':')[1])
-      .getTime() - 
-      new Date(b.year, b.month - 1, b.day, +b.start_Time.split(':')[0], +b.start_Time.split(':')[1])
-      .getTime()
-    );
-
+  
+    const reservations = branch.reservations
+      .filter(reservation => {
+        const reservationStart = new Date(reservation.reservationYear, reservation.reservationMonth - 1, reservation.reservationDay, 
+                                           +reservation.start_Time.split(':')[0], +reservation.start_Time.split(':')[1]);
+        return reservationStart >= now; // Filter out past reservations
+      })
+      .sort((a, b) => {
+        const dateA = new Date(a.reservationYear, a.reservationMonth - 1, a.reservationDay, 
+                               +a.start_Time.split(':')[0], +a.start_Time.split(':')[1]);
+        const dateB = new Date(b.reservationYear, b.reservationMonth - 1, b.reservationDay, 
+                               +b.start_Time.split(':')[0], +b.start_Time.split(':')[1]);
+        return dateA.getTime() - dateB.getTime();
+      });
+  
     let suggestedSlot = this.findGapInReservations(now, reservations, totalDuration);
-
+  
     if (!suggestedSlot) {
-      throw new BadRequestException('No available time slots in the near future');
+      // Search for available slots in future dates
+      const futureDate = new Date(now);
+      futureDate.setMonth(futureDate.getMonth() + 1); // Search one month ahead
+  
+      while (futureDate <= futureDate) {
+        suggestedSlot = this.findGapInReservations(futureDate, reservations, totalDuration);
+        if (suggestedSlot) {
+          return suggestedSlot;
+        }
+        futureDate.setDate(futureDate.getDate() + 1); // Move to the next day
+      }
+  
+      throw new BadRequestException('No available time slots in the extended future');
     }
-
+  
     return suggestedSlot;
-}
+  }
+  
 
 
 private findGapInReservations(
@@ -245,16 +268,6 @@ async manuallySelectTimeSlot(
 
 
 
-async uploadDepositImage(imageFile: any): Promise<string> {
-      const filename = '';
-      const result = await this.CloudinaryService.uploadImage(imageFile,filename);
-      if (!result.url) {
-        throw new BadRequestException('Failed to upload image');
-      }
-      return result.url;
-}
-  
-
 
 
 
@@ -313,7 +326,6 @@ async createReservation(
   createCustomerDto: CreateCustomerDto,
   servicesIds: string[],
   manualDate?: { reservationDay: number; reservationMonth: number; reservationYear: number },
-  imageFile?: any
 ): Promise<{ reservation: ReservationEntity; receipt: string }> {
   // Select the branch
   const branch = await this.selectBranch(branchId);
@@ -343,11 +355,7 @@ async createReservation(
     }
   }
 
-  // Upload deposit image if provided
-  let imageUrl: string | undefined;
-  if (imageFile) {
-    imageUrl = await this.uploadDepositImage(imageFile);
-  }
+
 
   
   // Create the reservation
@@ -356,11 +364,11 @@ async createReservation(
     country_Code: customer.countryCode,
     phone_Number: customer.phoneNumber,
     client_FullName: customer.fullName,
-    day: customer.day,
-    month: customer.month,
-    year: customer.year,
+    day: createCustomerDto.day,
+    month: createCustomerDto.month,
+    year: createCustomerDto.year,
     ...slot,
-    deposit_Content: imageUrl,
+    deposit_Content: null,
     branch,
     services,
   });
@@ -392,6 +400,15 @@ async createReservation(
   
   
   
+
+// async uploadDepositImage(imageFile: any): Promise<string> {
+//       const filename = '';
+//       const result = await this.CloudinaryService.uploadImage(imageFile,filename);
+//       if (!result.url) {
+//         throw new BadRequestException('Failed to upload image');
+//       }
+//       return result.url;
+// }
   
   
   
@@ -401,11 +418,8 @@ async createReservation(
   
   
   
-  async getAllReservations(getReservationsDto: GetReservationsDto): Promise<{
-    data: ReservationEntity[];
-    total: number;
-    page: number;
-    limit: number;
+  
+async getAllReservations(getReservationsDto: GetReservationsDto): Promise<{data: ReservationEntity[]; total: number;page: number;limit: number;
   }> {
     const {
       day,
@@ -441,10 +455,10 @@ async createReservation(
       page,
       limit,
     };
-  }
+}
 
 
-  async updateReservation(id: string, updateReservationDto: UpdateReservationDto): Promise<ReservationEntity> {
+async updateReservation(id: string, updateReservationDto: UpdateReservationDto): Promise<ReservationEntity> {
     const reservation = await this.ReservationRepository.findOne({
       where: { id },
       relations: ['branch', 'services'],
@@ -461,11 +475,11 @@ async createReservation(
     } catch (error) {
       throw new InternalServerErrorException('Failed to update reservation');
     }
-  }
+}
 
 
 
-  async deleteReservation(id: string): Promise<void> {
+async deleteReservation(id: string): Promise<void> {
     const reservation = await this.ReservationRepository.findOne({
       where: { id },
     });
@@ -476,11 +490,11 @@ async createReservation(
 
     // Delete the reservation
     await this.ReservationRepository.remove(reservation);
-  }
+}
 
 
 
-  async uploadImageAndAssociateWithReservation(
+async uploadImageAndAssociateWithReservation(
     reservationId: string,
     image: Express.Multer.File,
   ): Promise<{ imageUrl: string }> {
@@ -506,6 +520,6 @@ async createReservation(
     await this.ReservationRepository.save(reservation);
   
     return { imageUrl: uploadResult.url };
-  }
+}
   
 }

@@ -11,6 +11,7 @@ import { Roles } from '../auth/Roles.decorator';
 import { Role } from '../user/utils/user.enum';
 import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
 import { RolesGuard } from '../auth/guards/role.guards';
+import { CreateCustomerDto } from 'src/customer/dto/create-customer.dto';
 
 @ApiTags('reservation')
 @Controller('reservation')
@@ -19,6 +20,44 @@ export class ReservationController {
     private readonly CloudinaryService: CloudinaryService
 
   ) {}
+
+ 
+  @Post(':branchId')
+  // @UseInterceptors(FileInterceptor('imageFile')) // Uncomment if you plan to use image uploads
+  async createReservation(
+    @Param('branchId') branchId: string,
+    @Body() createCustomerDto: CreateCustomerDto,
+    @Query('servicesIds') servicesIds: string | string[], // Accept string or array
+    @Query('manualDate') manualDate?: string,
+    // @UploadedFile() imageFile?: any // Commented out if no file upload
+  ): Promise<{ reservation: ReservationEntity; receipt: string }> {
+    // Parse manualDate if provided
+    const parsedManualDate = manualDate
+      ? {
+          reservationDay: parseInt(manualDate.split('-')[0], 10),
+          reservationMonth: parseInt(manualDate.split('-')[1], 10),
+          reservationYear: parseInt(manualDate.split('-')[2], 10),
+        }
+      : undefined;
+
+    // Convert servicesIds to array
+    let servicesIdsArray: string[];
+
+    if (Array.isArray(servicesIds)) {
+      servicesIdsArray = servicesIds;
+    } else if (typeof servicesIds === 'string') {
+      servicesIdsArray = servicesIds.split(',').map(id => id.trim());
+    } else {
+      throw new BadRequestException('Invalid servicesIds format');
+    }
+
+    return this.reservationService.createReservation(
+      branchId,
+      createCustomerDto,
+      servicesIdsArray,
+      parsedManualDate,
+    );
+  }
 
 
   // @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
