@@ -20,6 +20,7 @@ import * as crypto from "crypto";
 import { LoginAuthDto } from "./dto/login.auth.dto";
 import { v4 as uuidv4 } from "uuid"; // For generating unique tokens
 import { ConfigService } from "@nestjs/config";
+import { I18nContext, I18nService } from "nestjs-i18n";
 
 @Injectable()
 export class AuthService {
@@ -28,7 +29,8 @@ export class AuthService {
     private readonly UserRepository: Repository<UserEntity>,
     private JwtService: JwtService,
     private MailService: MailService,
-    private configService: ConfigService
+    private configService: ConfigService,
+    private readonly i18nService:I18nService
   ) {}
 
   async signUp(createUserDto: CreateUserDto): Promise<UserEntity> {
@@ -53,8 +55,6 @@ export class AuthService {
       const salt = await bcrypt.genSalt();
       const hashedPassword = await bcrypt.hash(password, salt);
 
-      // // Generate OTP
-      // const otp = this.generateOtp();
 
       // Create new user
       const user = this.UserRepository.create({
@@ -174,7 +174,9 @@ export class AuthService {
     try {
       await this.MailService.transporter.sendMail(mailOptions);
     } catch (error) {
+      console.log(error.stack)
       throw new InternalServerErrorException("Failed to send OTP email");
+
     }
   }
 
@@ -249,13 +251,17 @@ export class AuthService {
   
       if (result.affected === 0) {
         // If no rows were affected, it means the user was not found or the update failed
+        // throw new NotFoundException('User not found'); 
+        return this.i18nService.translate('test.NOT_FOUND');
+
         throw new NotFoundException('User not found'); 
+
       }
   
       // Return a success message
       return { message: 'Logout successful' };
     } catch (error) {
-      
+       
   
       // Return a user-friendly message without exposing internal details
       throw new InternalServerErrorException('Failed to logout. Please try again later.');

@@ -9,6 +9,7 @@ import { MailService } from '../user/utils/Email.Service';
 import { ConfigService } from '@nestjs/config';
 import { AccessTokenStrategy } from './accessToken.strategy';
 import { RefreshTokenStrategy } from './refreshToken.strategy';
+import { CustomI18nService } from '../common/custom.18n.service';
 
 @Module({
   imports: [
@@ -25,7 +26,7 @@ import { RefreshTokenStrategy } from './refreshToken.strategy';
     // }),
     JwtModule.register({}),
   ],
-  providers: [AuthService,MailService,AccessTokenStrategy,RefreshTokenStrategy],
+  providers: [AuthService,MailService,AccessTokenStrategy,RefreshTokenStrategy,CustomI18nService],
 
   controllers: [AuthController],
   exports:[AuthService]
