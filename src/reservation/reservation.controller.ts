@@ -11,7 +11,7 @@ import { Roles } from '../auth/Roles.decorator';
 import { Role } from '../user/utils/user.enum';
 import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
 import { RolesGuard } from '../auth/guards/role.guards';
-import { CreateCustomerDto } from 'src/customer/dto/create-customer.dto';
+import { CreateCustomerDto } from '../customer/dto/create-customer.dto';
 
 @ApiTags('reservation')
 @Controller('reservation')
