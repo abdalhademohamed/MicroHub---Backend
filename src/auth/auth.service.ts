@@ -174,8 +174,7 @@ export class AuthService {
     try {
       await this.MailService.transporter.sendMail(mailOptions);
     } catch (error) {
-      console.log(error.stack)
-      throw new InternalServerErrorException("Failed to send OTP email",error.stack);
+     throw new InternalServerErrorException(error.stack);
 
     }
   }
