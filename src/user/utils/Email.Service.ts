@@ -8,7 +8,7 @@ export class MailService {
     constructor() {
         this.transporter = nodemailer.createTransport({
             host: process.env.NodeMailer_HOST,
-            port: parseInt(process.env.SMTP_PORT, 10), // Replace with your SMTP port
+            // port: 587,
             auth: {
                 user: process.env.NodeMailer_USER,
                 pass: process.env.NodeMailer_PW,
