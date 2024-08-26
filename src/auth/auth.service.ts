@@ -173,8 +173,13 @@ export class AuthService {
 
     try {
       await this.MailService.transporter.sendMail(mailOptions);
-    } catch (error) {
-     throw new InternalServerErrorException(error.stack);
+    } catch (error) { 
+      console.error('Error sending OTP email:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+    })
+     throw new InternalServerErrorException("Failed to send OTP email");
 
     }
   }
@@ -205,7 +210,11 @@ export class AuthService {
       return { message: "Please check your email for the OTP to reset your password." };
     } catch (error) {
       // Log the error for internal tracking (optional)
-      console.error('Error sending OTP email:', error);
+      console.error('Error', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+    })
   
       // Return a user-friendly message
       throw new InternalServerErrorException("Failed to send reset email. Please try again later.");
