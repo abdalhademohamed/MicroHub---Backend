@@ -1,3 +1,4 @@
+import { CustomerEntity } from '../../customer/entities/customer.entity';
 import { ServiceEntity } from '../../service/entities/service.entity';
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
 
@@ -14,4 +15,7 @@ export class RootoshEntity {
 
   @ManyToOne(() => ServiceEntity, ServiceEntity => ServiceEntity.rootosh)
   service: ServiceEntity; // Link to the main service
+
+  @ManyToOne(() => CustomerEntity, CustomerEntity => CustomerEntity.lastRootoshes) // Adjust the relation name as necessary
+  customer: CustomerEntity;
 }
