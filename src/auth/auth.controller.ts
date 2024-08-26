@@ -49,7 +49,6 @@ export class AuthController {
     return this.authService.logout(Req.user["sub"]);
   }
 
-  @UseGuards(AccessTokenGuard)
   // Endpoint to request a password reset
   @Post("request/password/reset")
   async requestPasswordReset(
