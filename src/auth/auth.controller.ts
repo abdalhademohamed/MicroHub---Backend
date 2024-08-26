@@ -58,7 +58,6 @@ export class AuthController {
     return this.authService.requestPasswordReset(email);
   }
 
-  @UseGuards(AccessTokenGuard)
   // Endpoint to reset the password
   @Post("reset/password")
   async resetPassword(

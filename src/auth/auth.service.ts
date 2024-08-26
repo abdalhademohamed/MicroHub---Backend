@@ -74,7 +74,6 @@ export class AuthService {
 
       return newUser;
     } catch (error) {
-      console.error('Error during signUp:', error.stack);
       throw new InternalServerErrorException("Failed to sign up user");
     }
   }
@@ -173,12 +172,7 @@ export class AuthService {
 
     try {
       await this.MailService.transporter.sendMail(mailOptions);
-    } catch (error) { 
-      console.error('Error sending OTP email:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-    })
+    } catch (error) {
      throw new InternalServerErrorException("Failed to send OTP email");
 
     }
@@ -209,13 +203,6 @@ export class AuthService {
       // Return a success message
       return { message: "Please check your email for the OTP to reset your password." };
     } catch (error) {
-      // Log the error for internal tracking (optional)
-      console.error('Error', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-    })
-  
       // Return a user-friendly message
       throw new InternalServerErrorException("Failed to send reset email. Please try again later.");
     }
@@ -245,8 +232,6 @@ export class AuthService {
       // Return a success message
       return { message: 'Password reset successful' };
     } catch (error) {
-      // Log the error for internal tracking (optional)
-      console.error('Error resetting password:', error);
   
       // Return a user-friendly message
       throw new InternalServerErrorException('Failed to reset password. Please try again later.');
