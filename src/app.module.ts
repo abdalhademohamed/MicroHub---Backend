@@ -53,8 +53,8 @@ import { RootoshEntity } from './rootosh/entities/rootosh.entity';
       username: process.env.DB_USER ,
       password: process.env.DB_PASSWORD ,
       database: process.env.DB_NAME ,
-      // entities: ["dist/**/*.entity.js"], 
-      entities:[UserEntity,BranchEntity,CustomerEntity,EmployeeEntity,PositionEntity,ReservationEntity,ServiceEntity,RootoshEntity],
+      entities: ["dist/**/*.entity.ts"], 
+      // entities:[UserEntity,BranchEntity,CustomerEntity,EmployeeEntity,PositionEntity,ReservationEntity,ServiceEntity,RootoshEntity],
       synchronize: true, // Set to false in production
       ssl: true, // Neon typically requires SSL connections
       extra: {
