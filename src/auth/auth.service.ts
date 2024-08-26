@@ -20,6 +20,7 @@ import * as crypto from "crypto";
 import { LoginAuthDto } from "./dto/login.auth.dto";
 import { v4 as uuidv4 } from "uuid"; // For generating unique tokens
 import { ConfigService } from "@nestjs/config";
+import { I18nContext, I18nService } from "nestjs-i18n";
 
 @Injectable()
 export class AuthService {
@@ -28,7 +29,8 @@ export class AuthService {
     private readonly UserRepository: Repository<UserEntity>,
     private JwtService: JwtService,
     private MailService: MailService,
-    private configService: ConfigService
+    private configService: ConfigService,
+    private readonly i18nService:I18nService
   ) {}
 
   async signUp(createUserDto: CreateUserDto): Promise<UserEntity> {
@@ -53,8 +55,6 @@ export class AuthService {
       const salt = await bcrypt.genSalt();
       const hashedPassword = await bcrypt.hash(password, salt);
 
-      // // Generate OTP
-      // const otp = this.generateOtp();
 
       // Create new user
       const user = this.UserRepository.create({
@@ -74,7 +74,6 @@ export class AuthService {
 
       return newUser;
     } catch (error) {
-      console.error('Error during signUp:', error.stack);
       throw new InternalServerErrorException("Failed to sign up user");
     }
   }
@@ -95,15 +94,21 @@ export class AuthService {
     // Invalidate the previous refresh token
     await this.invalidateOldRefreshToken(user.id);
     // return { accessToken };
-    const tokens = await this.GenerateTokens(user.id, user.email, user.role);
+    const tokens = await this.generateTokens(user.id, user.email, user.role);
+    // Update the user's record with the new refresh token
     await this.updateRefreshToken(user.id, tokens.refreshToken);
     return {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
     };
-  }
 
-  async invalidateOldRefreshToken(userId: number): Promise<void> {
+  }private async hashToken(token: string): Promise<string> {
+    const salt = await bcrypt.genSalt();
+    return bcrypt.hash(token, salt);
+  }
+  
+  
+  async invalidateOldRefreshToken(userId: string): Promise<void> {
     // Fetch the user and check if there is an existing refresh token
     const user = await this.UserRepository.findOne({ where: { id: userId } });
   
@@ -124,44 +129,7 @@ export class AuthService {
     throw new UnauthorizedException("Please check your login credentials");
   }
 
-  async GenerateTokens(userId: number, username: string, role: string) {
-    const [accessToken, refreshToken] = await Promise.all([
-      this.JwtService.signAsync(
-        {
-          sub: userId,
-          username,
-          role,
-        },
-        {
-          secret: this.configService.get<string>("JWT_ACCESS_SECRET"),
-          expiresIn: "15m",
-        }
-      ),
-      this.JwtService.signAsync(
-        {
-          sub: userId,
-          username,
-          role,
-        },
-        {
-          secret: this.configService.get<string>("JWT_REFRESH_SECRET"),
-          expiresIn: "7d",
-        }
-      ),
-    ]);
-    // console.log('acesstoken:' + accessToken, 'refreshtoken:' + refreshToken);
-    return {
-      accessToken,
-      refreshToken,
-    };
-  }
-  async updateRefreshToken(userId: number, refreshToken: string) {
-    const salt = await bcrypt.genSalt();
-    const hashedRefreshToken = await bcrypt.hash(refreshToken, salt);
-    await this.UserRepository.update(userId, {
-      refreshToken: hashedRefreshToken,
-    });
-  }
+
 
   async sendOtpEmail(email: string, otp: string): Promise<void> {
     const mailOptions = {
@@ -174,7 +142,8 @@ export class AuthService {
     try {
       await this.MailService.transporter.sendMail(mailOptions);
     } catch (error) {
-      throw new InternalServerErrorException("Failed to send OTP email");
+     throw new InternalServerErrorException("Failed to send OTP email");
+
     }
   }
 
@@ -203,9 +172,6 @@ export class AuthService {
       // Return a success message
       return { message: "Please check your email for the OTP to reset your password." };
     } catch (error) {
-      // Log the error for internal tracking (optional)
-      console.error('Error sending OTP email:', error);
-  
       // Return a user-friendly message
       throw new InternalServerErrorException("Failed to send reset email. Please try again later.");
     }
@@ -235,8 +201,6 @@ export class AuthService {
       // Return a success message
       return { message: 'Password reset successful' };
     } catch (error) {
-      // Log the error for internal tracking (optional)
-      console.error('Error resetting password:', error);
   
       // Return a user-friendly message
       throw new InternalServerErrorException('Failed to reset password. Please try again later.');
@@ -249,29 +213,64 @@ export class AuthService {
   
       if (result.affected === 0) {
         // If no rows were affected, it means the user was not found or the update failed
+        // throw new NotFoundException('User not found'); 
+        return this.i18nService.translate('test.NOT_FOUND');
+
         throw new NotFoundException('User not found'); 
+
       }
   
       // Return a success message
       return { message: 'Logout successful' };
     } catch (error) {
-      
+       
   
       // Return a user-friendly message without exposing internal details
       throw new InternalServerErrorException('Failed to logout. Please try again later.');
     }
   }
-  async refreshTokens(userId: number, refreshToken: string) {
-    const user = await this.UserRepository.findOne({ where: { id: userId } });
-    if (!user || !user.refreshToken)
-      throw new ForbiddenException("Access Denied");
-    const refreshTokenMatches = await bcrypt.compare(
-      user.refreshToken,
-      refreshToken
-    );
-    if (!refreshTokenMatches) throw new ForbiddenException("Access Denied");
-    const tokens = await this.GenerateTokens(user.id, user.username, user.role);
-    await this.updateRefreshToken(user.id, tokens.refreshToken);
-    return tokens;
+  async refreshTokens(userId: string, providedRefreshToken: string) {
+  // Fetch user from the database by UUID
+  const user = await this.UserRepository.findOne({ where: { id: userId } });
+
+  if (!user || !user.refreshToken) {
+    throw new ForbiddenException('Access Denied');
+  }
+
+  // Compare provided refresh token with the stored hash
+  const refreshTokenMatches = await bcrypt.compare(providedRefreshToken, user.refreshToken);
+
+  if (!refreshTokenMatches) {
+    throw new ForbiddenException('Access Denied');
+  }
+
+  // Generate new tokens
+  const tokens = await this.generateTokens(user.id, user.username, user.role);
+
+  // Update refresh token in the database
+  await this.updateRefreshToken(user.id, tokens.refreshToken);
+
+  return tokens;
+}
+
+  
+  private async generateTokens(userId: string, username: string, role: string) {
+    const [accessToken, refreshToken] = await Promise.all([
+      this.JwtService.signAsync(
+        { sub: userId, username, role },
+        { secret: process.env.JWT_ACCESS_SECRET, expiresIn: '15m' },
+      ),
+      this.JwtService.signAsync(
+        { sub: userId, username, role },
+        { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '7d' },
+      ),
+    ]);
+
+    return { accessToken, refreshToken };
+  }
+  private async updateRefreshToken(userId: string, refreshToken: string) {
+    const salt = await bcrypt.genSalt();
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, salt);
+    await this.UserRepository.update(userId, { refreshToken :hashedRefreshToken});
   }
 }

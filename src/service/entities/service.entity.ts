@@ -1,8 +1,9 @@
 // import { ReservationEntity } from '../../reservation/entities/reservation.entity';
 import { UUID } from 'crypto';
 import { ReservationEntity } from '../../reservation/entities/reservation.entity';
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToMany, JoinTable } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToMany, JoinTable, ManyToOne } from 'typeorm';
 import { RootoshEntity } from '../../rootosh/entities/rootosh.entity';
+import { CustomerEntity } from '../../customer/entities/customer.entity';
 
 
 
@@ -40,4 +41,8 @@ export class ServiceEntity {
 
   @OneToMany(() => RootoshEntity, RootoshEntity => RootoshEntity.service)
   rootosh: RootoshEntity[]; // Include rootoshes with the service
+
+
+  @ManyToOne(() => CustomerEntity, CustomerEntity => CustomerEntity.lastServices) // Adjust the relation name as necessary
+  customer: CustomerEntity;
 }

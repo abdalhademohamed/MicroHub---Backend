@@ -7,6 +7,9 @@ import {
   Post,
   Req,
   UseGuards,
+  Res,
+  Query,
+  Param,
 } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 
@@ -20,6 +23,7 @@ import {
   RequestPasswordResetDto,
   ResetPasswordDto,
 } from "./dto/reset.pw.auth.dto";
+import { RefreshTokenDto } from "./dto/refresh.token.dto";
 @ApiTags("auth")
 @Controller("auth")
 export class AuthController {
@@ -49,7 +53,6 @@ export class AuthController {
     return this.authService.logout(Req.user["sub"]);
   }
 
-  @UseGuards(AccessTokenGuard)
   // Endpoint to request a password reset
   @Post("request/password/reset")
   async requestPasswordReset(
@@ -59,7 +62,6 @@ export class AuthController {
     return this.authService.requestPasswordReset(email);
   }
 
-  @UseGuards(AccessTokenGuard)
   // Endpoint to reset the password
   @Post("reset/password")
   async resetPassword(
@@ -67,5 +69,24 @@ export class AuthController {
   ): Promise<{ message: string }> {
     const { otp, newPassword } = ResetPasswordDto;
     return this.authService.resetPassword(otp, newPassword);
+  }
+
+
+  @Post('refresh/token/:userId')
+  async refreshTokens(
+    @Param('userId') userId: string,
+    @Body() refreshTokenDto: RefreshTokenDto,
+    @Res() res
+  ): Promise<void> {
+    const { refreshToken } = refreshTokenDto;
+
+    try {
+      const tokens = await this.authService.refreshTokens(userId, refreshToken);
+      res.status(HttpStatus.OK).json(tokens);
+    } catch (error) {
+      res.status(error.status || HttpStatus.INTERNAL_SERVER_ERROR).json({
+        message: error.response?.message || 'Failed to refresh tokens. Please try again later.',
+      });
+    }
   }
 }
