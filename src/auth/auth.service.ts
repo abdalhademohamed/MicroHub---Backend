@@ -94,15 +94,21 @@ export class AuthService {
     // Invalidate the previous refresh token
     await this.invalidateOldRefreshToken(user.id);
     // return { accessToken };
-    const tokens = await this.GenerateTokens(user.id, user.email, user.role);
+    const tokens = await this.generateTokens(user.id, user.email, user.role);
+    // Update the user's record with the new refresh token
     await this.updateRefreshToken(user.id, tokens.refreshToken);
     return {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
     };
-  }
 
-  async invalidateOldRefreshToken(userId: number): Promise<void> {
+  }private async hashToken(token: string): Promise<string> {
+    const salt = await bcrypt.genSalt();
+    return bcrypt.hash(token, salt);
+  }
+  
+  
+  async invalidateOldRefreshToken(userId: string): Promise<void> {
     // Fetch the user and check if there is an existing refresh token
     const user = await this.UserRepository.findOne({ where: { id: userId } });
   
@@ -123,44 +129,7 @@ export class AuthService {
     throw new UnauthorizedException("Please check your login credentials");
   }
 
-  async GenerateTokens(userId: number, username: string, role: string) {
-    const [accessToken, refreshToken] = await Promise.all([
-      this.JwtService.signAsync(
-        {
-          sub: userId,
-          username,
-          role,
-        },
-        {
-          secret: this.configService.get<string>("JWT_ACCESS_SECRET"),
-          expiresIn: "15m",
-        }
-      ),
-      this.JwtService.signAsync(
-        {
-          sub: userId,
-          username,
-          role,
-        },
-        {
-          secret: this.configService.get<string>("JWT_REFRESH_SECRET"),
-          expiresIn: "7d",
-        }
-      ),
-    ]);
-    // console.log('acesstoken:' + accessToken, 'refreshtoken:' + refreshToken);
-    return {
-      accessToken,
-      refreshToken,
-    };
-  }
-  async updateRefreshToken(userId: number, refreshToken: string) {
-    const salt = await bcrypt.genSalt();
-    const hashedRefreshToken = await bcrypt.hash(refreshToken, salt);
-    await this.UserRepository.update(userId, {
-      refreshToken: hashedRefreshToken,
-    });
-  }
+
 
   async sendOtpEmail(email: string, otp: string): Promise<void> {
     const mailOptions = {
@@ -260,17 +229,48 @@ export class AuthService {
       throw new InternalServerErrorException('Failed to logout. Please try again later.');
     }
   }
-  async refreshTokens(userId: number, refreshToken: string) {
-    const user = await this.UserRepository.findOne({ where: { id: userId } });
-    if (!user || !user.refreshToken)
-      throw new ForbiddenException("Access Denied");
-    const refreshTokenMatches = await bcrypt.compare(
-      user.refreshToken,
-      refreshToken
-    );
-    if (!refreshTokenMatches) throw new ForbiddenException("Access Denied");
-    const tokens = await this.GenerateTokens(user.id, user.username, user.role);
-    await this.updateRefreshToken(user.id, tokens.refreshToken);
-    return tokens;
+  async refreshTokens(userId: string, providedRefreshToken: string) {
+  // Fetch user from the database by UUID
+  const user = await this.UserRepository.findOne({ where: { id: userId } });
+
+  if (!user || !user.refreshToken) {
+    throw new ForbiddenException('Access Denied');
+  }
+
+  // Compare provided refresh token with the stored hash
+  const refreshTokenMatches = await bcrypt.compare(providedRefreshToken, user.refreshToken);
+
+  if (!refreshTokenMatches) {
+    throw new ForbiddenException('Access Denied');
+  }
+
+  // Generate new tokens
+  const tokens = await this.generateTokens(user.id, user.username, user.role);
+
+  // Update refresh token in the database
+  await this.updateRefreshToken(user.id, tokens.refreshToken);
+
+  return tokens;
+}
+
+  
+  private async generateTokens(userId: string, username: string, role: string) {
+    const [accessToken, refreshToken] = await Promise.all([
+      this.JwtService.signAsync(
+        { sub: userId, username, role },
+        { secret: process.env.JWT_ACCESS_SECRET, expiresIn: '15m' },
+      ),
+      this.JwtService.signAsync(
+        { sub: userId, username, role },
+        { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '7d' },
+      ),
+    ]);
+
+    return { accessToken, refreshToken };
+  }
+  private async updateRefreshToken(userId: string, refreshToken: string) {
+    const salt = await bcrypt.genSalt();
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, salt);
+    await this.UserRepository.update(userId, { refreshToken :hashedRefreshToken});
   }
 }
