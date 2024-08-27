@@ -39,7 +39,13 @@ export class UserEntity{
 
     
 
-    
+    @Column({ nullable: true })
+    resetPasswordToken: string | null;
+  
+    @Column({ nullable: true })
+    resetPasswordExpires: Date | null;
 
 
+
+   
 }
