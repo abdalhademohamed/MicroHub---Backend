@@ -26,7 +26,7 @@ export class EmployeeEntity {
   
 
   @Column()
-  workingHours: number;  // Number of working hours
+  workingHours: string;  // Number of working hours
 
   @Column({ unique: true })
   email: string;  // Employee email

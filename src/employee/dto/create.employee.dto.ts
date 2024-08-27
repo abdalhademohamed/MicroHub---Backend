@@ -14,7 +14,7 @@ export class CreateEmployeeDto {
   arabic_Name: string; 
 
   @IsNotEmpty()
-  workingHours: number;  // Ensure this is between 1 and 10
+  workingHours: string;  // Ensure this is between 1 and 10
 
   @IsEmail()
   email: string;
