@@ -6,11 +6,12 @@ import { EmployeeEntity } from './entities/employee.entity';
 import { BranchEntity } from '../branch/entities/branch.entity';
 import { PositionEntity } from '../postion/entities/postion.entity';
 import { EmployeeTypeEntity } from '../employetype/entities/employetype.entity';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Module({
   
   imports: [TypeOrmModule.forFeature([EmployeeEntity,BranchEntity,PositionEntity,EmployeeTypeEntity])],
   controllers: [EmployeeController],
-  providers: [EmployeeService],
+  providers: [EmployeeService,CloudinaryService],
 })
 export class EmployeeModule {}
