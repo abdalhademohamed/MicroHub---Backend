@@ -7,6 +7,7 @@ import { BranchEntity } from '../branch/entities/branch.entity';
 import { PositionEntity } from '../postion/entities/postion.entity';
 import { In, Like, Repository } from 'typeorm';
 import { EmployeeTypeEntity } from '../employetype/entities/employetype.entity';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 @Injectable()
 export class EmployeeService {
@@ -22,35 +23,44 @@ export class EmployeeService {
 
     @InjectRepository(EmployeeTypeEntity)
     private readonly EmployeeTypeRepository: Repository<EmployeeTypeEntity>,
+
+    private readonly CloudinaryService: CloudinaryService,
+
   ) {}
 
   async createEmployee(createEmployeeDto: CreateEmployeeDto): Promise<EmployeeEntity> {
     const { 
-      english_Name, 
-      arabic_Name, 
-      branch: branchId, 
-      position: positionId, 
-      employeeType: employeeTypeId // Add this if it's part of the DTO
-    } = createEmployeeDto;
-
+        english_Name, 
+        arabic_Name, 
+        branch: branchId, 
+        position: positionId, 
+        employeeType: employeeTypeId, 
+        workingHours,
+        email,
+        countryCode,
+        phoneNumber,
+        password,
+        image // Image URL or path
+      } = createEmployeeDto;
+  
     // Check if the branch exists
     const branch = await this.branchRepository.findOne({ where: { id: branchId } });
     if (!branch) {
       throw new NotFoundException('Branch not found');
     }
-
+  
     // Check if the position exists
     const position = await this.positionRepository.findOne({ where: { id: positionId } });
     if (!position) {
       throw new NotFoundException('Position not found');
     }
-
+  
     // Check if the employee type exists
     const employeeType = await this.EmployeeTypeRepository.findOne({ where: { id: employeeTypeId } });
     if (!employeeType) {
       throw new NotFoundException('Employee Type not found');
     }
-
+  
     try {
       // Create the new employee
       const newEmployee = this.employeeRepository.create({
@@ -58,15 +68,22 @@ export class EmployeeService {
         arabic_Name,
         branch,
         position,
-        employeeType, // Include the employeeType
+        employeeType,
+        workingHours,
+        email,
+        countryCode,
+        phoneNumber,
+        password, // Typically hashed before saving
+        image // Store the image URL or path
       });
-
+  
       // Save the new employee
       return await this.employeeRepository.save(newEmployee);
     } catch (error) {
-      throw new InternalServerErrorException('Failed to create employee',error.stack);
+      throw new InternalServerErrorException('Failed to create employee', error.stack);
     }
   }
+  
 
   async getAllEmployees(
     page: number = 1,
@@ -79,12 +96,12 @@ export class EmployeeService {
     limit: number;
   }> {
     // Ensure page and limit are valid
-    if (page < 1) page = 1;
-    if (limit < 1) limit = 10;
-  
+    page = Math.max(page, 1);
+    limit = Math.max(limit, 1);
+
     // Initialize the filter object for employeeType
     const employeeTypeFilter: any = {};
-  
+
     // If employeeTypeName is provided, find matching EmployeeType IDs
     if (employeeTypeName) {
       const employeeTypes = await this.EmployeeTypeRepository.find({
@@ -92,8 +109,12 @@ export class EmployeeService {
           typeEnglish: Like(`%${employeeTypeName}%`), // Adjust based on actual field name
         },
       });
-  
-      if (employeeTypes.length === 0) {
+
+      const employeeTypeIds = employeeTypes.map(type => type.id);
+      if (employeeTypeIds.length > 0) {
+        employeeTypeFilter.employeeType = In(employeeTypeIds);
+      } else {
+        // If no matching employee types found, return empty result
         return {
           items: [],
           total: 0,
@@ -101,13 +122,8 @@ export class EmployeeService {
           limit,
         };
       }
-  
-      const employeeTypeIds = employeeTypes.map(type => type.id);
-      employeeTypeFilter.employeeType = {
-        id: In(employeeTypeIds),
-      };
     }
-  
+
     // Find and count employees with optional employeeType filtering
     const [items, total] = await this.employeeRepository.findAndCount({
       where: employeeTypeFilter,
@@ -115,7 +131,7 @@ export class EmployeeService {
       skip: (page - 1) * limit,
       take: limit,
     });
-  
+
     return {
       items,
       total,
@@ -123,11 +139,12 @@ export class EmployeeService {
       limit,
     };
   }
+
   
   async getEmployeeById(id: string): Promise<EmployeeEntity> {
     const employee = await this.employeeRepository.findOne({
       where: { id },
-      relations: ['branch', 'position', 'employeeType'], // Include 'employeeType'
+      relations: ['branch', 'position', 'employeeType'], // Include related entities
     });
 
     if (!employee) {
@@ -138,49 +155,71 @@ export class EmployeeService {
   }
 
 
+  
+  // async updateEmployee(id: string, updateEmployeeDto: UpdateEmployeeDto): Promise<EmployeeEntity> {
+  //   // Find existing employee
+  //   const employee = await this.employeeRepository.findOne({
+  //     where: { id },
+  //     relations: ['branch', 'position', 'employeeType'],
+  //   });
 
-  async updateEmployee(id: string, updateEmployeeDto: UpdateEmployeeDto): Promise<EmployeeEntity> {
-    // Find existing employee
-    const employee = await this.employeeRepository.findOne({
-      where: { id },
-      relations: ['branch', 'position', 'employeeType'],
-    });
+  //   if (!employee) {
+  //     throw new NotFoundException(`Employee with ID ${id} not found`);
+  //   }
 
-    if (!employee) {
-      throw new NotFoundException(`Employee with ID ${id} not found`);
-    }
+  //   // Update basic fields
+  //   const { 
+  //     english_Name, 
+  //     arabic_Name, 
+  //     branch: branchId, 
+  //     position: positionId, 
+  //     employeeType: employeeTypeId,
+  //     workingHours,
+  //     email,
+  //     countryCode,
+  //     phoneNumber,
+  //     password,
+  //     image,
+  //   } = updateEmployeeDto;
 
-    // Update basic fields
-    const { 
-      english_Name, 
-      arabic_Name, 
-      branch: branchId, 
-      position: positionId, 
-      employeeType: employeeTypeId 
-    } = updateEmployeeDto;
+    
 
-    if (english_Name) employee.english_Name = english_Name;
-    if (arabic_Name) employee.arabic_Name = arabic_Name;
-    if (branchId) {
-      const branch = await this.branchRepository.findOne({ where: { id: branchId } });
-      if (branch) employee.branch = branch;
-    }
-    if (positionId) {
-      const position = await this.positionRepository.findOne({ where: { id: positionId } });
-      if (position) employee.position = position;
-    }
-    if (employeeTypeId) {
-      const employeeType = await this.EmployeeTypeRepository.findOne({ where: { id: employeeTypeId } });
-      if (employeeType) employee.employeeType = employeeType;
-    }
+  //   // Update related entities only if IDs are provided and valid
+  //   if (branchId) {
+  //     const branch = await this.branchRepository.findOne({ where: { id: branchId } });
+  //     if (branch) {
+  //       employee.branch = branch;
+  //     } else {
+  //       throw new NotFoundException(`Branch with ID ${branchId} not found`);
+  //     }
+  //   }
+    
+  //   if (positionId) {
+  //     const position = await this.positionRepository.findOne({ where: { id: positionId } });
+  //     if (position) {
+  //       employee.position = position;
+  //     } else {
+  //       throw new NotFoundException(`Position with ID ${positionId} not found`);
+  //     }
+  //   }
 
-    try {
-      // Save the updated employee
-      return await this.employeeRepository.save(employee);
-    } catch (error) {
-      throw new InternalServerErrorException('Failed to update employee');
-    }
-  }
+  //   if (employeeTypeId) {
+  //     const employeeType = await this.EmployeeTypeRepository.findOne({ where: { id: employeeTypeId } });
+  //     if (employeeType) {
+  //       employee.employeeType = employeeType;
+  //     } else {
+  //       throw new NotFoundException(`EmployeeType with ID ${employeeTypeId} not found`);
+  //     }
+  //   }
+
+  //   try {
+  //     // Save the updated employee
+  //     return await this.employeeRepository.save(employee);
+  //   } catch (error) {
+  //     console.error('Update Employee Error:', error);
+  //     throw new InternalServerErrorException('Failed to update employee');
+  //   }
+  // }
   async deleteEmployee(id: string): Promise<void> {
     const result = await this.employeeRepository.delete(id);
 
@@ -194,7 +233,11 @@ export class EmployeeService {
   }
 
 
- 
+  async uploadImage(file: Express.Multer.File,folderName:string): Promise<string> {
+    const result = await this.CloudinaryService.uploadImage(file,folderName);
+    return result.url;  // Return the URL of the uploaded image
+  }
+
   
 }
 

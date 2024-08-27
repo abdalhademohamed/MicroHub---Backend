@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsUUID, IsNotEmpty } from 'class-validator';
+import { IsString, IsUUID, IsNotEmpty, Length, IsEmail, IsInt, Min, Max } from 'class-validator';
 
 export class CreateEmployeeDto {
 
@@ -11,7 +11,26 @@ export class CreateEmployeeDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  arabic_Name: string;
+  arabic_Name: string; 
+
+  @IsNotEmpty()
+  workingHours: string;  // Ensure this is between 1 and 10
+
+  @IsEmail()
+  email: string;
+
+
+  @IsString()
+  @Length(1, 10)
+  countryCode: string;
+
+
+  @IsString()
+  @Length(7, 15)
+  phoneNumber: string;
+
+  @IsString()
+  password: string; 
 
   @ApiProperty()
   @IsUUID()
@@ -27,4 +46,10 @@ export class CreateEmployeeDto {
   @IsUUID()
   @IsNotEmpty()
   position: string;
+
+
+
+  @ApiProperty({ description: 'Image URL or path' })
+
+  image?:string;  // 
 }

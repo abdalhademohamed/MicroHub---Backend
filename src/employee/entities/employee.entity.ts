@@ -14,13 +14,32 @@ export class EmployeeEntity {
   @Column()
   arabic_Name: string;
 
-  @ManyToOne(() => EmployeeTypeEntity, (EmployeeTypeEntity) => EmployeeTypeEntity.employees)
+  @ManyToOne(() => EmployeeTypeEntity, (employeeType) => employeeType.employees)
   employeeType: EmployeeTypeEntity;
 
-
-  @ManyToOne(() => BranchEntity, (BranchEntity) => BranchEntity.employees)
+  @ManyToOne(() => BranchEntity, (branch) => branch.employees)
   branch: BranchEntity | string;
 
-  @ManyToOne(() => PositionEntity, (PositionEntity) => PositionEntity.employees)
-  position: PositionEntity |string;
+  @ManyToOne(() => PositionEntity, (position) => position.employees)
+  position: PositionEntity | string;
+
+  
+
+  @Column()
+  workingHours: string;  // Number of working hours
+
+  @Column({ unique: true })
+  email: string;  // Employee email
+
+  @Column({ length: 10 })
+  countryCode: string;  // Country code for the phone number
+
+  @Column({ length: 15 })
+  phoneNumber: string;  // Employee phone number
+
+  @Column()
+  password: string;  // Generated one-time password (OTP)
+
+  @Column()
+  image: string;  // Store the URL of the image uploaded to Cloudinary
 }

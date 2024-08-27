@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, InternalServerErrorException, Query, NotFoundException, Put, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, InternalServerErrorException, Query, NotFoundException, Put, BadRequestException, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { EmployeeService } from './employee.service';
 import { CreateEmployeeDto } from './dto/create.employee.dto';
 import { UpdateEmployeeDto } from './dto/update.employee.dto';
 import { EmployeeEntity } from './entities/employee.entity';
 import { ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 
 
@@ -12,10 +13,21 @@ import { ApiTags } from '@nestjs/swagger';
 export class EmployeeController {
   constructor(private readonly employeeService: EmployeeService) {}
 
+  @UseInterceptors(FileInterceptor('image'))  // 'file' is the name of the field in the form-data
   @Post()
-  async createEmployee(@Body() createEmployeeDto: CreateEmployeeDto): Promise<EmployeeEntity> {
+  async createEmployee(@Body() createEmployeeDto: CreateEmployeeDto,
+  @UploadedFile() image: Express.Multer.File,
+): Promise<EmployeeEntity> {
    
-      return await this.employeeService.createEmployee(createEmployeeDto);  
+
+  if (!image) {
+    throw new BadRequestException('Photo is required');
+  }
+  const folderName = 'employees'; // or any other dynamic name based on context
+  const imageUrl = await this.employeeService.uploadImage(image,folderName);
+  createEmployeeDto.image = imageUrl;
+
+  return await this.employeeService.createEmployee(createEmployeeDto);  
   }
 
   @Get()
@@ -39,15 +51,15 @@ export class EmployeeController {
     return await this.employeeService.getEmployeeById(id);
   }
 
-  @Put(':id')
-  async updateEmployee(
-    @Param('id') id: string,
-    @Body() updateEmployeeDto: UpdateEmployeeDto
-  ): Promise<EmployeeEntity> {
+  // @Put(':id')
+  // async updateEmployee(
+  //   @Param('id') id: string,
+  //   @Body() updateEmployeeDto: UpdateEmployeeDto
+  // ): Promise<EmployeeEntity> {
     
-    return await this.employeeService.updateEmployee(id, updateEmployeeDto);
+  //   return await this.employeeService.updateEmployee(id, updateEmployeeDto);
    
-  }
+  // }
 
   @Delete(':id')
   async deleteEmployee(@Param('id') id: string): Promise<void> {
