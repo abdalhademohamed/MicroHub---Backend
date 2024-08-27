@@ -34,6 +34,10 @@ export class AuthService {
     private readonly i18nService:I18nService
   ) {}
 
+
+
+
+
   async signUp(createUserDto: CreateUserDto): Promise<UserEntity> {
     const { username, email, password, role } = createUserDto;
 
@@ -142,39 +146,6 @@ export class AuthService {
     }
   }
 
-  // async requestPasswordReset(email: string): Promise<{ message: string }> {
-  //   // Find the user by email
-  //   const user = await this.UserRepository.findOne({ where: { email } });
-  
-  //   if (!user) {
-  //     throw new UnauthorizedException("User not found");
-  //   }
-  
-  //   // Generate OTP
-  //   const otp = this.generateOtp();
-  
-  //   // Save the OTP and expiration time in the user entity
-  //   user.otp = otp;
-  //   user.otpExpiration = new Date(Date.now() + 15 * 60 * 1000); // OTP valid for 15 minutes
-  
-  //   try {
-  //     // Save the user with the updated OTP and expiration time
-  //     await this.UserRepository.save(user);
-  
-  //     // Send OTP email
-  //     await this.sendOtpEmail(user.email, otp);
-  
-  //     // Return a success message
-  //     return { message: "Please check your email for the OTP to reset your password." };
-  //   } catch (error) {
-  //     // Return a user-friendly message
-  //     throw new InternalServerErrorException("Failed to send reset email. Please try again later.");
-  //   }
-  // }
-
-
-
-
   async requestPasswordReset(email: string): Promise<any> {
     const user = await this.UserRepository.findOne({where:{email}});
     if (!user) {
@@ -209,7 +180,7 @@ export class AuthService {
   }
   async setResetPasswordToken(userId: string, token: string): Promise<void> {
     await this.UserRepository.update(userId, { resetPasswordToken: token, resetPasswordExpires: new Date(Date.now() + 3600000) }); // Token expires in 1 hour
- }
+  }
 
 
  async verifyResetToken(token: string, otp: string): Promise<UserEntity> {
@@ -322,36 +293,7 @@ async resetPassword(userId: string, newPassword: string): Promise<void> {
 
 
 
-  // async resetPassword(otp: string, newPassword: string): Promise<{ message: string }> {
-  //   // Find the user by OTP
-  //   const user = await this.UserRepository.findOne({ where: { otp } });
-  
-  //   // Check if the user exists and the OTP is valid
-  //   if (!user || !user.otp || user.otp !== otp || new Date() > user.otpExpiration) {
-  //     throw new UnauthorizedException("Invalid or expired OTP");
-  //   }
-  
-  //   try {
-  //     // Generate a salt and hash the new password
-  //     const salt = await bcrypt.genSalt();
-  //     const hashedPassword = await bcrypt.hash(newPassword, salt);
-  
-  //     // Update the user entity
-  //     user.password = hashedPassword;
-  //     user.otp = null;
-  //     user.otpExpiration = null;
-  
-  //     // Save the updated user entity
-  //     await this.UserRepository.save(user);
-  
-  //     // Return a success message
-  //     return { message: 'Password reset successful' };
-  //   } catch (error) {
-  
-  //     // Return a user-friendly message
-  //     throw new InternalServerErrorException('Failed to reset password. Please try again later.');
-  //   }
-  // }
+ 
   async logout(userId: number): Promise<{ message: string }> {
     try {
       // Update the user's record to remove the refresh token
