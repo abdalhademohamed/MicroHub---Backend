@@ -10,6 +10,9 @@ import {
   Res,
   Query,
   Param,
+  NotFoundException,
+  BadRequestException,
+  InternalServerErrorException,
 } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 
@@ -54,21 +57,36 @@ export class AuthController {
   }
 
   // Endpoint to request a password reset
-  @Post("request/password/reset")
-  async requestPasswordReset(
-    @Body() RequestPasswordResetDto: RequestPasswordResetDto
-  ): Promise<{ message: string }> {
-    const { email } = RequestPasswordResetDto;
-    return this.authService.requestPasswordReset(email);
+  // @Post("request/password/reset")
+  // async requestPasswordReset(
+  //   @Body() RequestPasswordResetDto: RequestPasswordResetDto
+  // ): Promise<{ message: string }> {
+  //   const { email } = RequestPasswordResetDto;
+  //   return this.authService.requestPasswordReset(email);
+  // }
+
+  @Post('request/password/reset')
+  async requestPasswordReset(@Body() requestPasswordResetDto: RequestPasswordResetDto) {
+    return await this.authService.requestPasswordReset(requestPasswordResetDto.email);
   }
 
-  // Endpoint to reset the password
-  @Post("reset/password")
+
+
+  @Get('verify/reset/token')
+  async verifyResetToken(@Query('resettoken') token: string, @Query('otp') otp: string): Promise<any> {
+    return await this.authService.verifyResetToken(token, otp);
+  }
+  
+
+  @Post('reset/password')
   async resetPassword(
-    @Body() ResetPasswordDto: ResetPasswordDto
-  ): Promise<{ message: string }> {
-    const { otp, newPassword } = ResetPasswordDto;
-    return this.authService.resetPassword(otp, newPassword);
+    @Query('resettoken') token: string,
+    @Body('newPassword') newPassword: string
+  ): Promise<any> {
+    // Verify the token  first
+    const user = await this.authService.GetUserFromToken(token);
+    await this.authService.resetPassword(user.id, newPassword);
+    return { message: 'password has been changed and comfirmation mail will be sent' };
   }
 
 
