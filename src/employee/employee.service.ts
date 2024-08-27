@@ -7,7 +7,7 @@ import { BranchEntity } from '../branch/entities/branch.entity';
 import { PositionEntity } from '../postion/entities/postion.entity';
 import { In, Like, Repository } from 'typeorm';
 import { EmployeeTypeEntity } from '../employetype/entities/employetype.entity';
-import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 @Injectable()
 export class EmployeeService {
