@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   HttpStatus,
@@ -12,7 +13,7 @@ import {
 import { InjectRepository } from "@nestjs/typeorm";
 import * as bcrypt from "bcrypt";
 import { UserEntity } from "../user/entities/user.entity";
-import { Repository } from "typeorm";
+import { MoreThan, Repository } from "typeorm";
 import { JwtService } from "@nestjs/jwt";
 import { CreateUserDto } from "../user/dto/create-user.dto";
 import { MailService } from "../user/utils/Email.Service";
@@ -32,6 +33,10 @@ export class AuthService {
     private configService: ConfigService,
     private readonly i18nService:I18nService
   ) {}
+
+
+
+
 
   async signUp(createUserDto: CreateUserDto): Promise<UserEntity> {
     const { username, email, password, role } = createUserDto;
@@ -69,8 +74,7 @@ export class AuthService {
       // Save user to database
       const newUser = await this.UserRepository.save(user);
 
-      // Send OTP email
-      // await this.sendOtpEmail(newUser.email, otp);
+     
 
       return newUser;
     } catch (error) {
@@ -78,9 +82,6 @@ export class AuthService {
     }
   }
 
-  private generateOtp(): string {
-    return crypto.randomBytes(3).toString("hex"); // Generates a 6-digit OTP
-  }
 
 
 
@@ -102,10 +103,8 @@ export class AuthService {
       refreshToken: tokens.refreshToken,
     };
 
-  }private async hashToken(token: string): Promise<string> {
-    const salt = await bcrypt.genSalt();
-    return bcrypt.hash(token, salt);
   }
+
   
   
   async invalidateOldRefreshToken(userId: string): Promise<void> {
@@ -147,65 +146,154 @@ export class AuthService {
     }
   }
 
-  async requestPasswordReset(email: string): Promise<{ message: string }> {
-    // Find the user by email
-    const user = await this.UserRepository.findOne({ where: { email } });
-  
+  async requestPasswordReset(email: string): Promise<any> {
+    const user = await this.UserRepository.findOne({where:{email}});
     if (!user) {
-      throw new UnauthorizedException("User not found");
+      return; // Handle silently for security reasons
     }
+
+    const otp = crypto.randomInt(100000, 999999).toString();
+
+    const token = this.JwtService.sign(
+      { userId: user.id,email: user.email, otp },
+      {secret:process.env.JWT_RESET_SECRET, expiresIn: '15m' } // Token expires in 15 minutes
+    );
+    const hashedToken = await bcrypt.hash(token, 10);
+    user.resetPasswordToken = hashedToken;
+    user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes from now
+    await this.UserRepository.save(user);
   
-    // Generate OTP
-    const otp = this.generateOtp();
-  
-    // Save the OTP and expiration time in the user entity
-    user.otp = otp;
-    user.otpExpiration = new Date(Date.now() + 15 * 60 * 1000); // OTP valid for 15 minutes
-  
+    const mailOptions = {
+      from: process.env.NodeMailer_USER,
+      to: user.email,
+      subject: "Password Reset Request",
+      text: `YOUR OTP Is :${otp}`,
+    };
     try {
-      // Save the user with the updated OTP and expiration time
-      await this.UserRepository.save(user);
-  
-      // Send OTP email
-      await this.sendOtpEmail(user.email, otp);
-  
-      // Return a success message
-      return { message: "Please check your email for the OTP to reset your password." };
+      await this.MailService.transporter.sendMail(mailOptions);
+      return { message: 'If your email is valid, you will receive a password reset link.', 
+        resetToken:token}
     } catch (error) {
-      // Return a user-friendly message
-      throw new InternalServerErrorException("Failed to send reset email. Please try again later.");
+     throw new InternalServerErrorException("Failed to send Password Reset Request email");
+
     }
   }
-  async resetPassword(otp: string, newPassword: string): Promise<{ message: string }> {
-    // Find the user by OTP
-    const user = await this.UserRepository.findOne({ where: { otp } });
-  
-    // Check if the user exists and the OTP is valid
-    if (!user || !user.otp || user.otp !== otp || new Date() > user.otpExpiration) {
-      throw new UnauthorizedException("Invalid or expired OTP");
-    }
-  
-    try {
-      // Generate a salt and hash the new password
-      const salt = await bcrypt.genSalt();
-      const hashedPassword = await bcrypt.hash(newPassword, salt);
-  
-      // Update the user entity
-      user.password = hashedPassword;
-      user.otp = null;
-      user.otpExpiration = null;
-  
-      // Save the updated user entity
-      await this.UserRepository.save(user);
-  
-      // Return a success message
-      return { message: 'Password reset successful' };
-    } catch (error) {
-  
-      // Return a user-friendly message
-      throw new InternalServerErrorException('Failed to reset password. Please try again later.');
-    }
+  async setResetPasswordToken(userId: string, token: string): Promise<void> {
+    await this.UserRepository.update(userId, { resetPasswordToken: token, resetPasswordExpires: new Date(Date.now() + 3600000) }); // Token expires in 1 hour
   }
+
+
+ async verifyResetToken(token: string, otp: string): Promise<UserEntity> {
+  let decoded;
+
+  // Verify and decode the JWT token
+  try {
+    decoded = this.JwtService.verify(token, { secret: process.env.JWT_RESET_SECRET });
+  } catch (error) {
+    throw new BadRequestException('Invalid or expired token');
+  }
+
+  // Retrieve user by checking if the reset token is valid and not expired
+  const user = await this.UserRepository.findOne({
+    where: {
+      id: decoded.userId,
+      email: decoded.email,
+      resetPasswordExpires: MoreThan(new Date()) // Ensure token is not expired
+    }
+  });
+
+  // Check if the user exists and the provided OTP matches
+  if (!user) {
+    throw new NotFoundException('User not found or token has expired');
+  }
+
+  // Compare the provided token with the hashed token stored in the database
+  const isTokenValid = await bcrypt.compare(token, user.resetPasswordToken);
+  if (!isTokenValid || decoded.otp !== otp) {
+    throw new BadRequestException('Invalid token or OTP');
+  }
+
+  return user;
+}
+
+
+async GetUserFromToken(token: string): Promise<UserEntity> {
+  let decoded;
+
+  // Verify and decode the JWT token
+  try {
+    decoded = this.JwtService.verify(token, { secret: process.env.JWT_RESET_SECRET });
+  } catch (error) {
+    throw new BadRequestException('Invalid or expired token');
+  }
+
+  // Retrieve user by checking if the reset token is valid and not expired
+  const user = await this.UserRepository.findOne({
+    where: {
+      id: decoded.userId,
+      email: decoded.email,
+      resetPasswordExpires: MoreThan(new Date()) // Ensure token is not expired
+    }
+  });
+
+  // Check if the user exists and the provided OTP matches
+  if (!user) {
+    throw new NotFoundException('User not found or token has expired');
+  }
+
+  // Compare the provided token with the hashed token stored in the database
+  const isTokenValid = await bcrypt.compare(token, user.resetPasswordToken);
+  if (!isTokenValid ) {
+    throw new BadRequestException('Invalid token or OTP');
+  }
+
+  return user;
+}
+
+async resetPassword(userId: string, newPassword: string): Promise<void> {
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  await this.UserRepository.update(userId, {
+    password: hashedPassword,
+    resetPasswordToken: null,
+    resetPasswordExpires: null,
+   
+  });
+
+  // Optionally, notify the user via email
+  const user = await this.UserRepository.findOne({ where: { id: userId } });
+  const mailOptions = {
+    from: process.env.NodeMailer_USER,
+    to: user.email,
+    subject: "Password Reset Successful",
+    text: `Password Reset Successful`,
+  };
+
+  try {
+    await this.MailService.transporter.sendMail(mailOptions);
+  } catch (error) {
+   throw new InternalServerErrorException("Failed to send confirmation email");
+
+  }
+ 
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
   async logout(userId: number): Promise<{ message: string }> {
     try {
       // Update the user's record to remove the refresh token
@@ -258,7 +346,7 @@ export class AuthService {
     const [accessToken, refreshToken] = await Promise.all([
       this.JwtService.signAsync(
         { sub: userId, username, role },
-        { secret: process.env.JWT_ACCESS_SECRET, expiresIn: '15m' },
+        { secret: process.env.JWT_ACCESS_SECRET, expiresIn: '20h' },
       ),
       this.JwtService.signAsync(
         { sub: userId, username, role },

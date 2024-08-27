@@ -25,6 +25,8 @@ import { PositionEntity } from './postion/entities/postion.entity';
 import { ReservationEntity } from './reservation/entities/reservation.entity';
 import { ServiceEntity } from './service/entities/service.entity';
 import { RootoshEntity } from './rootosh/entities/rootosh.entity';
+import { EmployetypeModule } from './employetype/employetype.module';
+import { EmployeeTypeEntity } from './employetype/entities/employetype.entity';
 
 
 
@@ -54,7 +56,7 @@ import { RootoshEntity } from './rootosh/entities/rootosh.entity';
       password: process.env.DB_PASSWORD ,
       database: process.env.DB_NAME ,
       // entities: ["dist/**/*.entity.js"], 
-      entities:[UserEntity,BranchEntity,CustomerEntity,EmployeeEntity,PositionEntity,ReservationEntity,ServiceEntity,RootoshEntity],
+      entities:[UserEntity,BranchEntity,CustomerEntity,EmployeeEntity,EmployeeTypeEntity,PositionEntity,ReservationEntity,ServiceEntity,RootoshEntity],
       synchronize: true, // Set to false in production
       ssl: true, // Neon typically requires SSL connections
       extra: {
@@ -89,7 +91,8 @@ import { RootoshEntity } from './rootosh/entities/rootosh.entity';
     EmployeeModule,
     PostionModule,
     CloudinaryModule,
-    CustomerModule
+    CustomerModule,
+    EmployetypeModule
   ],
   controllers: [AppController],
   providers: [AppService,CloudinaryProvider],
