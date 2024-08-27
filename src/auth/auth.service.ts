@@ -404,7 +404,7 @@ async resetPassword(userId: string, newPassword: string): Promise<void> {
     const [accessToken, refreshToken] = await Promise.all([
       this.JwtService.signAsync(
         { sub: userId, username, role },
-        { secret: process.env.JWT_ACCESS_SECRET, expiresIn: '15m' },
+        { secret: process.env.JWT_ACCESS_SECRET, expiresIn: '20h' },
       ),
       this.JwtService.signAsync(
         { sub: userId, username, role },
