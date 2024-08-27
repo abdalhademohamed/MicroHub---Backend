@@ -14,14 +14,9 @@ export class CreateEmployeeDto {
   arabic_Name: string;
 
   @ApiProperty()
-  @IsString()
+  @IsUUID()
   @IsNotEmpty()
-  employee_Type_English: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  employee_Type_Arabic: string;
+  employeeType: string;
 
   @ApiProperty()
   @IsUUID()
