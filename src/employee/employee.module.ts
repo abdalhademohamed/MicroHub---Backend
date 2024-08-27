@@ -5,10 +5,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { EmployeeEntity } from './entities/employee.entity';
 import { BranchEntity } from '../branch/entities/branch.entity';
 import { PositionEntity } from '../postion/entities/postion.entity';
+import { EmployeeTypeEntity } from '../employetype/entities/employetype.entity';
 
 @Module({
   
-  imports: [TypeOrmModule.forFeature([EmployeeEntity,BranchEntity,PositionEntity])],
+  imports: [TypeOrmModule.forFeature([EmployeeEntity,BranchEntity,PositionEntity,EmployeeTypeEntity])],
   controllers: [EmployeeController],
   providers: [EmployeeService],
 })

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, InternalServerErrorException, Query, NotFoundException, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, InternalServerErrorException, Query, NotFoundException, Put, BadRequestException } from '@nestjs/common';
 import { EmployeeService } from './employee.service';
 import { CreateEmployeeDto } from './dto/create.employee.dto';
 import { UpdateEmployeeDto } from './dto/update.employee.dto';
@@ -21,14 +21,15 @@ export class EmployeeController {
   @Get()
   async getAllEmployees(
     @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10
+    @Query('limit') limit: number = 10,
+    @Query('employeeType') employeeType?: string // Optional query parameter for filtering
   ): Promise<{
     data: EmployeeEntity[];
     total: number;
     page: number;
     limit: number;
   }> {
-    return await this.employeeService.getAllEmployees(page, limit);
+    return await this.employeeService.getAllEmployees(page, limit, employeeType);
   }
 
   @Get(':id')
