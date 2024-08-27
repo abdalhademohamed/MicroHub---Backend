@@ -24,7 +24,7 @@ export class EmployeeController {
     @Query('limit') limit: number = 10,
     @Query('employeeType') employeeType?: string // Optional query parameter for filtering
   ): Promise<{
-    data: EmployeeEntity[];
+    items: EmployeeEntity[];
     total: number;
     page: number;
     limit: number;

@@ -73,7 +73,7 @@ export class EmployeeService {
     limit: number = 10,
     employeeTypeName?: string // Optional parameter for filtering
   ): Promise<{
-    data: EmployeeEntity[];
+    items: EmployeeEntity[];
     total: number;
     page: number;
     limit: number;
@@ -95,7 +95,7 @@ export class EmployeeService {
   
       if (employeeTypes.length === 0) {
         return {
-          data: [],
+          items: [],
           total: 0,
           page,
           limit,
@@ -109,7 +109,7 @@ export class EmployeeService {
     }
   
     // Find and count employees with optional employeeType filtering
-    const [data, total] = await this.employeeRepository.findAndCount({
+    const [items, total] = await this.employeeRepository.findAndCount({
       where: employeeTypeFilter,
       relations: ['branch', 'position', 'employeeType'], // Include relations if necessary
       skip: (page - 1) * limit,
@@ -117,7 +117,7 @@ export class EmployeeService {
     });
   
     return {
-      data,
+      items,
       total,
       page,
       limit,
