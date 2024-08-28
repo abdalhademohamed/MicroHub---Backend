@@ -5,10 +5,10 @@ import { ServiceEntity } from '../../service/entities/service.entity';
 
 export class CreateReservationDto {
 
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  country_Code: string;
+  // @ApiProperty()
+  // @IsString()
+  // @IsNotEmpty()
+  // country_Code: string;
 
   @ApiProperty()
   @IsString()
@@ -35,15 +35,15 @@ export class CreateReservationDto {
   @IsNotEmpty()
   year: number;
 
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  reservation_Time_From: string;
+  // @ApiProperty()
+  // @IsString()
+  // @IsNotEmpty()
+  // reservation_Time_From: string;
 
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  reservation_Time_To: string;
+  // @ApiProperty()
+  // @IsString()
+  // @IsNotEmpty()
+  // reservation_Time_To: string;
 
   @ApiProperty()
   @IsNotEmpty()
