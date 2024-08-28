@@ -14,15 +14,6 @@ export class EmployeeEntity {
   @Column()
   arabic_Name: string;
 
-  @ManyToOne(() => EmployeeTypeEntity, (employeeType) => employeeType.employees)
-  employeeType: EmployeeTypeEntity;
-
-  @ManyToOne(() => BranchEntity, (branch) => branch.employees)
-  branch: BranchEntity | string;
-
-  @ManyToOne(() => PositionEntity, (position) => position.employees)
-  position: PositionEntity | string;
-
   
 
   @Column()
@@ -42,4 +33,19 @@ export class EmployeeEntity {
 
   @Column()
   image: string;  // Store the URL of the image uploaded to Cloudinary
+
+
+
+  
+  @ManyToOne(() => EmployeeTypeEntity, (employeeType) => employeeType.employees)
+  employeeType: EmployeeTypeEntity;
+
+  @ManyToOne(() => BranchEntity, (branch) => branch.employees)
+  branch: BranchEntity | string;
+
+  @ManyToOne(() => PositionEntity, (position) => position.employees)
+  position: PositionEntity | string;
+
+
+  
 }

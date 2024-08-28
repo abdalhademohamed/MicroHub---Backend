@@ -1,13 +1,19 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { CreateEmployeeDto } from './dto/create.employee.dto';
-import { UpdateEmployeeDto } from './dto/update.employee.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { EmployeeEntity } from './entities/employee.entity';
-import { BranchEntity } from '../branch/entities/branch.entity';
-import { PositionEntity } from '../postion/entities/postion.entity';
-import { In, Like, Repository } from 'typeorm';
-import { EmployeeTypeEntity } from '../employetype/entities/employetype.entity';
-import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from "@nestjs/common";
+import { CreateEmployeeDto } from "./dto/create.employee.dto";
+import { UpdateEmployeeDto } from "./dto/update.employee.dto";
+import { InjectRepository } from "@nestjs/typeorm";
+import { EmployeeEntity } from "./entities/employee.entity";
+import { BranchEntity } from "../branch/entities/branch.entity";
+import { PositionEntity } from "../postion/entities/postion.entity";
+import { In, Like, Repository } from "typeorm";
+import { EmployeeTypeEntity } from "../employetype/entities/employetype.entity";
+import { CloudinaryService } from "../cloudinary/cloudinary.service";
+import * as bcrypt from "bcrypt";
 
 @Injectable()
 export class EmployeeService {
@@ -24,43 +30,54 @@ export class EmployeeService {
     @InjectRepository(EmployeeTypeEntity)
     private readonly EmployeeTypeRepository: Repository<EmployeeTypeEntity>,
 
-    private readonly CloudinaryService: CloudinaryService,
-
+    private readonly CloudinaryService: CloudinaryService
   ) {}
 
-  async createEmployee(createEmployeeDto: CreateEmployeeDto): Promise<EmployeeEntity> {
-    const { 
-        english_Name, 
-        arabic_Name, 
-        branch: branchId, 
-        position: positionId, 
-        employeeType: employeeTypeId, 
-        workingHours,
-        email,
-        countryCode,
-        phoneNumber,
-        password,
-        image // Image URL or path
-      } = createEmployeeDto;
-  
+  async createEmployee(
+    createEmployeeDto: CreateEmployeeDto
+  ): Promise<EmployeeEntity> {
+    const {
+      english_Name,
+      arabic_Name,
+      branch: branchId,
+      position: positionId,
+      employeeType: employeeTypeId,
+      workingHours,
+      email,
+      countryCode,
+      phoneNumber,
+      password,
+      image, // Image URL or path
+    } = createEmployeeDto;
+
     // Check if the branch exists
-    const branch = await this.branchRepository.findOne({ where: { id: branchId } });
+    const branch = await this.branchRepository.findOne({
+      where: { id: branchId },
+    });
     if (!branch) {
-      throw new NotFoundException('Branch not found');
+      throw new NotFoundException("Branch not found");
     }
-  
+
     // Check if the position exists
-    const position = await this.positionRepository.findOne({ where: { id: positionId } });
+    const position = await this.positionRepository.findOne({
+      where: { id: positionId },
+    });
     if (!position) {
-      throw new NotFoundException('Position not found');
+      throw new NotFoundException("Position not found");
     }
-  
+
     // Check if the employee type exists
-    const employeeType = await this.EmployeeTypeRepository.findOne({ where: { id: employeeTypeId } });
+    const employeeType = await this.EmployeeTypeRepository.findOne({
+      where: { id: employeeTypeId },
+    });
     if (!employeeType) {
-      throw new NotFoundException('Employee Type not found');
+      throw new NotFoundException("Employee Type not found");
     }
-  
+
+    // Hash the password before saving
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(password, salt);
+
     try {
       // Create the new employee
       const newEmployee = this.employeeRepository.create({
@@ -73,17 +90,19 @@ export class EmployeeService {
         email,
         countryCode,
         phoneNumber,
-        password, // Typically hashed before saving
-        image // Store the image URL or path
+        password: hashedPassword, // Typically hashed before saving
+        image, // Store the image URL or path
       });
-  
+
       // Save the new employee
       return await this.employeeRepository.save(newEmployee);
     } catch (error) {
-      throw new InternalServerErrorException('Failed to create employee', error.stack);
+      throw new InternalServerErrorException(
+        "Failed to create employee",
+        error.stack
+      );
     }
   }
-  
 
   async getAllEmployees(
     page: number = 1,
@@ -110,7 +129,7 @@ export class EmployeeService {
         },
       });
 
-      const employeeTypeIds = employeeTypes.map(type => type.id);
+      const employeeTypeIds = employeeTypes.map((type) => type.id);
       if (employeeTypeIds.length > 0) {
         employeeTypeFilter.employeeType = In(employeeTypeIds);
       } else {
@@ -127,7 +146,7 @@ export class EmployeeService {
     // Find and count employees with optional employeeType filtering
     const [items, total] = await this.employeeRepository.findAndCount({
       where: employeeTypeFilter,
-      relations: ['branch', 'position', 'employeeType'], // Include relations if necessary
+      relations: ["branch", "position", "employeeType"], // Include relations if necessary
       skip: (page - 1) * limit,
       take: limit,
     });
@@ -140,11 +159,10 @@ export class EmployeeService {
     };
   }
 
-  
   async getEmployeeById(id: string): Promise<EmployeeEntity> {
     const employee = await this.employeeRepository.findOne({
       where: { id },
-      relations: ['branch', 'position', 'employeeType'], // Include related entities
+      relations: ["branch", "position", "employeeType"], // Include related entities
     });
 
     if (!employee) {
@@ -154,72 +172,94 @@ export class EmployeeService {
     return employee;
   }
 
+  async updateEmployee(
+    id: string,
+    updateEmployeeDto: UpdateEmployeeDto
+  ): Promise<EmployeeEntity> {
+    const {
+      english_Name,
+      arabic_Name,
+      branch: branchId,
+      position: positionId,
+      employeeType: employeeTypeId,
+      workingHours,
+      email,
+      countryCode,
+      phoneNumber,
+      password,
+      image,
+    } = updateEmployeeDto;
 
-  
-  // async updateEmployee(id: string, updateEmployeeDto: UpdateEmployeeDto): Promise<EmployeeEntity> {
-  //   // Find existing employee
-  //   const employee = await this.employeeRepository.findOne({
-  //     where: { id },
-  //     relations: ['branch', 'position', 'employeeType'],
-  //   });
+    // Find existing employee or throw an error if not found
+    const employee = await this.employeeRepository.findOne({
+      where: { id },
+      relations: ["branch", "position", "employeeType"],
+    });
 
-  //   if (!employee) {
-  //     throw new NotFoundException(`Employee with ID ${id} not found`);
-  //   }
+    if (!employee) {
+      throw new NotFoundException(`Employee with ID ${id} not found`);
+    }
 
-  //   // Update basic fields
-  //   const { 
-  //     english_Name, 
-  //     arabic_Name, 
-  //     branch: branchId, 
-  //     position: positionId, 
-  //     employeeType: employeeTypeId,
-  //     workingHours,
-  //     email,
-  //     countryCode,
-  //     phoneNumber,
-  //     password,
-  //     image,
-  //   } = updateEmployeeDto;
+    // Update basic fields if provided
+    if (english_Name !== undefined) employee.english_Name = english_Name;
+    if (arabic_Name !== undefined) employee.arabic_Name = arabic_Name;
+    if (workingHours !== undefined) employee.workingHours = workingHours;
+    if (email !== undefined) employee.email = email;
+    if (countryCode !== undefined) employee.countryCode = countryCode;
+    if (phoneNumber !== undefined) employee.phoneNumber = phoneNumber;
 
-    
+    // Hash the password if it's updated
+    if (password !== undefined) {
+      const salt = await bcrypt.genSalt();
+      employee.password = await bcrypt.hash(password, salt);
+    }
+    if (image !== undefined) employee.image = image;
 
-  //   // Update related entities only if IDs are provided and valid
-  //   if (branchId) {
-  //     const branch = await this.branchRepository.findOne({ where: { id: branchId } });
-  //     if (branch) {
-  //       employee.branch = branch;
-  //     } else {
-  //       throw new NotFoundException(`Branch with ID ${branchId} not found`);
-  //     }
-  //   }
-    
-  //   if (positionId) {
-  //     const position = await this.positionRepository.findOne({ where: { id: positionId } });
-  //     if (position) {
-  //       employee.position = position;
-  //     } else {
-  //       throw new NotFoundException(`Position with ID ${positionId} not found`);
-  //     }
-  //   }
+    // Update branch if a new one is provided
+    if (branchId) {
+      const branch = await this.branchRepository.findOne({
+        where: { id: branchId },
+      });
+      if (!branch) {
+        throw new NotFoundException(`Branch with ID ${branchId} not found`);
+      }
+      employee.branch = branch;
+    }
 
-  //   if (employeeTypeId) {
-  //     const employeeType = await this.EmployeeTypeRepository.findOne({ where: { id: employeeTypeId } });
-  //     if (employeeType) {
-  //       employee.employeeType = employeeType;
-  //     } else {
-  //       throw new NotFoundException(`EmployeeType with ID ${employeeTypeId} not found`);
-  //     }
-  //   }
+    // Update position if a new one is provided
+    if (positionId) {
+      const position = await this.positionRepository.findOne({
+        where: { id: positionId },
+      });
+      if (!position) {
+        throw new NotFoundException(`Position with ID ${positionId} not found`);
+      }
+      employee.position = position;
+    }
 
-  //   try {
-  //     // Save the updated employee
-  //     return await this.employeeRepository.save(employee);
-  //   } catch (error) {
-  //     console.error('Update Employee Error:', error);
-  //     throw new InternalServerErrorException('Failed to update employee');
-  //   }
-  // }
+    // Update employee type if a new one is provided
+    if (employeeTypeId) {
+      const employeeType = await this.EmployeeTypeRepository.findOne({
+        where: { id: employeeTypeId },
+      });
+      if (!employeeType) {
+        throw new NotFoundException(
+          `Employee Type with ID ${employeeTypeId} not found`
+        );
+      }
+      employee.employeeType = employeeType;
+    }
+
+    try {
+      // Save the updated employee back to the database
+      return await this.employeeRepository.save(employee);
+    } catch (error) {
+      throw new InternalServerErrorException(
+        "Failed to update employee",
+        error.stack
+      );
+    }
+  }
   async deleteEmployee(id: string): Promise<void> {
     const result = await this.employeeRepository.delete(id);
 
@@ -232,12 +272,11 @@ export class EmployeeService {
     // No need to explicitly handle success case since nothing is returned
   }
 
-
-  async uploadImage(file: Express.Multer.File,folderName:string): Promise<string> {
-    const result = await this.CloudinaryService.uploadImage(file,folderName);
-    return result.url;  // Return the URL of the uploaded image
+  async uploadImage(
+    file: Express.Multer.File,
+    folderName: string
+  ): Promise<string> {
+    const result = await this.CloudinaryService.uploadImage(file, folderName);
+    return result.url; // Return the URL of the uploaded image
   }
-
-  
 }
-
