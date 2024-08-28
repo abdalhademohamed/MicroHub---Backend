@@ -22,57 +22,73 @@ export class ReservationController {
   ) {}
 
  
+ 
+  // @Post(':branchId')
+  // async createReservation(
+  //   @Body()   createCustomerDto: CreateCustomerDto,
+  //   @Param('branchId') branchId: string,
+  //   @Query('servicesIds') serviceIds: string |string[]
+  //   , // Accept string or array
+
+  // ): Promise<{ reservation: ReservationEntity; receipt: string }> {
+   
+  //  // Convert servicesIds to array
+  //   let servicesIdsArray: string[];
+
+  //   if (Array.isArray(serviceIds)) {
+  //     servicesIdsArray = serviceIds;
+  //   } else if (typeof serviceIds === 'string') {
+  //     servicesIdsArray = serviceIds.split(',').map(id => id.trim());
+  //   } else {
+  //     throw new BadRequestException('Invalid servicesIds format');
+  //   }
+  //   try {
+  //     // Create reservation using the service
+  //     const result = await this.reservationService.createReservation(
+  //       branchId,
+  //       createCustomerDto,
+  //       servicesIdsArray
+  //     );
+  //     return result;
+  //   } catch (error) {
+  //     // Handle errors appropriately
+  //     throw new BadRequestException(error.message);
+  //   }
+  // }
+
+
   @Post(':branchId')
-  // @UseInterceptors(FileInterceptor('imageFile')) // Uncomment if you plan to use image uploads
-  async createReservation(
+  async createReservations(
+    @Body() CreateCustomerDto: CreateCustomerDto,  // Array of customer DTOs
     @Param('branchId') branchId: string,
-    @Body() createCustomerDto: CreateCustomerDto,
-    @Query('servicesIds') servicesIds: string | string[], // Accept string or array
-    @Query('manualDate') manualDate?: string,
-    // @UploadedFile() imageFile?: any // Commented out if no file upload
-  ): Promise<{ reservation: ReservationEntity; receipt: string }> {
-    // Parse manualDate if provided
-    const parsedManualDate = manualDate
-      ? {
-          reservationDay: parseInt(manualDate.split('-')[0], 10),
-          reservationMonth: parseInt(manualDate.split('-')[1], 10),
-          reservationYear: parseInt(manualDate.split('-')[2], 10),
-        }
-      : undefined;
+    @Query('servicesIds') serviceIds: string | string[],
+  ): Promise<any> {
 
     // Convert servicesIds to array
     let servicesIdsArray: string[];
-
-    if (Array.isArray(servicesIds)) {
-      servicesIdsArray = servicesIds;
-    } else if (typeof servicesIds === 'string') {
-      servicesIdsArray = servicesIds.split(',').map(id => id.trim());
+    if (Array.isArray(serviceIds)) {
+      servicesIdsArray = serviceIds;
+    } else if (typeof serviceIds === 'string') {
+      servicesIdsArray = serviceIds.split(',').map(id => id.trim());
     } else {
       throw new BadRequestException('Invalid servicesIds format');
     }
 
-    return this.reservationService.createReservation(
-      branchId,
-      createCustomerDto,
-      servicesIdsArray,
-      parsedManualDate,
-    );
+    try {
+      // Call the service to create reservations
+      return  await this.reservationService.createReservation(
+              branchId,
+              CreateCustomerDto,
+              servicesIdsArray
+            );
+    } catch (error) {
+      // Handle errors appropriately
+      throw new BadRequestException(error.message);
+    }
   }
-
 
   // @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
   // @Roles(Role.SUPERADMIN)
-  // // Create a new reservation
-  // @Post()
-  // async createReservation(
-  //   @Body() createReservationDto: CreateReservationDto,
-  // ): Promise<ReservationEntity> {
-  //   return this.reservationService.createReservation(createReservationDto);
-  // }
-
-
-  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
   // Get all reservations with pagination and filtering
   @Get()
   async getAllReservations(

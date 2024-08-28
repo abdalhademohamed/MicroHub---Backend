@@ -1,7 +1,8 @@
-import { Entity, Column, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, ManyToOne, PrimaryGeneratedColumn, ManyToMany, OneToMany } from 'typeorm';
 import { BranchEntity } from '../../branch/entities/branch.entity';
 import { PositionEntity } from '../../postion/entities/postion.entity';
 import { EmployeeTypeEntity } from '../../employetype/entities/employetype.entity';
+import { ReservationEntity } from '../../reservation/entities/reservation.entity';
 
 @Entity()
 export class EmployeeEntity {
@@ -13,15 +14,6 @@ export class EmployeeEntity {
 
   @Column()
   arabic_Name: string;
-
-  @ManyToOne(() => EmployeeTypeEntity, (employeeType) => employeeType.employees)
-  employeeType: EmployeeTypeEntity;
-
-  @ManyToOne(() => BranchEntity, (branch) => branch.employees)
-  branch: BranchEntity | string;
-
-  @ManyToOne(() => PositionEntity, (position) => position.employees)
-  position: PositionEntity | string;
 
   
 
@@ -42,4 +34,23 @@ export class EmployeeEntity {
 
   @Column()
   image: string;  // Store the URL of the image uploaded to Cloudinary
+
+
+  @Column({ type: 'boolean', default: true })
+  available: string;  // Indicates if the employee is available or not
+  
+  @ManyToOne(() => EmployeeTypeEntity, (employeeType) => employeeType.employees)
+  employeeType: EmployeeTypeEntity;
+
+  @ManyToOne(() => BranchEntity, (branch) => branch.employees)
+  branch: BranchEntity | string;
+
+  @ManyToOne(() => PositionEntity, (position) => position.employees)
+  position: PositionEntity | string;
+
+  // @ManyToMany(() => ReservationEntity, (ReservationEntity) => ReservationEntity.employees)
+  // reservations: ReservationEntity[];  // Add reservations relationship
+  // @OneToMany(() => ReservationEntity, ReservationEntity => ReservationEntity.artist)
+  // reservations: ReservationEntity[];
+  
 }

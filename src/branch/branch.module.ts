@@ -4,9 +4,10 @@ import { BranchController } from './branch.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BranchEntity } from './entities/branch.entity';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { I18nService } from 'nestjs-i18n';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([BranchEntity])],
+  imports: [TypeOrmModule.forFeature([BranchEntity]),],
   controllers: [BranchController,],
   providers: [BranchService,CloudinaryService],
 })

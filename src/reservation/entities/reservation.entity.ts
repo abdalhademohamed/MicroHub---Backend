@@ -1,14 +1,15 @@
 import { ServiceEntity } from '../../service/entities/service.entity';
 import { BranchEntity } from '../../branch/entities/branch.entity';
 import { Entity, Column, ManyToOne, PrimaryGeneratedColumn, ManyToMany } from 'typeorm';
+import { EmployeeEntity } from '../../employee/entities/employee.entity';
 
 @Entity() // Specify table name if necessary
 export class ReservationEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  country_Code: string; // Correct property name
+  // @Column()
+  // country_Code: string; // Correct property name
 
   @Column()
   phone_Number: string; // Correct property name
@@ -32,11 +33,11 @@ export class ReservationEntity {
   @Column()
   reservationYear: number; // Year of reservation
 
-  @Column({ type: 'time' })
-  start_Time: string;
+  @Column({ type: 'timestamp' })
+  start_Time: Date;
 
-  @Column({ type: 'time' })
-  end_Time: string;
+  @Column({ type: 'timestamp' })
+  end_Time: Date;
  
 
   @Column({ type: 'text', nullable: true })
@@ -47,4 +48,10 @@ export class ReservationEntity {
 
   @ManyToMany(() => ServiceEntity, (service) => service.reservations)
   services: ServiceEntity[]; // Handle multiple services
+  // New relation to employees
+  // @ManyToMany(() => EmployeeEntity, (EmployeeEntity) => EmployeeEntity.reservations)
+  // employees: EmployeeEntity[];
+
+  // @ManyToOne(() => EmployeeEntity, { nullable: true })
+  // artist?: EmployeeEntity; // Ensure this relationship is defined
 }

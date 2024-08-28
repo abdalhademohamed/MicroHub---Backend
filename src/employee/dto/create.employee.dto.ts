@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsUUID, IsNotEmpty, Length, IsEmail, IsInt, Min, Max } from 'class-validator';
+import { IsString, IsUUID, IsNotEmpty, Length, IsEmail, IsInt, Min, Max, IsBoolean } from 'class-validator';
 
 export class CreateEmployeeDto {
 
@@ -47,7 +47,8 @@ export class CreateEmployeeDto {
   @IsNotEmpty()
   position: string;
 
-
+  @IsNotEmpty()
+  available: string; // Indicates if the employee is available or not
 
   @ApiProperty({ description: 'Image URL or path' })
 

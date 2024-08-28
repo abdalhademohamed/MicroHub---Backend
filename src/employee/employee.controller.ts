@@ -51,15 +51,21 @@ export class EmployeeController {
     return await this.employeeService.getEmployeeById(id);
   }
 
-  // @Put(':id')
-  // async updateEmployee(
-  //   @Param('id') id: string,
-  //   @Body() updateEmployeeDto: UpdateEmployeeDto
-  // ): Promise<EmployeeEntity> {
-    
-  //   return await this.employeeService.updateEmployee(id, updateEmployeeDto);
-   
-  // }
+  @Put(':id')
+  async updateEmployee(
+    @Param('id') id: string,
+    @Body() updateEmployeeDto: UpdateEmployeeDto
+  ): Promise<EmployeeEntity> {
+    try {
+      return await this.employeeService.updateEmployee(id, updateEmployeeDto);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      } else {
+        throw new InternalServerErrorException('Failed to update employee', error.stack);
+      }
+    }
+  }
 
   @Delete(':id')
   async deleteEmployee(@Param('id') id: string): Promise<void> {

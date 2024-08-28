@@ -10,6 +10,9 @@ import { UpdateReservationDto } from './dto/update.reservation.dto';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { CustomerEntity } from '../customer/entities/customer.entity';
 import { CreateCustomerDto } from '../customer/dto/create-customer.dto';
+import { format } from 'date-fns';
+import { EmployeeEntity } from '../employee/entities/employee.entity';
+import { PositionEntity } from '../postion/entities/postion.entity';
 
 
 @Injectable()
@@ -31,65 +34,14 @@ export class ReservationService {
 
     @InjectRepository(CustomerEntity)
     private readonly CustomerRepository: Repository<CustomerEntity>,
+
+    @InjectRepository(EmployeeEntity)
+    private readonly EmployeeRepository: Repository<EmployeeEntity>,
+    @InjectRepository(PositionEntity)
+    private readonly PositionRepository: Repository<PositionEntity>,
   ) {}
 
-  // async createReservation(createReservationDto: CreateReservationDto): Promise<ReservationEntity> {
-  //   const {
-  //     country_Code,
-  //     phone_Number,
-  //     client_FullName,
-  //     day,
-  //     month,
-  //     year,
-  //     branch,
-  //     services: serviceIds,
-  //     deposit_Content,
-  //   } = createReservationDto;
-
-  //   // Check if the branch exists
-  //   const existingbranch = await this.BranchRepository.findOne({ where: { id :branch.id} });
-  //   if (!existingbranch) {
-  //     throw new NotFoundException('Branch not found');
-  //   }
-
-  //   // Retrieve and verify services
-  //  const services = await this.ServiceRepository.find({
-  //    where: {
-  //      id: In(serviceIds),
-  //    },
-  //    relations: ['rootosh'], // Include the rootosh relationship
-
-  //  });
-  //   if (services.length !== serviceIds.length) {
-  //     throw new NotFoundException('One or more services not found');
-  //   }
-
-   
-
-  //   // Create the reservation
-  //   const newReservation = this.ReservationRepository.create({
-  //     country_Code,
-  //     phone_Number,
-  //     client_FullName,
-  //     day,
-  //     month,
-  //     year,
-  //     reservation_Time_From,
-  //     reservation_Time_To,
-  //     branch,
-  //     services, 
-  //     deposit_Content
-  //   });
-
-  //   try {
-  //     // Save the reservation
-  //     return await this.ReservationRepository.save(newReservation);
-  //   } catch (error) {
-  //     // console.log(error.stack)
-  //     throw new InternalServerErrorException('Failed to create reservation');
-  //   }
-  // }
-
+ 
 
 
   async selectBranch(branchId: string): Promise<BranchEntity> {
@@ -123,18 +75,6 @@ export class ReservationService {
   
     return customer;
   }
-  async selectServices(servicesIds: string[]): Promise<ServiceEntity[]> {
-    const services = await this.ServiceRepository.find({
-      where: { id: In(servicesIds) }, // Ensure you're using the correct operator here
-      relations: ['rootosh'], // Load the related rootoshes
-    });
-  
-    if (services.length === 0) {
-      throw new BadRequestException('No valid services found');
-    }
-  
-    return services;
-  }
 
 
 
@@ -142,266 +82,170 @@ export class ReservationService {
       return services.reduce((total, service) => total + service.duration_Mins, 0);
   }
  
-  async findNearestAvailableSlot(
-    branchId: string,
-    totalDuration: number,
-  ): Promise<{ reservationDay: number; reservationMonth: number; reservationYear: number; start_Time: string; end_Time: string }> {
-    const now = new Date();
-    const branch = await this.BranchRepository.findOne({ where: { id: branchId }, relations: ['reservations'] });
   
-    if (!branch) {
-      throw new NotFoundException('Branch not found');
-    }
+  private findAvailableSlot(
+    reservations: ReservationEntity[],
+    totalDuration: number
+  ): { startTime: Date; endTime: Date } | null {
+    reservations.sort((a, b) => a.start_Time.getTime() - b.start_Time.getTime());
   
-    const reservations = branch.reservations
-      .filter(reservation => {
-        const reservationStart = new Date(reservation.reservationYear, reservation.reservationMonth - 1, reservation.reservationDay, 
-                                           +reservation.start_Time.split(':')[0], +reservation.start_Time.split(':')[1]);
-        return reservationStart >= now; // Filter out past reservations
-      })
-      .sort((a, b) => {
-        const dateA = new Date(a.reservationYear, a.reservationMonth - 1, a.reservationDay, 
-                               +a.start_Time.split(':')[0], +a.start_Time.split(':')[1]);
-        const dateB = new Date(b.reservationYear, b.reservationMonth - 1, b.reservationDay, 
-                               +b.start_Time.split(':')[0], +b.start_Time.split(':')[1]);
-        return dateA.getTime() - dateB.getTime();
-      });
+    let lastEndTime = new Date(); // Starting point for finding gaps
   
-    let suggestedSlot = this.findGapInReservations(now, reservations, totalDuration);
+    for (const reservation of reservations) {
+      const startTime = reservation.start_Time;
+      const endTime = reservation.end_Time;
   
-    if (!suggestedSlot) {
-      // Search for available slots in future dates
-      const futureDate = new Date(now);
-      futureDate.setMonth(futureDate.getMonth() + 1); // Search one month ahead
+      const gapDuration = (startTime.getTime() - lastEndTime.getTime()) / (1000 * 60);
   
-      while (futureDate <= futureDate) {
-        suggestedSlot = this.findGapInReservations(futureDate, reservations, totalDuration);
-        if (suggestedSlot) {
-          return suggestedSlot;
-        }
-        futureDate.setDate(futureDate.getDate() + 1); // Move to the next day
+      if (gapDuration >= totalDuration) {
+        return {
+          startTime: lastEndTime,
+          endTime: new Date(lastEndTime.getTime() + totalDuration * 60 * 1000)
+        };
       }
   
-      throw new BadRequestException('No available time slots in the extended future');
+      lastEndTime = endTime;
     }
   
-    return suggestedSlot;
-  }
-  
-
-
-private findGapInReservations(
-  now: Date,
-  reservations: ReservationEntity[],
-  totalDuration: number,
-): { reservationDay: number; reservationMonth: number; reservationYear: number; start_Time: string; end_Time: string } | null {
-  let lastEndTime = now;
-
-  // Sort reservations by date and time
-  reservations.sort((a, b) => {
-    const dateA = new Date(a.reservationYear, a.reservationMonth - 1, a.reservationDay, 
-                           +a.start_Time.split(':')[0], +a.start_Time.split(':')[1]);
-    const dateB = new Date(b.reservationYear, b.reservationMonth - 1, b.reservationDay, 
-                           +b.start_Time.split(':')[0], +b.start_Time.split(':')[1]);
-    return dateA.getTime() - dateB.getTime();
-  });
-
-  for (const reservation of reservations) {
-    const reservationStartTime = new Date(reservation.reservationYear, reservation.reservationMonth - 1, reservation.reservationDay, 
-                                          +reservation.start_Time.split(':')[0], +reservation.start_Time.split(':')[1]);
-
-    const gapMinutes = (reservationStartTime.getTime() - lastEndTime.getTime()) / (1000 * 60);
-
-    if (gapMinutes >= totalDuration) {
-      return this.createTimeSlotFromGap(lastEndTime, totalDuration);
-    }
-
-    const reservationEndTime = new Date(reservation.reservationYear, reservation.reservationMonth - 1, reservation.reservationDay, 
-                                        +reservation.end_Time.split(':')[0], +reservation.end_Time.split(':')[1]);
-    lastEndTime = reservationEndTime;
+    return {
+      startTime: lastEndTime,
+      endTime: new Date(lastEndTime.getTime() + totalDuration * 60 * 1000)
+    };
   }
 
-  return this.createTimeSlotFromGap(lastEndTime, totalDuration);
-}
 
-private createTimeSlotFromGap(
-  startDate: Date,
-  totalDuration: number,
-): { reservationDay: number; reservationMonth: number; reservationYear: number; start_Time: string; end_Time: string } {
-  const endTime = new Date(startDate.getTime() + totalDuration * 60 * 1000);
-
-  return {
-    reservationDay: startDate.getDate(),
-    reservationMonth: startDate.getMonth() + 1,
-    reservationYear: startDate.getFullYear(),
-    start_Time: `${startDate.getHours()}:${startDate.getMinutes().toString().padStart(2, '0')}`,
-    end_Time: `${endTime.getHours()}:${endTime.getMinutes().toString().padStart(2, '0')}`,
-  };
-}
-
-
-
-async manuallySelectTimeSlot(
-    branchId: string,
-    services: ServiceEntity[],
-    manualDate: { reservationDay: number; reservationMonth: number; reservationYear: number },): Promise<{ reservationDay: number; reservationMonth: number; reservationYear: number; start_Time: string; end_Time: string }> {
-    const totalDuration = this.calculateTotalDuration(services);
-
-    const availableSlot = await this.findNearestAvailableSlot(branchId, totalDuration);
-
-    if (availableSlot) {
-      // Implement logic for manual selection and validation if needed
-      return availableSlot;
-    } else {
-      throw new BadRequestException('No available time slots for the manual date selected');
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Function to validate manual date availability
-private async checkManualDateAvailability(
-  branchId: string,
-  manualDate: { reservationDay: number; reservationMonth: number; reservationYear: number },
-  totalDuration: number
-): Promise<{ reservationDay: number; reservationMonth: number; reservationYear: number; start_Time: string; end_Time: string } | null> {
-  const branch = await this.BranchRepository.findOne({ where: { id: branchId }, relations: ['reservations'] });
-
-  if (!branch) {
-    throw new NotFoundException('Branch not found');
-  }
-
-  const reservations = branch.reservations;
-
-  // Check availability for the manually specified date
-  const manualDateStart = new Date(manualDate.reservationYear, manualDate.reservationMonth - 1, manualDate.reservationDay);
-  const manualDateEnd = new Date(manualDateStart.getTime() + totalDuration * 60 * 1000);
-
-  for (const reservation of reservations) {
-    const reservationStart = new Date(reservation.reservationYear, reservation.reservationMonth - 1, reservation.reservationDay, 
-                                       +reservation.start_Time.split(':')[0], +reservation.start_Time.split(':')[1]);
-    const reservationEnd = new Date(reservation.reservationYear, reservation.reservationMonth - 1, reservation.reservationDay, 
-                                     +reservation.end_Time.split(':')[0], +reservation.end_Time.split(':')[1]);
-
-    // Check if the manual date slot overlaps with any existing reservation
-    if (manualDateStart < reservationEnd && manualDateEnd > reservationStart) {
-      // Overlaps with an existing reservation; not available
-      return null;
-    }
-  }
-
-  // Manual date slot is available
-  return {
-    reservationDay: manualDate.reservationDay,
-    reservationMonth: manualDate.reservationMonth,
-    reservationYear: manualDate.reservationYear,
-    start_Time: manualDateStart.toTimeString().slice(0, 5), // Format HH:MM
-    end_Time: manualDateEnd.toTimeString().slice(0, 5) // Format HH:MM
-  };
-}
 
 
   
-
-
-
   
   
 async createReservation(
   branchId: string,
   createCustomerDto: CreateCustomerDto,
-  servicesIds: string[],
-  manualDate?: { reservationDay: number; reservationMonth: number; reservationYear: number },
+    serviceIds: string[]
 ): Promise<{ reservation: ReservationEntity; receipt: string }> {
-  // Select the branch
-  const branch = await this.selectBranch(branchId);
+  const branch = await this.BranchRepository.findOne({ where: { id: branchId }, relations: ['reservations','employees', 'employees.position'] });
 
-  // Register or lookup customer
-  const customer = await this.registerOrLookupCustomer(createCustomerDto);
+  if (!branch) {
+    throw new NotFoundException('Branch not found');
+  }
 
-  // Select services
-  const services = await this.selectServices(servicesIds);
+  const services = await this.ServiceRepository.findByIds(serviceIds);
   const totalDuration = this.calculateTotalDuration(services);
 
-  // Find nearest available slot
-  let slot: { reservationDay: number; reservationMonth: number; reservationYear: number; start_Time: string; end_Time: string };
+  const availableSlot = this.findAvailableSlot(branch.reservations, totalDuration);
 
-  try {
-    slot = await this.findNearestAvailableSlot(branchId, totalDuration);    
-  } catch (error) {
-    throw new BadRequestException('No available time slots in the near future');
+  if (!availableSlot) {
+    throw new BadRequestException('No available slots');
   }
 
-  // If manual date provided, check availability for manual date
-  if (manualDate) {
-    const manualSlot = await this.checkManualDateAvailability(branchId, manualDate, totalDuration);
-    
-    if (manualSlot) {
-      slot = manualSlot; // Use manual date slot if available
-    }
-  }
+  // Extract date information from the available slot
+  const startTime = new Date(availableSlot.startTime);
+  const reservationDay = startTime.getDate();
+  const reservationMonth = startTime.getMonth() + 1; // Months are 0-indexed
+  const reservationYear = startTime.getFullYear();
 
 
-
-  
-  // Create the reservation
-  const reservation = this.ReservationRepository.create({
-    
-    country_Code: customer.countryCode,
-    phone_Number: customer.phoneNumber,
-    client_FullName: customer.fullName,
-    day: createCustomerDto.day,
-    month: createCustomerDto.month,
-    year: createCustomerDto.year,
-    ...slot,
-    deposit_Content: null,
-    branch,
-    services,
-  });
+// Format start time
+const formattedStartTime = format(new Date(availableSlot.startTime), 'yyyy-MM-dd HH:mm');
+const formattedEndTime = format(new Date(availableSlot.endTime), 'yyyy-MM-dd HH:mm');
+// Create the reservation with the suggested timing
+    const reservation = this.ReservationRepository.create({
+      // country_Code: createCustomerDto.countryCode,
+      phone_Number: createCustomerDto.phoneNumber,
+      client_FullName: createCustomerDto.fullName,
+      day: createCustomerDto.day,
+      month: createCustomerDto.month,
+      year: createCustomerDto.year,
+      start_Time :formattedStartTime,   
+      end_Time : formattedEndTime,
+      reservationDay,
+      reservationMonth,
+      reservationYear,      branch,
+      services,
+    });
+  // const reservation = new ReservationEntity();
+  // reservation.start_Time = availableSlot.startTime;
+  // reservation.end_Time = availableSlot.endTime;
+  // reservation.branch = branch;
 
   await this.ReservationRepository.save(reservation);
 
-  // Collect all rootoshes from the services
-  const rootoshes = services.flatMap(service => service.rootosh);
-
-  // Update the customer's last services and rootoshes
-  customer.lastServices = services;
-  customer.lastRootoshes = rootoshes;
-
-  // Save the updated customer
-  await this.CustomerRepository.save(customer);
-
-
-  // Generate receipt
-  const receipt = `Receipt:\nCustomer: ${customer.fullName}\nDate: ${slot.reservationDay}/${slot.reservationMonth}/${slot.reservationYear}\nStart Time: ${slot.start_Time}\nEnd Time: ${slot.end_Time}\nTotal Duration: ${totalDuration} minutes\n`;
+  const receipt = `Receipt:\nCustomer: ${createCustomerDto.fullName}\nDate: ${availableSlot.startTime.toDateString()}\nStart Time: ${availableSlot.startTime.toTimeString().slice(0, 5)}\nEnd Time: ${availableSlot.endTime.toTimeString().slice(0, 5)}\nTotal Duration: ${totalDuration} minutes\n`;
 
   return { reservation, receipt };
 }
 
-  
-  
-  
-  
-  
-  
-  
-  
 
-// async uploadDepositImage(imageFile: any): Promise<string> {
+
+
+
+
+// async createReservation(
+//   branchId: string,
+//   createCustomerDto: CreateCustomerDto,
+//   serviceIds: string[]
+// ): Promise<{ reservation: ReservationEntity; receipt: string }> {
+//   const branch = await this.BranchRepository.findOne({
+//     where: { id: branchId },
+//     relations: ['reservations', 'employees', 'employees.position'] // Include position relation
+//   });
+
+//   if (!branch) {
+//     throw new NotFoundException('Branch not found');
+//   }
+
+//   const services = await this.ServiceRepository.findByIds(serviceIds);
+//   const totalDuration = this.calculateTotalDuration(services);
+
+//   const availableSlot = this.findAvailableSlot(branch.reservations, totalDuration);
+
+//   if (!availableSlot) {
+//     throw new BadRequestException('No available slots');
+//   }
+
+//   // Extract date information from the available slot
+//   const startTime = new Date(availableSlot.startTime);
+//   const reservationDay = startTime.getDate();
+//   const reservationMonth = startTime.getMonth() + 1; // Months are 0-indexed
+//   const reservationYear = startTime.getFullYear();
+
+//   // Format start time
+//   const formattedStartTime = format(startTime, 'yyyy-MM-dd HH:mm');
+//   const formattedEndTime = format(new Date(availableSlot.endTime), 'yyyy-MM-dd HH:mm');
+//  // Filter employees who are artists
+//  const artistEmployees = branch.employees.filter(employee => 
+//   employee.position && 
+//   typeof employee.position !== 'string' && 
+//   employee.position.positionInEnglish === 'ARTIST'
+// );
+//   // Create the reservation with the suggested timing
+//   const reservation = this.ReservationRepository.create({
+//     phone_Number: createCustomerDto.phoneNumber,
+//     client_FullName: createCustomerDto.fullName,
+//     day: createCustomerDto.day,
+//     month: createCustomerDto.month,
+//     year: createCustomerDto.year,
+//     start_Time: formattedStartTime,
+//     end_Time: formattedEndTime,
+//     reservationDay,
+//     reservationMonth,
+//     reservationYear,
+//     branch,
+//     services,
+//     employees:artistEmployees // Include only artist employees
+//   });
+
+//   await this.ReservationRepository.save(reservation);
+
+  
+//   // Format receipt
+//   const receipt = `Receipt:\nCustomer: ${createCustomerDto.fullName}\nDate: ${availableSlot.startTime.toDateString()}\nStart Time: ${availableSlot.startTime.toTimeString().slice(0, 5)}\nEnd Time: ${availableSlot.endTime.toTimeString().slice(0, 5)}\nTotal Duration: ${totalDuration} minutes\n`;
+
+//   return { reservation, receipt };
+// }
+  
+  // async uploadDepositImage(imageFile: any): Promise<string> {
 //       const filename = '';
 //       const result = await this.CloudinaryService.uploadImage(imageFile,filename);
 //       if (!result.url) {
@@ -409,13 +253,6 @@ async createReservation(
 //       }
 //       return result.url;
 // }
-  
-  
-  
-  
-  
-  
-  
   
   
   
