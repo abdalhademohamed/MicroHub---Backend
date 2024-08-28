@@ -1,6 +1,6 @@
 import { RootoshEntity } from '../../rootosh/entities/rootosh.entity';
 import { ServiceEntity } from '../../service/entities/service.entity';
-import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, JoinTable } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, JoinTable, OneToMany } from 'typeorm';
 
 @Entity() 
 export class CustomerEntity {
@@ -26,10 +26,13 @@ export class CustomerEntity {
   year: number;
 
 
-   // Last services and rootoshes
-   @ManyToMany(() => ServiceEntity, { cascade: true })
-   lastServices: ServiceEntity[];
- 
-   @ManyToMany(() => RootoshEntity, { cascade: true })
-   lastRootoshes: RootoshEntity[];
+
+
+  @ManyToMany(() => ServiceEntity, service => service.customers)
+  @JoinTable() // This will create a join table
+  lastServices: ServiceEntity[];
+
+  @ManyToMany(() => RootoshEntity, rootosh => rootosh.customers)
+  @JoinTable() // This will create a join table
+  lastRootoshes: RootoshEntity[];
 }
