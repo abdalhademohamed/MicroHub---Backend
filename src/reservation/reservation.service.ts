@@ -11,6 +11,8 @@ import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { CustomerEntity } from '../customer/entities/customer.entity';
 import { CreateCustomerDto } from '../customer/dto/create-customer.dto';
 import { format } from 'date-fns';
+import { EmployeeEntity } from '../employee/entities/employee.entity';
+import { PositionEntity } from '../postion/entities/postion.entity';
 
 
 @Injectable()
@@ -32,6 +34,11 @@ export class ReservationService {
 
     @InjectRepository(CustomerEntity)
     private readonly CustomerRepository: Repository<CustomerEntity>,
+
+    @InjectRepository(EmployeeEntity)
+    private readonly EmployeeRepository: Repository<EmployeeEntity>,
+    @InjectRepository(PositionEntity)
+    private readonly PositionRepository: Repository<PositionEntity>,
   ) {}
 
  
@@ -117,7 +124,7 @@ async createReservation(
   createCustomerDto: CreateCustomerDto,
     serviceIds: string[]
 ): Promise<{ reservation: ReservationEntity; receipt: string }> {
-  const branch = await this.BranchRepository.findOne({ where: { id: branchId }, relations: ['reservations'] });
+  const branch = await this.BranchRepository.findOne({ where: { id: branchId }, relations: ['reservations','employees', 'employees.position'] });
 
   if (!branch) {
     throw new NotFoundException('Branch not found');
@@ -170,7 +177,73 @@ const formattedEndTime = format(new Date(availableSlot.endTime), 'yyyy-MM-dd HH:
 }
 
 
+
+
+
+
+// async createReservation(
+//   branchId: string,
+//   createCustomerDto: CreateCustomerDto,
+//   serviceIds: string[]
+// ): Promise<{ reservation: ReservationEntity; receipt: string }> {
+//   const branch = await this.BranchRepository.findOne({
+//     where: { id: branchId },
+//     relations: ['reservations', 'employees', 'employees.position'] // Include position relation
+//   });
+
+//   if (!branch) {
+//     throw new NotFoundException('Branch not found');
+//   }
+
+//   const services = await this.ServiceRepository.findByIds(serviceIds);
+//   const totalDuration = this.calculateTotalDuration(services);
+
+//   const availableSlot = this.findAvailableSlot(branch.reservations, totalDuration);
+
+//   if (!availableSlot) {
+//     throw new BadRequestException('No available slots');
+//   }
+
+//   // Extract date information from the available slot
+//   const startTime = new Date(availableSlot.startTime);
+//   const reservationDay = startTime.getDate();
+//   const reservationMonth = startTime.getMonth() + 1; // Months are 0-indexed
+//   const reservationYear = startTime.getFullYear();
+
+//   // Format start time
+//   const formattedStartTime = format(startTime, 'yyyy-MM-dd HH:mm');
+//   const formattedEndTime = format(new Date(availableSlot.endTime), 'yyyy-MM-dd HH:mm');
+//  // Filter employees who are artists
+//  const artistEmployees = branch.employees.filter(employee => 
+//   employee.position && 
+//   typeof employee.position !== 'string' && 
+//   employee.position.positionInEnglish === 'ARTIST'
+// );
+//   // Create the reservation with the suggested timing
+//   const reservation = this.ReservationRepository.create({
+//     phone_Number: createCustomerDto.phoneNumber,
+//     client_FullName: createCustomerDto.fullName,
+//     day: createCustomerDto.day,
+//     month: createCustomerDto.month,
+//     year: createCustomerDto.year,
+//     start_Time: formattedStartTime,
+//     end_Time: formattedEndTime,
+//     reservationDay,
+//     reservationMonth,
+//     reservationYear,
+//     branch,
+//     services,
+//     employees:artistEmployees // Include only artist employees
+//   });
+
+//   await this.ReservationRepository.save(reservation);
+
   
+//   // Format receipt
+//   const receipt = `Receipt:\nCustomer: ${createCustomerDto.fullName}\nDate: ${availableSlot.startTime.toDateString()}\nStart Time: ${availableSlot.startTime.toTimeString().slice(0, 5)}\nEnd Time: ${availableSlot.endTime.toTimeString().slice(0, 5)}\nTotal Duration: ${totalDuration} minutes\n`;
+
+//   return { reservation, receipt };
+// }
   
   // async uploadDepositImage(imageFile: any): Promise<string> {
 //       const filename = '';

@@ -1,6 +1,7 @@
 import { ServiceEntity } from '../../service/entities/service.entity';
 import { BranchEntity } from '../../branch/entities/branch.entity';
 import { Entity, Column, ManyToOne, PrimaryGeneratedColumn, ManyToMany } from 'typeorm';
+import { EmployeeEntity } from '../../employee/entities/employee.entity';
 
 @Entity() // Specify table name if necessary
 export class ReservationEntity {
@@ -47,4 +48,10 @@ export class ReservationEntity {
 
   @ManyToMany(() => ServiceEntity, (service) => service.reservations)
   services: ServiceEntity[]; // Handle multiple services
+  // New relation to employees
+  // @ManyToMany(() => EmployeeEntity, (EmployeeEntity) => EmployeeEntity.reservations)
+  // employees: EmployeeEntity[];
+
+  // @ManyToOne(() => EmployeeEntity, { nullable: true })
+  // artist?: EmployeeEntity; // Ensure this relationship is defined
 }

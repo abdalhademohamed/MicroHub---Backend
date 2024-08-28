@@ -59,5 +59,7 @@ export class CreateReservationDto {
   @IsOptional()
   @IsString()
   deposit_Content?: string; // Optional deposit content
+
+
   
 }
