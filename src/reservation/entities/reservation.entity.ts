@@ -7,8 +7,8 @@ export class ReservationEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  country_Code: string; // Correct property name
+  // @Column()
+  // country_Code: string; // Correct property name
 
   @Column()
   phone_Number: string; // Correct property name
@@ -32,11 +32,11 @@ export class ReservationEntity {
   @Column()
   reservationYear: number; // Year of reservation
 
-  @Column({ type: 'time' })
-  start_Time: string;
+  @Column({ type: 'timestamp' })
+  start_Time: Date;
 
-  @Column({ type: 'time' })
-  end_Time: string;
+  @Column({ type: 'timestamp' })
+  end_Time: Date;
  
 
   @Column({ type: 'text', nullable: true })
