@@ -16,19 +16,20 @@ async function bootstrap() {
       transform: true, // Automatically transform payloads to be objects typed according to their DTO classes
     })
   );
-  const configService = app.get<ConfigService>(ConfigService);
-  const expressInstance = app.getHttpAdapter().getInstance();
-  useNestTreblle(expressInstance, {
-    apiKey: configService.get<string>('TREBLLE_API_KEY'),
-    projectId: configService.get<string>('TREBLLE_PROJECT_ID'),
-  });
+  // const configService = app.get<ConfigService>(ConfigService);
+  // const expressInstance = app.getHttpAdapter().getInstance();
+  // useNestTreblle(expressInstance, {
+  //   apiKey: configService.get<string>('TREBLLE_API_KEY'),
+  //   projectId: configService.get<string>('TREBLLE_PROJECT_ID'),
+    
+  // });
  
   const config = new DocumentBuilder()
     .setTitle("EASY-BOOK-API")
     .setDescription("the description of the api")
     .setVersion("1.0")
     .build();
-  // const Document= SwaggerModule.createDocument(app,config)
+  // const Document= SwaggerModule.createDocument(app,config) 
   // SwaggerModule.setup('/DOC',app,Document)
 
   const document = SwaggerModule.createDocument(app, config);
