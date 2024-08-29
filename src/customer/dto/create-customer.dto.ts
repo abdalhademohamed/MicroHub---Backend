@@ -1,4 +1,5 @@
-import { IsString, IsNotEmpty, IsNumber, Min, Max, Length } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, Min, Max, Length, IsOptional } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateCustomerDto {
   @IsString()
@@ -18,14 +19,17 @@ export class CreateCustomerDto {
   @IsNumber()
   @Min(1)
   @Max(31)
+  @Type(() => Number) // Transform the form-data string into a number
   day: number;
 
   @IsNumber()
   @Min(1)
   @Max(12)
+  @Type(() => Number) // Transform the form-data string into a number
   month: number;
 
   @IsNumber()
   @Min(1900)
+  @Type(() => Number) // Transform the form-data string into a number
   year: number;
 }
