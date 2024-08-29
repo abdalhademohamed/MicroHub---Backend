@@ -60,7 +60,7 @@ export class ReservationService {
   async registerOrLookupCustomer(
     createCustomerDto: CreateCustomerDto
   ): Promise<CustomerEntity> {
-    const { countryCode, phoneNumber, fullName, day, month, year } =
+    const { country_Code, phoneNumber, fullName, day, month, year } =
       createCustomerDto;
 
     // Check if customer exists by phone number
@@ -72,7 +72,7 @@ export class ReservationService {
     if (!customer) {
       // Register new customer
       customer = this.CustomerRepository.create({
-        countryCode,
+        country_Code,
         phoneNumber,
         fullName,
         day,
@@ -176,7 +176,7 @@ export class ReservationService {
     const result = await this.CloudinaryService.uploadImage(image, folderName);
 
     const reservation = this.ReservationRepository.create({
-      country_Code: createCustomerDto.countryCode,
+      country_Code: createCustomerDto.country_Code,
       phone_Number: createCustomerDto.phoneNumber,
       client_FullName: createCustomerDto.fullName,
       day: createCustomerDto.day,

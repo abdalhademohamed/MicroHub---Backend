@@ -7,8 +7,8 @@ export class CustomerEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ length: 10 })
-  countryCode: string;
+  @Column()
+  country_Code: string;
 
   @Column({ length: 15 })
   phoneNumber: string;

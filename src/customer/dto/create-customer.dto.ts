@@ -2,10 +2,10 @@ import { IsString, IsNotEmpty, IsNumber, Min, Max, Length, IsOptional } from 'cl
 import { Type } from 'class-transformer';
 
 export class CreateCustomerDto {
+
   @IsString()
   @IsNotEmpty()
-  @Length(1, 10)
-  countryCode: string;
+  country_Code: string;
 
   @IsString()
   @IsNotEmpty()
