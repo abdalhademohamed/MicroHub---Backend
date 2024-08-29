@@ -1,5 +1,5 @@
-import { BranchEntity } from "src/branch/entities/branch.entity";
-import { ServiceEntity } from "src/service/entities/service.entity";
+import { BranchEntity } from "../../branch/entities/branch.entity";
+import { ServiceEntity } from "../../service/entities/service.entity";
 import {
   Entity,
   PrimaryGeneratedColumn,

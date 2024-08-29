@@ -3,8 +3,8 @@ import { CreateOfferDto } from './dto/create-offer.dto';
 import { UpdateOfferDto } from './dto/update-offer.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { OfferEntity } from './entities/offer.entity';
-import { ServiceEntity } from 'src/service/entities/service.entity';
-import { BranchEntity } from 'src/branch/entities/branch.entity';
+import { ServiceEntity } from '../service/entities/service.entity';
+import { BranchEntity } from '../branch/entities/branch.entity';
 import { In, MoreThan, Repository } from 'typeorm';
 
 @Injectable()

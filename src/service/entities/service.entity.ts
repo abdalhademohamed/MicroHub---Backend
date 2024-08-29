@@ -4,7 +4,7 @@ import { ReservationEntity } from '../../reservation/entities/reservation.entity
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToMany, JoinTable, ManyToOne } from 'typeorm';
 import { RootoshEntity } from '../../rootosh/entities/rootosh.entity';
 import { CustomerEntity } from '../../customer/entities/customer.entity';
-import { OfferEntity } from 'src/offer/entities/offer.entity';
+import { OfferEntity } from '../../offer/entities/offer.entity';
 
 
 

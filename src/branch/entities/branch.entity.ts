@@ -1,4 +1,4 @@
-import { OfferEntity } from 'src/offer/entities/offer.entity';
+import { OfferEntity } from '../../offer/entities/offer.entity';
 import { EmployeeEntity } from '../../employee/entities/employee.entity';
 import { ReservationEntity } from '../../reservation/entities/reservation.entity';
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToMany } from 'typeorm';

@@ -2,9 +2,9 @@ import { Module } from '@nestjs/common';
 import { OfferService } from './offer.service';
 import { OfferController } from './offer.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ServiceEntity } from 'src/service/entities/service.entity';
+import { ServiceEntity } from '../service/entities/service.entity';
 import { OfferEntity } from './entities/offer.entity';
-import { BranchEntity } from 'src/branch/entities/branch.entity';
+import { BranchEntity } from '../branch/entities/branch.entity';
 
 @Module({
  
