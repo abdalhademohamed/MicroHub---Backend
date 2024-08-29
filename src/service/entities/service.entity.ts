@@ -4,6 +4,7 @@ import { ReservationEntity } from '../../reservation/entities/reservation.entity
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToMany, JoinTable, ManyToOne } from 'typeorm';
 import { RootoshEntity } from '../../rootosh/entities/rootosh.entity';
 import { CustomerEntity } from '../../customer/entities/customer.entity';
+import { OfferEntity } from 'src/offer/entities/offer.entity';
 
 
 
@@ -43,6 +44,9 @@ export class ServiceEntity {
   rootosh: RootoshEntity[]; // Include rootoshes with the service
 
 
-  @ManyToOne(() => CustomerEntity, CustomerEntity => CustomerEntity.lastServices) // Adjust the relation name as necessary
-  customer: CustomerEntity;
+  @ManyToMany(() => CustomerEntity, customer => customer.lastServices)
+  customers: CustomerEntity[];
+
+  @ManyToMany(() => OfferEntity, (OfferEntity) => OfferEntity.services)
+  offers: OfferEntity[];
 }
