@@ -1,6 +1,7 @@
+import { OfferEntity } from '../../offer/entities/offer.entity';
 import { EmployeeEntity } from '../../employee/entities/employee.entity';
 import { ReservationEntity } from '../../reservation/entities/reservation.entity';
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToMany } from 'typeorm';
 
 @Entity()
 export class BranchEntity {
@@ -22,4 +23,7 @@ export class BranchEntity {
   @OneToMany(() => EmployeeEntity, (EmployeeEntity) => EmployeeEntity.branch)
   employees: EmployeeEntity[];
   
+
+  @ManyToMany(() => OfferEntity, (OfferEntity) => OfferEntity.branches)
+  offers: OfferEntity[];
 }

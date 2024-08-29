@@ -34,14 +34,16 @@ export class EmployeeController {
   async getAllEmployees(
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
-    @Query('employeeType') employeeType?: string // Optional query parameter for filtering
+    @Query('employeeType') employeeType?: string, // Optional query parameter for filtering
+    @Query('branch') branchId?: string // Optional query parameter for filtering
+
   ): Promise<{
     items: EmployeeEntity[];
     total: number;
     page: number;
     limit: number;
   }> {
-    return await this.employeeService.getAllEmployees(page, limit, employeeType);
+    return await this.employeeService.getAllEmployees(page, limit, employeeType,branchId);
   }
 
   @Get(':id')

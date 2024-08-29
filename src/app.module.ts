@@ -27,6 +27,7 @@ import { ServiceEntity } from './service/entities/service.entity';
 import { RootoshEntity } from './rootosh/entities/rootosh.entity';
 import { EmployetypeModule } from './employetype/employetype.module';
 import { EmployeeTypeEntity } from './employetype/entities/employetype.entity';
+import { OfferEntity } from './offer/entities/offer.entity';
 
 
 
@@ -56,7 +57,9 @@ import { EmployeeTypeEntity } from './employetype/entities/employetype.entity';
       password: process.env.DB_PASSWORD ,
       database: process.env.DB_NAME ,
       // entities: ["dist/**/*.entity.js"], 
-      entities:[UserEntity,BranchEntity,CustomerEntity,EmployeeEntity,EmployeeTypeEntity,PositionEntity,ReservationEntity,ServiceEntity,RootoshEntity],
+      entities:[UserEntity,BranchEntity,CustomerEntity,EmployeeEntity,
+        EmployeeTypeEntity,PositionEntity,ReservationEntity,ServiceEntity,RootoshEntity
+      ,OfferEntity],
       synchronize: true, // Set to false in production
       ssl: true, // Neon typically requires SSL connections
       extra: {

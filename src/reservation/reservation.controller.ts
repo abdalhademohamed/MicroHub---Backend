@@ -58,12 +58,15 @@ export class ReservationController {
 
 
   @Post(':branchId')
+  @UseInterceptors(FileInterceptor('image')) // Intercept the file upload
+
   async createReservations(
     @Body() CreateCustomerDto: CreateCustomerDto,  // Array of customer DTOs
     @Param('branchId') branchId: string,
     @Query('servicesIds') serviceIds: string | string[],
+    @UploadedFile() image: Express.Multer.File, // Handle the uploaded file
   ): Promise<any> {
-
+   
     // Convert servicesIds to array
     let servicesIdsArray: string[];
     if (Array.isArray(serviceIds)) {
@@ -79,7 +82,8 @@ export class ReservationController {
       return  await this.reservationService.createReservation(
               branchId,
               CreateCustomerDto,
-              servicesIdsArray
+              servicesIdsArray,
+              image
             );
     } catch (error) {
       // Handle errors appropriately

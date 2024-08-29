@@ -5,10 +5,10 @@ import { ServiceEntity } from '../../service/entities/service.entity';
 
 export class CreateReservationDto {
 
-  // @ApiProperty()
-  // @IsString()
-  // @IsNotEmpty()
-  // country_Code: string;
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  country_Code: string;
 
   @ApiProperty()
   @IsString()
@@ -35,31 +35,21 @@ export class CreateReservationDto {
   @IsNotEmpty()
   year: number;
 
-  // @ApiProperty()
-  // @IsString()
-  // @IsNotEmpty()
-  // reservation_Time_From: string;
 
-  // @ApiProperty()
-  // @IsString()
-  // @IsNotEmpty()
-  // reservation_Time_To: string;
 
+  
   @ApiProperty()
   @IsNotEmpty()
   branch: BranchEntity 
 
   @ApiProperty()
   @IsArray()
-  @IsUUID(undefined, { each: true })
   @IsNotEmpty()
   services: ServiceEntity[]
-
-  @ApiProperty()
-  @IsOptional()
-  @IsString()
-  deposit_Content?: string; // Optional deposit content
-
-
   
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  deposit_Content: string; // Correct property name
+
 }

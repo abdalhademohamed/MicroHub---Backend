@@ -8,8 +8,8 @@ export class ReservationEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  // @Column()
-  // country_Code: string; // Correct property name
+  @Column()
+  country_Code: string; // Correct property name
 
   @Column()
   phone_Number: string; // Correct property name
@@ -40,7 +40,7 @@ export class ReservationEntity {
   end_Time: Date;
  
 
-  @Column({ type: 'text', nullable: true })
+  @Column()
   deposit_Content: string; // Correct property name
 
   @ManyToOne(() => BranchEntity, (branch) => branch.reservations)
