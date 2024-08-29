@@ -24,6 +24,14 @@ export class OfferEntity {
   @Column({ type: "timestamp" })
   endDateTime: Date;
 
+  
+
+  @Column({ type: "decimal", precision: 5, scale: 2 })
+  discountPercentage: number;
+
+  @Column({ type: "boolean", default: true })
+  isActive: boolean; // New boolean column
+
   @ManyToMany(() => ServiceEntity)
   @JoinTable()
   services: ServiceEntity[];
@@ -31,7 +39,4 @@ export class OfferEntity {
   @ManyToMany(() => BranchEntity)
   @JoinTable()
   branches: BranchEntity[];
-
-  @Column({ type: "decimal", precision: 5, scale: 2 })
-  discountPercentage: number;
 }
