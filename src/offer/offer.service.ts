@@ -1,11 +1,12 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { CreateOfferDto } from './dto/create-offer.dto';
-import { UpdateOfferDto } from './dto/update-offer.dto';
+import { CreateOfferDto } from './dto/create.offer.dto';
+import { UpdateOfferDto } from './dto/update.offer.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { OfferEntity } from './entities/offer.entity';
 import { ServiceEntity } from '../service/entities/service.entity';
 import { BranchEntity } from '../branch/entities/branch.entity';
 import { In, MoreThan, Repository } from 'typeorm';
+import { UpdateIsActiveDto } from './dto/update.active.dto';
 
 @Injectable()
 export class OfferService {
@@ -25,22 +26,35 @@ export class OfferService {
   async create(createOfferDto: CreateOfferDto): Promise<OfferEntity> {
     const { serviceIds, branchIds, ...offerData } = createOfferDto;
 
+    // Fetch related entities based on IDs
     const services = await this.ServiceRepository.find({
       where: { id: In(serviceIds) },
     });
     const branches = await this.BranchRepository.find({
       where: { id: In(branchIds) },
     });
-    if(!branches){
-      throw new NotFoundException(`Branch with ID "${branchIds}" not found`);
+
+    // Handle cases where no branches were found
+    if (!branches || branches.length === 0) {
+      throw new NotFoundException(`Branch with ID(s) "${branchIds}" not found`);
     }
+
+    // Validate date range
     if (new Date(offerData.startDateTime) >= new Date(offerData.endDateTime)) {
       throw new BadRequestException('End date must be after the start date');
     }
+
+    // Determine if the offer should be active based on the start date
+    const today = new Date();
+    const startDateTime = new Date(offerData.startDateTime);
+    const isActive = today.toDateString() === startDateTime.toDateString();
+
+    // Create and save the offer
     const offer = this.OfferRepository.create({
       ...offerData,
       services,
       branches,
+      isActive, // Set the isActive attribute
     });
 
     return await this.OfferRepository.save(offer);
@@ -108,6 +122,23 @@ export class OfferService {
     return await this.OfferRepository.save(offer);
   }
 
+
+  async updateIsActive(id: string, UpdateIsActiveDto: UpdateIsActiveDto): Promise<OfferEntity> {
+    // Fetch the offer by ID
+    const offer = await this.OfferRepository.findOneBy({ id });
+
+    // Handle cases where the offer is not found
+    if (!offer) {
+      throw new NotFoundException(`Offer with ID "${id}" not found`);
+    }
+
+    // Extract isActive from DTO and update the attribute
+    const { isActive } = UpdateIsActiveDto;
+    offer.isActive = isActive;
+
+    // Save the updated offer
+    return await this.OfferRepository.save(offer);
+  }
   async remove(id: string): Promise<void> {
     const offer = await this.findOne(id);
     await this.OfferRepository.remove(offer);

@@ -1,9 +1,10 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Put, Query } from '@nestjs/common';
 import { OfferService } from './offer.service';
-import { CreateOfferDto } from './dto/create-offer.dto';
-import { UpdateOfferDto } from './dto/update-offer.dto';
+import { CreateOfferDto } from './dto/create.offer.dto';
+import { UpdateOfferDto } from './dto/update.offer.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { OfferEntity } from './entities/offer.entity';
+import { UpdateIsActiveDto } from './dto/update.active.dto';
 
 
 
@@ -40,6 +41,10 @@ export class OfferController {
     return await this.offerService.update(id, updateOfferDto);
   }
 
+  @Put('update/active/:id')
+  async updateOfferIsActive(@Param('id') id: string ,  @Body() UpdateIsActiveDto: UpdateIsActiveDto) {
+    return this.offerService.updateIsActive(id,UpdateIsActiveDto);
+  }
   @Delete(':id')
   async remove(@Param('id') id: string): Promise<void> {
     return await this.offerService.remove(id);
