@@ -107,7 +107,8 @@ export class EmployeeService {
   async getAllEmployees(
     page: number = 1,
     limit: number = 10,
-    employeeTypeName?: string // Optional parameter for filtering
+    employeeTypeName?: string,
+    branchId?: string
   ): Promise<{
     items: EmployeeEntity[];
     total: number;
@@ -117,10 +118,10 @@ export class EmployeeService {
     // Ensure page and limit are valid
     page = Math.max(page, 1);
     limit = Math.max(limit, 1);
-
-    // Initialize the filter object for employeeType
-    const employeeTypeFilter: any = {};
-
+  
+    // Initialize the filter object
+    const filter: any = {};
+  
     // If employeeTypeName is provided, find matching EmployeeType IDs
     if (employeeTypeName) {
       const employeeTypes = await this.EmployeeTypeRepository.find({
@@ -128,10 +129,10 @@ export class EmployeeService {
           typeEnglish: Like(`%${employeeTypeName}%`), // Adjust based on actual field name
         },
       });
-
+  
       const employeeTypeIds = employeeTypes.map((type) => type.id);
       if (employeeTypeIds.length > 0) {
-        employeeTypeFilter.employeeType = In(employeeTypeIds);
+        filter.employeeType = In(employeeTypeIds);
       } else {
         // If no matching employee types found, return empty result
         return {
@@ -142,15 +143,20 @@ export class EmployeeService {
         };
       }
     }
-
-    // Find and count employees with optional employeeType filtering
+  
+    // Add branch filtering if branchId is provided
+    if (branchId) {
+      filter.branch = { id: branchId }; // Modify this if branch is a relationship
+    }
+  
+    // Find and count employees with optional filtering
     const [items, total] = await this.employeeRepository.findAndCount({
-      where: employeeTypeFilter,
+      where: filter,
       relations: ["branch", "position", "employeeType"], // Include relations if necessary
       skip: (page - 1) * limit,
       take: limit,
     });
-
+  
     return {
       items,
       total,
@@ -158,7 +164,7 @@ export class EmployeeService {
       limit,
     };
   }
-
+  
   async getEmployeeById(id: string): Promise<EmployeeEntity> {
     const employee = await this.employeeRepository.findOne({
       where: { id },
