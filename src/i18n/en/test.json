@@ -1,5 +1,15 @@
 {
-  "HELLO": "hello",
-  "NOT_FOUND": "Not found User For this id",
-  "EMAIL_NOT_FORMATTED": "Email is not formatted correctly"
+  "EMAIL_EXISTS": "Email already exists",
+  "USERNAME_EXISTS": "Username already exists",
+  "SIGNUP_FAILED": "Failed to sign up user",
+  "INVALID_CREDENTIALS": "Please check your login credentials",
+  "OTP_EMAIL_FAILED": "Failed to send OTP email",
+  "RESET_EMAIL_FAILED": "Failed to send Password Reset Request email",
+  "USER_NOT_FOUND": "User not found or token has expired",
+  "INVALID_TOKEN_OR_OTP": "Invalid token or OTP",
+  "INVALID_TOKEN": "Invalid or expired token",
+  "CONFIRMATION_EMAIL_FAILED": "Failed to send confirmation email",
+  "LOGOUT_FAILED": "Failed to logout. Please try again later.",
+  "ACCESS_DENIED": "Access Denied",
+  "LOGOUT_SUCCESS": "Logout successful"
 }
