@@ -28,11 +28,11 @@ export class CustomerEntity {
 
 
 
-  @ManyToMany(() => ServiceEntity, service => service.customers)
+  @ManyToMany(() => ServiceEntity, service => service.customers,{ cascade: ['insert', 'update'], onDelete: 'CASCADE' })
   @JoinTable() // This will create a join table
   lastServices: ServiceEntity[];
 
-  @ManyToMany(() => RootoshEntity, rootosh => rootosh.customers)
+  @ManyToMany(() => RootoshEntity, rootosh => rootosh.customers,{ cascade: ['insert', 'update'], onDelete: 'CASCADE' })
   @JoinTable() // This will create a join table
   lastRootoshes: RootoshEntity[];
 }
