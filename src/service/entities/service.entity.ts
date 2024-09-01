@@ -35,7 +35,7 @@ export class ServiceEntity {
   months_To_Expire: number;
 
 
-  @ManyToMany(() => ReservationEntity, ReservationEntity => ReservationEntity.services)
+  @ManyToMany(() => ReservationEntity, ReservationEntity => ReservationEntity.services,{ cascade: ['insert', 'update'], onDelete: 'SET NULL' })
   @JoinTable()
   reservations: ReservationEntity[];
 
