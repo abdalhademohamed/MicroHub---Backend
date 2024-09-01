@@ -17,7 +17,7 @@ export class BranchEntity {
   @Column()
   image: string;  // Store the URL of the image uploaded to Cloudinary
 
-  @OneToMany(() => ReservationEntity, (ReservationEntity) => ReservationEntity.branch)  // Define the relationship
+  @OneToMany(() => ReservationEntity, (ReservationEntity) => ReservationEntity.branch,{ cascade: ['insert', 'update'], onDelete: 'CASCADE' })  // Define the relationship
   reservations: ReservationEntity[];
 
   @OneToMany(() => EmployeeEntity, (EmployeeEntity) => EmployeeEntity.branch)

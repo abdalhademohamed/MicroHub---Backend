@@ -11,7 +11,7 @@ import { Roles } from '../auth/Roles.decorator';
 import { Role } from '../user/utils/user.enum';
 import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
 import { RolesGuard } from '../auth/guards/role.guards';
-import { CreateCustomerDto } from '../customer/dto/create-customer.dto';
+import { CreateCustomerDto } from '../customer/dto/create.customer.dto';
 
 @ApiTags('reservation')
 @Controller('reservation')
@@ -56,10 +56,10 @@ export class ReservationController {
   //   }
   // }
 
-
+  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN)
   @Post(':branchId')
   @UseInterceptors(FileInterceptor('image')) // Intercept the file upload
-
   async createReservations(
     @Body() CreateCustomerDto: CreateCustomerDto,  // Array of customer DTOs
     @Param('branchId') branchId: string,
@@ -91,8 +91,8 @@ export class ReservationController {
     }
   }
 
-  // @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
-  // @Roles(Role.SUPERADMIN)
+  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN)
   // Get all reservations with pagination and filtering
   @Get()
   async getAllReservations(

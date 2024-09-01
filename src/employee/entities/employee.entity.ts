@@ -42,7 +42,7 @@ export class EmployeeEntity {
   @ManyToOne(() => EmployeeTypeEntity, (employeeType) => employeeType.employees)
   employeeType: EmployeeTypeEntity;
 
-  @ManyToOne(() => BranchEntity, (branch) => branch.employees)
+  @ManyToOne(() => BranchEntity, (branch) => branch.employees,{ onDelete: 'SET NULL' })
   branch: BranchEntity | string;
 
   @ManyToOne(() => PositionEntity, (position) => position.employees)

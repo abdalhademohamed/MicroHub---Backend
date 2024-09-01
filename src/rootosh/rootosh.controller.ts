@@ -22,6 +22,8 @@ export class RootoshController {
   async create(@Body() createRootoshDto: CreateRootoshDto): Promise<any> {
     return this.RootoshService.createRootosh(createRootoshDto);
   }
+
+
   @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
   @Get()
@@ -33,12 +35,16 @@ export class RootoshController {
     
     return this.RootoshService.findAllRootosh(page, limit);
   }
+
+
   @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<RootoshEntity> {
     return this.RootoshService.findOneRootosh(id);
   }
+
+
   @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
   @Put(':id')
@@ -48,6 +54,8 @@ export class RootoshController {
   ): Promise<RootoshEntity> {
     return this.RootoshService.updateRootosh(id, updateRootoshDto);
   }
+
+  
   @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
   @Delete(':id')

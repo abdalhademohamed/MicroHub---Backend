@@ -1,11 +1,11 @@
-import { IsString, IsNotEmpty, IsNumber, Min, Max, Length, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, Min, Max, Length, IsOptional, IsISO8601 } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateCustomerDto {
+
   @IsString()
   @IsNotEmpty()
-  @Length(1, 10)
-  countryCode: string;
+  country_Code: string;
 
   @IsString()
   @IsNotEmpty()
@@ -32,4 +32,15 @@ export class CreateCustomerDto {
   @Min(1900)
   @Type(() => Number) // Transform the form-data string into a number
   year: number;
+
+
+  @IsOptional()
+  @IsISO8601({}, { message: 'customStartTime must be a valid ISO 8601 date string' })
+  @IsNotEmpty({ message: 'customStartTime must be provided if customEndTime is provided' })
+  customStartTime?: string;
+
+  @IsOptional()
+  @IsISO8601({}, { message: 'customEndTime must be a valid ISO 8601 date string' })
+  @IsNotEmpty({ message: 'customEndTime must be provided if customStartTime is provided' })
+  customEndTime?: string;
 }

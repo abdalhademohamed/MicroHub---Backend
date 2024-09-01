@@ -1,10 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, InternalServerErrorException, Query, NotFoundException, Put, BadRequestException, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, InternalServerErrorException, Query, NotFoundException, Put, BadRequestException, UploadedFile, UseInterceptors, UseGuards } from '@nestjs/common';
 import { EmployeeService } from './employee.service';
 import { CreateEmployeeDto } from './dto/create.employee.dto';
 import { UpdateEmployeeDto } from './dto/update.employee.dto';
 import { EmployeeEntity } from './entities/employee.entity';
 import { ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Roles } from 'src/auth/Roles.decorator';
+import { Role } from 'src/user/utils/user.enum';
+import { AccessTokenGuard } from 'src/auth/guards/accessToken.guard';
+import { RolesGuard } from 'src/auth/guards/role.guards';
 
 
 
@@ -13,6 +17,9 @@ import { FileInterceptor } from '@nestjs/platform-express';
 export class EmployeeController {
   constructor(private readonly employeeService: EmployeeService) {}
 
+
+  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN)
   @UseInterceptors(FileInterceptor('image'))  // 'file' is the name of the field in the form-data
   @Post()
   async createEmployee(@Body() createEmployeeDto: CreateEmployeeDto,
@@ -30,6 +37,11 @@ export class EmployeeController {
   return await this.employeeService.createEmployee(createEmployeeDto);  
   }
 
+
+
+
+  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN)
   @Get()
   async getAllEmployees(
     @Query('page') page: number = 1,
@@ -46,6 +58,10 @@ export class EmployeeController {
     return await this.employeeService.getAllEmployees(page, limit, employeeType,branchId);
   }
 
+
+
+  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN)
   @Get(':id')
   async getEmployeeById(@Param('id') id: string): Promise<EmployeeEntity> {
     
@@ -53,6 +69,9 @@ export class EmployeeController {
     return await this.employeeService.getEmployeeById(id);
   }
 
+
+  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN)
   @Put(':id')
   async updateEmployee(
     @Param('id') id: string,
@@ -69,6 +88,10 @@ export class EmployeeController {
     }
   }
 
+
+
+  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN)
   @Delete(':id')
   async deleteEmployee(@Param('id') id: string): Promise<void> {
    
