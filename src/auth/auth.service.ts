@@ -49,10 +49,15 @@ export class AuthService {
 
       if (existingUser) {
         if (existingUser.email === email) {
-          throw new ConflictException("Email already exists");
+
+          throw new ConflictException(this.i18nService.translate('test.EMAIL_EXISTS'));
+
+          // throw new ConflictException("Email already exists");
         }
         if (existingUser.username === username) {
-          throw new ConflictException("Username already exists");
+          throw new ConflictException( this.i18nService.translate('test.USERNAME_EXISTS'));
+
+          // throw new ConflictException("Username already exists");
         }
       }
 
@@ -78,7 +83,9 @@ export class AuthService {
 
       return newUser;
     } catch (error) {
-      throw new InternalServerErrorException("Failed to sign up user");
+      throw new InternalServerErrorException( this.i18nService.translate('test.SIGNUP_FAILED'));
+
+      // throw new InternalServerErrorException("Failed to sign up user");
     }
   }
 
@@ -124,8 +131,9 @@ export class AuthService {
     if (user && (await bcrypt.compare(password, user.password))) {
       return user;
     }
+    throw new UnauthorizedException( this.i18nService.translate('test.INVALID_CREDENTIALS'));
 
-    throw new UnauthorizedException("Please check your login credentials");
+    // throw new UnauthorizedException("Please check your login credentials");
   }
 
 
@@ -141,7 +149,9 @@ export class AuthService {
     try {
       await this.MailService.transporter.sendMail(mailOptions);
     } catch (error) {
-     throw new InternalServerErrorException("Failed to send OTP email");
+      throw new InternalServerErrorException( this.i18nService.translate('test.OTP_EMAIL_FAILED'));
+
+    //  throw new InternalServerErrorException("Failed to send OTP email");
 
     }
   }
@@ -174,7 +184,9 @@ export class AuthService {
       return { message: 'If your email is valid, you will receive a password reset link.', 
         resetToken:token}
     } catch (error) {
-     throw new InternalServerErrorException("Failed to send Password Reset Request email");
+      throw new InternalServerErrorException( this.i18nService.translate('test.RESET_EMAIL_FAILED'));
+
+    //  throw new InternalServerErrorException("Failed to send Password Reset Request email");
 
     }
   }
@@ -204,13 +216,17 @@ export class AuthService {
 
   // Check if the user exists and the provided OTP matches
   if (!user) {
-    throw new NotFoundException('User not found or token has expired');
+    throw new NotFoundException( this.i18nService.translate('test.USER_NOT_FOUND'));
+
+    // throw new NotFoundException('User not found or token has expired');
   }
 
   // Compare the provided token with the hashed token stored in the database
   const isTokenValid = await bcrypt.compare(token, user.resetPasswordToken);
   if (!isTokenValid || decoded.otp !== otp) {
-    throw new BadRequestException('Invalid token or OTP');
+    throw new BadRequestException( this.i18nService.translate('test.INVALID_TOKEN_OR_OTP'));
+
+    // throw new BadRequestException('Invalid token or OTP');
   }
 
   return user;
@@ -224,7 +240,9 @@ async GetUserFromToken(token: string): Promise<UserEntity> {
   try {
     decoded = this.JwtService.verify(token, { secret: process.env.JWT_RESET_SECRET });
   } catch (error) {
-    throw new BadRequestException('Invalid or expired token');
+    throw new BadRequestException( this.i18nService.translate('test.INVALID_TOKEN'));
+
+    // throw new BadRequestException('Invalid or expired token');
   }
 
   // Retrieve user by checking if the reset token is valid and not expired
@@ -238,13 +256,17 @@ async GetUserFromToken(token: string): Promise<UserEntity> {
 
   // Check if the user exists and the provided OTP matches
   if (!user) {
-    throw new NotFoundException('User not found or token has expired');
+    throw new NotFoundException( this.i18nService.translate('test.USER_NOT_FOUND'));
+
+    // throw new NotFoundException('User not found or token has expired');
   }
 
   // Compare the provided token with the hashed token stored in the database
   const isTokenValid = await bcrypt.compare(token, user.resetPasswordToken);
   if (!isTokenValid ) {
-    throw new BadRequestException('Invalid token or OTP');
+    throw new BadRequestException( this.i18nService.translate('test.INVALID_TOKEN_OR_OTP'));
+
+    // throw new BadRequestException('Invalid token or OTP');
   }
 
   return user;
@@ -272,7 +294,9 @@ async resetPassword(userId: string, newPassword: string): Promise<void> {
   try {
     await this.MailService.transporter.sendMail(mailOptions);
   } catch (error) {
-   throw new InternalServerErrorException("Failed to send confirmation email");
+    throw new InternalServerErrorException( this.i18nService.translate('test.CONFIRMATION_EMAIL_FAILED'));
+
+  //  throw new InternalServerErrorException("Failed to send confirmation email");
 
   }
  
@@ -302,14 +326,13 @@ async resetPassword(userId: string, newPassword: string): Promise<void> {
       if (result.affected === 0) {
         // If no rows were affected, it means the user was not found or the update failed
         // throw new NotFoundException('User not found'); 
-        return this.i18nService.translate('test.NOT_FOUND');
-
-        throw new NotFoundException('User not found'); 
+        // throw new NotFoundException( this.i18nService.translate('test.USER_NOT_FOUND'));
+        throw new NotFoundException(this.i18nService.translate('test.USER_NOT_FOUND')); 
 
       }
   
       // Return a success message
-      return { message: 'Logout successful' };
+      return { message:  this.i18nService.translate('test.LOGOUT_SUCCESS') };
     } catch (error) {
        
   
