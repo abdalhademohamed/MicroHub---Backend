@@ -15,7 +15,7 @@ import { GetReservationsDto } from "./dto/get.reservation.dto";
 import { UpdateReservationDto } from "./dto/update.reservation.dto";
 import { CloudinaryService } from "../cloudinary/cloudinary.service";
 import { CustomerEntity } from "../customer/entities/customer.entity";
-import { CreateCustomerDto } from "../customer/dto/create-customer.dto";
+import { CreateCustomerDto } from "../customer/dto/create.customer.dto";
 import { format } from "date-fns";
 import { EmployeeEntity } from "../employee/entities/employee.entity";
 import { PositionEntity } from "../postion/entities/postion.entity";
@@ -151,26 +151,60 @@ export class ReservationService {
     if (!availableSlot) {
       throw new BadRequestException("No available slots");
     }
+    let startTime: Date;
+    let endTime: Date;
+    // Check for custom start and end times
+    if (createCustomerDto.customStartTime && createCustomerDto.customEndTime) {
+      startTime = new Date(createCustomerDto.customStartTime);
+      endTime = new Date(createCustomerDto.customEndTime);
 
-    // Extract date information from the available slot
-    const startTime = new Date(availableSlot.startTime);
+      // Validate that the custom times are not conflicting with existing reservations
+      const conflictingReservation = branch.reservations.find(
+        (reservation) =>
+          (startTime >= reservation.start_Time &&
+            startTime < reservation.end_Time) ||
+          (endTime > reservation.start_Time && endTime <= reservation.end_Time)
+      );
+
+      if (conflictingReservation) {
+        throw new BadRequestException(
+          "The custom schedule conflicts with an existing reservation."
+        );
+      }
+    } else {
+      // Find the first available slot if no custom times are provided
+      const availableSlot = this.findAvailableSlot(
+        branch.reservations,
+        totalDuration
+      );
+
+      if (!availableSlot) {
+        throw new BadRequestException("No available slots");
+      }
+
+      startTime = availableSlot.startTime;
+      endTime = availableSlot.endTime;
+    }
     const reservationDay = startTime.getDate();
     const reservationMonth = startTime.getMonth() + 1; // Months are 0-indexed
     const reservationYear = startTime.getFullYear();
-   
+
     // Format start time
     // Assign the image URL to the DTO
-    const formattedStartTime = format(
-      new Date(availableSlot.startTime),
-      "yyyy-MM-dd HH:mm"
-    );
-    const formattedEndTime = format(
-      new Date(availableSlot.endTime),
-      "yyyy-MM-dd HH:mm"
-    );
+    const formattedStartTime = format(startTime, "yyyy-MM-dd HH:mm");
+    const formattedEndTime = format(endTime, "yyyy-MM-dd HH:mm");
+
+    // const formattedStartTime = format(
+    //   new Date(availableSlot.startTime),
+    //   "yyyy-MM-dd HH:mm"
+    // );
+    // const formattedEndTime = format(
+    //   new Date(availableSlot.endTime),
+    //   "yyyy-MM-dd HH:mm"
+    // );
     // Create the reservation with the suggested timing
     if (!image) {
-      throw new BadRequestException('Photo is required');
+      throw new BadRequestException("Photo is required");
     }
     const folderName = "reservation"; // or any other dynamic name based on context
     const result = await this.CloudinaryService.uploadImage(image, folderName);
@@ -189,9 +223,8 @@ export class ReservationService {
       reservationYear,
       branch,
       services,
-      deposit_Content:result.url
+      deposit_Content: result.url,
     });
-   
 
     // const reservation = new ReservationEntity();
     // reservation.start_Time = availableSlot.startTime;
@@ -204,10 +237,7 @@ export class ReservationService {
     return { reservation, receipt };
   }
 
-
-  async getAllReservations(
-    getReservationsDto: GetReservationsDto
-  ): Promise<{
+  async getAllReservations(getReservationsDto: GetReservationsDto): Promise<{
     data: ReservationEntity[];
     total: number;
     page: number;
