@@ -238,7 +238,7 @@ export class ReservationService {
   }
 
   async getAllReservations(getReservationsDto: GetReservationsDto): Promise<{
-    data: ReservationEntity[];
+    items: ReservationEntity[];
     total: number;
     page: number;
     limit: number;
@@ -263,10 +263,10 @@ export class ReservationService {
     // Apply pagination
     query.skip((page - 1) * limit).take(limit);
 
-    const [data, total] = await query.getManyAndCount();
+    const [items, total] = await query.getManyAndCount();
 
     return {
-      data,
+      items,
       total,
       page,
       limit,
