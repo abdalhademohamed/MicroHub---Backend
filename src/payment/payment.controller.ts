@@ -1,0 +1,54 @@
+import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFile, UseInterceptors, Put } from '@nestjs/common';
+import { PaymentService } from './payment.service';
+import { CreatePaymentDto } from './dto/create.payment.dto';
+import { UpdatePaymentDto } from './dto/update.payment.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { PaymentEntity } from './entities/payment.entity';
+
+@Controller('payment')
+export class PaymentController {
+  constructor(private readonly paymentService: PaymentService) {}
+
+
+
+
+  @UseInterceptors(FileInterceptor('image'))
+  @Post()
+  create(@Body() createPaymentDto: CreatePaymentDto,
+  @UploadedFile() image: Express.Multer.File, // Handle the uploaded file
+) {
+    return this.paymentService.createPayment(createPaymentDto,image);
+  }
+
+ 
+
+
+  @Get()
+  async getAllPayments(): Promise<PaymentEntity[]> {
+    return this.paymentService.getAllPayments();
+  }
+
+  @Get(':id')
+  async getPaymentById(@Param('id') id: string): Promise<PaymentEntity> {
+    return this.paymentService.getPaymentById(id);
+  }
+
+  @Put(':id')
+  @UseInterceptors(FileInterceptor('image'))
+  async updatePayment(
+    @Param('id') id: string,
+    @Body() updatePaymentDto: UpdatePaymentDto,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<PaymentEntity> {
+    // Handle file upload and update the image path or URL in the DTO
+    if (file) {
+      updatePaymentDto.image = file.path; // Or use a URL if using a cloud service
+    }
+    return this.paymentService.updatePayment(id, updatePaymentDto);
+  }
+
+  @Delete(':id')
+  async removePayment(@Param('id') id: string): Promise<void> {
+    return this.paymentService.removePayment(id);
+  }
+}
