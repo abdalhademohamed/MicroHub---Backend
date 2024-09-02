@@ -20,22 +20,25 @@ export class CreateReservationDto {
   @IsNotEmpty()
   client_FullName: string;
 
-  @ApiProperty()
-  @IsNumber()
-  @IsNotEmpty()
-  day: number;
+  // @ApiProperty()
+  // @IsNumber()
+  // @IsNotEmpty()
+  // day: number;
+
+  // @ApiProperty()
+  // @IsNumber()
+  // @IsNotEmpty()
+  // month: number;
+
+  // @ApiProperty()
+  // @IsNumber()
+  // @IsNotEmpty()
+  // year: number;
 
   @ApiProperty()
-  @IsNumber()
+  @IsString()
   @IsNotEmpty()
-  month: number;
-
-  @ApiProperty()
-  @IsNumber()
-  @IsNotEmpty()
-  year: number;
-
-
+  dateOfBirth: string; // Format: YYYY-MM-DD
 
   
   @ApiProperty()
