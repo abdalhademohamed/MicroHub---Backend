@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Put } from '@nestjs/common';
 import { PostionService } from './postion.service';
 import { UpdatePostionDto } from './dto/update.postion.dto';
 import { PositionEntity } from './entities/postion.entity';
@@ -37,5 +37,25 @@ export class PostionController {
     return this.postionService.getAllPositions();
   }
 
+
+
+
+  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN)
+  @Put(':id')
+  async updatePosition(
+    @Param('id') id: string,
+    @Body() updatePositionDto: UpdatePostionDto,
+  ): Promise<PositionEntity> {
+    return this.postionService.updatePosition(id, updatePositionDto);
+  }
+
+
+  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN)
+  @Delete(':id')
+  async removePosition(@Param('id') id: string): Promise<void> {
+    return this.postionService.removePosition(id);
+  }
   
 }
