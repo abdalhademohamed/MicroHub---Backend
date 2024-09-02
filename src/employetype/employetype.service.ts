@@ -5,12 +5,17 @@ import { Repository } from 'typeorm';
 import { CreateEmployeeTypeDto } from './dto/create-employetype.dto';
 import { UpdateEmployeeDto } from '../employee/dto/update.employee.dto';
 import { UpdateEmployeeTypeDto } from './dto/update-employetype.dto';
+import { EmployeeEntity } from 'src/employee/entities/employee.entity';
 
 @Injectable()
 export class EmployetypeService {
   constructor(
     @InjectRepository(EmployeeTypeEntity)
     private readonly employeeTypeRepository: Repository<EmployeeTypeEntity>,
+
+    @InjectRepository(EmployeeEntity)
+    private readonly employeeRepository: Repository<EmployeeEntity>,
+
   ) {}
   async create(createEmployeeTypeDto: CreateEmployeeTypeDto): Promise<EmployeeTypeEntity> {
     const newEmployeeType = this.employeeTypeRepository.create(createEmployeeTypeDto);
@@ -34,9 +39,10 @@ export class EmployetypeService {
     return employeeType;
   }
 
-  async update(id: string, UpdateEmployeeTypeDto: UpdateEmployeeTypeDto): Promise<EmployeeTypeEntity> {
+  async update(id: string, updateEmployeeTypeDto: UpdateEmployeeTypeDto): Promise<EmployeeTypeEntity> {
     const employeeType = await this.findOne(id);
-    Object.assign(employeeType, UpdateEmployeeTypeDto);
+
+    Object.assign(employeeType, updateEmployeeTypeDto);
 
     try {
       return await this.employeeTypeRepository.save(employeeType);
@@ -46,7 +52,13 @@ export class EmployetypeService {
   }
 
   async remove(id: string): Promise<void> {
+    const employeeType = await this.findOne(id);
+  
+    // Update related employees to remove their reference to the employee type
+    await this.employeeRepository.update({ employeeType: employeeType }, { employeeType: null });
+  
     const result = await this.employeeTypeRepository.delete(id);
+  
     if (result.affected === 0) {
       throw new NotFoundException('Employee Type not found');
     }
