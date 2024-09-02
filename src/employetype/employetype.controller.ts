@@ -4,10 +4,10 @@ import { CreateEmployeeTypeDto } from './dto/create-employetype.dto';
 import { EmployeeTypeEntity } from './entities/employetype.entity';
 import { UpdateEmployeeTypeDto } from './dto/update-employetype.dto';
 import { ApiTags } from '@nestjs/swagger';
-import { AccessTokenGuard } from 'src/auth/guards/accessToken.guard';
-import { RolesGuard } from 'src/auth/guards/role.guards';
-import { Role } from 'src/user/utils/user.enum';
-import { Roles } from 'src/auth/Roles.decorator';
+import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
+import { RolesGuard } from '../auth/guards/role.guards';
+import { Role } from '../user/utils/user.enum';
+import { Roles } from '../auth/Roles.decorator';
 
 
 @ApiTags('employeetype')

@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import { CreateEmployeeTypeDto } from './dto/create-employetype.dto';
 import { UpdateEmployeeDto } from '../employee/dto/update.employee.dto';
 import { UpdateEmployeeTypeDto } from './dto/update-employetype.dto';
-import { EmployeeEntity } from 'src/employee/entities/employee.entity';
+import { EmployeeEntity } from '../employee/entities/employee.entity';
 
 @Injectable()
 export class EmployetypeService {

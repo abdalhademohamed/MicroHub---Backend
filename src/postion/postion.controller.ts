@@ -4,10 +4,10 @@ import { UpdatePostionDto } from './dto/update.postion.dto';
 import { PositionEntity } from './entities/postion.entity';
 import { CreatePositionDto } from './dto/create.postion.dto';
 import { ApiTags } from '@nestjs/swagger';
-import { AccessTokenGuard } from 'src/auth/guards/accessToken.guard';
-import { RolesGuard } from 'src/auth/guards/role.guards';
-import { Role } from 'src/user/utils/user.enum';
-import { Roles } from 'src/auth/Roles.decorator';
+import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
+import { RolesGuard } from '../auth/guards/role.guards';
+import { Role } from '../user/utils/user.enum';
+import { Roles } from '../auth/Roles.decorator';
 @ApiTags('postion')
 @Controller('postion')
 export class PostionController {

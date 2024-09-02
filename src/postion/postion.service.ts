@@ -4,7 +4,7 @@ import { PositionEntity } from './entities/postion.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreatePositionDto } from './dto/create.postion.dto';
-import { EmployeeEntity } from 'src/employee/entities/employee.entity';
+import { EmployeeEntity } from '../employee/entities/employee.entity';
 
 @Injectable()
 export class PostionService {
