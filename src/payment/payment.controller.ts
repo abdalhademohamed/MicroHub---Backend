@@ -1,9 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFile, UseInterceptors, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFile, UseInterceptors, Put, UseGuards } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { CreatePaymentDto } from './dto/create.payment.dto';
 import { UpdatePaymentDto } from './dto/update.payment.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PaymentEntity } from './entities/payment.entity';
+import { Roles } from '../auth/Roles.decorator';
+import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
+import { RolesGuard } from '../auth/guards/role.guards';
+import { Role } from '../user/utils/user.enum';
 
 @Controller('payment')
 export class PaymentController {
@@ -11,7 +15,8 @@ export class PaymentController {
 
 
 
-
+  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN)
   @UseInterceptors(FileInterceptor('image'))
   @Post()
   create(@Body() createPaymentDto: CreatePaymentDto,
@@ -22,17 +27,26 @@ export class PaymentController {
 
  
 
-
+  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN)
   @Get()
   async getAllPayments(): Promise<PaymentEntity[]> {
     return this.paymentService.getAllPayments();
   }
 
+
+
+  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN)
   @Get(':id')
   async getPaymentById(@Param('id') id: string): Promise<PaymentEntity> {
     return this.paymentService.getPaymentById(id);
   }
 
+
+
+  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN)
   @Put(':id')
   @UseInterceptors(FileInterceptor('image'))
   async updatePayment(
@@ -47,6 +61,10 @@ export class PaymentController {
     return this.paymentService.updatePayment(id, updatePaymentDto);
   }
 
+
+
+  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN)
   @Delete(':id')
   async removePayment(@Param('id') id: string): Promise<void> {
     return this.paymentService.removePayment(id);

@@ -4,8 +4,7 @@ import { UpdatePaymentDto } from "./dto/update.payment.dto";
 import { InjectRepository } from "@nestjs/typeorm";
 import { PaymentEntity } from "./entities/payment.entity";
 import { Repository } from "typeorm";
-import { CloudinaryService } from "src/cloudinary/cloudinary.service";
-import { create } from "domain";
+import { CloudinaryService } from "../cloudinary/cloudinary.service";
 
 @Injectable()
 export class PaymentService {
