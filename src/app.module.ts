@@ -28,6 +28,8 @@ import { RootoshEntity } from './rootosh/entities/rootosh.entity';
 import { EmployetypeModule } from './employetype/employetype.module';
 import { EmployeeTypeEntity } from './employetype/entities/employetype.entity';
 import { OfferEntity } from './offer/entities/offer.entity';
+import { PaymentModule } from './payment/payment.module';
+import { PaymentEntity } from './payment/entities/payment.entity';
 
 
 
@@ -59,7 +61,7 @@ import { OfferEntity } from './offer/entities/offer.entity';
       // entities: ["dist/**/*.entity.js"], 
       entities:[UserEntity,BranchEntity,CustomerEntity,EmployeeEntity,
         EmployeeTypeEntity,PositionEntity,ReservationEntity,ServiceEntity,RootoshEntity
-      ,OfferEntity],
+      ,OfferEntity,PaymentEntity],
       synchronize: true, // Set to false in production
       ssl: true, // Neon typically requires SSL connections
       extra: {
@@ -95,7 +97,8 @@ import { OfferEntity } from './offer/entities/offer.entity';
     PostionModule,
     CloudinaryModule,
     CustomerModule,
-    EmployetypeModule
+    EmployetypeModule,
+    PaymentModule
   ],
   controllers: [AppController],
   providers: [AppService,CloudinaryProvider],

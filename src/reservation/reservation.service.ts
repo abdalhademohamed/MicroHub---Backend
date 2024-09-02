@@ -60,8 +60,7 @@ export class ReservationService {
   async registerOrLookupCustomer(
     createCustomerDto: CreateCustomerDto
   ): Promise<CustomerEntity> {
-    const { country_Code, phoneNumber, fullName, day, month, year } =
-      createCustomerDto;
+    const { country_Code, phoneNumber, fullName, dateOfBirth } = createCustomerDto;
 
     // Check if customer exists by phone number
     let customer = await this.CustomerRepository.findOne({
@@ -75,10 +74,9 @@ export class ReservationService {
         country_Code,
         phoneNumber,
         fullName,
-        day,
-        month,
-        year,
+        dateOfBirth, // Include dateOfBirth if applicable
       });
+
       await this.CustomerRepository.save(customer);
     }
 
@@ -213,9 +211,11 @@ export class ReservationService {
       country_Code: createCustomerDto.country_Code,
       phone_Number: createCustomerDto.phoneNumber,
       client_FullName: createCustomerDto.fullName,
-      day: createCustomerDto.day,
-      month: createCustomerDto.month,
-      year: createCustomerDto.year,
+      // day: createCustomerDto.day,
+      // month: createCustomerDto.month,
+      // year: createCustomerDto.year,
+      dateOfBirth: createCustomerDto.dateOfBirth, // Unified date field
+
       start_Time: formattedStartTime,
       end_Time: formattedEndTime,
       reservationDay,
@@ -238,7 +238,7 @@ export class ReservationService {
   }
 
   async getAllReservations(getReservationsDto: GetReservationsDto): Promise<{
-    data: ReservationEntity[];
+    items: ReservationEntity[];
     total: number;
     page: number;
     limit: number;
@@ -263,10 +263,10 @@ export class ReservationService {
     // Apply pagination
     query.skip((page - 1) * limit).take(limit);
 
-    const [data, total] = await query.getManyAndCount();
+    const [items, total] = await query.getManyAndCount();
 
     return {
-      data,
+      items,
       total,
       page,
       limit,

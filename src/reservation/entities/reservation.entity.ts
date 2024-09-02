@@ -17,15 +17,19 @@ export class ReservationEntity {
   @Column()
   client_FullName: string; // Correct property name
 
-  @Column()
-  day: number; // User's birthday day
+  // @Column()
+  // day: number; // User's birthday day
 
-  @Column()
-  month: number; // User's birthday month
+  // @Column()
+  // month: number; // User's birthday month
 
-  @Column()
-  year: number; // User's birthday year
+  // @Column()
+  // year: number; // User's birthday year
 
+
+  @Column({ type: 'date' })
+  dateOfBirth: string; // Format: YYYY-MM-DD
+  
   @Column()
   reservationDay: number; // Day of reservation
   @Column()

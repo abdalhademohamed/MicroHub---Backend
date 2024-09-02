@@ -98,7 +98,7 @@ export class ReservationController {
   async getAllReservations(
     @Query() GetReservationsDto: GetReservationsDto,
   ): Promise<{
-    data: ReservationEntity[];
+    items: ReservationEntity[];
     total: number;
     page: number;
     limit: number;

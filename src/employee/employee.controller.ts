@@ -5,10 +5,10 @@ import { UpdateEmployeeDto } from './dto/update.employee.dto';
 import { EmployeeEntity } from './entities/employee.entity';
 import { ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Roles } from 'src/auth/Roles.decorator';
-import { Role } from 'src/user/utils/user.enum';
-import { AccessTokenGuard } from 'src/auth/guards/accessToken.guard';
-import { RolesGuard } from 'src/auth/guards/role.guards';
+import { Roles } from '../auth/Roles.decorator';
+import { Role } from '../user/utils/user.enum';
+import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
+import { RolesGuard } from '../auth/guards/role.guards';
 
 
 
@@ -69,16 +69,22 @@ export class EmployeeController {
     return await this.employeeService.getEmployeeById(id);
   }
 
-
-  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @UseGuards(AccessTokenGuard, RolesGuard)
   @Roles(Role.SUPERADMIN)
   @Put(':id')
+  @UseInterceptors(FileInterceptor('image')) // Use interceptor for file uploads
   async updateEmployee(
     @Param('id') id: string,
-    @Body() updateEmployeeDto: UpdateEmployeeDto
+    @Body() updateEmployeeDto: UpdateEmployeeDto,
+    @UploadedFile() image: Express.Multer.File, // If uploading a file
   ): Promise<EmployeeEntity> {
     try {
-      return await this.employeeService.updateEmployee(id, updateEmployeeDto);
+      // If there's a file, add it to the DTO or handle it separately
+      if (image) {
+        updateEmployeeDto.image = image.path; // Adjust based on how you handle file paths
+      }
+      
+      return await this.employeeService.updateEmployee(id, updateEmployeeDto,image);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw new NotFoundException(error.message);
@@ -87,7 +93,6 @@ export class EmployeeController {
       }
     }
   }
-
 
 
   @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first

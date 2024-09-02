@@ -16,15 +16,16 @@ export class CustomerEntity {
   @Column()
   fullName: string;
 
-  @Column()
-  day: number;
+  // @Column()
+  // day: number;
 
-  @Column()
-  month: number;
+  // @Column()
+  // month: number;
 
-  @Column()
-  year: number;
-
+  // @Column()
+  // year: number;
+  @Column({ type: 'date', nullable: true }) // Adjust the type and nullable flag as needed
+  dateOfBirth?: Date;
 
 
 

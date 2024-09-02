@@ -12,6 +12,6 @@ export class EmployeeTypeEntity {
   @Column({ type: 'varchar', length: 255 })
   typeArabic: string;
 
-  @OneToMany(() => EmployeeEntity, (EmployeeEntity) => EmployeeEntity.employeeType)
+  @OneToMany(() => EmployeeEntity, (EmployeeEntity) => EmployeeEntity.employeeType,{ cascade: true, onDelete: 'CASCADE', onUpdate: 'CASCADE' })
   employees: EmployeeEntity[];
 }

@@ -36,8 +36,8 @@ export class EmployeeEntity {
   image: string;  // Store the URL of the image uploaded to Cloudinary
 
 
-  @Column({ type: 'boolean', default: true })
-  available: string;  // Indicates if the employee is available or not
+  @Column({ default: true })
+  available: boolean;  // Indicates if the employee is available or not
   
   @ManyToOne(() => EmployeeTypeEntity, (employeeType) => employeeType.employees)
   employeeType: EmployeeTypeEntity;
