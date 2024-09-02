@@ -13,7 +13,6 @@ export class PositionEntity {
     type: 'enum',
     enum: Postion,
   })
-  role: Postion;
 
   @Column()
   positionInEnglish: string;
