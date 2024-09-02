@@ -4,8 +4,8 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateServiceDto } from './dto/create-service.dto';
-import { UpdateServiceDto } from './dto/update-service.dto';
+import { CreateServiceDto } from './dto/create.service.dto';
+import { UpdateServiceDto } from './dto/update.service.dto';
 import { ServiceEntity } from './entities/service.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -95,29 +95,37 @@ export class ServiceService {
     }
   }
 
- 
-  async updateService(id: string, updateServiceDto: CreateServiceDto): Promise<ServiceEntity> {
-    
-    
+  async updateService(id: string, updateServiceDto: CreateServiceDto, image?: Express.Multer.File): Promise<ServiceEntity> {
+    // Find the existing service or throw a not found exception
+    const service = await this.ServiceRepository.findOne({where:{id}});
 
-    try {
-      // Attempt to preload the existing service with the given ID and updated DTO data
-      const service = await this.ServiceRepository.preload({
-        id,
-        ...updateServiceDto,
-      });
-      // If no service is found for the given ID, throw a NotFoundException
-      if (!service) {
-        // Status Code: 404 Not Found
-        throw new NotFoundException(`Service with ID ${id} not found.`);
+    if (!service) {
+      throw new NotFoundException(`Service with ID ${id} not found.`);
+    }
+
+    // Update properties only if they are provided in the DTO
+    service.arabic_Name = updateServiceDto.arabic_Name ?? service.arabic_Name;
+    service.english_Name = updateServiceDto.english_Name ?? service.english_Name;
+    service.price = updateServiceDto.price ?? service.price;
+    service.duration_Mins = updateServiceDto.duration_Mins ?? service.duration_Mins;
+    service.rootosh_Number = updateServiceDto.rootosh_Number ?? service.rootosh_Number;
+    service.months_To_Expire = updateServiceDto.months_To_Expire ?? service.months_To_Expire;
+
+    // Handle image upload if a file is provided
+    if (image) {
+      try {
+        const uploadedImage = await this.cloudinaryService.uploadImage(image, 'services');
+        service.imageUrl = uploadedImage.url;
+      } catch (error) {
+        throw new InternalServerErrorException('Failed to upload image');
       }
+    }
 
-      // Save the updated service entity to the database
-      // Status Code: 200 OK
+    // Save the updated service entity to the database
+    try {
       return await this.ServiceRepository.save(service);
     } catch (error) {
-      // Handle unexpected errors and throw an InternalServerErrorException
-      // Status Code: 500 Internal Server Error
+      console.error('Error updating service:', error);
       throw new InternalServerErrorException('An unexpected error occurred while updating the service.');
     }
   }

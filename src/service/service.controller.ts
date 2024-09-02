@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Put, HttpCode, HttpStatus, UploadedFile, UseInterceptors, UseGuards } from '@nestjs/common';
 import { ServiceService } from './service.service';
-import { CreateServiceDto } from './dto/create-service.dto';
-import { UpdateServiceDto } from './dto/update-service.dto';
+import { CreateServiceDto } from './dto/create.service.dto';
+import { UpdateServiceDto } from './dto/update.service.dto';
 import { ServiceEntity } from './entities/service.entity';
 import { PaginateResultDto } from '../branch/dto/paginate.result.dto';
 import { ApiTags } from '@nestjs/swagger';
@@ -49,14 +49,16 @@ export class ServiceController {
   @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
   @Put(':id')
+  @UseInterceptors(FileInterceptor('image')) // Use interceptor for file uploads
+
   async updateService(
     @Param('id') id: string,
-    @Body() updateServiceDto: CreateServiceDto
+    @Body() updateServiceDto: CreateServiceDto,
+    @UploadedFile() image: Express.Multer.File, // If uploading a file
+
   ): Promise<ServiceEntity> {
-    return this.serviceService.updateService(id, updateServiceDto);
+    return this.serviceService.updateService(id, updateServiceDto,image);
   }
-
-
 
 
 
