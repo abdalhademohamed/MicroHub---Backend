@@ -178,94 +178,73 @@ export class EmployeeService {
     return employee;
   }
 
-  async updateEmployee(
-    id: string,
-    updateEmployeeDto: UpdateEmployeeDto
-  ): Promise<EmployeeEntity> {
-    const {
-      english_Name,
-      arabic_Name,
-      branch: branchId,
-      position: positionId,
-      employeeType: employeeTypeId,
-      workingHours,
-      email,
-      countryCode,
-      phoneNumber,
-      password,
-      image,
-    } = updateEmployeeDto;
-
-    // Find existing employee or throw an error if not found
+  
+  async updateEmployee(id: string, updateEmployeeDto: UpdateEmployeeDto, image: Express.Multer.File): Promise<EmployeeEntity> {
+    // Find the employee or throw a not found exception
     const employee = await this.employeeRepository.findOne({
       where: { id },
-      relations: ["branch", "position", "employeeType"],
+      relations: ['branch', 'position', 'employeeType'],
     });
 
     if (!employee) {
-      throw new NotFoundException(`Employee with ID ${id} not found`);
+      throw new NotFoundException('Employee not found');
     }
 
-    // Update basic fields if provided
-    if (english_Name !== undefined) employee.english_Name = english_Name;
-    if (arabic_Name !== undefined) employee.arabic_Name = arabic_Name;
-    if (workingHours !== undefined) employee.workingHours = workingHours;
-    if (email !== undefined) employee.email = email;
-    if (countryCode !== undefined) employee.countryCode = countryCode;
-    if (phoneNumber !== undefined) employee.phoneNumber = phoneNumber;
+    // Update properties if provided
+    employee.english_Name = updateEmployeeDto.english_Name ?? employee.english_Name;
+    employee.arabic_Name = updateEmployeeDto.arabic_Name ?? employee.arabic_Name;
+    employee.workingHours = updateEmployeeDto.workingHours ?? employee.workingHours;
+    employee.email = updateEmployeeDto.email ?? employee.email;
+    employee.countryCode = updateEmployeeDto.countryCode ?? employee.countryCode;
+    employee.phoneNumber = updateEmployeeDto.phoneNumber ?? employee.phoneNumber;
+    employee.password = updateEmployeeDto.password ?? employee.password;
 
-    // Hash the password if it's updated
-    if (password !== undefined) {
-      const salt = await bcrypt.genSalt();
-      employee.password = await bcrypt.hash(password, salt);
+    if (image) {
+      const folderName = 'employee'; // Dynamic name if needed
+      try {
+        const result = await this.CloudinaryService.uploadImage(image, folderName);
+        employee.image = result.url;
+      } catch (error) {
+        throw new InternalServerErrorException('Failed to upload image');
+      }
     }
-    if (image !== undefined) employee.image = image;
 
-    // Update branch if a new one is provided
-    if (branchId) {
-      const branch = await this.branchRepository.findOne({
-        where: { id: branchId },
-      });
+    employee.available = updateEmployeeDto.available !== undefined ? updateEmployeeDto.available : employee.available;
+
+    // Handle relations separately if provided
+    if (updateEmployeeDto.branch) {
+      const branch = await this.branchRepository.findOne({ where: { id: updateEmployeeDto.branch } });
       if (!branch) {
-        throw new NotFoundException(`Branch with ID ${branchId} not found`);
+        throw new NotFoundException('Branch not found');
       }
       employee.branch = branch;
     }
 
-    // Update position if a new one is provided
-    if (positionId) {
-      const position = await this.positionRepository.findOne({
-        where: { id: positionId },
-      });
+    if (updateEmployeeDto.position) {
+      const position = await this.positionRepository.findOne({ where: { id: updateEmployeeDto.position } });
       if (!position) {
-        throw new NotFoundException(`Position with ID ${positionId} not found`);
+        throw new NotFoundException('Position not found');
       }
       employee.position = position;
     }
 
-    // Update employee type if a new one is provided
-    if (employeeTypeId) {
-      const employeeType = await this.EmployeeTypeRepository.findOne({
-        where: { id: employeeTypeId },
-      });
+    if (updateEmployeeDto.employeeType) {
+      const employeeType = await this.EmployeeTypeRepository.findOne({ where: { id: updateEmployeeDto.employeeType } });
       if (!employeeType) {
-        throw new NotFoundException(
-          `Employee Type with ID ${employeeTypeId} not found`
-        );
+        throw new NotFoundException('EmployeeType not found');
       }
       employee.employeeType = employeeType;
     }
 
+    // Save the updated employee
     try {
-      // Save the updated employee back to the database
       return await this.employeeRepository.save(employee);
     } catch (error) {
-      throw new InternalServerErrorException(
-        "Failed to update employee",
-        error.stack
-      );
+      console.error('Error updating employee:', error);
+      throw new InternalServerErrorException('Failed to update employee');
     }
   }
+
   async deleteEmployee(id: string): Promise<void> {
     const result = await this.employeeRepository.delete(id);
 
