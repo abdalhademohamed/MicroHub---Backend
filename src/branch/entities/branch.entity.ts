@@ -2,6 +2,7 @@ import { OfferEntity } from '../../offer/entities/offer.entity';
 import { EmployeeEntity } from '../../employee/entities/employee.entity';
 import { ReservationEntity } from '../../reservation/entities/reservation.entity';
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToMany } from 'typeorm';
+import { WorkingBranchEntity } from '../../working-branch/entities/working.branch.entity';
 
 @Entity()
 export class BranchEntity {
@@ -17,6 +18,9 @@ export class BranchEntity {
   @Column()
   image: string;  // Store the URL of the image uploaded to Cloudinary
 
+
+  // @Column()
+  // periods: string[];  // List of time periods like '09:00', '10:00'
   @OneToMany(() => ReservationEntity, (ReservationEntity) => ReservationEntity.branch,{ cascade: ['insert', 'update'], onDelete: 'CASCADE' })  // Define the relationship
   reservations: ReservationEntity[];
 
@@ -26,4 +30,7 @@ export class BranchEntity {
 
   @ManyToMany(() => OfferEntity, (OfferEntity) => OfferEntity.branches)
   offers: OfferEntity[];
+
+  @OneToMany(() => WorkingBranchEntity, (WorkingBranchEntity) => WorkingBranchEntity.branch, { cascade: true })
+  workingbranch: WorkingBranchEntity[];
 }

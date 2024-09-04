@@ -30,6 +30,8 @@ import { EmployeeTypeEntity } from './employetype/entities/employetype.entity';
 import { OfferEntity } from './offer/entities/offer.entity';
 import { PaymentModule } from './payment/payment.module';
 import { PaymentEntity } from './payment/entities/payment.entity';
+import { WorkingBranchModule } from './working-branch/working.branch.module';
+import { WorkingBranchEntity } from './working-branch/entities/working.branch.entity';
 
 
 
@@ -61,7 +63,7 @@ import { PaymentEntity } from './payment/entities/payment.entity';
       // entities: ["dist/**/*.entity.js"], 
       entities:[UserEntity,BranchEntity,CustomerEntity,EmployeeEntity,
         EmployeeTypeEntity,PositionEntity,ReservationEntity,ServiceEntity,RootoshEntity
-      ,OfferEntity,PaymentEntity],
+      ,OfferEntity,PaymentEntity,WorkingBranchEntity],
       synchronize: true, // Set to false in production
       ssl: true, // Neon typically requires SSL connections
       extra: {
@@ -98,7 +100,8 @@ import { PaymentEntity } from './payment/entities/payment.entity';
     CloudinaryModule,
     CustomerModule,
     EmployetypeModule,
-    PaymentModule
+    PaymentModule,
+    WorkingBranchModule
   ],
   controllers: [AppController],
   providers: [AppService,CloudinaryProvider],

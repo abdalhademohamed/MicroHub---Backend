@@ -5,14 +5,15 @@ import { Postion } from '../utils/postion.enum';
 
 
 @Entity()
-export class PositionEntity {
+export class PositionEntity { 
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({
-    type: 'enum',
-    enum: Postion,
-  })
+  // @Column({
+  //   type: 'enum',
+  //   enum: Postion,
+  // })
+  // postion:Postion
 
   @Column()
   positionInEnglish: string;
