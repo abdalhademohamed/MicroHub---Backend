@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { CreateBranchDto } from './dto/create.branch.dto';
 import { UpdateBranchDto } from './dto/update.branch.dto';
@@ -12,6 +13,7 @@ import { PaginateResultDto } from './dto/paginate.result.dto';
 import { create } from 'domain';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { I18nService } from 'nestjs-i18n';
+import { CreateBranchWorkingHoursDto } from './dto/create.branch.workingHours';
 
 @Injectable()
 export class BranchService {
@@ -56,6 +58,39 @@ export class BranchService {
       );
     }
   }
+
+
+
+
+  // async createWorkingHours(createBranchWorkingHoursDto: CreateBranchWorkingHoursDto): Promise<void> {
+  //   const { branchId, dayOfWeek, workingHours } = createBranchWorkingHoursDto;
+
+  //   // Find the branch by ID
+  //   const branch = await this.BranchRepository.findOne({ where: { id: branchId }});
+  //   if (!branch) {
+  //     throw new NotFoundException(`Branch with ID ${branchId} not found`);
+  //   }
+
+  //   // Check if there's already a schedule for the given day
+  //   // let schedule = branch.schedules.find(s => s.dayOfWeek === dayOfWeek);
+
+  //   // if (schedule) {
+  //   //   // Update existing schedule
+  //   //   schedule.workingHours = workingHours;
+  //   // } else {
+  //     // Create a new schedule
+  //    const schedule = this.BranchRepository.create({
+  //       dayOfWeek,
+  //       workingHours,
+  //       branch,
+  //     });
+  //     branch.schedules.push(schedule);
+  //   // }
+
+  //   await this.branchScheduleRepository.save(schedule);
+  //   console.log(`Created/Updated working hours for Branch ID: ${branchId} on ${dayOfWeek}`);
+  // }
+
   async getBranches(
     page: number,
     limit: number,
@@ -76,6 +111,26 @@ export class BranchService {
     const result = await this.CloudinaryService.uploadImage(file,folderName);
     return result.url;  // Return the URL of the uploaded image
   }
+  async deleteBranch(branchId: string): Promise<void> {
+    try {
+      // Find the branch by ID
+      const branch = await this.BranchRepository.findOne({ where: { id: branchId } });
 
+      if (!branch) {
+        throw new NotFoundException(`Branch with ID ${branchId} not found.`);
+      }
+
+      // Delete the branch
+      await this.BranchRepository.delete(branchId);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException(
+        'An unexpected error occurred while deleting the branch.',
+      );
+    }
+  }
   
 }
