@@ -60,6 +60,10 @@ export class BranchController {
   }
   
 
-
- 
+  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN,Role.BRANCHMANAGER)
+  @Delete(':branchId')
+  async deleteBranch(@Param('branchId') branchId: string): Promise<void> {
+    await this.branchService.deleteBranch(branchId);
+  }
 }
