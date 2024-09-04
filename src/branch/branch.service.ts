@@ -13,7 +13,6 @@ import { PaginateResultDto } from './dto/paginate.result.dto';
 import { create } from 'domain';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { I18nService } from 'nestjs-i18n';
-import { CreateBranchWorkingHoursDto } from './dto/create.branch.workingHours';
 
 @Injectable()
 export class BranchService {
@@ -21,7 +20,6 @@ export class BranchService {
     @InjectRepository(BranchEntity)
     private readonly BranchRepository: Repository<BranchEntity>,
     private readonly CloudinaryService: CloudinaryService,
-    private readonly i18nService : I18nService
 
 
   ) {}
