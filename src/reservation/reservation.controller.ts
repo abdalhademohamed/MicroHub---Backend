@@ -111,6 +111,17 @@ export class ReservationController {
   }
 
 
+  @Get('suggest/:branchId')
+  @ApiOperation({ summary: 'Suggest available reservation times' })
+  @ApiResponse({ status: 200, description: 'Returns a list of suggested reservation times.' })
+  async suggestReservationTimes(
+    @Param('branchId') branchId: string,
+    @Query('servicesIds') servicesIds: string // Expecting a comma-separated string
+  ) {
+    const serviceIds = servicesIds ? servicesIds.split(',') : []; // Split by comma to create an array
+    return this.reservationService.suggestReservationTimes(branchId, serviceIds);
+  }
+
   @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
   // Update a reservation by ID

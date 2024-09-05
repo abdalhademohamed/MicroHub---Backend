@@ -231,6 +231,88 @@ export class ReservationService {
     return { reservation, receipt };
   }
   
+  async suggestReservationTimes(
+    branchId: string,
+    serviceIds: string[]
+  ): Promise<any[]> {
+    const branch = await this.BranchRepository.findOne({
+      where: { id: branchId },
+      relations: ['reservations', 'employees', 'employees.position'],
+    });
+  
+    if (!branch) {
+      throw new NotFoundException('Branch not found');
+    }
+  
+    // Ensure serviceIds is an array and is not empty
+    if (!Array.isArray(serviceIds) || serviceIds.length === 0) {
+      throw new BadRequestException('Invalid or missing service IDs');
+    }
+  
+    const services = await this.ServiceRepository.findByIds(serviceIds);
+  
+    // Ensure services is an array and contains elements
+    if (!services || services.length === 0) {
+      throw new NotFoundException('No services found for the provided IDs');
+    }
+  
+    const totalDuration = this.calculateTotalDuration(services);
+  
+    // Use today's date for the start
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0); // Set to start of the day
+  
+    // Get all suggested available slots
+    const availableSlots = this.findSuggestedAvailableSlots(branch.reservations, totalDuration, startDate);
+  
+    if (availableSlots.length === 0) {
+      throw new BadRequestException('No available slots');
+    }
+  
+    return availableSlots;
+  }
+  
+  private findSuggestedAvailableSlots(
+    reservations: ReservationEntity[],
+    totalDuration: number,
+    startDate: Date
+  ): { startTime: Date; endTime: Date }[] {
+    // Sort reservations by start time
+    reservations.sort((a, b) => a.start_Time.getTime() - b.start_Time.getTime());
+  
+    const slots: { startTime: Date; endTime: Date }[] = [];
+    let lastEndTime = startDate; // Start checking from today
+  
+    for (const reservation of reservations) {
+      const startTime = reservation.start_Time;
+      const endTime = reservation.end_Time;
+  
+      // Calculate the duration of the gap between reservations
+      const gapDuration = (startTime.getTime() - lastEndTime.getTime()) / (1000 * 60);
+  
+      // If the gap is large enough to fit the required duration, suggest this slot
+      if (gapDuration >= totalDuration) {
+        slots.push({
+          startTime: lastEndTime,
+          endTime: new Date(lastEndTime.getTime() + totalDuration * 60 * 1000),
+        });
+      }
+  
+      // Move the last end time to the end of the current reservation
+      lastEndTime = endTime;
+    }
+  
+    // Add the slot after the last reservation if it's today or in the future
+    if (lastEndTime >= startDate) {
+      slots.push({
+        startTime: lastEndTime,
+        endTime: new Date(lastEndTime.getTime() + totalDuration * 60 * 1000),
+      });
+    }
+  
+    // Filter slots to include only those starting today or in the future
+    return slots.filter(slot => slot.startTime >= startDate);
+  }
   
   async getAllReservations(
     getReservationsDto: GetReservationsDto,
