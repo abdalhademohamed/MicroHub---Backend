@@ -90,38 +90,38 @@ export class ReservationService {
     );
   }
 
-  private findAvailableSlot(
-    reservations: ReservationEntity[],
-    totalDuration: number
-  ): { startTime: Date; endTime: Date } | null {
-    reservations.sort(
-      (a, b) => a.start_Time.getTime() - b.start_Time.getTime()
-    );
+  // private findAvailableSlot(
+  //   reservations: ReservationEntity[],
+  //   totalDuration: number
+  // ): { startTime: Date; endTime: Date } | null {
+  //   reservations.sort(
+  //     (a, b) => a.start_Time.getTime() - b.start_Time.getTime()
+  //   );
 
-    let lastEndTime = new Date(); // Starting point for finding gaps
+  //   let lastEndTime = new Date(); // Starting point for finding gaps
 
-    for (const reservation of reservations) {
-      const startTime = reservation.start_Time;
-      const endTime = reservation.end_Time;
+  //   for (const reservation of reservations) {
+  //     const startTime = reservation.start_Time;
+  //     const endTime = reservation.end_Time;
 
-      const gapDuration =
-        (startTime.getTime() - lastEndTime.getTime()) / (1000 * 60);
+  //     const gapDuration =
+  //       (startTime.getTime() - lastEndTime.getTime()) / (1000 * 60);
 
-      if (gapDuration >= totalDuration) {
-        return {
-          startTime: lastEndTime,
-          endTime: new Date(lastEndTime.getTime() + totalDuration * 60 * 1000),
-        };
-      }
+  //     if (gapDuration >= totalDuration) {
+  //       return {
+  //         startTime: lastEndTime,
+  //         endTime: new Date(lastEndTime.getTime() + totalDuration * 60 * 1000),
+  //       };
+  //     }
 
-      lastEndTime = endTime;
-    }
+  //     lastEndTime = endTime;
+  //   }
 
-    return {
-      startTime: lastEndTime,
-      endTime: new Date(lastEndTime.getTime() + totalDuration * 60 * 1000),
-    };
-  }
+  //   return {
+  //     startTime: lastEndTime,
+  //     endTime: new Date(lastEndTime.getTime() + totalDuration * 60 * 1000),
+  //   };
+  // }
 
   async createReservation(
     branchId: string,
@@ -169,29 +169,33 @@ export class ReservationService {
           "The custom schedule conflicts with an existing reservation."
         );
       }
-    } else {
-      // Automatically find the first available slot if no custom times are provided
-      const availableSlot = this.findAvailableSlot(
-        branch.reservations,
-        totalDuration
-      );
-  
-      if (!availableSlot) {
-        throw new BadRequestException("No available slots");
-      }
-  
-      startTime = availableSlot.startTime;
-      endTime = availableSlot.endTime;
-  
-      // Ensure automatic slots are not in the past
-      const now = new Date();
-      now.setHours(0, 0, 0, 0); // Reset time for comparison
-      if (startTime < now) {
-        // Adjust start time to the next available day if it falls in the past
-        startTime = new Date(now.getTime() + totalDuration * 60 * 1000);
-        endTime = new Date(startTime.getTime() + totalDuration * 60 * 1000);
-      }
+    }else{
+       // If no custom times are provided, throw an exception
+      throw new BadRequestException("Custom start and end times are required.");
     }
+    //  else {
+    //   // Automatically find the first available slot if no custom times are provided
+    //   const availableSlot = this.findAvailableSlot(
+    //     branch.reservations,
+    //     totalDuration
+    //   );
+  
+    //   if (!availableSlot) {
+    //     throw new BadRequestException("No available slots");
+    //   }
+  
+    //   startTime = availableSlot.startTime;
+    //   endTime = availableSlot.endTime;
+  
+    //   // Ensure automatic slots are not in the past
+    //   const now = new Date();
+    //   now.setHours(0, 0, 0, 0); // Reset time for comparison
+    //   if (startTime < now) {
+    //     // Adjust start time to the next available day if it falls in the past
+    //     startTime = new Date(now.getTime() + totalDuration * 60 * 1000);
+    //     endTime = new Date(startTime.getTime() + totalDuration * 60 * 1000);
+    //   }
+    // }
   
     // Format start and end times
     const formattedStartTime = format(startTime, "yyyy-MM-dd HH:mm");
