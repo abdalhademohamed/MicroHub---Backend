@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsNumber, IsPositive } from 'class-validator';
+import { IsOptional, IsNumber, IsPositive, IsString } from 'class-validator';
 
 export class GetReservationsDto {
   @ApiProperty()
@@ -24,5 +24,9 @@ export class GetReservationsDto {
   @ApiProperty()
   @IsOptional()
   limit?: number;
+
+  @IsOptional()
+  @IsString()
+  branchId?: string; // Optional filter for branchId
   
 }
