@@ -133,122 +133,120 @@ export class ReservationService {
       where: { id: branchId },
       relations: ["reservations", "employees", "employees.position"],
     });
-
+  
     if (!branch) {
       throw new NotFoundException("Branch not found");
     }
-
+  
     const services = await this.ServiceRepository.findByIds(serviceIds);
     const totalDuration = this.calculateTotalDuration(services);
-
-    const availableSlot = this.findAvailableSlot(
-      branch.reservations,
-      totalDuration
-    );
-
-    if (!availableSlot) {
-      throw new BadRequestException("No available slots");
-    }
+  
     let startTime: Date;
     let endTime: Date;
+  
     // Check for custom start and end times
     if (createCustomerDto.customStartTime && createCustomerDto.customEndTime) {
       startTime = new Date(createCustomerDto.customStartTime);
       endTime = new Date(createCustomerDto.customEndTime);
-
+  
+      // Ensure custom times are today or in the future
+      const now = new Date();
+      now.setHours(0, 0, 0, 0); // Reset time for comparison
+      if (startTime < now) {
+        throw new BadRequestException("Reservations can only be made for today or future dates.");
+      }
+  
       // Validate that the custom times are not conflicting with existing reservations
       const conflictingReservation = branch.reservations.find(
         (reservation) =>
-          (startTime >= reservation.start_Time &&
-            startTime < reservation.end_Time) ||
-          (endTime > reservation.start_Time && endTime <= reservation.end_Time)
+          (startTime >= reservation.start_Time && startTime < reservation.end_Time) ||
+          (endTime > reservation.start_Time && endTime <= reservation.end_Time) ||
+          (startTime < reservation.start_Time && endTime > reservation.end_Time)
       );
-
+  
       if (conflictingReservation) {
         throw new BadRequestException(
           "The custom schedule conflicts with an existing reservation."
         );
       }
     } else {
-      // Find the first available slot if no custom times are provided
+      // Automatically find the first available slot if no custom times are provided
       const availableSlot = this.findAvailableSlot(
         branch.reservations,
         totalDuration
       );
-
+  
       if (!availableSlot) {
         throw new BadRequestException("No available slots");
       }
-
+  
       startTime = availableSlot.startTime;
       endTime = availableSlot.endTime;
+  
+      // Ensure automatic slots are not in the past
+      const now = new Date();
+      now.setHours(0, 0, 0, 0); // Reset time for comparison
+      if (startTime < now) {
+        // Adjust start time to the next available day if it falls in the past
+        startTime = new Date(now.getTime() + totalDuration * 60 * 1000);
+        endTime = new Date(startTime.getTime() + totalDuration * 60 * 1000);
+      }
     }
-    const reservationDay = startTime.getDate();
-    const reservationMonth = startTime.getMonth() + 1; // Months are 0-indexed
-    const reservationYear = startTime.getFullYear();
-
-    // Format start time
-    // Assign the image URL to the DTO
+  
+    // Format start and end times
     const formattedStartTime = format(startTime, "yyyy-MM-dd HH:mm");
     const formattedEndTime = format(endTime, "yyyy-MM-dd HH:mm");
-
-    // const formattedStartTime = format(
-    //   new Date(availableSlot.startTime),
-    //   "yyyy-MM-dd HH:mm"
-    // );
-    // const formattedEndTime = format(
-    //   new Date(availableSlot.endTime),
-    //   "yyyy-MM-dd HH:mm"
-    // );
-    // Create the reservation with the suggested timing
+  
+    // Ensure image is provided
     if (!image) {
       throw new BadRequestException("Photo is required");
     }
+  
+    // Upload image
     const folderName = "reservation"; // or any other dynamic name based on context
     const result = await this.CloudinaryService.uploadImage(image, folderName);
-
+  
+    // Create and save reservation
     const reservation = this.ReservationRepository.create({
       country_Code: createCustomerDto.country_Code,
       phone_Number: createCustomerDto.phoneNumber,
       client_FullName: createCustomerDto.fullName,
-      // day: createCustomerDto.day,
-      // month: createCustomerDto.month,
-      // year: createCustomerDto.year,
       dateOfBirth: createCustomerDto.dateOfBirth, // Unified date field
-
+  
       start_Time: formattedStartTime,
       end_Time: formattedEndTime,
-      reservationDay,
-      reservationMonth,
-      reservationYear,
+      reservationDay: startTime.getDate(),
+      reservationMonth: startTime.getMonth() + 1, // Months are 0-indexed
+      reservationYear: startTime.getFullYear(),
       branch,
       services,
       deposit_Content: result.url,
     });
-
-    // const reservation = new ReservationEntity();
-    // reservation.start_Time = availableSlot.startTime;
-    // reservation.end_Time = availableSlot.endTime;
-    // reservation.branch = branch;
+  
     await this.ReservationRepository.save(reservation);
-
-    const receipt = `Receipt:\nCustomer: ${createCustomerDto.fullName}\nDate: ${availableSlot.startTime.toDateString()}\nStart Time: ${availableSlot.startTime.toTimeString().slice(0, 5)}\nEnd Time: ${availableSlot.endTime.toTimeString().slice(0, 5)}\nTotal Duration: ${totalDuration} minutes\n`;
-
+  
+    // Generate receipt
+    const receipt = `Receipt:\nCustomer: ${createCustomerDto.fullName}\nDate: ${startTime.toDateString()}\nStart Time: ${format(startTime, "HH:mm")}\nEnd Time: ${format(endTime, "HH:mm")}\nTotal Duration: ${totalDuration} minutes\n`;
+  
     return { reservation, receipt };
   }
-
-  async getAllReservations(getReservationsDto: GetReservationsDto): Promise<{
+  
+  
+  async getAllReservations(
+    getReservationsDto: GetReservationsDto,
+    branchId?: string
+  ): Promise<{
     items: ReservationEntity[];
     total: number;
     page: number;
     limit: number;
   }> {
     const { day, month, year, page = 1, limit = 10 } = getReservationsDto;
-
+  
     const query = this.ReservationRepository.createQueryBuilder("reservation")
       .leftJoinAndSelect("reservation.branch", "branch")
       .leftJoinAndSelect("reservation.services", "services");
-
+  
     // Apply filters
     if (day) {
       query.andWhere("reservation.day = :day", { day });
@@ -259,12 +257,17 @@ export class ReservationService {
     if (year) {
       query.andWhere("reservation.year = :year", { year });
     }
-
+  
+    // Optional branchId filter
+    if (branchId) {
+      query.andWhere("branch.id = :branchId", { branchId });
+    }
+  
     // Apply pagination
     query.skip((page - 1) * limit).take(limit);
-
+  
     const [items, total] = await query.getManyAndCount();
-
+  
     return {
       items,
       total,
@@ -272,6 +275,7 @@ export class ReservationService {
       limit,
     };
   }
+  
 
   async updateReservation(
     id: string,

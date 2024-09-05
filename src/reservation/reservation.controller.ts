@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseIntercepto
 import { ReservationService } from './reservation.service';
 import { CreateReservationDto } from './dto/create.reservation.dto';
 import { UpdateReservationDto } from './dto/update.reservation.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ReservationEntity } from './entities/reservation.entity';
 import { GetReservationsDto } from './dto/get.reservation.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -95,15 +95,19 @@ export class ReservationController {
   @Roles(Role.SUPERADMIN)
   // Get all reservations with pagination and filtering
   @Get()
+  @ApiOperation({ summary: 'Retrieve all reservations with optional filters' })
+  @ApiResponse({ status: 200, description: 'List of reservations', type: [ReservationEntity] })
+  @ApiResponse({ status: 404, description: 'No reservations found' })
   async getAllReservations(
-    @Query() GetReservationsDto: GetReservationsDto,
+    @Query() getReservationsDto: GetReservationsDto,
   ): Promise<{
     items: ReservationEntity[];
     total: number;
     page: number;
     limit: number;
   }> {
-    return this.reservationService.getAllReservations(GetReservationsDto);
+    const { branchId, ...filterDto } = getReservationsDto;
+    return this.reservationService.getAllReservations(filterDto, branchId);
   }
 
 
