@@ -60,4 +60,31 @@ export class WorkingBranchService {
         // Return the saved WorkingBranchEntity, which includes the branch details
         return savedWorkingBranch;
     }
+
+
+ // Get all working branches
+ async findAll(): Promise<WorkingBranchEntity[]> {
+    return this.WorkingBranchsRepository.find({ relations: ['branch'] });
+  }
+
+  // Get a specific working branch by ID
+  async findOne(id: string): Promise<WorkingBranchEntity> {
+    const workingBranch = await this.WorkingBranchsRepository.findOne({ where: { id }, relations: ['branch'] });
+    if (!workingBranch) {
+      throw new NotFoundException(`Working branch with ID ${id} not found`);
+    }
+    return workingBranch;
+  }
+
+  // Update a working branch by ID
+  async update(id: string, updateWorkingBranchDto: UpdateWorkingBranchDto): Promise<WorkingBranchEntity> {
+    const workingBranch = await this.findOne(id);
+    if (!workingBranch) {
+      throw new NotFoundException(`Working branch with ID ${id} not found`);
+    }
+    
+    Object.assign(workingBranch, updateWorkingBranchDto);
+    return this.WorkingBranchsRepository.save(workingBranch);
+  }
+
   }
