@@ -11,7 +11,7 @@ import { Role } from '../user/utils/user.enum';
 import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
-import { ReservationEntity } from 'src/reservation/entities/reservation.entity';
+import { ReservationEntity } from '../reservation/entities/reservation.entity';
 
 
 @ApiTags('branch')

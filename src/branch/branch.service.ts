@@ -14,8 +14,8 @@ import { PaginateResultDto } from './dto/paginate.result.dto';
 import { create } from 'domain';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { I18nService } from 'nestjs-i18n';
-import { ReservationEntity } from 'src/reservation/entities/reservation.entity';
-import { WorkingBranchEntity } from 'src/working-branch/entities/working.branch.entity';
+import { ReservationEntity } from '../reservation/entities/reservation.entity';
+import { WorkingBranchEntity } from '../working-branch/entities/working.branch.entity';
 import { WeekDays } from './utils/days.enum';
 
 @Injectable()
