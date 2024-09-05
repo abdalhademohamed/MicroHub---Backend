@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   InternalServerErrorException,
@@ -13,6 +14,9 @@ import { PaginateResultDto } from './dto/paginate.result.dto';
 import { create } from 'domain';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { I18nService } from 'nestjs-i18n';
+import { ReservationEntity } from '../reservation/entities/reservation.entity';
+import { WorkingBranchEntity } from '../working-branch/entities/working.branch.entity';
+import { WeekDays } from './utils/days.enum';
 
 @Injectable()
 export class BranchService {
@@ -20,6 +24,10 @@ export class BranchService {
     @InjectRepository(BranchEntity)
     private readonly BranchRepository: Repository<BranchEntity>,
     private readonly CloudinaryService: CloudinaryService,
+    @InjectRepository(ReservationEntity)
+    private readonly ReservationRepository: Repository<ReservationEntity>,
+    @InjectRepository(WorkingBranchEntity)
+    private readonly WorkingBranchRepository: Repository<WorkingBranchEntity>,
 
 
   ) {}
@@ -103,6 +111,76 @@ export class BranchService {
       total,
       currentPage: page,
       totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async getBranchCalendar(
+    branchId: string,
+    dayOfWeek: string, // String representation of the day of the week
+    date: string, // Date in string format (e.g., '2024-09-05')
+  ): Promise<{
+    branch: {
+      id: string;
+      name: string;
+      location: string;
+      image: string;
+    };
+    workingHours: string[];
+    reservations: ReservationEntity[];
+  }> {
+    // Fetch the branch entity to ensure it exists
+    const branch = await this.BranchRepository.findOne({
+      where: { id: branchId },
+    });
+  
+    if (!branch) {
+      throw new NotFoundException('Branch not found');
+    }
+  
+    // Convert dayOfWeek string to WeekDays enum
+    const weekDayEnum = WeekDays[dayOfWeek as keyof typeof WeekDays];
+  
+    if (!weekDayEnum) {
+      throw new BadRequestException('Invalid day of the week');
+    }
+  
+    // Find the working branch entity for the given day
+    const workingBranch = await this.WorkingBranchRepository.findOne({
+      where: {
+        branch: { id: branchId },
+        dayOfWeek: weekDayEnum,
+      },
+    });
+  
+    // Convert date string to Date object
+    const dateObj = new Date(date);
+    const reservationDay = dateObj.getDate();
+    const reservationMonth = dateObj.getMonth() + 1; // Months are 0-indexed
+    const reservationYear = dateObj.getFullYear();
+  
+    // Fetch reservations for the specified branch and date
+    const reservations = await this.ReservationRepository.find({
+      where: {
+        branch: { id: branchId },
+        reservationDay,
+        reservationMonth,
+        reservationYear,
+      },
+      order: {
+        start_Time: 'ASC', // Optional: sort reservations by start time
+      },
+    });
+  
+    // Return branch details, working hours, and reservations
+    return {
+      branch: {
+        id: branch.id,
+        name: branch.name,
+        location: branch.location,
+        image: branch.image,
+      },
+      workingHours: workingBranch ? workingBranch.workingHours : [],
+      reservations,
     };
   }
   async uploadImage(file: Express.Multer.File,folderName:string): Promise<string> {
