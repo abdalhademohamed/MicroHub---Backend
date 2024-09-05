@@ -11,6 +11,7 @@ import { Role } from '../user/utils/user.enum';
 import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { ReservationEntity } from 'src/reservation/entities/reservation.entity';
 
 
 @ApiTags('branch')
@@ -59,6 +60,15 @@ export class BranchController {
     return await this.branchService.getBranches(page, limit);
   }
   
+  @Get('calender')
+  async getWorkingHoursAndReservations(
+    @Param('branchId') branchId: string,
+    @Query('dayOfWeek') dayOfWeek: string,
+    @Query('date') date: string,
+  ): Promise<{ workingHours: string[], reservations: ReservationEntity[] }> {
+    return this.branchService.getBranchCalendar(branchId, dayOfWeek, date);
+  }
+
 
   @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN,Role.BRANCHMANAGER)
