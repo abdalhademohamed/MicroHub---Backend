@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, Put, Query } from '@nestjs/common';
 import { WorkingBranchService } from './working.branch.service';
 import { CreateWorkingBranchDto } from './dto/create.working.branch.dto';
 import { UpdateWorkingBranchDto } from './dto/update.working.branch.dto';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { WorkingBranchEntity } from './entities/working.branch.entity';
 
 ApiTags('working/branch')
@@ -22,10 +22,22 @@ export class WorkingBranchController {
 
 
   @Get()
-  @ApiOperation({ summary: 'Get all working branches' })
-  @ApiResponse({ status: 200, description: 'List of working branches', type: [WorkingBranchEntity] })
-  async findAll(): Promise<WorkingBranchEntity[]> {
-    return this.workingBranchService.findAll();
+  @ApiOperation({ summary: 'Retrieve working branches with optional branch ID filtering' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns a list of working branches with optional branch ID filtering.',
+    type: [WorkingBranchEntity],
+  })
+  @ApiQuery({
+    name: 'branchId',
+    required: false,
+    description: 'ID of the branch to filter working branches by',
+    type: String,
+  })
+  async findAll(
+    @Query('branchId') branchId?: string
+  ): Promise<WorkingBranchEntity[]> {
+    return this.workingBranchService.findAll(branchId);
   }
 
   // @Get(':id')
