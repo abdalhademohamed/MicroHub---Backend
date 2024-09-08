@@ -37,6 +37,7 @@
     "cloudinary": "^2.4.0",
     "date-fns": "^3.6.0",
     "express-session": "^1.18.0",
+    "firebase-admin": "^12.4.0",
     "nestjs-i18n": "^10.4.5",
     "nodemailer": "^6.9.14",
     "passport": "^0.7.0",

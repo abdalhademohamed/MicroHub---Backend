@@ -32,6 +32,9 @@ import { PaymentModule } from './payment/payment.module';
 import { PaymentEntity } from './payment/entities/payment.entity';
 import { WorkingBranchModule } from './working-branch/working.branch.module';
 import { WorkingBranchEntity } from './working-branch/entities/working.branch.entity';
+import { NotificationModule } from './notification/notification.module';
+import { NotificationEntity } from './notification/entities/notification.entity';
+import { FcmTokenEntity } from './notification/entities/fcm.token.entity';
 
 
 
@@ -43,16 +46,7 @@ import { WorkingBranchEntity } from './working-branch/entities/working.branch.en
     }), 
 
     TypeOrmModule.forRoot({
-      // type:'postgres',
-      // host: 'localhost',
-      // port: 5432,
-      // username: process.env.POSTGRES_USER,
-      // password: process.env.POSTGRES_PASSWORD,
-      // database: process.env.POSTGRES_DB,
-      // entities: ['dist/**/*.entity{.ts,.js}'],
-      // autoLoadEntities: true,
-      // synchronize: true,
-      // // logging: true,
+     
 
       type: 'postgres',
       host: process.env.DB_HOST , // Neon host
@@ -63,7 +57,7 @@ import { WorkingBranchEntity } from './working-branch/entities/working.branch.en
       // entities: ["dist/**/*.entity.js"], 
       entities:[UserEntity,BranchEntity,CustomerEntity,EmployeeEntity,
         EmployeeTypeEntity,PositionEntity,ReservationEntity,ServiceEntity,RootoshEntity
-      ,OfferEntity,PaymentEntity,WorkingBranchEntity],
+      ,OfferEntity,PaymentEntity,WorkingBranchEntity,NotificationEntity,FcmTokenEntity],
       synchronize: true, // Set to false in production
       ssl: true, // Neon typically requires SSL connections
       extra: {
@@ -101,7 +95,8 @@ import { WorkingBranchEntity } from './working-branch/entities/working.branch.en
     CustomerModule,
     EmployetypeModule,
     PaymentModule,
-    WorkingBranchModule
+    WorkingBranchModule,
+    NotificationModule
   ],
   controllers: [AppController],
   providers: [AppService,CloudinaryProvider],

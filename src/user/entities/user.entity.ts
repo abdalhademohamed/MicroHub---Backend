@@ -1,6 +1,8 @@
 
 import { Column, Entity, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Role } from "../utils/user.enum";
+import { NotificationEntity } from "../../notification/entities/notification.entity";
+import { FcmTokenEntity } from "../../notification/entities/fcm.token.entity";
 
 
 @Entity()
@@ -46,6 +48,10 @@ export class UserEntity{
     resetPasswordExpires: Date | null;
 
 
+ // One user can have multiple notification devices (FCM tokens)
+  @OneToMany(() => NotificationEntity, notification => notification.user,{ cascade: true })
+  notifications: NotificationEntity[];
 
-   
+  @OneToMany(() => FcmTokenEntity, FcmTokenEntity => FcmTokenEntity.user)
+  fcmTokens: FcmTokenEntity[];
 }
