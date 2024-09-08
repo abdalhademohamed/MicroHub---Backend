@@ -5,16 +5,26 @@ import * as admin from 'firebase-admin';
 @Injectable()
 export class FcmService {
   constructor(private configService: ConfigService) {
-    const privateKey = this.configService.get<string>('FIREBASE_PRIVATE_KEY').replace(/\\n/g, '\n');
 
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: this.configService.get<string>('FIREBASE_PROJECT_ID'),
-        privateKey,
-        clientEmail: this.configService.get<string>('FIREBASE_CLIENT_EMAIL'),
-      }),
-    });
-  }
+
+    const privateKey = this.configService.get<string>('FIREBASE_PRIVATE_KEY');
+    const projectId = this.configService.get<string>('FIREBASE_PROJECT_ID');
+    const clientEmail = this.configService.get<string>('FIREBASE_CLIENT_EMAIL');
+      // const privateKey = this.configService.get<string>('FIREBASE_PRIVATE_KEY').replace(/\\n/g, '\n');
+      if (!privateKey || !projectId || !clientEmail) {
+        throw new Error('Firebase configuration is missing.');
+      }
+  
+      const formattedPrivateKey = privateKey.replace(/\\n/g, '\n');
+
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId,
+          privateKey: formattedPrivateKey,
+          clientEmail,
+        }),
+      });
+    }
 
   // async sendNotification(token: string, payload: admin.messaging.MessagingPayload): Promise<string> {
   //   try {
