@@ -35,6 +35,8 @@ import { WorkingBranchEntity } from './working-branch/entities/working.branch.en
 import { NotificationModule } from './notification/notification.module';
 import { NotificationEntity } from './notification/entities/notification.entity';
 import { FcmTokenEntity } from './notification/entities/fcm.token.entity';
+import { AuditLogModule } from './audit-log/audit.log.module';
+import { AuditLogEntity } from './audit-log/entities/audit.log.entity';
 
 
 
@@ -57,14 +59,16 @@ import { FcmTokenEntity } from './notification/entities/fcm.token.entity';
       // entities: ["dist/**/*.entity.js"], 
       entities:[UserEntity,BranchEntity,CustomerEntity,EmployeeEntity,
         EmployeeTypeEntity,PositionEntity,ReservationEntity,ServiceEntity,RootoshEntity
-      ,OfferEntity,PaymentEntity,WorkingBranchEntity,NotificationEntity,FcmTokenEntity],
+      ,OfferEntity,PaymentEntity,WorkingBranchEntity,NotificationEntity,FcmTokenEntity,AuditLogEntity],
       synchronize: true, // Set to false in production
       ssl: true, // Neon typically requires SSL connections
       extra: {
         ssl: {
           rejectUnauthorized: false, // Required for self-signed certificates
         },
-      },
+      },  
+      // logging: true,
+
 
 
     }),
@@ -96,7 +100,8 @@ import { FcmTokenEntity } from './notification/entities/fcm.token.entity';
     EmployetypeModule,
     PaymentModule,
     WorkingBranchModule,
-    NotificationModule
+    NotificationModule,
+    AuditLogModule
   ],
   controllers: [AppController],
   providers: [AppService,CloudinaryProvider],
