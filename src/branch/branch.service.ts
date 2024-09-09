@@ -4,19 +4,24 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
-} from '@nestjs/common';
-import { CreateBranchDto } from './dto/create.branch.dto';
-import { UpdateBranchDto } from './dto/update.branch.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { BranchEntity } from './entities/branch.entity';
-import { PaginateResultDto } from './dto/paginate.result.dto';
-import { create } from 'domain';
-import { CloudinaryService } from '../cloudinary/cloudinary.service';
-import { I18nService } from 'nestjs-i18n';
-import { ReservationEntity } from '../reservation/entities/reservation.entity';
-import { WorkingBranchEntity } from '../working-branch/entities/working.branch.entity';
-import { WeekDays } from './utils/days.enum';
+} from "@nestjs/common";
+import { CreateBranchDto } from "./dto/create.branch.dto";
+import { UpdateBranchDto } from "./dto/update.branch.dto";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { BranchEntity } from "./entities/branch.entity";
+import { PaginateResultDto } from "./dto/paginate.result.dto";
+import { create } from "domain";
+import { CloudinaryService } from "../cloudinary/cloudinary.service";
+import { I18nService } from "nestjs-i18n";
+import { ReservationEntity } from "../reservation/entities/reservation.entity";
+import { WorkingBranchEntity } from "../working-branch/entities/working.branch.entity";
+import { WeekDays } from "./utils/days.enum";
+import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
+import { UserEntity } from "../user/entities/user.entity";
+import { UserService } from "../user/user.service";
+import { FilterBranchesDto } from "./dto/filter.branch.dto";
+import { FilterBranchCalendarDto } from "./dto/filter.branch.calendar.dto";
 
 @Injectable()
 export class BranchService {
@@ -29,11 +34,17 @@ export class BranchService {
     @InjectRepository(WorkingBranchEntity)
     private readonly WorkingBranchRepository: Repository<WorkingBranchEntity>,
 
+    @InjectRepository(AuditLogEntity)
+    private readonly AuditLogRepository: Repository<AuditLogEntity>,
 
+    private readonly UserService: UserService
   ) {}
 
-  async createBranch(createBranchDto: CreateBranchDto): Promise<BranchEntity> {
-    const { name, location, image } = createBranchDto;
+  async createBranch(
+    createBranchDto: CreateBranchDto,
+    userId: string
+  ): Promise<BranchEntity> {
+    const { name, location, image, workingBranch } = createBranchDto;
   
     try {
       // Check if the branch already exists
@@ -43,81 +54,141 @@ export class BranchService {
   
       if (existingBranch) {
         throw new ConflictException(
-          'A branch with the given name or location already exists.',
+          "A branch with the given name or location already exists."
         );
       }
   
       // Create and save the new branch
-      const branch = this.BranchRepository.create({ name, location, image });
-      return await this.BranchRepository.save(branch);
+      const branch = this.BranchRepository.create({
+        name,
+        location,
+        image,
+        createdBy: userId,
+        workingbranch:[]
+      });
+      const savedBranch = await this.BranchRepository.save(branch);
+  
+      // // If workingBranches are provided, create WorkingBranchEntity records
+      // if (workingBranch && workingBranch.length > 0) {
+      //   const workingBranchEntities = workingBranches.map(wbDto => {
+      //     const weekDayEnum = WeekDays[wbDto.dayOfWeek as keyof typeof WeekDays];
+      //     if (!weekDayEnum) {
+      //       throw new Error(`Invalid dayOfWeek: ${wbDto.dayOfWeek}`);
+      //     }
+      //     return this.WorkingBranchRepository.create({
+      //       dayOfWeek: weekDayEnum,
+      //       workingHours: wbDto.workingHours,
+      //       branch: savedBranch,
+      //     });
+      //   });
+  
+      //   // Save all working branch entities
+      //   await this.WorkingBranchRepository.save(workingBranchEntities);
+      // }
+  
+      // Create an audit log entry
+      const log = new AuditLogEntity();
+      log.tableName = "branch"; // Use the table name
+      log.action = "INSERT";
+      log.entityId = savedBranch.id;
+      log.performedBy = userId;
+  
+      // Fetch user details if needed
+      if (userId) {
+        const user = await this.UserService.getUserDetails(userId);
+        log.userDetails = user;
+      }
+  
+      await this.AuditLogRepository.save(log);
+  
+      return savedBranch;
     } catch (error) {
       // Handle specific errors
       if (error instanceof ConflictException) {
-        // ConflictException will automatically send status code 409
         throw error;
       }
   
       // Handle unexpected errors
-      // InternalServerErrorException will automatically send status code 500
       throw new InternalServerErrorException(
-        'An unexpected error occurred while creating the branch.',
+        "An unexpected error occurred while creating the branch."
       );
     }
   }
+  async getAllBranches(
+    filterDto: FilterBranchesDto
+  ): Promise<{
+    items: BranchEntity[];
+    total: number;
+    currentPage: number;
+    totalPages: number;
+  }> {
+    const { page = 1, limit = 10, order = 'ASC' } = filterDto;
 
+    // Validate pagination values
+    if (page < 1 || limit < 1) {
+      throw new BadRequestException('Page and limit must be greater than 0');
+    }
 
+    // Validate order value
+    if (!['ASC', 'DESC'].includes(order)) {
+      throw new BadRequestException('Invalid order value. Must be "ASC" or "DESC"');
+    }
 
-
-  // async createWorkingHours(createBranchWorkingHoursDto: CreateBranchWorkingHoursDto): Promise<void> {
-  //   const { branchId, dayOfWeek, workingHours } = createBranchWorkingHoursDto;
-
-  //   // Find the branch by ID
-  //   const branch = await this.BranchRepository.findOne({ where: { id: branchId }});
-  //   if (!branch) {
-  //     throw new NotFoundException(`Branch with ID ${branchId} not found`);
-  //   }
-
-  //   // Check if there's already a schedule for the given day
-  //   // let schedule = branch.schedules.find(s => s.dayOfWeek === dayOfWeek);
-
-  //   // if (schedule) {
-  //   //   // Update existing schedule
-  //   //   schedule.workingHours = workingHours;
-  //   // } else {
-  //     // Create a new schedule
-  //    const schedule = this.BranchRepository.create({
-  //       dayOfWeek,
-  //       workingHours,
-  //       branch,
-  //     });
-  //     branch.schedules.push(schedule);
-  //   // }
-
-  //   await this.branchScheduleRepository.save(schedule);
-  //   console.log(`Created/Updated working hours for Branch ID: ${branchId} on ${dayOfWeek}`);
-  // }
-
-  async getBranches(
-    page: number,
-    limit: number,
-  ): Promise<PaginateResultDto<BranchEntity>> {
-    const [items, total] = await this.BranchRepository.findAndCount({
+    // Build query options
+    const queryOptions: any = {
       skip: (page - 1) * limit,
       take: limit,
-    }); 
+      order: {
+        name: order, // Sorting by the 'name' field
+      },
+    };
+
+    // Execute the query
+    const [items, total] = await this.BranchRepository.findAndCount(queryOptions);
+
+    // Calculate total pages
+    const totalPages = Math.ceil(total / limit);
 
     return {
       items,
       total,
       currentPage: page,
-      totalPages: Math.ceil(total / limit),
+      totalPages,
     };
   }
 
+  async getBranchWithWorkingHours(branchId: string): Promise<{
+    branch: BranchEntity;
+    workingHours: { dayOfWeek: string; hours: string[] }[];
+  }> {
+    // Fetch the branch entity to ensure it exists
+    const branch = await this.BranchRepository.findOne({
+      where: { id: branchId },
+    });
+
+    if (!branch) {
+      throw new NotFoundException('Branch not found');
+    }
+
+    // Fetch working hours for the specified branch
+    const workingHoursEntities = await this.WorkingBranchRepository.find({
+      where: { branch: { id: branchId } },
+    });
+
+    const workingHours = workingHoursEntities.map(entity => ({
+      dayOfWeek: entity.dayOfWeek,
+      hours: entity.workingHours,
+    }));
+
+    return {
+      branch,
+      workingHours,
+    };
+  }
+
+
   async getBranchCalendar(
-    branchId: string,
-    dayOfWeek: string, // String representation of the day of the week
-    date: string, // Date in string format (e.g., '2024-09-05')
+    filterDto: FilterBranchCalendarDto
   ): Promise<{
     branch: {
       id: string;
@@ -125,9 +196,14 @@ export class BranchService {
       location: string;
       image: string;
     };
-    workingHours: string[];
-    reservations: ReservationEntity[];
+    workingHours: { dayOfWeek: string; hours: string[] }[];
+    reservations: any[];
+    total: number;
+    currentPage: number;
+    totalPages: number;
   }> {
+    const { branchId, dayOfWeek, date, page = 1, limit = 10, order = 'ASC' } = filterDto;
+  
     // Fetch the branch entity to ensure it exists
     const branch = await this.BranchRepository.findOne({
       where: { id: branchId },
@@ -137,29 +213,49 @@ export class BranchService {
       throw new NotFoundException('Branch not found');
     }
   
-    // Convert dayOfWeek string to WeekDays enum
-    const weekDayEnum = WeekDays[dayOfWeek as keyof typeof WeekDays];
+    // Prepare working hours response
+    let workingHours: { dayOfWeek: string; hours: string[] }[] = [];
   
-    if (!weekDayEnum) {
-      throw new BadRequestException('Invalid day of the week');
+    if (dayOfWeek) {
+      // Convert dayOfWeek string to WeekDays enum
+      const weekDayEnum = WeekDays[dayOfWeek as keyof typeof WeekDays];
+  
+      if (!weekDayEnum) {
+        throw new BadRequestException('Invalid day of the week');
+      }
+  
+      // Find the working branch entity for the given day
+      const workingBranch = await this.WorkingBranchRepository.findOne({
+        where: {
+          branch: { id: branchId },
+          dayOfWeek: weekDayEnum,
+        },
+      });
+  
+      if (workingBranch) {
+        workingHours.push({
+          dayOfWeek: weekDayEnum,
+          hours: workingBranch.workingHours,
+        });
+      }
+    } else {
+      // Fetch working hours for all days if dayOfWeek is not provided
+      workingHours = await this.WorkingBranchRepository.find({
+        where: { branch: { id: branchId } },
+      }).then(results => results.map(wb => ({
+        dayOfWeek: wb.dayOfWeek,
+        hours: wb.workingHours,
+      })));
     }
   
-    // Find the working branch entity for the given day
-    const workingBranch = await this.WorkingBranchRepository.findOne({
-      where: {
-        branch: { id: branchId },
-        dayOfWeek: weekDayEnum,
-      },
-    });
+    // Handle date for reservations
+    const reservationsDate = date ? new Date(date) : new Date();
+    const reservationDay = reservationsDate.getDate();
+    const reservationMonth = reservationsDate.getMonth() + 1; // Months are 0-indexed
+    const reservationYear = reservationsDate.getFullYear();
   
-    // Convert date string to Date object
-    const dateObj = new Date(date);
-    const reservationDay = dateObj.getDate();
-    const reservationMonth = dateObj.getMonth() + 1; // Months are 0-indexed
-    const reservationYear = dateObj.getFullYear();
-  
-    // Fetch reservations for the specified branch and date
-    const reservations = await this.ReservationRepository.find({
+    // Calculate pagination
+    const [reservations, total] = await this.ReservationRepository.findAndCount({
       where: {
         branch: { id: branchId },
         reservationDay,
@@ -167,8 +263,10 @@ export class BranchService {
         reservationYear,
       },
       order: {
-        start_Time: 'ASC', // Optional: sort reservations by start time
+        start_Time: order, // Order reservations by start time
       },
+      skip: (page - 1) * limit,
+      take: limit,
     });
   
     // Return branch details, working hours, and reservations
@@ -179,23 +277,136 @@ export class BranchService {
         location: branch.location,
         image: branch.image,
       },
-      workingHours: workingBranch ? workingBranch.workingHours : [],
+      workingHours,
       reservations,
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
     };
   }
-  async uploadImage(file: Express.Multer.File,folderName:string): Promise<string> {
-    const result = await this.CloudinaryService.uploadImage(file,folderName);
-    return result.url;  // Return the URL of the uploaded image
+  async uploadImage(
+    file: Express.Multer.File,
+    folderName: string
+  ): Promise<string> {
+    const result = await this.CloudinaryService.uploadImage(file, folderName);
+    return result.url; // Return the URL of the uploaded image
   }
-  async deleteBranch(branchId: string): Promise<void> {
+
+  async updateBranch(
+    branchId: string,
+    updateBranchDto: UpdateBranchDto,
+    userId: string
+  ): Promise<BranchEntity> {
     try {
       // Find the branch by ID
-      const branch = await this.BranchRepository.findOne({ where: { id: branchId } });
+      const branch = await this.BranchRepository.findOne({
+        where: { id: branchId },
+      });
+  
+      if (!branch) {
+        throw new NotFoundException(`Branch with ID ${branchId} not found.`);
+      }
+  
+      // Track original values
+      const originalBranch = { ...branch };
+  
+      // Update branch properties
+      const { name, location, image } = updateBranchDto;
+      branch.name = name ?? branch.name;
+      branch.location = location ?? branch.location;
+      branch.image = image ?? branch.image;
+      branch.updatedBy = userId;
+  
+      // Save the updated branch
+      const updatedBranch = await this.BranchRepository.save(branch);
+  
+      // Determine which columns have changed and log detailed information
+      const changedColumns = [];
+      const changesDetails = {};
+      
+      if (originalBranch.name !== updatedBranch.name) {
+        changedColumns.push("name");
+        changesDetails["name"] = {
+          oldValue: originalBranch.name,
+          newValue: updatedBranch.name,
+        };
+      }
+      if (originalBranch.location !== updatedBranch.location) {
+        changedColumns.push("location");
+        changesDetails["location"] = {
+          oldValue: originalBranch.location,
+          newValue: updatedBranch.location,
+        };
+      }
+      if (originalBranch.image !== updatedBranch.image) {
+        changedColumns.push("image");
+        changesDetails["image"] = {
+          oldValue: originalBranch.image,
+          newValue: updatedBranch.image,
+        };
+      }
+  
+      // Debug statements
+      console.log("Original Branch:", originalBranch);
+      console.log("Updated Branch:", updatedBranch);
+      console.log("Changed Columns:", changedColumns);
+      console.log("Changes Details:", changesDetails);
+  
+      // Create an audit log entry
+      const auditLog = new AuditLogEntity();
+      auditLog.tableName = "branch";
+      auditLog.action = "UPDATE";
+      auditLog.entityId = branchId;
+      auditLog.performedBy = userId;
+      auditLog.changedColumns = changedColumns; // Log changed columns
+      auditLog.changesDetails = changesDetails; // Log detailed changes
+  
+      // Optionally, get user details for more detailed logging
+      if (userId) {
+        const user = await this.UserService.getUserDetails(userId);
+        auditLog.userDetails = user; // Adjust according to your AuditLogEntity structure
+      }
+  
+      await this.AuditLogRepository.save(auditLog);
+  
+      return updatedBranch;
+    } catch (error) {
+      console.error('Update Branch Error:', error); // Debug statement
+      throw new InternalServerErrorException(
+        "An unexpected error occurred while updating the branch."
+      );
+    }
+  }
+  
+  
+  async deleteBranch(branchId: string, userId: string): Promise<void> {
+    try {
+      // Find the branch by ID
+      const branch = await this.BranchRepository.findOne({
+        where: { id: branchId },
+      });
 
       if (!branch) {
         throw new NotFoundException(`Branch with ID ${branchId} not found.`);
       }
+      // Update the branch entity to record who deleted it
+      branch.deletedBy = userId;
+      await this.BranchRepository.save(branch);
+      // Log the deletion
+      const auditLog = new AuditLogEntity();
+      auditLog.tableName = "branch";
+      auditLog.action = "DELETE";
+      auditLog.entityId = branchId;
+      auditLog.performedBy = userId;
 
+      // Optionally, get user details for more detailed logging
+      if (userId) {
+        const user = await this.UserService.getUserDetails(userId); // Adjust method according to your UserService
+        auditLog.userDetails = user; // Adjust according to your AuditLogEntity structure
+      }
+
+      // Save the audit log before performing the deletion
+      await this.AuditLogRepository.save(auditLog);
       // Delete the branch
       await this.BranchRepository.delete(branchId);
     } catch (error) {
@@ -204,9 +415,8 @@ export class BranchService {
       }
 
       throw new InternalServerErrorException(
-        'An unexpected error occurred while deleting the branch.',
+        "An unexpected error occurred while deleting the branch."
       );
     }
   }
-  
 }

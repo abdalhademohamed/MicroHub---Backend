@@ -33,4 +33,13 @@ export class BranchEntity {
 
   @OneToMany(() => WorkingBranchEntity, (WorkingBranchEntity) => WorkingBranchEntity.branch, { cascade: true })
   workingbranch: WorkingBranchEntity[];
+
+  @Column({ name: 'created_by', nullable: true })
+  createdBy: string;
+
+  @Column({ name: 'updated_by', nullable: true })
+  updatedBy: string;
+
+  @Column({ name: 'deleted_by', nullable: true })
+  deletedBy: string;
 }

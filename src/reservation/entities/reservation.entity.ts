@@ -8,8 +8,8 @@ export class ReservationEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  country_Code: string; // Correct property name
+  @Column({ type: 'varchar', nullable: true }) // Ensure nullable is set if the column can have NULL values
+  country_Code: string;
 
   @Column()
   phone_Number: string; // Correct property name

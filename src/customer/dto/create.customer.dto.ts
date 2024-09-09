@@ -45,4 +45,7 @@ export class CreateCustomerDto {
   @IsISO8601({}, { message: 'customEndTime must be a valid ISO 8601 date string' })
   @IsNotEmpty({ message: 'customEndTime must be provided if customStartTime is provided' })
   customEndTime?: string;
+
+
+  
 }

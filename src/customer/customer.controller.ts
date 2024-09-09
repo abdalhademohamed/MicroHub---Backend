@@ -1,34 +1,31 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { CustomerService } from './customer.service';
 import { CreateCustomerDto } from './dto/create.customer.dto';
 import { UpdateCustomerDto } from './dto/update.customer.dto';
+import { GetCustomerDto } from './dto/get.customer.dto';
+import { ApiTags } from '@nestjs/swagger';
 
+
+@ApiTags('customer')
 @Controller('customer')
 export class CustomerController {
   constructor(private readonly customerService: CustomerService) {}
 
-  // @Post()
-  // create(@Body() createCustomerDto: CreateCustomerDto) {
-  //   return this.customerService.create(createCustomerDto);
-  // }
-
-  // @Get()
-  // findAll() {
-  //   return this.customerService.findAll();
-  // }
-
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.customerService.findOne(+id);
-  // }
-
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateCustomerDto: UpdateCustomerDto) {
-  //   return this.customerService.update(+id, updateCustomerDto);
-  // }
-
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.customerService.remove(+id);
-  // }
+  @Get(':phoneNumber')
+  async getCustomerByPhoneNumber(@Param('phoneNumber') phoneNumber: string): Promise<GetCustomerDto> {
+    try {
+      const customer = await this.customerService.getCustomerByPhoneNumber(phoneNumber);
+      if (!customer) {
+        throw new NotFoundException(`Customer with phone number ${phoneNumber} not found.`);
+      }
+      return customer;
+    } catch (error) {
+      console.error('Error in getCustomerByPhoneNumber:', {
+        message: error.message,
+        stack: error.stack,
+        phoneNumber,
+      });
+      throw new InternalServerErrorException('An unexpected error occurred');
+    }
+  }
 }
