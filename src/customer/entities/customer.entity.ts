@@ -36,4 +36,6 @@ export class CustomerEntity {
   @ManyToMany(() => RootoshEntity, rootosh => rootosh.customers,{ cascade: ['insert', 'update'], onDelete: 'CASCADE' })
   @JoinTable() // This will create a join table
   lastRootoshes: RootoshEntity[];
+
+  
 }
