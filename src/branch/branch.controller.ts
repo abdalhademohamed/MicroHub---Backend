@@ -4,7 +4,7 @@ import { CreateBranchDto } from './dto/create.branch.dto';
 import { UpdateBranchDto } from './dto/update.branch.dto';
 import { BranchEntity } from './entities/branch.entity';
 import { PaginateResultDto } from './dto/paginate.result.dto';
-import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RolesGuard } from '../auth/guards/role.guards';
 import { Roles } from '../auth/Roles.decorator';
 import { Role } from '../user/utils/user.enum';
@@ -54,7 +54,32 @@ export class BranchController {
   
   
   
-  
+  @Get('sorted')
+  @ApiQuery({ name: 'page', type: Number, required: false, description: 'Page number for pagination', example: 1 })
+  @ApiQuery({ name: 'limit', type: Number, required: false, description: 'Number of items per page', example: 10 })
+  @ApiQuery({ name: 'order', type: String, required: false, description: 'Order of sorting by name', example: 'ASC', enum: ['ASC', 'DESC'] })
+  @ApiOkResponse({
+    description: 'List of branches with pagination and sorting',
+    schema: {
+      example: {
+        items: [
+          {
+            id: '1',
+            name: 'Main Branch',
+            location: '123 Main St',
+            image: 'url_to_image',
+          },
+        ],
+        total: 10,
+        currentPage: 1,
+        totalPages: 1,
+      },
+    },
+  })
+  @Get()
+  async getBranches(@Query() filterDto: FilterBranchesDto) {
+    return this.branchService.getAllBranches(filterDto);
+  }
   
   
   

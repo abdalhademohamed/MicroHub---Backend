@@ -114,34 +114,48 @@ export class BranchService {
       );
     }
   }
-  // async createWorkingHours(createBranchWorkingHoursDto: CreateBranchWorkingHoursDto): Promise<void> {
-  //   const { branchId, dayOfWeek, workingHours } = createBranchWorkingHoursDto;
+  async getAllBranches(
+    filterDto: FilterBranchesDto
+  ): Promise<{
+    items: BranchEntity[];
+    total: number;
+    currentPage: number;
+    totalPages: number;
+  }> {
+    const { page = 1, limit = 10, order = 'ASC' } = filterDto;
 
-  //   // Find the branch by ID
-  //   const branch = await this.BranchRepository.findOne({ where: { id: branchId }});
-  //   if (!branch) {
-  //     throw new NotFoundException(`Branch with ID ${branchId} not found`);
-  //   }
+    // Validate pagination values
+    if (page < 1 || limit < 1) {
+      throw new BadRequestException('Page and limit must be greater than 0');
+    }
 
-  //   // Check if there's already a schedule for the given day
-  //   // let schedule = branch.schedules.find(s => s.dayOfWeek === dayOfWeek);
+    // Validate order value
+    if (!['ASC', 'DESC'].includes(order)) {
+      throw new BadRequestException('Invalid order value. Must be "ASC" or "DESC"');
+    }
 
-  //   // if (schedule) {
-  //   //   // Update existing schedule
-  //   //   schedule.workingHours = workingHours;
-  //   // } else {
-  //     // Create a new schedule
-  //    const schedule = this.BranchRepository.create({
-  //       dayOfWeek,
-  //       workingHours,
-  //       branch,
-  //     });
-  //     branch.schedules.push(schedule);
-  //   // }
+    // Build query options
+    const queryOptions: any = {
+      skip: (page - 1) * limit,
+      take: limit,
+      order: {
+        name: order, // Sorting by the 'name' field
+      },
+    };
 
-  //   await this.branchScheduleRepository.save(schedule);
-  //   console.log(`Created/Updated working hours for Branch ID: ${branchId} on ${dayOfWeek}`);
-  // }
+    // Execute the query
+    const [items, total] = await this.BranchRepository.findAndCount(queryOptions);
+
+    // Calculate total pages
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      items,
+      total,
+      currentPage: page,
+      totalPages,
+    };
+  }
 
   async getBranchWithWorkingHours(branchId: string): Promise<{
     branch: BranchEntity;
