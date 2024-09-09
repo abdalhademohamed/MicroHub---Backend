@@ -4,6 +4,7 @@ import { CreateWorkingBranchDto } from './dto/create.working.branch.dto';
 import { UpdateWorkingBranchDto } from './dto/update.working.branch.dto';
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { WorkingBranchEntity } from './entities/working.branch.entity';
+import { BranchEntity } from '../branch/entities/branch.entity';
 
 ApiTags('working/branch')
 @Controller('working/branch')
@@ -11,14 +12,14 @@ export class WorkingBranchController {
   constructor(private readonly workingBranchService: WorkingBranchService) {}
 
  
-  @Post(':branchId')
-  @HttpCode(HttpStatus.OK)
-  async createWorkingBranch(
-      @Param('branchId') branchId: string,
-      @Body() createWorkingBranchDto: CreateWorkingBranchDto,
-  ): Promise<WorkingBranchEntity> {
-      return this.workingBranchService.createWorkingBranch(branchId, createWorkingBranchDto);
-  }
+  // @Post(':branchId')
+  // @HttpCode(HttpStatus.OK)
+  // async createWorkingBranch(
+  //     @Param('branchId') branchId: string,
+  //     @Body() createWorkingBranchDto: CreateWorkingBranchDto,
+  // ): Promise<WorkingBranchEntity> {
+  //     return this.workingBranchService.createWorkingBranch(branchId, createWorkingBranchDto);
+  // }
 
 
   @Get()
@@ -48,11 +49,11 @@ export class WorkingBranchController {
   //   return this.workingBranchService.findOne(id);
   // }
 
-  @Put(':id')
-  @ApiOperation({ summary: 'Update a working branch by ID' })
-  @ApiResponse({ status: 200, description: 'The updated working branch', type: WorkingBranchEntity })
-  @ApiResponse({ status: 404, description: 'Working branch not found' })
-  async update(@Param('id') id: string, @Body() updateWorkingBranchDto: UpdateWorkingBranchDto): Promise<WorkingBranchEntity> {
-    return this.workingBranchService.update(id, updateWorkingBranchDto);
+  @Put(':branchId')
+  async updateWorkingBranches(
+    @Param('branchId') branchId: string,
+    @Body() UpdateWorkingBranchDto: UpdateWorkingBranchDto[]
+  ): Promise<any> {
+    return this.workingBranchService.updateWorkingBranches(branchId, UpdateWorkingBranchDto);
   }
 }
