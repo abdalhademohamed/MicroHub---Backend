@@ -7,10 +7,11 @@ import { BranchEntity } from '../branch/entities/branch.entity';
 import { PositionEntity } from '../postion/entities/postion.entity';
 import { EmployeeTypeEntity } from '../employetype/entities/employetype.entity';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { ArtistModule } from './artist/artist.module';
 
 @Module({
   
-  imports: [TypeOrmModule.forFeature([EmployeeEntity,BranchEntity,PositionEntity,EmployeeTypeEntity])],
+  imports: [TypeOrmModule.forFeature([EmployeeEntity,BranchEntity,PositionEntity,EmployeeTypeEntity]), ArtistModule],
   controllers: [EmployeeController],
   providers: [EmployeeService,CloudinaryService],
 })
