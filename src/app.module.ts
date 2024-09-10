@@ -37,6 +37,13 @@ import { NotificationEntity } from './notification/entities/notification.entity'
 import { FcmTokenEntity } from './notification/entities/fcm.token.entity';
 import { AuditLogModule } from './audit-log/audit.log.module';
 import { AuditLogEntity } from './audit-log/entities/audit.log.entity';
+import { ArtistModule } from './employee/artist/artist.module';
+import { CommentModule } from './comment/comment.module';
+import { OrdersModule } from './orders/orders.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { ReviewEntity } from './reviews/entities/review.entity';
+import { OrderEntity } from './orders/entities/order.entity';
+import { CommentEntity } from './comment/entities/comment.entity';
 
 
 
@@ -59,7 +66,7 @@ import { AuditLogEntity } from './audit-log/entities/audit.log.entity';
       // entities: ["dist/**/*.entity.js"], 
       entities:[UserEntity,BranchEntity,CustomerEntity,EmployeeEntity,
         EmployeeTypeEntity,PositionEntity,ReservationEntity,ServiceEntity,RootoshEntity
-      ,OfferEntity,PaymentEntity,WorkingBranchEntity,NotificationEntity,FcmTokenEntity,AuditLogEntity],
+      ,OfferEntity,PaymentEntity,WorkingBranchEntity,NotificationEntity,FcmTokenEntity,AuditLogEntity,ReviewEntity,OrderEntity,CommentEntity],
       synchronize: true, // Set to false in production
       ssl: true, // Neon typically requires SSL connections
       extra: {
@@ -101,7 +108,11 @@ import { AuditLogEntity } from './audit-log/entities/audit.log.entity';
     PaymentModule,
     WorkingBranchModule,
     NotificationModule,
-    AuditLogModule
+    AuditLogModule,
+    ArtistModule,
+    CommentModule,
+    OrdersModule,
+    ReviewsModule
   ],
   controllers: [AppController],
   providers: [AppService,CloudinaryProvider],
