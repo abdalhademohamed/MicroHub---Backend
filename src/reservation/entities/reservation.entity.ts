@@ -45,9 +45,10 @@ export class ReservationEntity {
   @Column({ type: 'timestamp' })
   end_Time: Date;
  
-  @Column({ type: 'number'})
-  totalPrice: number;
+  @Column({ type: 'numeric', precision: 10, scale: 2, default: 0 })
+  totalPrice: number; // Total price as a numeric value with 2 decimal places
 
+  
   @Column({ type: 'number' })
   deposit: number;
   @Column()
