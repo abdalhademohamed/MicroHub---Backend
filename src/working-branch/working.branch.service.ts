@@ -92,7 +92,7 @@ export class WorkingBranchService {
     return workingBranches;
   } catch (error) {
     // Log detailed error information for internal tracking
-    console.error('Error retrieving working branches:', error);
+    // console.error('Error retrieving working branches:', error);
 
     // Provide more detailed and specific error responses
     if (error instanceof NotFoundException) {

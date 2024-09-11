@@ -75,7 +75,7 @@ export class CreateEmployeeDto {
   })
   @IsUUID()
   @IsNotEmpty()
-  branch: string;
+  branchId: string;
 
   @ApiProperty({
     description: 'The UUID of the position of the employee',
