@@ -3,6 +3,8 @@ import { ReservationEntity } from '../../reservation/entities/reservation.entity
 import { CommentEntity } from '../../comment/entities/comment.entity';
 import { EmployeeEntity } from '../../employee/entities/employee.entity';
 import { ReviewEntity } from '../../reviews/entities/review.entity';
+import { ReceiptEntity } from '../../receipt/entities/receipt.entity';
+import { OrderStatus } from '../utils/order.status.enum';
 
 @Entity()
 export class OrderEntity {
@@ -21,8 +23,8 @@ export class OrderEntity {
   @Column({ nullable: true })
   invoiceNumber: string; // Add this column for invoice number
 
-  @Column({ type: 'enum', enum: ['working', 'done'], default: 'working' })
-  status: 'working' | 'done'; // Status of the work
+  @Column({ type: 'enum', enum: OrderStatus})
+  status: OrderStatus; // Status of the work
 
   @ManyToOne(() => ReservationEntity, reservation => reservation.orders)
   reservation: ReservationEntity;
@@ -35,4 +37,8 @@ export class OrderEntity {
 
   @OneToMany(() => ReviewEntity, (ReviewEntity) => ReviewEntity.order)
   reviews: ReviewEntity[]; // Reviews associated with the order
+
+
+  @OneToMany(() => ReceiptEntity, receipt => receipt.order)
+  receipts: ReceiptEntity[];
 }
