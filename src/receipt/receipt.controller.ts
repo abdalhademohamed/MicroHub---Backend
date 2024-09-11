@@ -37,35 +37,35 @@ export class ReceiptController {
   }
 
 
-  // //  Endpoint to generate and download the receipt PDF
-  // @Get('download/:id')
-  // @UseGuards(AccessTokenGuard,RolesGuard)  // Ensure AccessTokenGuard is first
-  // @Roles(Role.SUPERADMIN)
-  // async downloadReceipt(@Param('id') id: string, @Response() Res: any) {
-  //   try {
-  //     await this.receiptService.generatePdfReceipt(id, Res);
-  //   } catch (error) {
-  //     // Handle errors and return appropriate response
-  //     Res.status(HttpStatus.INTERNAL_SERVER_ERROR).send('Failed to generate PDF receipt');
-  //   }
-  // }
-
-
-
-    // Endpoint to generate and download the receipt PDF
-    @Get('download/:id')
-    async downloadfakeReceipt(
-      @Param('id') id: string,
-      @Response() response: ExpressResponse
-    ) {
-      try {
-        await this.receiptService.generatefakePdfReceipt(id, response);
-      } catch (error) {
-        if (error instanceof NotFoundException) {
-          response.status(404).send('Receipt not found');
-        } else {
-          response.status(500).send('Failed to generate PDF receipt');
-        }
-      }
+  //  Endpoint to generate and download the receipt PDF
+  @Get('download/:id')
+  @UseGuards(AccessTokenGuard,RolesGuard)  // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN)
+  async downloadReceipt(@Param('id') id: string, @Response() Res: any) {
+    try {
+      await this.receiptService.generatePdfReceipt(id, Res);
+    } catch (error) {
+      // Handle errors and return appropriate response
+      Res.status(HttpStatus.INTERNAL_SERVER_ERROR).send('Failed to generate PDF receipt');
     }
+  }
+
+
+
+    // // Endpoint to generate and download the receipt PDF
+    // @Get('download/:id')
+    // async downloadfakeReceipt(
+    //   @Param('id') id: string,
+    //   @Response() response: ExpressResponse
+    // ) {
+    //   try {
+    //     await this.receiptService.generatefakePdfReceipt(id, response);
+    //   } catch (error) {
+    //     if (error instanceof NotFoundException) {
+    //       response.status(404).send('Receipt not found');
+    //     } else {
+    //       response.status(500).send('Failed to generate PDF receipt');
+    //     }
+    //   }
+    // }
 }
