@@ -9,6 +9,7 @@ import { CommentEntity } from '../comment/entities/comment.entity';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { EmployeeEntity } from '../employee/entities/employee.entity';
 import { FindOrdersDto } from './dto/find.all.orders.dto';
+import { OrderStatus } from './utils/order.status.enum';
 
 @Injectable()
 export class OrdersService {
@@ -19,10 +20,7 @@ export class OrdersService {
     @InjectRepository(ReservationEntity)
     private readonly reservationRepository: Repository<ReservationEntity>,
 
-    @InjectRepository(CommentEntity)
-    private readonly commentRepository: Repository<CommentEntity>,
-
-    private readonly CloudinaryService: CloudinaryService,
+    
 
     @InjectRepository(EmployeeEntity)
     private readonly employeeRepository: Repository<EmployeeEntity>
@@ -42,7 +40,7 @@ export class OrdersService {
       customerName: reservation.customer ? reservation.customer.fullName : 'Unknown',
       date: `${reservation.reservationYear}-${reservation.reservationMonth}-${reservation.reservationDay}`,
       service: reservation.services.map(service => service.english_Name).join(', '),
-      status: 'working',
+      status: OrderStatus.Completed,
       comments:[],
       reservation,
       artist: null // Initialize artist with null
@@ -57,7 +55,26 @@ export class OrdersService {
 
 
 
+   // Method to update the status of an order
+   async updateOrderStatus(orderId: string, newStatus: OrderStatus): Promise<OrderEntity> {
+    // Find the order
+    const order = await this.orderRepository.findOne({
+      where: { id: orderId },
+    });
 
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    // Update the status
+    order.status = newStatus;
+
+    try {
+      return await this.orderRepository.save(order);
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to update order status', error.stack);
+    }
+  }
 
 
 
