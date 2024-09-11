@@ -1,9 +1,9 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateWorkingBranchDto } from './dto/create.working.branch.dto';
 import { UpdateWorkingBranchDto } from './dto/update.working.branch.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BranchEntity } from '../branch/entities/branch.entity';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { FindOptionsWhere, QueryFailedError, Repository } from 'typeorm';
 import { WorkingBranchEntity } from './entities/working.branch.entity';
 import { WeekDays } from '../branch/utils/days.enum';
 
@@ -91,8 +91,22 @@ export class WorkingBranchService {
 
     return workingBranches;
   } catch (error) {
-    // Handle database access errors or other unexpected errors
-    throw new Error('An error occurred while retrieving working branches: ' + error.message);
+    // Log detailed error information for internal tracking
+    console.error('Error retrieving working branches:', error);
+
+    // Provide more detailed and specific error responses
+    if (error instanceof NotFoundException) {
+      throw error; // Re-throw known exceptions to preserve specific messages and status codes
+    } else if (error instanceof QueryFailedError) {
+      // Handle database-specific errors
+      throw new BadRequestException('Database query failed. Please check your request and try again.');
+    } else {
+      // Handle other unexpected errors
+      throw new HttpException({
+        status: HttpStatus.BAD_REQUEST,
+        error: 'An unexpected error occurred while retrieving working branches. Please try again later.',
+      }, HttpStatus.BAD_REQUEST);
+    }
   }
 }
 
