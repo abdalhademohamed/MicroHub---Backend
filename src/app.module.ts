@@ -44,6 +44,8 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { ReviewEntity } from './reviews/entities/review.entity';
 import { OrderEntity } from './orders/entities/order.entity';
 import { CommentEntity } from './comment/entities/comment.entity';
+import { ReceiptModule } from './receipt/receipt.module';
+import { ReceiptEntity } from './receipt/entities/receipt.entity';
 
 
 
@@ -66,7 +68,7 @@ import { CommentEntity } from './comment/entities/comment.entity';
       // entities: ["dist/**/*.entity.js"], 
       entities:[UserEntity,BranchEntity,CustomerEntity,EmployeeEntity,
         EmployeeTypeEntity,PositionEntity,ReservationEntity,ServiceEntity,RootoshEntity
-      ,OfferEntity,PaymentEntity,WorkingBranchEntity,NotificationEntity,FcmTokenEntity,AuditLogEntity,ReviewEntity,OrderEntity,CommentEntity],
+      ,OfferEntity,PaymentEntity,WorkingBranchEntity,NotificationEntity,FcmTokenEntity,AuditLogEntity,ReviewEntity,OrderEntity,CommentEntity,ReceiptEntity],
       synchronize: true, // Set to false in production
       ssl: true, // Neon typically requires SSL connections
       extra: {
@@ -112,7 +114,8 @@ import { CommentEntity } from './comment/entities/comment.entity';
     ArtistModule,
     CommentModule,
     OrdersModule,
-    ReviewsModule
+    ReviewsModule,
+    ReceiptModule
   ],
   controllers: [AppController],
   providers: [AppService,CloudinaryProvider],
