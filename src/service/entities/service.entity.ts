@@ -5,6 +5,7 @@ import { Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToMany, JoinTabl
 import { RootoshEntity } from '../../rootosh/entities/rootosh.entity';
 import { CustomerEntity } from '../../customer/entities/customer.entity';
 import { OfferEntity } from '../../offer/entities/offer.entity';
+import { ReceiptEntity } from '../../receipt/entities/receipt.entity';
 
 
 
@@ -49,4 +50,7 @@ export class ServiceEntity {
 
   @ManyToMany(() => OfferEntity, (OfferEntity) => OfferEntity.services)
   offers: OfferEntity[];
+
+  @ManyToMany(() => ReceiptEntity, ReceiptEntity => ReceiptEntity.services)
+  receipts: ReceiptEntity[];
 }
