@@ -123,117 +123,132 @@ export class ReservationService {
   //   };
   // }
 
-  async createReservation(
-    branchId: string,
-    createCustomerDto: CreateCustomerDto,
-    serviceIds: string[],
-    image: Express.Multer.File
-  ): Promise<any> {
-    const branch = await this.BranchRepository.findOne({
-      where: { id: branchId },
-      relations: ["reservations", "employees", "employees.position"],
-    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   
-    if (!branch) {
-      throw new NotFoundException("Branch not found");
-    }
+  // async createReservation(
+  //   branchId: string,
+  //   createCustomerDto: CreateCustomerDto,
+  //   serviceIds: string[],
+  //   image: Express.Multer.File
+  // ): Promise<any> {
+  //   const branch = await this.BranchRepository.findOne({
+  //     where: { id: branchId },
+  //     relations: ["reservations", "employees", "employees.position"],
+  //   });
   
-    const services = await this.ServiceRepository.findByIds(serviceIds);
-    const totalDuration = this.calculateTotalDuration(services);
+  //   if (!branch) {
+  //     throw new NotFoundException("Branch not found");
+  //   }
   
-    let startTime: Date;
-    let endTime: Date;
+  //   const services = await this.ServiceRepository.findByIds(serviceIds);
+  //   const totalDuration = this.calculateTotalDuration(services);
   
-    // Check for custom start and end times
-    if (createCustomerDto.customStartTime && createCustomerDto.customEndTime) {
-      startTime = new Date(createCustomerDto.customStartTime);
-      endTime = new Date(createCustomerDto.customEndTime);
+  //   let startTime: Date;
+  //   let endTime: Date;
   
-      // Ensure custom times are today or in the future
-      const now = new Date();
-      now.setHours(0, 0, 0, 0); // Reset time for comparison
-      if (startTime < now) {
-        throw new BadRequestException("Reservations can only be made for today or future dates.");
-      }
+  //   // Check for custom start and end times
+  //   if (createCustomerDto.customStartTime && createCustomerDto.customEndTime) {
+  //     startTime = new Date(createCustomerDto.customStartTime);
+  //     endTime = new Date(createCustomerDto.customEndTime);
   
-      // Validate that the custom times are not conflicting with existing reservations
-      const conflictingReservation = branch.reservations.find(
-        (reservation) =>
-          (startTime >= reservation.start_Time && startTime < reservation.end_Time) ||
-          (endTime > reservation.start_Time && endTime <= reservation.end_Time) ||
-          (startTime < reservation.start_Time && endTime > reservation.end_Time)
-      );
+  //     // Ensure custom times are today or in the future
+  //     const now = new Date();
+  //     now.setHours(0, 0, 0, 0); // Reset time for comparison
+  //     if (startTime < now) {
+  //       throw new BadRequestException("Reservations can only be made for today or future dates.");
+  //     }
   
-      if (conflictingReservation) {
-        throw new BadRequestException(
-          "The custom schedule conflicts with an existing reservation."
-        );
-      }
-    }else{
-       // If no custom times are provided, throw an exception
-      throw new BadRequestException("Custom start and end times are required.");
-    }
-    //  else {
-    //   // Automatically find the first available slot if no custom times are provided
-    //   const availableSlot = this.findAvailableSlot(
-    //     branch.reservations,
-    //     totalDuration
-    //   );
+  //     // Validate that the custom times are not conflicting with existing reservations
+  //     const conflictingReservation = branch.reservations.find(
+  //       (reservation) =>
+  //         (startTime >= reservation.start_Time && startTime < reservation.end_Time) ||
+  //         (endTime > reservation.start_Time && endTime <= reservation.end_Time) ||
+  //         (startTime < reservation.start_Time && endTime > reservation.end_Time)
+  //     );
   
-    //   if (!availableSlot) {
-    //     throw new BadRequestException("No available slots");
-    //   }
+  //     if (conflictingReservation) {
+  //       throw new BadRequestException(
+  //         "The custom schedule conflicts with an existing reservation."
+  //       );
+  //     }
+  //   }else{
+  //      // If no custom times are provided, throw an exception
+  //     throw new BadRequestException("Custom start and end times are required.");
+  //   }
+  //   //  else {
+  //   //   // Automatically find the first available slot if no custom times are provided
+  //   //   const availableSlot = this.findAvailableSlot(
+  //   //     branch.reservations,
+  //   //     totalDuration
+  //   //   );
   
-    //   startTime = availableSlot.startTime;
-    //   endTime = availableSlot.endTime;
+  //   //   if (!availableSlot) {
+  //   //     throw new BadRequestException("No available slots");
+  //   //   }
   
-    //   // Ensure automatic slots are not in the past
-    //   const now = new Date();
-    //   now.setHours(0, 0, 0, 0); // Reset time for comparison
-    //   if (startTime < now) {
-    //     // Adjust start time to the next available day if it falls in the past
-    //     startTime = new Date(now.getTime() + totalDuration * 60 * 1000);
-    //     endTime = new Date(startTime.getTime() + totalDuration * 60 * 1000);
-    //   }
-    // }
+  //   //   startTime = availableSlot.startTime;
+  //   //   endTime = availableSlot.endTime;
   
-    // Format start and end times
-    const formattedStartTime = format(startTime, "yyyy-MM-dd HH:mm");
-    const formattedEndTime = format(endTime, "yyyy-MM-dd HH:mm");
+  //   //   // Ensure automatic slots are not in the past
+  //   //   const now = new Date();
+  //   //   now.setHours(0, 0, 0, 0); // Reset time for comparison
+  //   //   if (startTime < now) {
+  //   //     // Adjust start time to the next available day if it falls in the past
+  //   //     startTime = new Date(now.getTime() + totalDuration * 60 * 1000);
+  //   //     endTime = new Date(startTime.getTime() + totalDuration * 60 * 1000);
+  //   //   }
+  //   // }
   
-    // Ensure image is provided
-    if (!image) {
-      throw new BadRequestException("Photo is required");
-    }
+  //   // Format start and end times
+  //   const formattedStartTime = format(startTime, "yyyy-MM-dd HH:mm");
+  //   const formattedEndTime = format(endTime, "yyyy-MM-dd HH:mm");
   
-    // Upload image
-    const folderName = "reservation"; // or any other dynamic name based on context
-    const result = await this.CloudinaryService.uploadImage(image, folderName);
+  //   // Ensure image is provided
+  //   if (!image) {
+  //     throw new BadRequestException("Photo is required");
+  //   }
   
-    // Create and save reservation
-    const reservation = this.ReservationRepository.create({
-      country_Code: createCustomerDto.country_Code,
-      phone_Number: createCustomerDto.phoneNumber,
-      client_FullName: createCustomerDto.fullName,
-      dateOfBirth: createCustomerDto.dateOfBirth, // Unified date field
+  //   // Upload image
+  //   const folderName = "reservation"; // or any other dynamic name based on context
+  //   const result = await this.CloudinaryService.uploadImage(image, folderName);
   
-      start_Time: formattedStartTime,
-      end_Time: formattedEndTime,
-      reservationDay: startTime.getDate(),
-      reservationMonth: startTime.getMonth() + 1, // Months are 0-indexed
-      reservationYear: startTime.getFullYear(),
-      branch,
-      services,
-      deposit_Content: result.url,
-    });
+  //   // Create and save reservation
+  //   const reservation = this.ReservationRepository.create({
+  //     // // country_Code: createCustomerDto.country_Code,
+  //     // phone_Number: createCustomerDto.phoneNumber,
+  //     // client_FullName: createCustomerDto.fullName,
+  //     // dateOfBirth: createCustomerDto.dateOfBirth, // Unified date field
   
-    await this.ReservationRepository.save(reservation);
+  //     start_Time: formattedStartTime,
+  //     end_Time: formattedEndTime,
+  //     reservationDay: startTime.getDate(),
+  //     reservationMonth: startTime.getMonth() + 1, // Months are 0-indexed
+  //     reservationYear: startTime.getFullYear(),
+  //     branch,
+  //     services,
+  //     deposit_Content: result.url,
+  //   });
   
-    // Generate receipt
-    const receipt = `Receipt:\nCustomer: ${createCustomerDto.fullName}\nDate: ${startTime.toDateString()}\nStart Time: ${format(startTime, "HH:mm")}\nEnd Time: ${format(endTime, "HH:mm")}\nTotal Duration: ${totalDuration} minutes\n`;
+  //   await this.ReservationRepository.save(reservation);
   
-    return { reservation, receipt };
-  }
+  //   // Generate receipt
+  //   const receipt = `Receipt:\nCustomer: ${createCustomerDto.fullName}\nDate: ${startTime.toDateString()}\nStart Time: ${format(startTime, "HH:mm")}\nEnd Time: ${format(endTime, "HH:mm")}\nTotal Duration: ${totalDuration} minutes\n`;
+  
+  //   return { reservation, receipt };
+  // }
   
   async suggestReservationTimes(
     branchId: string,

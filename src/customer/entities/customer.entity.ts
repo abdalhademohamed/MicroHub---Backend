@@ -1,3 +1,4 @@
+import { ReservationEntity } from '../../reservation/entities/reservation.entity';
 import { RootoshEntity } from '../../rootosh/entities/rootosh.entity';
 import { ServiceEntity } from '../../service/entities/service.entity';
 import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, JoinTable, OneToMany } from 'typeorm';
@@ -37,5 +38,6 @@ export class CustomerEntity {
   @JoinTable() // This will create a join table
   lastRootoshes: RootoshEntity[];
 
-  
+  @OneToMany(() => ReservationEntity, ReservationEntity => ReservationEntity.customer)
+  reservations: ReservationEntity[]; // Relation to reservations
 }

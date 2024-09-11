@@ -56,40 +56,40 @@ export class ReservationController {
   //   }
   // }
 
-  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
-  @Post(':branchId')
-  @UseInterceptors(FileInterceptor('image')) // Intercept the file upload
-  async createReservations(
-    @Body() CreateCustomerDto: CreateCustomerDto,  // Array of customer DTOs
-    @Param('branchId') branchId: string,
-    @Query('servicesIds') serviceIds: string | string[],
-    @UploadedFile() image: Express.Multer.File, // Handle the uploaded file
-  ): Promise<any> {
+  // @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  // @Roles(Role.SUPERADMIN)
+  // @Post(':branchId')
+  // @UseInterceptors(FileInterceptor('image')) // Intercept the file upload
+  // async createReservations(
+  //   @Body() CreateCustomerDto: CreateCustomerDto,  // Array of customer DTOs
+  //   @Param('branchId') branchId: string,
+  //   @Query('servicesIds') serviceIds: string | string[],
+  //   @UploadedFile() image: Express.Multer.File, // Handle the uploaded file
+  // ): Promise<any> {
    
-    // Convert servicesIds to array
-    let servicesIdsArray: string[];
-    if (Array.isArray(serviceIds)) {
-      servicesIdsArray = serviceIds;
-    } else if (typeof serviceIds === 'string') {
-      servicesIdsArray = serviceIds.split(',').map(id => id.trim());
-    } else {
-      throw new BadRequestException('Invalid servicesIds format');
-    }
+  //   // Convert servicesIds to array
+  //   let servicesIdsArray: string[];
+  //   if (Array.isArray(serviceIds)) {
+  //     servicesIdsArray = serviceIds;
+  //   } else if (typeof serviceIds === 'string') {
+  //     servicesIdsArray = serviceIds.split(',').map(id => id.trim());
+  //   } else {
+  //     throw new BadRequestException('Invalid servicesIds format');
+  //   }
 
-    try {
-      // Call the service to create reservations
-      return  await this.reservationService.createReservation(
-              branchId,
-              CreateCustomerDto,
-              servicesIdsArray,
-              image
-            );
-    } catch (error) {
-      // Handle errors appropriately
-      throw new BadRequestException(error.message);
-    }
-  }
+  //   try {
+  //     // Call the service to create reservations
+  //     return  await this.reservationService.createReservation(
+  //             branchId,
+  //             CreateCustomerDto,
+  //             servicesIdsArray,
+  //             image
+  //           );
+  //   } catch (error) {
+  //     // Handle errors appropriately
+  //     throw new BadRequestException(error.message);
+  //   }
+  // }
 
   @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)

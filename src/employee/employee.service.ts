@@ -264,4 +264,8 @@ export class EmployeeService {
     const result = await this.CloudinaryService.uploadImage(file, folderName);
     return result.url; // Return the URL of the uploaded image
   }
+
+
+
+  
 }
