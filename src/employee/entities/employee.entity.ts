@@ -57,11 +57,10 @@ export class EmployeeEntity {
   @ManyToOne(() => BranchEntity, (BranchEntity) => BranchEntity.employees, {
     onDelete: "SET NULL",
   })
-  branch: BranchEntity | string;
+  branch: BranchEntity 
 
   @ManyToOne(() => PositionEntity, (PositionEntity) => PositionEntity.employees)
-  position: PositionEntity | string;
-
+  position: PositionEntity 
   @ManyToMany(() => ReservationEntity, (ReservationEntity) => ReservationEntity.employees)
   reservations: ReservationEntity[];
   // @OneToMany(() => ReservationEntity, ReservationEntity => ReservationEntity.artist)

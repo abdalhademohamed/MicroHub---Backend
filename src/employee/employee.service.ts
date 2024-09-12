@@ -83,7 +83,7 @@ export class EmployeeService {
       const newEmployee = this.employeeRepository.create({
         english_Name,
         arabic_Name,
-        branch:branchId,
+        branch,
         position,
         employeeType,
         workingHours,
