@@ -46,6 +46,11 @@ import { OrderEntity } from './orders/entities/order.entity';
 import { CommentEntity } from './comment/entities/comment.entity';
 import { ReceiptModule } from './receipt/receipt.module';
 import { ReceiptEntity } from './receipt/entities/receipt.entity';
+import { SlotsEntity } from './slots/entities/slots.entity';
+import { WorkingEntity } from './slots/entities/working.entity';
+import { SlotModule } from './slots/slot.module';
+import { AnalysisModule } from './analysis/analysis.module';
+import { AnalysisEntity } from './analysis/entities/analysis.entity';
 
 
 
@@ -68,7 +73,7 @@ import { ReceiptEntity } from './receipt/entities/receipt.entity';
       // entities: ["dist/**/*.entity.js"], 
       entities:[UserEntity,BranchEntity,CustomerEntity,EmployeeEntity,
         EmployeeTypeEntity,PositionEntity,ReservationEntity,ServiceEntity,RootoshEntity
-      ,OfferEntity,PaymentEntity,WorkingBranchEntity,NotificationEntity,FcmTokenEntity,AuditLogEntity,ReviewEntity,OrderEntity,CommentEntity,ReceiptEntity],
+      ,OfferEntity,PaymentEntity,WorkingBranchEntity,NotificationEntity,FcmTokenEntity,AuditLogEntity,ReviewEntity,OrderEntity,CommentEntity,ReceiptEntity,SlotsEntity,WorkingEntity,AnalysisEntity],
       synchronize: true, // Set to false in production
       ssl: true, // Neon typically requires SSL connections
       extra: {
@@ -115,7 +120,9 @@ import { ReceiptEntity } from './receipt/entities/receipt.entity';
     CommentModule,
     OrdersModule,
     ReviewsModule,
-    ReceiptModule
+    ReceiptModule,
+    SlotModule,
+    AnalysisModule
   ],
   controllers: [AppController],
   providers: [AppService,CloudinaryProvider],
