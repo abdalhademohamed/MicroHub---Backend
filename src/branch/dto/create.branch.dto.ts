@@ -9,7 +9,7 @@ export class CreateBranchDto {
   name: string;
 
   @ApiProperty({ description: 'Location URL of the branch' })
-  @IsString()
+  @IsString() 
   @IsNotEmpty()
   location: string;
 
