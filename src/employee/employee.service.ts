@@ -39,7 +39,7 @@ export class EmployeeService {
     const {
       english_Name,
       arabic_Name,
-      branch: branchId,
+      branchId,
       position: positionId,
       employeeType: employeeTypeId,
       workingHours,

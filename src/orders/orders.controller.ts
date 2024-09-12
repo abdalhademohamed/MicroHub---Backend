@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UseGuards, UploadedFile, Query, BadRequestException, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UseGuards, UploadedFile, Query, BadRequestException, Put, HttpStatus } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -10,6 +10,7 @@ import { Roles } from '../auth/Roles.decorator';
 import { Role } from '../user/utils/user.enum';
 import { OrderEntity } from './entities/order.entity';
 import { FindOrdersDto } from './dto/find.all.orders.dto';
+import { OrderStatus } from './utils/order.status.enum';
 
 @Controller('orders')
 export class OrdersController {
@@ -25,7 +26,25 @@ export class OrdersController {
     return this.ordersService.createOrder(reservationId);
   }
 
+ // Endpoint to update the order status
+ @Patch('status/:id')
+ @UseGuards(AccessTokenGuard, RolesGuard)
+ @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER)
+ async updateOrderStatus(
+   @Param('id') id: string,
+   @Body('status') status: OrderStatus
+ ) {
+   if (!Object.values(OrderStatus).includes(status)) {
+     throw new BadRequestException('Invalid status');
+   }
 
+   try {
+     const updatedOrder = await this.ordersService.updateOrderStatus(id, status);
+     return { statusCode: HttpStatus.OK, data: updatedOrder };
+   } catch (error) {
+     return { statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: 'Failed to update order status' };
+   }
+ }
 
 
   @Put('assign')

@@ -3,7 +3,9 @@ import { Postion } from '../utils/postion.enum';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreatePositionDto {
- 
+  @ApiProperty()
+  @IsEnum(Postion)
+  postion: Postion;
 
   @ApiProperty()
   @IsString()

@@ -9,11 +9,11 @@ export class PositionEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  // @Column({
-  //   type: 'enum',
-  //   enum: Postion,
-  // })
-  // postion:Postion
+  @Column({
+    type: 'enum',
+    enum: Postion,
+  })
+  postion:Postion
 
   @Column()
   positionInEnglish: string;

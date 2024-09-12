@@ -40,11 +40,11 @@ export class PostionService {
       return updatedPosition;
     }
   
-    // Delete a position
+    // Delete a position  
     async removePosition(id: string): Promise<void> {
       const position = await this.PositionRepository.findOne({ where: { id } });
   
-      if (!position) {
+      if (!position) { 
         throw new NotFoundException('Position not found');
       }
   

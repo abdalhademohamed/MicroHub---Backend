@@ -60,7 +60,7 @@ export class BranchService {
   
       // Create and save the new branch
       const branch = this.BranchRepository.create({
-        name,
+        name,  
         location,
         image,
         createdBy: userId,

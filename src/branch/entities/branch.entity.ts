@@ -3,6 +3,7 @@ import { EmployeeEntity } from '../../employee/entities/employee.entity';
 import { ReservationEntity } from '../../reservation/entities/reservation.entity';
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToMany } from 'typeorm';
 import { WorkingBranchEntity } from '../../working-branch/entities/working.branch.entity';
+import { SlotsEntity } from '../../slots/entities/slots.entity';
 
 @Entity()
 export class BranchEntity {
@@ -33,6 +34,8 @@ export class BranchEntity {
 
   @OneToMany(() => WorkingBranchEntity, (WorkingBranchEntity) => WorkingBranchEntity.branch, { cascade: true })
   workingbranch: WorkingBranchEntity[];
+  @OneToMany( ()=> SlotsEntity, (entity) => entity.branch)
+  slots: SlotsEntity[];
 
   @Column({ name: 'created_by', nullable: true })
   createdBy: string;
