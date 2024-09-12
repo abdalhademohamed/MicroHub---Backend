@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { And, LessThanOrEqual, MoreThanOrEqual, Repository } from "typeorm";
-import { ReservationEntity } from "src/reservation/entities/reservation.entity";
-import { PaymentEntity } from "src/payment/entities/payment.entity";
+import { ReservationEntity } from "../reservation/entities/reservation.entity";
+import { PaymentEntity } from "../payment/entities/payment.entity";
 import { AnalysisDto } from "./dto/deposit.dto";
 
 @Injectable()

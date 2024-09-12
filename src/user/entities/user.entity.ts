@@ -10,7 +10,7 @@ import {
 import { Role } from "../utils/user.enum";
 import { NotificationEntity } from "../../notification/entities/notification.entity";
 import { FcmTokenEntity } from "../../notification/entities/fcm.token.entity";
-import { BranchEntity } from "src/branch/entities/branch.entity";
+import { BranchEntity } from "../../branch/entities/branch.entity";
 
 @Entity()
 export class UserEntity {

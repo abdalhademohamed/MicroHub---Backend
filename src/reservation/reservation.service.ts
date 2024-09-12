@@ -15,7 +15,7 @@ import { CustomerEntity } from "../customer/entities/customer.entity";
 import { CreateCustomerDto } from "../customer/dto/create.customer.dto";
 import { format } from "date-fns";
 import { CreateReservationDto } from "./dto/create.reservation.dto";
-import { WorkingEntity } from "src/slots/entities/working.entity";
+import { WorkingEntity } from "../slots/entities/working.entity";
 
 @Injectable()
 export class ReservationService {

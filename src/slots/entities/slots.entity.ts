@@ -1,4 +1,4 @@
-import { BranchEntity } from "src/branch/entities/branch.entity";
+import { BranchEntity } from "../../branch/entities/branch.entity";
 import {
   Column,
   PrimaryGeneratedColumn,

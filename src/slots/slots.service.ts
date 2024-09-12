@@ -1,14 +1,14 @@
 import { Injectable } from "@nestjs/common";
-import { WeekDays } from "src/branch/utils/days.enum";
+import { WeekDays } from "../branch/utils/days.enum";
 import { CreateSlotDto } from "./dto/create.slot.dto";
 import { InjectRepository } from "@nestjs/typeorm";
-import { WorkingBranchEntity } from "src/working-branch/entities/working.branch.entity";
+import { WorkingBranchEntity } from "../working-branch/entities/working.branch.entity";
 import { MoreThanOrEqual, Repository } from "typeorm";
-import { BranchEntity } from "src/branch/entities/branch.entity";
+import { BranchEntity } from "../branch/entities/branch.entity";
 
-import { Role } from "src/user/utils/user.enum";
-import { UserEntity } from "src/user/entities/user.entity";
-import { ReservationService } from "src/reservation/reservation.service";
+import { Role } from "../user/utils/user.enum";
+import { UserEntity } from "../user/entities/user.entity";
+import { ReservationService } from "../reservation/reservation.service";
 import { SlotsEntity } from "./entities/slots.entity";
 import { WorkingEntity } from "./entities/working.entity";
 

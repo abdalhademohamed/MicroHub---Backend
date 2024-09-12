@@ -3,7 +3,7 @@ import { EmployeeEntity } from '../../employee/entities/employee.entity';
 import { ReservationEntity } from '../../reservation/entities/reservation.entity';
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToMany } from 'typeorm';
 import { WorkingBranchEntity } from '../../working-branch/entities/working.branch.entity';
-import { SlotsEntity } from 'src/slots/entities/slots.entity';
+import { SlotsEntity } from '../../slots/entities/slots.entity';
 
 @Entity()
 export class BranchEntity {

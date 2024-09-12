@@ -9,8 +9,8 @@ import { CloudinaryService } from "../cloudinary/cloudinary.service";
 import { CustomerEntity } from "../customer/entities/customer.entity";
 import { EmployeeEntity } from "../employee/entities/employee.entity";
 import { PositionEntity } from "../postion/entities/postion.entity";
-import { UserEntity } from "src/user/entities/user.entity";
-import { WorkingEntity } from "src/slots/entities/working.entity";
+import { UserEntity } from "../user/entities/user.entity";
+import { WorkingEntity } from "../slots/entities/working.entity";
 
 @Module({
   imports: [
