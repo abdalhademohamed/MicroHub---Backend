@@ -17,27 +17,6 @@ export class ReservationEntity {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  // @Column({ type: 'varchar', nullable: true }) // Ensure nullable is set if the column can have NULL values
-  // country_Code: string;
-
-  // @Column()
-  // phone_Number: string; // Correct property name
-
-  // @Column()
-  // client_FullName: string; // Correct property name
-
-  // @Column()
-  // day: number; // User's birthday day
-
-  // @Column()
-  // month: number; // User's birthday month
-
-  // @Column()
-  // year: number; // User's birthday year
-
-  // @Column({ type: 'date' })
-  // dateOfBirth: string; // Format: YYYY-MM-DD
-
   @Column()
   reservationDay: number; // Day of reservation
   @Column()
@@ -56,6 +35,10 @@ export class ReservationEntity {
 
   @Column({ type: "numeric", precision: 10, scale: 2, default: 0 })
   deposit: number; // Numeric value with 2 decimal places
+
+  @Column({ default: new Date() })
+  createdAt: Date;
+
   @Column()
   deposit_Content: string; // Correct property name
 
