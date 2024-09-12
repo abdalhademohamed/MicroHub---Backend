@@ -53,6 +53,7 @@ export class EmployeeEntity {
 
   @Column({ default: 'working' })
   status: 'working' | 'completed'; // Status of the employee
+  
   @ManyToOne(() => BranchEntity, (BranchEntity) => BranchEntity.employees, {
     onDelete: "SET NULL",
   })
