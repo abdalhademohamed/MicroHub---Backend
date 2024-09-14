@@ -61,6 +61,9 @@ export class EmployeeEntity {
 
   @ManyToOne(() => PositionEntity, (PositionEntity) => PositionEntity.employees)
   position: PositionEntity 
+
+
+  
   @ManyToMany(() => ReservationEntity, (ReservationEntity) => ReservationEntity.employees)
   reservations: ReservationEntity[];
   // @OneToMany(() => ReservationEntity, ReservationEntity => ReservationEntity.artist)
