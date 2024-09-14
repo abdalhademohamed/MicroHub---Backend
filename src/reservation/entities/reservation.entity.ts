@@ -59,4 +59,8 @@ export class ReservationEntity {
 
   @OneToMany(() => OrderEntity, (OrderEntity) => OrderEntity.reservation)
   orders: OrderEntity[];
+
+
+  @Column({ default: false })
+  isDeleted: boolean;
 }
