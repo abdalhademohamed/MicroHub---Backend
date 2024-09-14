@@ -1,6 +1,6 @@
 import { EmployeeEntity } from '../../employee/entities/employee.entity';
 import { OrderEntity } from '../../orders/entities/order.entity';
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn } from 'typeorm';
 
 @Entity()
 export class CommentEntity {
@@ -11,7 +11,9 @@ export class CommentEntity {
   content: string; // Comment content
 
   @Column()
-  imageUrl: string; // URL of the uploaded image
+  imageBeforeUrl: string; // URL of the uploaded image
+  @Column()
+  imageAfterUrl: string; // URL of the uploaded image
 
   @ManyToOne(() => OrderEntity, order => order.comments)
   order: OrderEntity;
@@ -20,5 +22,8 @@ export class CommentEntity {
   @ManyToOne(() => EmployeeEntity, EmployeeEntity => EmployeeEntity.comments)
   employee: EmployeeEntity; // Reference to the employee who made the comment
 
+
+  @CreateDateColumn()
+  createdAt: Date; // Automatically set the date when the comment is created
   
 }
