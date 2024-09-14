@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { Between, Repository } from "typeorm";
 import { EmployeeEntity } from "../entities/employee.entity";
 import { ReservationEntity } from "../../reservation/entities/reservation.entity";
 import { OrderEntity } from "../../orders/entities/order.entity";
@@ -30,7 +30,8 @@ export class ArtistService {
   async addComment(
     orderId: string,
     content: string,
-    image: Express.Multer.File,
+    imageBefore: Express.Multer.File,
+    imageAfter: Express.Multer.File,
     userId: string
   ): Promise<any> {
     // Find the order
@@ -42,7 +43,7 @@ export class ArtistService {
       throw new NotFoundException("Order not found");
     }
 
-    if (!image) {
+    if (!imageBefore || !imageAfter) {
       throw new BadRequestException("Photo is required");
     }
     // Find the employee
@@ -58,12 +59,14 @@ export class ArtistService {
 
     // Upload image
     const folderName = "reservation"; // or any other dynamic name based on context
-    const result = await this.CloudinaryService.uploadImage(image, folderName);
+    const resultimagebefore = await this.CloudinaryService.uploadImage(imageBefore, folderName);
+    const resultimageafter = await this.CloudinaryService.uploadImage(imageAfter, folderName);
 
     // Create and save the comment
     const comment = this.commentRepository.create({
       content,
-      imageUrl: result.url,
+      imageBeforeUrl: resultimagebefore.url,
+      imageAfterUrl:resultimageafter.url,
       order,
       employee, // Optionally link the comment to the artist
     });
@@ -80,31 +83,6 @@ export class ArtistService {
 
 
 
-  // async getTotalReviews(employeeId: string): Promise<number> {
-  //   try {
-  //     // Check if the employee exists
-  //     const employee = await this.employeeRepository.findOne({
-  //       where: { id: employeeId },
-  //     });
-
-  //     if (!employee) {
-  //       throw new NotFoundException(`Employee with ID ${employeeId} not found`);
-  //     }
-
-  //     // Count the number of comments associated with the employee
-  //     const totalReviews = await this.commentRepository.count({
-  //       where: { employee: { id: employeeId } },
-  //     });
-
-  //     return totalReviews;
-
-  //   } catch (error) {
-  //     throw new InternalServerErrorException(
-  //       'Failed to get total reviews',
-  //       error.stack
-  //     );
-  //   }
-  // }
 
 
 
