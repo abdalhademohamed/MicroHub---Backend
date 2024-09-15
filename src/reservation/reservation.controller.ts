@@ -10,6 +10,8 @@ import {
   UploadedFile,
   BadRequestException,
   Put,
+  UsePipes,
+  ValidationPipe,
 } from "@nestjs/common";
 import { ReservationService } from "./reservation.service";
 import { UpdateReservationDto } from "./dto/update.reservation.dto";
@@ -28,13 +30,16 @@ export class ReservationController {
   // @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   // @Roles(Role.SUPERADMIN)
   @Post()
-  @UseInterceptors(FileInterceptor("image")) // Intercept the file upload
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+
+  @UseInterceptors(FileInterceptor("deposit_Content")) // Intercept the file upload
   async createReservations(
     @Body() CreateCustomerDto: CreateReservationDto, // Array of customer DTOs
     @UploadedFile() image: Express.Multer.File, // Handle the uploaded file
   ): Promise<any> {
     try {
       // Call the service to create reservations
+      // console.log("data:",CreateCustomerDto)
       return await this.reservationService.createReservation(
         CreateCustomerDto,
         image,
