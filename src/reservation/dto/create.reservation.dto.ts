@@ -17,11 +17,23 @@ export class CreateReservationDto {
   @IsString()
   branch: string;
 
-  @ApiProperty()
+  
+  @ApiProperty({
+    type: [String],
+    description: 'Array of service IDs',
+    example: ['0414c556-e18a-452a-84e4-4f3813a4bf37', 'b78d5614-b6a3-4d01-97e2-f9749d098265'],
+  })
   @IsArray()
-  @IsString({ each: true })
-  @IsNotEmpty()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      // Convert comma-separated string to array
+      return value.split(',').map(id => id.trim());
+    }
+    // Return the value as-is if it's already an array
+    return Array.isArray(value) ? value : [];
+  })
   services: string[];
+
 
   @ApiProperty({ description: 'Deposit amount' })
   @IsNumber({}, { message: 'deposit must be a valid number' })
