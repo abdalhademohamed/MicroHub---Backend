@@ -35,11 +35,9 @@ export class ServiceEntity {
   @Column('int')
   months_To_Expire: number;
 
-
-  @ManyToMany(() => ReservationEntity, ReservationEntity => ReservationEntity.services,{ cascade: ['insert', 'update'], onDelete: 'SET NULL' })
+  @ManyToMany(() => ReservationEntity, ReservationEntity => ReservationEntity.services, { cascade: ['insert', 'update'], onDelete: 'SET NULL' })
   @JoinTable()
   reservations: ReservationEntity[];
-
 
   @OneToMany(() => RootoshEntity, RootoshEntity => RootoshEntity.service)
   rootosh: RootoshEntity[]; // Include rootoshes with the service
