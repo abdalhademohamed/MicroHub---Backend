@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNumber, IsArray, IsUUID, IsOptional, IsNotEmpty, IsDateString } from 'class-validator';
 import { BranchEntity } from '../../branch/entities/branch.entity';
 import { ServiceEntity } from '../../service/entities/service.entity';
+import { Transform } from 'class-transformer';
 
 export class CreateReservationDto {
 
@@ -22,13 +23,10 @@ export class CreateReservationDto {
   @IsNotEmpty()
   services: string[];
 
-
-
-  @ApiProperty()
-  @IsNumber()
+  @ApiProperty({ description: 'Deposit amount' })
+  @IsNumber({}, { message: 'deposit must be a valid number' })
+  @Transform(({ value }) => Number(value)) // Transform to number
   deposit: number;
-
-
 
 
 
@@ -48,15 +46,15 @@ export class CreateReservationDto {
 
 
 
-  @ApiProperty()
-  @IsDateString(
-    {},
-    { message: "customEndTime must be a valid ISO 8601 date string" },
-  )
-  @IsNotEmpty({
-    message: "customEndTime must be provided if customStartTime is provided",
-  })
-  customEndTime?: string;
+  // @ApiProperty()
+  // @IsDateString(
+  //   {},
+  //   { message: "customEndTime must be a valid ISO 8601 date string" },
+  // )
+  // @IsNotEmpty({
+  //   message: "customEndTime must be provided if customStartTime is provided",
+  // })
+  // customEndTime?: string;
 
 
 
