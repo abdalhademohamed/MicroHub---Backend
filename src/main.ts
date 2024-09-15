@@ -14,8 +14,12 @@ async function bootstrap() {
       whitelist: true, // Strip properties that do not have any decorators
       forbidNonWhitelisted: true, // Throw an error if non-whitelisted properties are present
       transform: true, // Automatically transform payloads to be objects typed according to their DTO classes
+      transformOptions: { enableImplicitConversion: true },
+
     })
   );
+
+ 
   // const configService = app.get<ConfigService>(ConfigService);
   // const expressInstance = app.getHttpAdapter().getInstance();
   // useNestTreblle(expressInstance, {
