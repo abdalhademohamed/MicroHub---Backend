@@ -28,7 +28,9 @@ export class ArtistController {
 
     @Query('orderId') orderId: string,
     @Query('content') content: string,
-    @UploadedFile() image: Express.Multer.File, // File uploads cannot be passed as query parameters
+    @UploadedFile() imageBefore: Express.Multer.File, // File uploads cannot be passed as query parameters
+    @UploadedFile() imageAfter: Express.Multer.File, // File uploads cannot be passed as query parameters
+
   ) {
     if (!orderId || !content) {
       throw new BadRequestException('OrderId and content are required');
@@ -38,9 +40,12 @@ export class ArtistController {
     if (!userId) {
       throw new BadRequestException('User not authenticated');
     }
-    return this.ArtistService.addComment(orderId, content, image,userId);
+    return this.ArtistService.addComment(orderId, content, imageBefore,imageAfter,userId);
   }
 
 
+
+
+  
  
 }

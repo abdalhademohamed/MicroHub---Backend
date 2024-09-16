@@ -10,6 +10,8 @@ import {
   UploadedFile,
   BadRequestException,
   Put,
+  UsePipes,
+  ValidationPipe,
 } from "@nestjs/common";
 import { ReservationService } from "./reservation.service";
 import { UpdateReservationDto } from "./dto/update.reservation.dto";
@@ -18,6 +20,8 @@ import { ReservationEntity } from "./entities/reservation.entity";
 import { GetReservationsDto } from "./dto/get.reservation.dto";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { CreateReservationDto } from "./dto/create.reservation.dto";
+import { UpdateTimeReservationDto } from "./dto/update-time.reservation.dto";
+import { CreateCustomerDto } from "../customer/dto/create.customer.dto";
 
 @ApiTags("reservation")
 @Controller("reservation")
@@ -26,13 +30,16 @@ export class ReservationController {
   // @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   // @Roles(Role.SUPERADMIN)
   @Post()
-  @UseInterceptors(FileInterceptor("image")) // Intercept the file upload
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+
+  @UseInterceptors(FileInterceptor("deposit_Content")) // Intercept the file upload
   async createReservations(
     @Body() CreateCustomerDto: CreateReservationDto, // Array of customer DTOs
     @UploadedFile() image: Express.Multer.File, // Handle the uploaded file
   ): Promise<any> {
     try {
       // Call the service to create reservations
+      // console.log("data:",CreateCustomerDto)
       return await this.reservationService.createReservation(
         CreateCustomerDto,
         image,
@@ -43,17 +50,17 @@ export class ReservationController {
     }
   }
 
+  @Get('booking/:branchId')
+  async getAllBookings(
+    @Param('branchId') branchId: string,
+    @Query() getReservationsDto: GetReservationsDto,
+  ) {
+    return this.reservationService.getBookingBranch(branchId, getReservationsDto);
+  }
+
   // @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   // @Roles(Role.SUPERADMIN)
-  // Get all reservations with pagination and filtering
   @Get()
-  @ApiOperation({ summary: "Retrieve all reservations with optional filters" })
-  @ApiResponse({
-    status: 200,
-    description: "List of reservations",
-    type: [ReservationEntity],
-  })
-  @ApiResponse({ status: 404, description: "No reservations found" })
   async getAllReservations(
     @Query() getReservationsDto: GetReservationsDto,
   ): Promise<{
@@ -69,19 +76,31 @@ export class ReservationController {
   // @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   // @Roles(Role.SUPERADMIN)
   // Update a reservation by ID
+  @Post("customer")
+  async createCustomer(
+    @Body() body: CreateCustomerDto,
+  ){
+    return this.reservationService.registerOrLookupCustomer(body);
+  }
   @Put(":id")
-  async updateReservation(
+  async updateReservationServices(
     @Param("id") id: string,
     @Body() updateReservationDto: UpdateReservationDto,
-  ): Promise<ReservationEntity> {
-    return this.reservationService.updateReservation(id, updateReservationDto);
+  ){
+    return this.reservationService.updateReservationServices(id, updateReservationDto);
   }
 
-  // @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  // @Roles(Role.SUPERADMIN)
-  // Delete a reservation by ID
+  @Put("time/:id")
+  async updateReservationStartTime(
+    @Param("id") id: string,
+    @Body() updateReservationDto: UpdateTimeReservationDto,
+  ){
+    return this.reservationService.updateTime(id, updateReservationDto);
+  }
+
+
   @Delete(":id")
-  async deleteReservation(@Param("id") id: string): Promise<void> {
+  async deleteReservation(@Param("id") id: string){
     return this.reservationService.deleteReservation(id);
   }
 }

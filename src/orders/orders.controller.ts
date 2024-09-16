@@ -16,15 +16,15 @@ import { OrderStatus } from './utils/order.status.enum';
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
-  @Post(':reservationId')
-  @ApiOperation({ summary: 'Create an order from a reservation' })
-  @ApiResponse({ status: 201, description: 'Order created successfully.' })
-  @ApiResponse({ status: 404, description: 'Reservation not found.' })
-  async createOrder(
-    @Param('reservationId') reservationId: string
-  ) {
-    return this.ordersService.createOrder(reservationId);
-  }
+  // @Post(':reservationId')
+  // @ApiOperation({ summary: 'Create an order from a reservation' })
+  // @ApiResponse({ status: 201, description: 'Order created successfully.' })
+  // @ApiResponse({ status: 404, description: 'Reservation not found.' })
+  // async createOrder(
+  //   @Param('reservationId') reservationId: string
+  // ) {
+  //   return this.ordersService.createOrder(reservationId);
+  // }
 
  // Endpoint to update the order status
  @Patch('status/:id')

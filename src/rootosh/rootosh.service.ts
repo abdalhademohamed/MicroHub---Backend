@@ -64,6 +64,21 @@ export class RootoshService {
     return rootosh;
   }
 
+
+  async findOneRootoshByServiceId(serviceId: string): Promise<RootoshEntity> {
+    const rootosh = await this.rootoshRepository.findOne({
+      where: {
+        service: { id: serviceId },
+      },
+      relations: ['service'], // Ensure that the related 'service' is included
+    });
+  
+    if (!rootosh) {
+      throw new NotFoundException(`Rootosh associated with service ID ${serviceId} not found.`);
+    }
+  
+    return rootosh;
+  }
   async updateRootosh(id: string, updateRootoshDto: UpdateRootoshDto): Promise<RootoshEntity> {
     const rootosh = await this.rootoshRepository.preload({
       id,

@@ -1,4 +1,10 @@
-import { PartialType } from '@nestjs/swagger';
-import { CreateReservationDto } from './create.reservation.dto';
+import { ArrayNotEmpty, IsArray, IsDateString, IsOptional, IsString, Min } from "class-validator";
 
-export class UpdateReservationDto extends PartialType(CreateReservationDto) {}
+export class UpdateReservationDto {
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsString({each: true})
+  services: string[];
+  @IsDateString()
+  startTime: string;
+}

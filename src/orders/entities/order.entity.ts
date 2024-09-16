@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany, OneToOne } from 'typeorm';
 import { ReservationEntity } from '../../reservation/entities/reservation.entity';
 import { CommentEntity } from '../../comment/entities/comment.entity';
 import { EmployeeEntity } from '../../employee/entities/employee.entity';
@@ -20,13 +20,13 @@ export class OrderEntity {
   @Column({ type: 'text' })
   service: string; // Description of the service
 
-  @Column({ nullable: true })
-  invoiceNumber: string; // Add this column for invoice number
+  @Column({ type: 'int', unique: true })
+  invoiceNumber: number;  // New field for invoice number
 
   @Column({ type: 'enum', enum: OrderStatus})
   status: OrderStatus; // Status of the work
 
-  @ManyToOne(() => ReservationEntity, reservation => reservation.orders)
+  @OneToOne(() => ReservationEntity, reservation => reservation.order)
   reservation: ReservationEntity;
 
   @OneToMany(() => CommentEntity, CommentEntity => CommentEntity.order)

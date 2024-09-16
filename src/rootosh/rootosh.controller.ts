@@ -3,7 +3,7 @@ import { CreateRootoshDto } from './dto/create-rootosh.dto';
 import { RootoshEntity } from './entities/rootosh.entity';
 import { RootoshService } from './rootosh.service';
 import { UpdateRootoshDto } from './dto/update-rootosh.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/Roles.decorator';
 import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
 import { Role } from '../user/utils/user.enum';
@@ -44,6 +44,18 @@ export class RootoshController {
     return this.RootoshService.findOneRootosh(id);
   }
 
+
+
+  @Get(':serviceId')
+  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN)
+  @ApiOperation({ summary: 'Get Rootosh by Service ID' })
+  @ApiParam({ name: 'serviceId', required: true, description: 'The ID of the service' })
+  @ApiResponse({ status: 200, description: 'Rootosh found', type: RootoshEntity })
+  @ApiResponse({ status: 404, description: 'Rootosh not found' })
+  async findOneRootoshByServiceId(@Param('serviceId') serviceId: string): Promise<RootoshEntity> {
+    return this.RootoshService.findOneRootoshByServiceId(serviceId);
+  }
 
   @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)

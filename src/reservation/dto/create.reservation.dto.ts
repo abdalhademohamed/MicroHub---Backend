@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNumber, IsArray, IsUUID, IsOptional, IsNotEmpty, IsDateString } from 'class-validator';
 import { BranchEntity } from '../../branch/entities/branch.entity';
 import { ServiceEntity } from '../../service/entities/service.entity';
+import { Transform } from 'class-transformer';
 
 export class CreateReservationDto {
 
@@ -16,19 +17,28 @@ export class CreateReservationDto {
   @IsString()
   branch: string;
 
-  @ApiProperty()
+  
+  @ApiProperty({
+    type: [String],
+    description: 'Array of service IDs',
+    example: ['0414c556-e18a-452a-84e4-4f3813a4bf37', 'b78d5614-b6a3-4d01-97e2-f9749d098265'],
+  })
   @IsArray()
-  @IsString({ each: true })
-  @IsNotEmpty()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      // Convert comma-separated string to array
+      return value.split(',').map(id => id.trim());
+    }
+    // Return the value as-is if it's already an array
+    return Array.isArray(value) ? value : [];
+  })
   services: string[];
 
 
-
-  @ApiProperty()
-  @IsNumber()
+  @ApiProperty({ description: 'Deposit amount' })
+  @IsNumber({}, { message: 'deposit must be a valid number' })
+  @Transform(({ value }) => Number(value)) // Transform to number
   deposit: number;
-
-
 
 
 
@@ -48,15 +58,15 @@ export class CreateReservationDto {
 
 
 
-  @ApiProperty()
-  @IsDateString(
-    {},
-    { message: "customEndTime must be a valid ISO 8601 date string" },
-  )
-  @IsNotEmpty({
-    message: "customEndTime must be provided if customStartTime is provided",
-  })
-  customEndTime?: string;
+  // @ApiProperty()
+  // @IsDateString(
+  //   {},
+  //   { message: "customEndTime must be a valid ISO 8601 date string" },
+  // )
+  // @IsNotEmpty({
+  //   message: "customEndTime must be provided if customStartTime is provided",
+  // })
+  // customEndTime?: string;
 
 
 

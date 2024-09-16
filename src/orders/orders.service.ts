@@ -1,12 +1,10 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { CreateOrderDto } from './dto/create-order.dto';
-import { UpdateOrderDto } from './dto/update-order.dto';
+
 import { InjectRepository } from '@nestjs/typeorm';
 import { OrderEntity } from './entities/order.entity';
 import { Repository } from 'typeorm';
 import { ReservationEntity } from '../reservation/entities/reservation.entity';
-import { CommentEntity } from '../comment/entities/comment.entity';
-import { CloudinaryService } from '../cloudinary/cloudinary.service';
+
 import { EmployeeEntity } from '../employee/entities/employee.entity';
 import { FindOrdersDto } from './dto/find.all.orders.dto';
 import { OrderStatus } from './utils/order.status.enum';
@@ -28,22 +26,25 @@ export class OrdersService {
   ) {}
 
   async createOrder(reservationId: string): Promise<OrderEntity> {
-    const reservation = await this.reservationRepository.findOne({
-      where: { id: reservationId },
-      relations: ['services'],
-    });
+     // Fetch reservation with related services
+  const reservation = await this.reservationRepository.findOne({
+    where: { id: reservationId },
+    relations: ['services', 'customer'],
+  });
+  
 
     if (!reservation) {
       throw new NotFoundException('Reservation not found');
     }
     const newOrder = this.orderRepository.create({
-      customerName: reservation.customer ? reservation.customer.fullName : 'Unknown',
+      customerName: reservation.customer.fullName,
       date: `${reservation.reservationYear}-${reservation.reservationMonth}-${reservation.reservationDay}`,
       service: reservation.services.map(service => service.english_Name).join(', '),
       status: OrderStatus.Completed,
+      invoiceNumber: +1,
       comments:[],
       reservation,
-      artist: null // Initialize artist with null
+      artist: null // Initialize artist with null 
     });
 
     try {
