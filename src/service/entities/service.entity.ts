@@ -49,6 +49,5 @@ export class ServiceEntity {
   @ManyToMany(() => OfferEntity, (OfferEntity) => OfferEntity.services)
   offers: OfferEntity[];
 
-  @ManyToMany(() => ReceiptEntity, ReceiptEntity => ReceiptEntity.services)
-  receipts: ReceiptEntity[];
+
 }
