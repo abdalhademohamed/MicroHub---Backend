@@ -301,9 +301,12 @@ export class ReservationService {
   }> {
     const { day, month, year, page = 1, limit = 10 } = getReservationsDto;
 
-    const query = this.ReservationRepository.createQueryBuilder("reservation")
-      .leftJoinAndSelect("reservation.branch", "branch")
-      .leftJoinAndSelect("reservation.services", "services");
+   
+  const query = this.ReservationRepository.createQueryBuilder("reservation")
+  .leftJoinAndSelect("reservation.branch", "branch")
+  .leftJoinAndSelect("reservation.services", "services")
+  .leftJoinAndSelect("reservation.customer", "customer"); // Join the customer entity
+
     // Apply filters
     if (day) {
       query.andWhere("reservation.reservationDay = :day", { day });
