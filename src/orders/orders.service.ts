@@ -26,22 +26,25 @@ export class OrdersService {
   ) {}
 
   async createOrder(reservationId: string): Promise<OrderEntity> {
-    const reservation = await this.reservationRepository.findOne({
-      where: { id: reservationId },
-      relations: ['services'],
-    });
+     // Fetch reservation with related services
+  const reservation = await this.reservationRepository.findOne({
+    where: { id: reservationId },
+    relations: ['services', 'customer'],
+  });
+  
 
     if (!reservation) {
       throw new NotFoundException('Reservation not found');
     }
     const newOrder = this.orderRepository.create({
-      customerName: reservation.customer ? reservation.customer.fullName : 'Unknown',
+      customerName: reservation.customer.fullName,
       date: `${reservation.reservationYear}-${reservation.reservationMonth}-${reservation.reservationDay}`,
       service: reservation.services.map(service => service.english_Name).join(', '),
       status: OrderStatus.Completed,
+      invoiceNumber: +1,
       comments:[],
       reservation,
-      artist: null // Initialize artist with null
+      artist: null // Initialize artist with null 
     });
 
     try {

@@ -14,5 +14,6 @@ import { EmployeeEntity } from '../employee/entities/employee.entity';
   ],
   controllers: [OrdersController],
   providers: [OrdersService,CloudinaryService],
+  exports: [OrdersService],
 })
 export class OrdersModule {}
