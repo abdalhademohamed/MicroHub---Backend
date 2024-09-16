@@ -58,5 +58,8 @@ export class UserEntity {
   notifications: NotificationEntity[];
 
   @OneToMany(() => FcmTokenEntity, (FcmTokenEntity) => FcmTokenEntity.user)
-  fcmTokens: FcmTokenEntity[];
+  fcmTokens: FcmTokenEntity[];   
+
+
+
 }
