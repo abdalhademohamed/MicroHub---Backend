@@ -8,6 +8,8 @@ import {
   ManyToMany,
   OneToMany,
   JoinTable,
+  OneToOne,
+  JoinColumn,
 } from "typeorm";
 import { EmployeeEntity } from "../../employee/entities/employee.entity";
 import { CustomerEntity } from "../../customer/entities/customer.entity";
@@ -58,9 +60,9 @@ export class ReservationEntity {
   @ManyToOne(() => CustomerEntity, (customer) => customer.reservations)
   customer: CustomerEntity; // Relationship to CustomerEntity
 
-  @OneToMany(() => OrderEntity, (OrderEntity) => OrderEntity.reservation)
-  orders: OrderEntity[];
-
+  @OneToOne(() => OrderEntity, order => order.reservation, { cascade: true })
+  @JoinColumn() // Indicates the owning side of the OneToOne relationship
+  order: OrderEntity;
 
   @Column({ default: false })
   isDeleted: boolean;

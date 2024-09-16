@@ -12,7 +12,9 @@ import { PositionEntity } from "../postion/entities/postion.entity";
 import { UserEntity } from "../user/entities/user.entity";
 import { SlotsEntity } from "../slots/entities/slots.entity";
 import { WorkingEntity } from "../slots/entities/working.entity";
-import { ReceiptService } from "src/receipt/receipt.service";
+import { ReceiptService } from "../receipt/receipt.service";
+import { OrdersService } from "../orders/orders.service";
+import { OrderEntity } from "../orders/entities/order.entity";
 
 
 @Module({
@@ -27,10 +29,12 @@ import { ReceiptService } from "src/receipt/receipt.service";
       UserEntity,
       WorkingEntity,
       SlotsEntity,
+      OrderEntity
+      
     ]),
   ],
   controllers: [ReservationController],
-  providers: [ReservationService, CloudinaryService,
+  providers: [ReservationService, OrdersService, CloudinaryService // Add OrdersService here
     // ReceiptService
   ],
   exports: [ReservationService],

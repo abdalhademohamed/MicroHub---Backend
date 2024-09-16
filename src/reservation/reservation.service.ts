@@ -20,7 +20,9 @@ import { UpdateReservationDto } from "./dto/update.reservation.dto";
 import { UpdateTimeReservationDto } from "./dto/update-time.reservation.dto";
 import { WorkingEntity } from "../slots/entities/working.entity";
 import { SlotsEntity } from "../slots/entities/slots.entity";
-import { ReceiptService } from "src/receipt/receipt.service";
+import { ReceiptService } from "../receipt/receipt.service";
+import { OrderEntity } from "../orders/entities/order.entity";
+import { OrdersService } from "../orders/orders.service";
 
 @Injectable()
 export class ReservationService {
@@ -38,6 +40,7 @@ export class ReservationService {
     private readonly WorkingHourEntity: Repository<WorkingEntity>,
     @InjectRepository(SlotsEntity)
     private readonly SlotRepository: Repository<SlotsEntity>,
+    private readonly OrdersService: OrdersService, // Inject the new service
 
     // private readonly ReceiptService: ReceiptService, // Inject the new service
 
@@ -271,6 +274,8 @@ export class ReservationService {
 //   serviceIds: body.services, // Assuming you want to use service IDs from the reservation
 // };
 // const receipt = await this.createReceipt(createReceiptDto, userId);
+// Create order after the reservation
+    await this.OrdersService.createOrder(reservation.id);
     const receipt = `Receipt:\nCustomer: ${customer.fullName}\nDate: ${startTime.toDateString()}\nStart Time: ${format(startTime, 'HH:mm')}\nEnd Time: ${format(endTime, 'HH:mm')}\nTotal Duration: ${duration} minutes\n`;
 
     return { reservation, receipt };
