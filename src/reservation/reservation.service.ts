@@ -100,17 +100,24 @@ export class ReservationService {
     return customer;
   }
 
-  async calculateTotalDuration(ids: string[]) {
+  async calculateTotalDuration(ids: string[]): Promise<{ price: number; duration: number; services: ServiceEntity[] }> {
     const services = await this.ServiceRepository.findByIds(ids);
-    if (services.length != ids.length) {
+  
+    if (services.length !== ids.length) {
       throw new HttpException("Invalid Service IDs", 400);
     }
-    const acc = { price: 0, duration: 0, services };
-    for (const service of services) {
-      acc.price += service.price;
-      acc.duration += service.duration_Mins;
-    }
-    return acc;
+  
+    // Use array reduction to sum the price and duration
+    const { price, duration } = services.reduce(
+      (acc, service) => {
+        acc.price += Number(service.price);  // Ensure price is a number
+        acc.duration += service.duration_Mins;
+        return acc;
+      },
+      { price: 0, duration: 0 } // Initial accumulator
+    );
+  
+    return { price, duration, services };
   }
   async getWorkingHoursAtSpecificDate(branchId: string, day: Date) {
     const workingHours = await this.WorkingHourEntity.find({
@@ -182,7 +189,8 @@ export class ReservationService {
   // Implement the other methods like calculateTotalDuration and getWorkingHoursAtSpecificDate
   async createReservation(
     body: CreateReservationDto,
-    image: Express.Multer.File
+    image: Express.Multer.File,
+    userId:string
   ) {
     const branch = await this.BranchRepository.findOne({
       where: { id: body.branch },
@@ -250,8 +258,9 @@ export class ReservationService {
       services,
     });
     // reservation.services = services;
-
     await this.ReservationRepository.save(reservation);
+    await this.OrdersService.createOrder(reservation.id,userId)
+
     const newWorkingHours = this.newAddedWorkingHours(
       {
         fromOriginal: workingHours[index].from,
@@ -275,10 +284,10 @@ export class ReservationService {
 // };
 // const receipt = await this.createReceipt(createReceiptDto, userId);
 // Create order after the reservation
-    await this.OrdersService.createOrder(reservation.id);
-    const receipt = `Receipt:\nCustomer: ${customer.fullName}\nDate: ${startTime.toDateString()}\nStart Time: ${format(startTime, 'HH:mm')}\nEnd Time: ${format(endTime, 'HH:mm')}\nTotal Duration: ${duration} minutes\n`;
+    // await this.OrdersService.createOrder(reservation.id);
+    // const receipt = `Receipt:\nCustomer: ${customer.fullName}\nDate: ${startTime.toDateString()}\nStart Time: ${format(startTime, 'HH:mm')}\nEnd Time: ${format(endTime, 'HH:mm')}\nTotal Duration: ${duration} minutes\n`;
 
-    return { reservation, receipt };
+    return { reservation };
   }
 
   async getAllReservations(

@@ -1,10 +1,11 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany, OneToOne } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany, OneToOne, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { ReservationEntity } from '../../reservation/entities/reservation.entity';
 import { CommentEntity } from '../../comment/entities/comment.entity';
 import { EmployeeEntity } from '../../employee/entities/employee.entity';
 import { ReviewEntity } from '../../reviews/entities/review.entity';
 import { ReceiptEntity } from '../../receipt/entities/receipt.entity';
 import { OrderStatus } from '../utils/order.status.enum';
+import { UserEntity } from '../../user/entities/user.entity';
 
 @Entity()
 export class OrderEntity {
@@ -26,6 +27,14 @@ export class OrderEntity {
   @Column({ type: 'enum', enum: OrderStatus})
   status: OrderStatus; // Status of the work
 
+  @Column({
+    type: 'enum',
+    enum: ['paid', 'partially paid'], // Inline enum definition
+    default: 'partially paid', // Default value
+  })
+  paymentStatus: 'paid' | 'partially paid'; // TypeScript type
+
+
   @OneToOne(() => ReservationEntity, reservation => reservation.order)
   reservation: ReservationEntity;
 
@@ -41,4 +50,23 @@ export class OrderEntity {
 
   @OneToMany(() => ReceiptEntity, receipt => receipt.order)
   receipts: ReceiptEntity[];
+  @Column({ nullable: true })
+  image_order_status_Url: string; // New field for the image URL
+
+  @Column({ nullable: true })
+  image_order_payment_status_Url: string; // New field for the image URL
+
+  @ManyToOne(() => UserEntity, { nullable: true })
+  createdBy: UserEntity;
+
+
+  @ManyToOne(() => UserEntity, { nullable: true })
+  updatedBy: UserEntity;
+
+
+  @CreateDateColumn()
+  createdAt: Date; // Automatically set when the entity is created
+
+  @UpdateDateColumn()
+  updatedAt: Date; // Automatically updated when the entity is updated
 }

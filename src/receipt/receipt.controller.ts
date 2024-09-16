@@ -29,7 +29,7 @@ export class ReceiptController {
         throw new BadRequestException('User not authenticated');
       }
       const receipt = await this.receiptService.createReceipt(createReceiptDto, userId);
-      return { statusCode: HttpStatus.CREATED, data: receipt };
+      return {receipt };
     } catch (error) {
       // Handle errors and return appropriate response
       return { statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: 'Failed to create receipt' };
@@ -37,18 +37,18 @@ export class ReceiptController {
   }
 
 
-  //  Endpoint to generate and download the receipt PDF
-  @Get('download/:id')
-  @UseGuards(AccessTokenGuard,RolesGuard)  // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
-  async downloadReceipt(@Param('id') id: string, @Response() Res: any) {
-    try {
-      await this.receiptService.generatePdfReceipt(id, Res);
-    } catch (error) {
-      // Handle errors and return appropriate response
-      Res.status(HttpStatus.INTERNAL_SERVER_ERROR).send('Failed to generate PDF receipt');
-    }
-  }
+  // //  Endpoint to generate and download the receipt PDF
+  // @Get('download/:id')
+  // @UseGuards(AccessTokenGuard,RolesGuard)  // Ensure AccessTokenGuard is first
+  // @Roles(Role.SUPERADMIN)
+  // async downloadReceipt(@Param('id') id: string, @Response() Res: any) {
+  //   try {
+  //     await this.receiptService.generatePdfReceipt(id, Res);
+  //   } catch (error) {
+  //     // Handle errors and return appropriate response
+  //     Res.status(HttpStatus.INTERNAL_SERVER_ERROR).send('Failed to generate PDF receipt');
+  //   }
+  // }
 
 
 

@@ -7,10 +7,12 @@ import { ReservationEntity } from '../reservation/entities/reservation.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { EmployeeEntity } from '../employee/entities/employee.entity';
+import { ReceiptEntity } from '../receipt/entities/receipt.entity';
+import { UserEntity } from '../user/entities/user.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([OrderEntity, CommentEntity, ReservationEntity,EmployeeEntity]),
+    TypeOrmModule.forFeature([OrderEntity, CommentEntity, ReservationEntity,EmployeeEntity,ReceiptEntity,UserEntity]),
   ],
   controllers: [OrdersController],
   providers: [OrdersService,CloudinaryService],

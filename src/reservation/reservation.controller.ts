@@ -12,6 +12,8 @@ import {
   Put,
   UsePipes,
   ValidationPipe,
+  UseGuards,
+  Request,
 } from "@nestjs/common";
 import { ReservationService } from "./reservation.service";
 import { UpdateReservationDto } from "./dto/update.reservation.dto";
@@ -22,6 +24,10 @@ import { FileInterceptor } from "@nestjs/platform-express";
 import { CreateReservationDto } from "./dto/create.reservation.dto";
 import { UpdateTimeReservationDto } from "./dto/update-time.reservation.dto";
 import { CreateCustomerDto } from "../customer/dto/create.customer.dto";
+import { AccessTokenGuard } from "../auth/guards/accessToken.guard";
+import { RolesGuard } from "../auth/guards/role.guards";
+import { Role } from "../user/utils/user.enum";
+import { Roles } from "../auth/Roles.decorator";
 
 @ApiTags("reservation")
 @Controller("reservation")
@@ -30,19 +36,28 @@ export class ReservationController {
   // @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   // @Roles(Role.SUPERADMIN)
   @Post()
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-
   @UseInterceptors(FileInterceptor("deposit_Content")) // Intercept the file upload
   async createReservations(
+    @Request() req: any, // Request object to access the user
+
     @Body() CreateCustomerDto: CreateReservationDto, // Array of customer DTOs
-    @UploadedFile() image: Express.Multer.File, // Handle the uploaded file
+    @UploadedFile() image: Express.Multer.File // Handle the uploaded file
   ): Promise<any> {
     try {
       // Call the service to create reservations
       // console.log("data:",CreateCustomerDto)
+      const userId = req.user.sub; // Extract user ID from request
+
+      if (!userId) {
+        throw new BadRequestException("User not authenticated");
+      }
       return await this.reservationService.createReservation(
         CreateCustomerDto,
         image,
+        userId
       );
     } catch (error) {
       // Handle errors appropriately
@@ -50,19 +65,22 @@ export class ReservationController {
     }
   }
 
-  @Get('booking/:branchId')
+  @Get("booking/:branchId")
   async getAllBookings(
-    @Param('branchId') branchId: string,
-    @Query() getReservationsDto: GetReservationsDto,
+    @Param("branchId") branchId: string,
+    @Query() getReservationsDto: GetReservationsDto
   ) {
-    return this.reservationService.getBookingBranch(branchId, getReservationsDto);
+    return this.reservationService.getBookingBranch(
+      branchId,
+      getReservationsDto
+    );
   }
 
   // @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   // @Roles(Role.SUPERADMIN)
   @Get()
   async getAllReservations(
-    @Query() getReservationsDto: GetReservationsDto,
+    @Query() getReservationsDto: GetReservationsDto
   ): Promise<{
     items: ReservationEntity[];
     total: number;
@@ -77,30 +95,30 @@ export class ReservationController {
   // @Roles(Role.SUPERADMIN)
   // Update a reservation by ID
   @Post("customer")
-  async createCustomer(
-    @Body() body: CreateCustomerDto,
-  ){
+  async createCustomer(@Body() body: CreateCustomerDto) {
     return this.reservationService.registerOrLookupCustomer(body);
   }
   @Put(":id")
   async updateReservationServices(
     @Param("id") id: string,
-    @Body() updateReservationDto: UpdateReservationDto,
-  ){
-    return this.reservationService.updateReservationServices(id, updateReservationDto);
+    @Body() updateReservationDto: UpdateReservationDto
+  ) {
+    return this.reservationService.updateReservationServices(
+      id,
+      updateReservationDto
+    );
   }
 
   @Put("time/:id")
   async updateReservationStartTime(
     @Param("id") id: string,
-    @Body() updateReservationDto: UpdateTimeReservationDto,
-  ){
+    @Body() updateReservationDto: UpdateTimeReservationDto
+  ) {
     return this.reservationService.updateTime(id, updateReservationDto);
   }
 
-
   @Delete(":id")
-  async deleteReservation(@Param("id") id: string){
+  async deleteReservation(@Param("id") id: string) {
     return this.reservationService.deleteReservation(id);
   }
 }
