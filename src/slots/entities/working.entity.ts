@@ -17,7 +17,7 @@ export class WorkingEntity {
   @Column()
   to: Date;
 
-  @ManyToOne(() => SlotsEntity, (entity) => entity.workingEntity)
+  @ManyToOne(() => SlotsEntity, (entity) => entity.workingEntity, { onDelete: 'CASCADE'})
   @JoinColumn({ name: "slotId" })
   slot: SlotsEntity;
 
