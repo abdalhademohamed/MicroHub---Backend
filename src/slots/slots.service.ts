@@ -11,6 +11,7 @@ import { UserEntity } from "../user/entities/user.entity";
 import { ReservationService } from "../reservation/reservation.service";
 import { SlotsEntity } from "./entities/slots.entity";
 import { WorkingEntity } from "./entities/working.entity";
+import { AvailableQueryDto } from "./dto/query.available.dto";
 
 @Injectable()
 export class SlotService {
@@ -196,33 +197,59 @@ export class SlotService {
     //   calender: savedWorkingEntities,
     // };
   }
+
+  createTimeSlots(intervals: { from: Date; to: Date }[], duration: number) {
+    const result = [];
+
+    intervals.map(({ from, to }) => {
+      let currentStartTime = new Date(from); // Start at the provided startTime
+      const currentEndTime = new Date(to); // End at the provided endTime
+
+      // Loop through the interval and create slots of the given duration
+      while (currentStartTime < currentEndTime) {
+        const nextSlotEnd = new Date( currentStartTime.getTime() + duration * 1000 * 60 );
+
+        // Ensure that we don't exceed the endTime
+        if (nextSlotEnd > currentEndTime) {
+          break; // Stop if the next slot exceeds the endTime
+        }
+        const obj = {
+          startTime: currentStartTime,
+          endTime: nextSlotEnd,
+        };
+
+        const idx = result.findIndex(({ startTime }) =>  startTime.getTime() == obj.startTime.getTime() );
+        if( idx == -1 ){
+          result.push(obj)
+        }
+        console.log(result);
+
+        // Move the currentStartTime to the next slot's start time
+        currentStartTime = nextSlotEnd;
+
+      }
+    });
+    return result;
+  }
   async getAllAvailableSlots(
     branchId: string,
-    { page, limit }: { page?: number; limit?: number },
+    { day, month, year, duration }: AvailableQueryDto,
   ) {
-    page = page || 1;
-    limit = limit || 10;
-    const skip = (page - 1) * limit;
-    const month = new Date().getMonth() + 1;
-    const year = new Date().getFullYear();
-    const day = new Date().getDate();
     const slots = await this.WorkingRepository.find({
       where: {
         slot: {
           branch: { id: branchId },
-          day: MoreThanOrEqual(day),
-          year: MoreThanOrEqual(year),
-          month: MoreThanOrEqual(month),
+          day: day,
+          year: year,
+          month: month,
         },
       },
       relations: { slot: { branch: true } },
       order: {
         from: "ASC",
       },
-      skip,
-      take: limit,
     });
-    return { items:slots, page };
+    return this.createTimeSlots(slots, duration);
   }
   async getFirstSlotAvailable(branchId: string, ids: string[]) {
     const month = new Date().getMonth() + 1;
@@ -250,13 +277,6 @@ export class SlotService {
         from: "ASC",
       },
     });
-    return {
-      from: workingHour.from,
-      to: workingHour.to,
-      day: workingHour.slot.day,
-      month: workingHour.slot.month,
-      year: workingHour.slot.year,
-      duration,
-    };
+    return this.createTimeSlots([workingHour], duration);
   }
 }

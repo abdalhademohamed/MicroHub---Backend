@@ -23,13 +23,16 @@ ApiTags("working/branch");
 export class WorkingBranchController {
   constructor(private readonly workingBranchService: WorkingBranchService) {}
 
-  @Post(':branchId')
+  @Post(":branchId")
   @HttpCode(HttpStatus.OK)
   async createWorkingBranch(
-      @Param('branchId') branchId: string,
-      @Body() createWorkingBranchDto: CreateWorkingBranchDto,
+    @Param("branchId") branchId: string,
+    @Body() createWorkingBranchDto: CreateWorkingBranchDto,
   ): Promise<WorkingBranchEntity> {
-      return this.workingBranchService.createWorkingBranch(branchId, createWorkingBranchDto);
+    return this.workingBranchService.createWorkingBranch(
+      branchId,
+      createWorkingBranchDto,
+    );
   }
 
   @Get()
