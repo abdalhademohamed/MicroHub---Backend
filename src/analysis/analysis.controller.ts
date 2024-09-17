@@ -1,34 +1,58 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { AnalysisService } from './analysis.service';
-import { CreateAnalysisDto } from './dto/create-analysis.dto';
-import { UpdateAnalysisDto } from './dto/update-analysis.dto';
+import { Controller, Get, Query } from "@nestjs/common";
+import { AnalysisService } from "./analysis.service";
+import { AnalysisDto } from "./dto/deposit.dto";
 
-@Controller('analysis')
+@Controller("analysis")
 export class AnalysisController {
   constructor(private readonly analysisService: AnalysisService) {}
 
-  // @Post()
-  // create(@Body() createAnalysisDto: CreateAnalysisDto) {
-  //   return this.analysisService.create(createAnalysisDto);
-  // }
+  @Get("all-deposits")
+  async getAllDeposits(@Query() query: AnalysisDto) {
+    return this.analysisService.getAllDeposits(query);
+  }
 
-  // @Get()
-  // findAll() {
-  //   return this.analysisService.findAll();
-  // }
+  @Get("deposits-by-branch")
+  async getDepositsByBranch(@Query() query: AnalysisDto) {
+    return this.analysisService.getDepositsByBranch(query);
+  }
 
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.analysisService.findOne(+id);
-  // }
+  @Get("remaining-amount-by-branch")
+  async getRemainingAmountByBranch(
+    @Query("start_Time") start_Time: Date,
+    @Query("end_Time") end_Time: Date,
+    @Query("branchId") branchId: string,
+  ) {
+    return this.analysisService.getRemainingAmountByBranch(
+      start_Time,
+      end_Time,
+      branchId,
+    );
+  }
 
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateAnalysisDto: UpdateAnalysisDto) {
-  //   return this.analysisService.update(+id, updateAnalysisDto);
-  // }
+  @Get("total-remaining-amount")
+  async getTotalRemainingAmount(
+    @Query("start_Time") start_Time: Date,
+    @Query("end_Time") end_Time: Date,
+  ) {
+    return this.analysisService.getTotalRemainingAmount(start_Time, end_Time);
+  }
+  @Get("returned-amount")
+  async getTotalReturnedAmount(
+    @Query("start_Time") start_Time: Date,
+    @Query("end_Time") end_Time: Date,
+  ) {
+    return this.analysisService.getTotalReturnedMoneyFromCanceledOrdersByTimeRange(
+      start_Time,
+      end_Time,
+    );
+  }
+  @Get("all-prices")
+  async getAllPrices() {
+    return this.analysisService.getAllPrices();
+  }
 
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.analysisService.remove(+id);
-  // }
+  @Get("prices-by-method")
+  async getPricesGroupedByMethod() {
+    return this.analysisService.getPricesGroupedByMethod();
+  }
 }
