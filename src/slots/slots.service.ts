@@ -222,7 +222,7 @@ export class SlotService {
       skip,
       take: limit,
     });
-    return { slots, page };
+    return { items:slots, page };
   }
   async getFirstSlotAvailable(branchId: string, ids: string[]) {
     const month = new Date().getMonth() + 1;
