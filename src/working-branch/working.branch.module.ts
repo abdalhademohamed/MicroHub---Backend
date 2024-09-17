@@ -4,7 +4,7 @@ import { WorkingBranchController } from "./working.branch.controller";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { BranchEntity } from "../branch/entities/branch.entity";
 import { WorkingBranchEntity } from "./entities/working.branch.entity";
-import { SlotModule } from "src/slots/slot.module";
+import { SlotModule } from "../slots/slot.module";
 
 @Module({
   imports: [

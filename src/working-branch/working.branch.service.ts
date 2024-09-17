@@ -13,7 +13,7 @@ import { BranchEntity } from "../branch/entities/branch.entity";
 import { FindOptionsWhere, QueryFailedError, Repository } from "typeorm";
 import { WorkingBranchEntity } from "./entities/working.branch.entity";
 import { WeekDays } from "../branch/utils/days.enum";
-import { SlotService } from "src/slots/slots.service";
+import { SlotService } from "../slots/slots.service";
 
 @Injectable()
 export class WorkingBranchService {

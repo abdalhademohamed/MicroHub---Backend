@@ -4,7 +4,7 @@ import { And, LessThanOrEqual, MoreThanOrEqual, Repository } from "typeorm";
 import { ReservationEntity } from "../reservation/entities/reservation.entity";
 import { PaymentEntity } from "../payment/entities/payment.entity";
 import { AnalysisDto } from "./dto/deposit.dto";
-import { OrderStatus } from "src/orders/utils/order.status.enum";
+import { OrderStatus } from "../orders/utils/order.status.enum";
 
 @Injectable()
 export class AnalysisService {
