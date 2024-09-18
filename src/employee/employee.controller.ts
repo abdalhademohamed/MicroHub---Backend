@@ -32,7 +32,7 @@ export class EmployeeController {
   }
   const folderName = 'employees'; // or any other dynamic name based on context
   const imageUrl = await this.employeeService.uploadImage(image,folderName);
-  createEmployeeDto.image = imageUrl;
+  createEmployeeDto.image = imageUrl; 
 
   return await this.employeeService.createEmployee(createEmployeeDto);  
   }
@@ -47,7 +47,7 @@ export class EmployeeController {
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
     @Query('employeeType') employeeType?: string, // Optional query parameter for filtering
-    @Query('branch') branchId?: string // Optional query parameter for filtering
+    @Query('branchId') branchId?: string // Optional query parameter for filtering
 
   ): Promise<{
     items: EmployeeEntity[];
@@ -95,12 +95,12 @@ export class EmployeeController {
   }
 
 
-  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
-  @Delete(':id')
-  async deleteEmployee(@Param('id') id: string): Promise<void> {
+  // @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  // @Roles(Role.SUPERADMIN)
+  @Delete(':employeeId')
+  async deleteEmployee(@Param('employeeId') employeeId: string): Promise<void> {
    
-  await this.employeeService.deleteEmployee(id);
+  await this.employeeService.deleteEmployeeByUserId(employeeId);
   }
   
 }
