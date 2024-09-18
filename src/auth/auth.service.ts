@@ -5,6 +5,7 @@ import {
   HttpStatus,
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
   Req,
   UnauthorizedException,
@@ -13,7 +14,7 @@ import {
 import { InjectRepository } from "@nestjs/typeorm";
 import * as bcrypt from "bcrypt";
 import { UserEntity } from "../user/entities/user.entity";
-import { MoreThan, Repository } from "typeorm";
+import { EntityManager, MoreThan, Repository } from "typeorm";
 import { JwtService } from "@nestjs/jwt";
 import { CreateUserDto } from "../user/dto/create-user.dto";
 import { MailService } from "../user/utils/Email.Service";
@@ -22,42 +23,59 @@ import { LoginAuthDto } from "./dto/login.auth.dto";
 import { v4 as uuidv4 } from "uuid"; // For generating unique tokens
 import { ConfigService } from "@nestjs/config";
 import { I18nContext, I18nService } from "nestjs-i18n";
+import { UserService } from "../user/user.service";
+import { Role } from "../user/utils/user.enum";
+import { CreateEmployeeDto } from "../employee/dto/create.employee.dto";
+import { EmployeeEntity } from "../employee/entities/employee.entity";
+import { BranchEntity } from "../branch/entities/branch.entity";
+import { EmployeeTypeEntity } from "../employetype/entities/employetype.entity";
+import { PositionEntity } from "../postion/entities/postion.entity";
+import { Postion } from "../postion/utils/postion.enum";
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(UserService.name);
+
   constructor(
     @InjectRepository(UserEntity)
     private readonly UserRepository: Repository<UserEntity>,
+    @InjectRepository(BranchEntity)
+    private readonly BranchRepository: Repository<BranchEntity>,
+    @InjectRepository(EmployeeTypeEntity)
+    private readonly EmployeeTypeRepository: Repository<EmployeeTypeEntity>,
+    @InjectRepository(EmployeeEntity)
+    private readonly EmployeeRepository: Repository<EmployeeEntity>,
+    @InjectRepository(PositionEntity)
+    private readonly PositionRepository: Repository<PositionEntity>,
+
+
     private JwtService: JwtService,
     private MailService: MailService,
     private configService: ConfigService,
-    private readonly i18nService:I18nService
+    private readonly i18nService:I18nService,
+    private readonly entityManager: EntityManager,
   ) {}
 
 
 
 
-
-  async signUp(createUserDto: CreateUserDto): Promise<UserEntity> {
+  async signUp(createUserDto: CreateUserDto): Promise<any> {
     const { username, email, password, role } = createUserDto;
 
-    // Check for existing user
     try {
-      const existingUser = await this.UserRepository.findOne({
-        where: [{ email }],
-      });
+      // Check for existing user
+      const existingUser = await this.UserRepository.findOne({ where: { email } });
 
       if (existingUser) {
         if (existingUser.email === email) {
-
-          throw new ConflictException(this.i18nService.translate('test.EMAIL_EXISTS'));
-
-          // throw new ConflictException("Email already exists");
+          throw new ConflictException(
+            this.i18nService.translate('test.EMAIL_EXISTS'),
+          );
         }
         if (existingUser.username === username) {
-          throw new ConflictException( this.i18nService.translate('test.USERNAME_EXISTS'));
-
-          // throw new ConflictException("Username already exists");
+          throw new ConflictException(
+            this.i18nService.translate('test.USERNAME_EXISTS'),
+          );
         }
       }
 
@@ -65,27 +83,31 @@ export class AuthService {
       const salt = await bcrypt.genSalt();
       const hashedPassword = await bcrypt.hash(password, salt);
 
-
       // Create new user
-      const user = this.UserRepository.create({
+      const user = this.UserRepository.create({ 
         username,
         email,
         password: hashedPassword,
-        role,
-        // otp,
+        role ,
         otpExpiration: new Date(Date.now() + 10 * 60 * 1000), // OTP valid for 10 minutes
       });
 
       // Save user to database
       const newUser = await this.UserRepository.save(user);
 
-     
-
       return newUser;
     } catch (error) {
-      throw new InternalServerErrorException( this.i18nService.translate('test.SIGNUP_FAILED'));
+      this.logger.error('Failed to sign up user', error.stack);
 
-      // throw new InternalServerErrorException("Failed to sign up user");
+      if (error.code === '23505') { // Unique violation error code for PostgreSQL
+        throw new ConflictException(
+          this.i18nService.translate('test.EMAIL_EXISTS'),
+        );
+      }
+
+      throw new InternalServerErrorException(
+        this.i18nService.translate('test.SIGNUP_FAILED'),
+      );
     }
   }
 
@@ -300,6 +322,10 @@ async resetPassword(userId: string, newPassword: string): Promise<void> {
 
   }
  
+
+
+
+  
 }
 
 
@@ -384,4 +410,131 @@ async resetPassword(userId: string, newPassword: string): Promise<void> {
     const hashedRefreshToken = await bcrypt.hash(refreshToken, salt);
     await this.UserRepository.update(userId, { refreshToken :hashedRefreshToken});
   }
+
+
+
+
+
+
+
+
+
+
+
+async createEmployee(createEmployeeDto: CreateEmployeeDto): Promise<any> {
+  const {
+    english_Name,
+    arabic_Name,
+    branchId,
+    position: positionId,
+    employeeType: employeeTypeId,
+    workingHours,
+    email,
+    countryCode,
+    phoneNumber,
+    password,
+    image,
+  } = createEmployeeDto;
+
+  return await this.entityManager.transaction(async (transactionalEntityManager) => {
+    try {
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Check if the email already exists
+      const existingUser = await transactionalEntityManager.findOne(UserEntity, { where: { email } });
+      if (existingUser) {
+        throw new ConflictException('A user with this email already exists.');
+      }
+
+      // Check if the branch exists
+      const branch = await transactionalEntityManager.findOne(BranchEntity, { where: { id: branchId } });
+      if (!branch) {
+        throw new NotFoundException('Branch not found');
+      }
+
+      // Check if the position exists
+      const position = await transactionalEntityManager.findOne(PositionEntity, { where: { id: positionId } });
+      if (!position) {
+        throw new NotFoundException('Position not found');
+      }
+
+      // Check if the employee type exists
+      const employeeType = await transactionalEntityManager.findOne(EmployeeTypeEntity, { where: { id: employeeTypeId } });
+      if (!employeeType) {
+        throw new NotFoundException('Employee Type not found');
+      }
+
+      // Determine role based on position
+      const role = this.determineRoleFromPosition(position);
+
+      // Create the user entity
+      const user = this.UserRepository.create({ 
+        username: createEmployeeDto.english_Name, // Set username as the English name
+        email:createEmployeeDto.email,
+        password: hashedPassword,
+        role,
+      });
+
+      // Save the user entity
+      const savedUser = await transactionalEntityManager.save(UserEntity, user);
+
+      // Create the employee entity
+      const newEmployee = this.EmployeeRepository.create({
+        id: savedUser.id, // Use the same ID as the user
+        english_Name,
+        arabic_Name,
+        branch,
+        position,
+        employeeType,
+        workingHours,
+        countryCode,
+        phoneNumber,
+        image,
+        // Use the created UserEntity for the username
+        username: createEmployeeDto.english_Name, // Set username as the English name
+        // username should be inherited from UserEntity but also set directly here for EmployeeEntity
+        email:createEmployeeDto.email,
+        password:hashedPassword,
+        role
+      });
+
+      // Save the employee entity
+      await transactionalEntityManager.save(EmployeeEntity, newEmployee);
+
+      return {
+        newEmployee,
+        message: 'Employee created successfully!',
+      };
+    } catch (error) {
+      console.error('Failed to create employee:', error);
+      throw new InternalServerErrorException('Failed to create employee', error.message);
+    }
+  });
 }
+  private determineRoleFromPosition(position: PositionEntity): Role {
+    // Example mapping logic based on the Postion enum
+    switch (position.postion) {
+      case Postion.ADMIN:
+        return Role.ADMIN;
+      case Postion.SUPERADMIN:
+        return Role.SUPERADMIN;
+      case Postion.BRANCHMANAGER:
+        return Role.BRANCHMANAGER;
+      case Postion.COORDINATOR:
+        return Role.COORDINATOR;
+      case Postion.RECEPTIONIST:
+        return Role.RECEPTIONIST;
+      case Postion.ACCOUNTANT:
+        return Role.ACCOUNTANT;
+      case Postion.ARTIST:
+        return Role.ARTIST;
+      case Postion.ARTISTMANAGER:
+        return Role.ARTISTMANAGER;
+      case Postion.TABLEMANAGER:
+        return Role.TABLEMANAGER;
+     
+    }
+  }
+}
+
