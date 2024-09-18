@@ -1,13 +1,19 @@
-import { EmployeeEntity } from '../../employee/entities/employee.entity';
-import { OrderEntity } from '../../orders/entities/order.entity';
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn } from 'typeorm';
+import { EmployeeEntity } from "../../employee/entities/employee.entity";
+import { OrderEntity } from "../../orders/entities/order.entity";
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  CreateDateColumn,
+} from "typeorm";
 
 @Entity()
 export class CommentEntity {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ type: 'text' })
+  @Column({ type: "text" })
   content: string; // Comment content
 
   @Column()
@@ -15,15 +21,12 @@ export class CommentEntity {
   @Column()
   imageAfterUrl: string; // URL of the uploaded image
 
-  @ManyToOne(() => OrderEntity, order => order.comments)
+  @ManyToOne(() => OrderEntity, (order) => order.comments)
   order: OrderEntity;
 
-
-  @ManyToOne(() => EmployeeEntity, EmployeeEntity => EmployeeEntity.comments)
-  employee: EmployeeEntity; // Reference to the employee who made the comment
-
+  @ManyToOne(() => EmployeeEntity, (employee) => employee.comments)
+  employee: EmployeeEntity;
 
   @CreateDateColumn()
   createdAt: Date; // Automatically set the date when the comment is created
-  
 }
