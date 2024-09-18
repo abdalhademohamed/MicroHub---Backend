@@ -295,7 +295,9 @@ export class BranchService {
   async updateBranch(
     branchId: string,
     updateBranchDto: UpdateBranchDto,
-    userId: string
+    userId: string,   
+    image: Express.Multer.File,
+
   ): Promise<BranchEntity> {
     try {
       // Find the branch by ID
@@ -311,10 +313,18 @@ export class BranchService {
       const originalBranch = { ...branch };
   
       // Update branch properties
-      const { name, location, image } = updateBranchDto;
+      const { name, location } = updateBranchDto;
       branch.name = name ?? branch.name;
       branch.location = location ?? branch.location;
-      branch.image = image ?? branch.image;
+
+      // Handle image upload and update
+      const folderName='branch'
+      if (image) {
+        // Upload the new image
+        const uploadedImage = await this.CloudinaryService.uploadImage(image,folderName); // Adjust according to your Cloudinary service method
+        branch.image = uploadedImage.url; // Assume the Cloudinary service returns a URL
+      }
+      
       branch.updatedBy = userId;
   
       // Save the updated branch

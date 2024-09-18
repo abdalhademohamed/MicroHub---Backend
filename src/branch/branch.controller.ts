@@ -162,10 +162,10 @@ export class BranchController {
     // Log received DTO
     console.log('Received UpdateBranchDto:', updateBranchDto);
 
-    // If an image file is uploaded, include its path in the DTO
-    if (image) {
-      updateBranchDto.image = image.path;
-    }
+    // // If an image file is uploaded, include its path in the DTO
+    // if (image) {
+    //   updateBranchDto.image = image.path;
+    // }
     const userId = req.user.sub; // Extract user ID from request
    
     if (!userId) {
@@ -173,7 +173,7 @@ export class BranchController {
     }
 
     // Call the service method with the updated DTO
-    return this.branchService.updateBranch(id, updateBranchDto, userId);
+    return this.branchService.updateBranch(id, updateBranchDto, userId,image);
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
