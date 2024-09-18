@@ -12,8 +12,5 @@ export class UpdateBranchDto {
   @IsOptional()
   location?: string;
 
-  @ApiProperty({ description: 'Image URL or path', required: false })
-  @IsString()
-  @IsOptional()
-  image?: string; // Optional for updates
+  
 }
