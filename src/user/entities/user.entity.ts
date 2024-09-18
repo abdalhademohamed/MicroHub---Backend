@@ -6,11 +6,13 @@ import {
   ManyToMany,
   OneToMany,
   PrimaryGeneratedColumn,
+  TableInheritance,
+   
 } from "typeorm";
 import { Role } from "../utils/user.enum";
 import { NotificationEntity } from "../../notification/entities/notification.entity";
 import { FcmTokenEntity } from "../../notification/entities/fcm.token.entity";
-import { BranchEntity } from "../../branch/entities/branch.entity";
+// import { BranchEntity } from "../../branch/entities/branch.entity";
 
 @Entity()
 export class UserEntity {
@@ -26,24 +28,27 @@ export class UserEntity {
   @Column()
   password: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true }) 
   otp: string;
 
   @Column({ nullable: true })
   otpExpiration: Date;
 
-  @ManyToMany(() => BranchEntity)
-  @JoinColumn({ name: "branchId" })
-  branch: BranchEntity;
+  // @ManyToMany(() => BranchEntity)
+  // @JoinColumn({ name: "branchId" }) 
+  // branch: BranchEntity;
 
   @Column({ nullable: true })
   refreshToken: string;
+  
   @Column({
     type: "enum",
     enum: Role,
     default: Role.ADMIN,
   })
   role: Role;
+
+
 
   @Column({ nullable: true })
   resetPasswordToken: string | null;
@@ -56,10 +61,11 @@ export class UserEntity {
     cascade: true,
   })
   notifications: NotificationEntity[];
-
+ 
   @OneToMany(() => FcmTokenEntity, (FcmTokenEntity) => FcmTokenEntity.user)
   fcmTokens: FcmTokenEntity[];   
 
 
 
 }
+
