@@ -5,6 +5,7 @@ import {
   PrimaryGeneratedColumn,
   ManyToMany,
   OneToMany,
+  DeleteDateColumn,
 } from "typeorm";
 import { BranchEntity } from "../../branch/entities/branch.entity";
 import { PositionEntity } from "../../postion/entities/postion.entity";
@@ -75,4 +76,10 @@ export class EmployeeEntity extends UserEntity {
 
   @OneToMany(() => ReviewEntity, (ReviewEntity) => ReviewEntity.employee)
   reviews: ReviewEntity[]; // Reviews made by the employee
+
+   // Add a soft delete column
+   @DeleteDateColumn({ name: 'deleted_at', nullable: true })
+   deletedAt?: Date;
+
+   
 }
