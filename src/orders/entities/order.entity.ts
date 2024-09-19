@@ -19,7 +19,10 @@ export class OrderEntity {
   date: string; // Reservation date
 
   @Column({ type: 'text' })
-  service: string; // Description of the service
+  serviceEnglish: string; // Description of the service in English
+
+  @Column({ type: 'text' })
+  serviceArabic: string; // Description of the service in Arabic
 
   @Column({ type: 'int', unique: true })
   invoiceNumber: number;  // New field for invoice number
@@ -58,7 +61,8 @@ export class OrderEntity {
 
   @ManyToOne(() => UserEntity, { nullable: true })
   createdBy: UserEntity;
-
+  @Column()
+  branchName: string; // Add this column to store the branch name
 
   @ManyToOne(() => UserEntity, { nullable: true })
   updatedBy: UserEntity;
