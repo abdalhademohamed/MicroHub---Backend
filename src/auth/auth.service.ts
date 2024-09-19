@@ -31,6 +31,7 @@ import { BranchEntity } from "../branch/entities/branch.entity";
 import { EmployeeTypeEntity } from "../employetype/entities/employetype.entity";
 import { PositionEntity } from "../postion/entities/postion.entity";
 import { Postion } from "../postion/utils/postion.enum";
+import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 
 @Injectable()
 export class AuthService {
@@ -421,97 +422,133 @@ async resetPassword(userId: string, newPassword: string): Promise<void> {
 
 
 
-async createEmployee(createEmployeeDto: CreateEmployeeDto): Promise<any> {
-  const {
-    english_Name,
-    arabic_Name,
-    branchId,
-    position: positionId,
-    employeeType: employeeTypeId,
-    workingHours,
-    email,
-    countryCode,
-    phoneNumber,
-    password,
-    image,
-  } = createEmployeeDto;
-
-  return await this.entityManager.transaction(async (transactionalEntityManager) => {
-    try {
-      // Hash the password
-      const hashedPassword = await bcrypt.hash(password, 10);
-
-      // Check if the email already exists
-      const existingUser = await transactionalEntityManager.findOne(UserEntity, { where: { email } });
-      if (existingUser) {
-        throw new ConflictException('A user with this email already exists.');
+  async createEmployee(createEmployeeDto: CreateEmployeeDto,userId:string): Promise<any> {
+    const {
+      english_Name,
+      arabic_Name,
+      branchId,
+      position: positionId,
+      employeeType: employeeTypeId,
+      workingHours,
+      email,
+      countryCode,
+      phoneNumber,
+      password,
+      image,
+    } = createEmployeeDto;
+  
+    return await this.entityManager.transaction(async (transactionalEntityManager) => {
+      try {
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
+  
+        // Check if email exists
+        await this.checkIfEmailExists(transactionalEntityManager, email);
+  
+        // Fetch branch, position, and employee type
+        const branch = await this.getBranchById(transactionalEntityManager, branchId);
+        const position = await this.getPositionById(transactionalEntityManager, positionId);
+        const employeeType = await this.getEmployeeTypeById(transactionalEntityManager, employeeTypeId);
+  
+        // Determine role based on position
+        const role = this.determineRoleFromPosition(position);
+  
+        // Create and save user entity
+        const savedUser = await this.createUser(transactionalEntityManager, {
+          username: english_Name,
+          email,
+          password: hashedPassword,
+          role,
+        });
+  
+        // Create and save employee entity
+        const newEmployee = this.EmployeeRepository.create({
+          id: savedUser.id, // Use the same ID as the user
+          english_Name,
+          arabic_Name,
+          branch,
+          position,
+          employeeType,
+          workingHours,
+          countryCode,
+          phoneNumber,
+          image,
+          username: english_Name,
+          email,
+          password: hashedPassword,
+          role,
+        });
+  
+        await transactionalEntityManager.save(EmployeeEntity, newEmployee);
+  
+        // Create an audit log entry
+        const log = new AuditLogEntity();
+        log.tableName = "employee"; // Use the table name
+        log.action = "INSERT";
+        log.entityId = newEmployee.id;
+        log.performedBy = userId // Set performedBy if available
+  
+        // Fetch user details if needed
+        if (userId) {
+          const user = await this.UserRepository.findOne({ where: { id: userId } });
+          if (user) {
+            log.userDetails = {
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              role: user.role,
+            };
+          }
+        }
+  
+        await transactionalEntityManager.save(AuditLogEntity, log);
+  
+        return {
+          newEmployee,
+          message: 'Employee created successfully!',
+        };
+      } catch (error) {
+        console.error('Failed to create employee:', error);
+        throw new InternalServerErrorException('Failed to create employee', error.message);
       }
+    });
+  }
 
-      // Check if the branch exists
-      const branch = await transactionalEntityManager.findOne(BranchEntity, { where: { id: branchId } });
-      if (!branch) {
-        throw new NotFoundException('Branch not found');
-      }
-
-      // Check if the position exists
-      const position = await transactionalEntityManager.findOne(PositionEntity, { where: { id: positionId } });
-      if (!position) {
-        throw new NotFoundException('Position not found');
-      }
-
-      // Check if the employee type exists
-      const employeeType = await transactionalEntityManager.findOne(EmployeeTypeEntity, { where: { id: employeeTypeId } });
-      if (!employeeType) {
-        throw new NotFoundException('Employee Type not found');
-      }
-
-      // Determine role based on position
-      const role = this.determineRoleFromPosition(position);
-
-      // Create the user entity
-      const user = this.UserRepository.create({ 
-        username: createEmployeeDto.english_Name, // Set username as the English name
-        email:createEmployeeDto.email,
-        password: hashedPassword,
-        role,
-      });
-
-      // Save the user entity
-      const savedUser = await transactionalEntityManager.save(UserEntity, user);
-
-      // Create the employee entity
-      const newEmployee = this.EmployeeRepository.create({
-        id: savedUser.id, // Use the same ID as the user
-        english_Name,
-        arabic_Name,
-        branch,
-        position,
-        employeeType,
-        workingHours,
-        countryCode,
-        phoneNumber,
-        image,
-        // Use the created UserEntity for the username
-        username: createEmployeeDto.english_Name, // Set username as the English name
-        // username should be inherited from UserEntity but also set directly here for EmployeeEntity
-        email:createEmployeeDto.email,
-        password:hashedPassword,
-        role
-      });
-
-      // Save the employee entity
-      await transactionalEntityManager.save(EmployeeEntity, newEmployee);
-
-      return {
-        newEmployee,
-        message: 'Employee created successfully!',
-      };
-    } catch (error) {
-      console.error('Failed to create employee:', error);
-      throw new InternalServerErrorException('Failed to create employee', error.message);
+  private async checkIfEmailExists(entityManager: EntityManager, email: string): Promise<void> {
+    const existingUser = await entityManager.findOne(UserEntity, { where: { email } });
+    if (existingUser) {
+      throw new ConflictException('A user with this email already exists.');
     }
-  });
-}
+  }
+  
+  private async getBranchById(entityManager: EntityManager, branchId: string): Promise<BranchEntity> {
+    const branch = await entityManager.findOne(BranchEntity, { where: { id: branchId } });
+    if (!branch) {
+      throw new NotFoundException('Branch not found');
+    }
+    return branch;
+  }
+  
+  private async getPositionById(entityManager: EntityManager, positionId: string): Promise<PositionEntity> {
+    const position = await entityManager.findOne(PositionEntity, { where: { id: positionId } });
+    if (!position) {
+      throw new NotFoundException('Position not found');
+    }
+    return position;
+  }
+  
+  private async getEmployeeTypeById(entityManager: EntityManager, employeeTypeId: string): Promise<EmployeeTypeEntity> {
+    const employeeType = await entityManager.findOne(EmployeeTypeEntity, { where: { id: employeeTypeId } });
+    if (!employeeType) {
+      throw new NotFoundException('Employee Type not found');
+    }
+    return employeeType;
+  }
+
+  private async createUser(entityManager: EntityManager, userData: Partial<UserEntity>): Promise<UserEntity> {
+    const user = this.UserRepository.create(userData);
+    return await entityManager.save(UserEntity, user);
+  }  
   private determineRoleFromPosition(position: PositionEntity): Role {
     // Example mapping logic based on the Postion enum
     switch (position.postion) {
