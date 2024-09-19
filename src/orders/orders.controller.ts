@@ -14,6 +14,8 @@ import {
   Put,
   HttpStatus,
   Request,
+  NotFoundException,
+  InternalServerErrorException,
 } from "@nestjs/common";
 import { OrdersService } from "./orders.service";
 import { CreateOrderDto } from "./dto/create-order.dto";
@@ -27,6 +29,7 @@ import { Role } from "../user/utils/user.enum";
 import { OrderEntity } from "./entities/order.entity";
 import { FindOrdersDto } from "./dto/find.all.orders.dto";
 import { OrderStatus } from "./utils/order.status.enum";
+import { FindOrdersByDayDto } from "./dto/find.orders.dto.for.artist";
 
 @ApiTags("orders")
 @Controller("order")
@@ -128,13 +131,19 @@ export class OrdersController {
     description: "Order or artist not found, or artist is not an artist.",
   })
   async assignOrderToArtist(
+    @Request() req: any, // Request object to access the user
     @Param("orderId") orderId: string,
     @Param("artistId") artistId: string
   ): Promise<OrderEntity> {
+    const userId = req.user.sub; // Extract user ID from request
+
+      if (!userId) {
+        throw new BadRequestException("User not authenticated");
+      }
     if (!orderId || !artistId) {
       throw new BadRequestException("Both orderId and artistId are required");
     }
-    return this.ordersService.assignOrderToArtist(orderId, artistId);
+    return this.ordersService.assignOrderToArtist(orderId, artistId,userId);
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -171,5 +180,35 @@ export class OrdersController {
   })
   async getOrderStatusCount(): Promise<{ items: { [key in OrderStatus]: number } }> {
     return await this.ordersService.getOrderStatusCount();
+  }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  @Get('filterd')
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  async getOrdersForEmployee(
+    @Request() req: any, // Request object to access the user
+    @Query() findOrdersByDayDto: FindOrdersByDayDto,
+  ) {
+    const userId = req.user.sub; // Extract user ID from request
+
+      if (!userId) {
+        throw new BadRequestException("User not authenticated");
+      }
+    return this.ordersService.findOrdersByEmployeeAndDay(userId, findOrdersByDayDto);
+  }
+  
+
+  @Get('/:orderId')
+  async getOrderById(@Param('orderId') orderId: string) {
+    try {
+      const order = await this.ordersService.findOrderById(orderId);
+      if (!order) {
+        throw new NotFoundException(`Order with ID ${orderId} not found`);
+      }
+      return order;
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to retrieve the order', error.stack);
+    }
   }
 }
