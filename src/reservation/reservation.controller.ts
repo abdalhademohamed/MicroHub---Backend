@@ -80,6 +80,8 @@ export class ReservationController {
   // @Roles(Role.SUPERADMIN)
   @Get()
   async getAllReservations(
+    @Request() req: any, // Request object to access the user
+
     @Query() getReservationsDto: GetReservationsDto
   ): Promise<{
     items: ReservationEntity[];
@@ -98,23 +100,38 @@ export class ReservationController {
   async createCustomer(@Body() body: CreateCustomerDto) {
     return this.reservationService.registerOrLookupCustomer(body);
   }
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Put(":id")
   async updateReservationServices(
+    @Request() req: any, // Request object to access the user
+
     @Param("id") id: string,
     @Body() updateReservationDto: UpdateReservationDto
   ) {
+    const userId = req.user.sub; // Extract user ID from request
+
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
     return this.reservationService.updateReservationServices(
       id,
-      updateReservationDto
+      updateReservationDto,
+      userId
     );
   }
 
   @Put("time/:id")
   async updateReservationStartTime(
+    @Request() req: any, // Request object to access the user
     @Param("id") id: string,
     @Body() updateReservationDto: UpdateTimeReservationDto
   ) {
-    return this.reservationService.updateTime(id, updateReservationDto);
+    const userId = req.user.sub; // Extract user ID from request
+
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
+    return this.reservationService.updateTime(id, updateReservationDto,userId);
   }
 
   @Delete(":id")

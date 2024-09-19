@@ -29,8 +29,8 @@ import { OrderEntity } from "../orders/entities/order.entity";
       UserEntity,
       WorkingEntity,
       SlotsEntity,
-      OrderEntity
-      
+      OrderEntity,
+      UserEntity
     ]),
   ],
   controllers: [ReservationController],
