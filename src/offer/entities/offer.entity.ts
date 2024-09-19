@@ -6,6 +6,7 @@ import {
   Column,
   ManyToMany,
   JoinTable,
+  DeleteDateColumn,
 } from "typeorm";
 
 @Entity()
@@ -39,4 +40,7 @@ export class OfferEntity {
   @ManyToMany(() => BranchEntity)
   @JoinTable()
   branches: BranchEntity[];
+  // Add a soft delete column
+  @DeleteDateColumn({ name: 'deleted_at', nullable: true })
+  deletedAt?: Date;
 }
