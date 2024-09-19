@@ -9,9 +9,9 @@ export class AuditSubscriber implements EntitySubscriberInterface<BranchEntity> 
   constructor(
     private readonly UserService: UserService,
   ) {}
-
   listenTo() {
-    return BranchEntity; // Use a base class or all entities if needed
+    // This will listen to all entities
+    return undefined;
   }
 
   async afterInsert(event: InsertEvent<BranchEntity>) {
