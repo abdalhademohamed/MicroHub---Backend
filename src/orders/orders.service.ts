@@ -17,6 +17,7 @@ import { CloudinaryService } from "../cloudinary/cloudinary.service";
 import { UserEntity } from "../user/entities/user.entity";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { FindOrdersByDayDto } from "./dto/find.orders.dto.for.artist";
+import { PaymentEntity } from "../payment/entities/payment.entity";
 
 @Injectable()
 export class OrdersService {
@@ -33,6 +34,9 @@ export class OrdersService {
 
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+
+    @InjectRepository(PaymentEntity)
+    private readonly PaymentRepository: Repository<PaymentEntity>,
 
     @InjectEntityManager() private readonly entityManager: EntityManager
   ) {}
@@ -59,11 +63,11 @@ export class OrdersService {
       where: { id: reservationId },
       relations: ["services", "customer", "branch"],
     });
-
+  
     if (!reservation) {
       throw new NotFoundException("Reservation not found");
     }
-
+  
     // Fetch the user who is creating the order, limiting the fields returned
     const createdBy = await this.userRepository.findOne({
       where: { id: userId },
@@ -72,9 +76,18 @@ export class OrdersService {
     if (!createdBy) {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
-
+  
+    // Find the payment method with 'Visa'
+    const visaPayment = await this.PaymentRepository.findOne({
+      where: { methodEnglish: 'Visa' },
+    });
+  
+    if (!visaPayment) {
+      throw new NotFoundException("Visa payment method not found");
+    }
+  
     const invoiceNumber = await this.generateUniqueInvoiceNumber();
-
+  
     const newOrder = this.orderRepository.create({
       customerName: reservation.customer.fullName,
       date: `${reservation.reservationYear}-${reservation.reservationMonth}-${reservation.reservationDay}`,
@@ -95,24 +108,22 @@ export class OrdersService {
       }, // Return an object with id and name of the branch
       artist: null,
       createdBy, // Set createdBy field with limited user data
+      payment: visaPayment, // Assign the Visa payment method to the order
     });
-
+  
     try {
       return await this.entityManager.transaction(
         async (transactionalEntityManager) => {
           // Save the new order
-          const savedOrder = await transactionalEntityManager.save(
-            OrderEntity,
-            newOrder
-          );
-
+          const savedOrder = await transactionalEntityManager.save(OrderEntity, newOrder);
+  
           // Create an audit log entry
           const auditLog = new AuditLogEntity();
           auditLog.tableName = "order";
           auditLog.action = "INSERT";
           auditLog.entityId = savedOrder.id; // ID of the created order
           auditLog.performedBy = userId; // User who created the order
-
+  
           // Fetch user details if needed
           if (userId) {
             const user = await transactionalEntityManager.findOne(UserEntity, {
@@ -127,9 +138,9 @@ export class OrdersService {
               };
             }
           }
-
+  
           await transactionalEntityManager.save(AuditLogEntity, auditLog);
-
+  
           return savedOrder;
         }
       );
@@ -140,6 +151,7 @@ export class OrdersService {
       );
     }
   }
+  
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async updatePaymentStatus(
     orderId: string,
@@ -543,48 +555,81 @@ export class OrdersService {
   async findAllOrders(
     findOrdersDto: FindOrdersDto
   ): Promise<{ items: OrderEntity[]; total: number }> {
-    const { page, limit, sort, employeeName } = findOrdersDto;
+    const { page, limit, sort, employeeName, branchId } = findOrdersDto;
   
     try {
-      const query = this.orderRepository
-        .createQueryBuilder("order")
-        .leftJoinAndSelect("order.artist", "artist") // Join artist relation
-        .leftJoin("order.createdBy", "createdBy") // Join createdBy without selecting all fields
-        .addSelect(["createdBy.id", "createdBy.username", "createdBy.email", "createdBy.role"]) // Only select specific fields from createdBy
-        .leftJoin("order.updatedBy", "updatedBy") // Join updatedBy relation
-        .addSelect(["updatedBy.id", "updatedBy.username"]) // Select only specific fields from updatedBy
+      // Build the query
+      const query = this.orderRepository.createQueryBuilder("o")
+        .leftJoinAndSelect("o.artist", "a") // Join artist relation with alias "a"
+        .leftJoinAndSelect("o.payment", "p") // Join payment relation with alias "p"
+        .leftJoin("o.createdBy", "cb") // Join createdBy relation with alias "cb"
+        .addSelect([
+          "cb.id",
+          "cb.username",
+          "cb.email",
+          "cb.role",
+        ]) // Select specific fields from createdBy
+        .leftJoin("o.updatedBy", "ub") // Join updatedBy relation with alias "ub"
+        .addSelect([
+          "ub.id",
+          "ub.username",
+        ]) // Select specific fields from updatedBy
         .take(limit)
         .skip((page - 1) * limit)
-        .orderBy("order.date", sort.toUpperCase() as "ASC" | "DESC");
+        .orderBy(`o.date`, sort.toUpperCase() as "ASC" | "DESC"); // Order by date
   
+      // Filter by employee name if provided
       if (employeeName) {
-        query.andWhere("artist.englishName ILIKE :employeeName", {
+        query.andWhere("a.englishName ILIKE :employeeName", { 
           employeeName: `%${employeeName}%`,
         });
       }
   
+      // Filter by branch ID if provided
+      if (branchId) {
+        query.andWhere("CAST(o.branch ->> 'id' AS uuid) = :branchId", { 
+          branchId 
+        });
+      }
+  
+      // Log the generated SQL query for debugging
+      console.log(query.getSql());
+  
+      // Execute the query and get results
       const [items, total] = await query.getManyAndCount();
   
       return { items, total };
     } catch (error) {
-      throw new InternalServerErrorException(
-        "Failed to get orders",
-        error.stack
-      );
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException({
+          message: error.message || "Entity not found",
+          category: "EntityNotFound",
+        });
+      } else if (error instanceof BadRequestException) {
+        throw new BadRequestException({
+          message: error.message || "Bad request",
+          category: "ValidationError",
+        });
+      } else {
+        throw new InternalServerErrorException({
+          message: error.message || "Internal server error",
+          category: "InternalServerError",
+        });
+      }
     }
   }
-  
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Method to get the count of each order status
-  async getOrderStatusCount(): Promise<{
-    items: { [key in OrderStatus]: number };
-  }> {
+  async getOrderStatusCount(branchId: string): Promise<{ items: { [key in OrderStatus]: number } }> {
     const orders = await this.orderRepository
       .createQueryBuilder("order")
+      .innerJoin("order.reservation", "reservation")
       .select("order.status", "status")
       .addSelect("COUNT(order.id)", "count")
+      .where("reservation.branchId = :branchId", { branchId })
       .groupBy("order.status")
       .getRawMany();
-
+  
     // Initialize the status count object with all possible statuses
     const orderStatusCounts: { [key in OrderStatus]: number } = {
       [OrderStatus.InProgress]: 0,
@@ -594,15 +639,14 @@ export class OrdersService {
       [OrderStatus.Completed]: 0,
       [OrderStatus.Canceled]: 0,
     };
-
+  
     // Populate the orderStatusCounts object with the results from the query
     orders.forEach((order) => {
       orderStatusCounts[order.status] = parseInt(order.count, 10);
     });
-
+  
     return { items: orderStatusCounts };
   }
-
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   async findOrdersByEmployeeAndDay(
@@ -665,6 +709,38 @@ export class OrdersService {
         "Failed to retrieve the order",
         error.stack
       );
+    }
+  }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  async updatePaymentForOrder(orderId: string, paymentId: string): Promise<OrderEntity> {
+    try {
+      // Find the order by ID
+      const order = await this.orderRepository.findOne({
+        where: { id: orderId },
+        relations: ['payment'], // Load relations if necessary
+      });
+
+      if (!order) {
+        throw new NotFoundException(`Order with ID ${orderId} not found`);
+      }
+
+      // Find the payment by ID
+      const payment = await this.PaymentRepository.findOne({
+        where: { id: paymentId },
+      });
+
+      if (!payment) {
+        throw new NotFoundException(`Payment with ID ${paymentId} not found`);
+      }
+
+      // Update the order with the new payment
+      order.payment = payment;
+
+      // Save the updated order
+      return await this.orderRepository.save(order);
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to update payment for order', error.stack);
     }
   }
 }

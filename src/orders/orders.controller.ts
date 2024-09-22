@@ -20,7 +20,7 @@ import {
 import { OrdersService } from "./orders.service";
 import { CreateOrderDto } from "./dto/create-order.dto";
 import { UpdateOrderDto } from "./dto/update-order.dto";
-import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { AccessTokenGuard } from "../auth/guards/accessToken.guard";
 import { RolesGuard } from "../auth/guards/role.guards";
@@ -156,19 +156,21 @@ export class OrdersController {
   async getAllOrders(
     @Query() findOrdersDto: FindOrdersDto
   ): Promise<{ items: OrderEntity[]; total: number }> {
-    return this.ordersService.findAllOrders(findOrdersDto);
+    return await this.ordersService.findAllOrders(findOrdersDto);
+
   }
 
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  @Get('status/count')
-  @ApiOperation({ summary: 'Get count of orders by status' })
-  @ApiResponse({
-    status: 200,
-    description: 'Return the count of each order status',
-    schema: {
-      example: {
+@Get('status/count/:branchId')
+@ApiOperation({ summary: 'Get count of orders by status for a specific branch' })
+@ApiResponse({
+  status: 200,
+  description: 'Return the count of each order status for the specified branch',
+  schema: {
+    example: {
+      items: {
         InProgress: 10,
         InQueue: 5,
         Working: 8,
@@ -177,10 +179,12 @@ export class OrdersController {
         Canceled: 3,
       },
     },
-  })
-  async getOrderStatusCount(): Promise<{ items: { [key in OrderStatus]: number } }> {
-    return await this.ordersService.getOrderStatusCount();
-  }
+  },
+})
+async getOrderStatusCount(@Param('branchId') branchId: string): Promise<{ items: { [key in OrderStatus]: number } }> {
+  return await this.ordersService.getOrderStatusCount(branchId);
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -198,7 +202,7 @@ export class OrdersController {
     return this.ordersService.findOrdersByEmployeeAndDay(userId, findOrdersByDayDto);
   }
   
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Get('/:orderId')
   async getOrderById(@Param('orderId') orderId: string) {
     try {
@@ -210,5 +214,43 @@ export class OrdersController {
     } catch (error) {
       throw new InternalServerErrorException('Failed to retrieve the order', error.stack);
     }
+  }
+
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  @Put('payment/:orderId')
+  @ApiOperation({ summary: 'Update the payment for a specific order' })
+  @ApiParam({
+    name: 'orderId',
+    description: 'The ID of the order to update',
+    type: String,
+  })
+  @ApiQuery({
+    name: 'paymentId',
+    description: 'The ID of the payment to associate with the order',
+    type: String,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'The order with the updated payment',
+    type: OrderEntity, // Update this to match your response DTO if you have one
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Order or payment not found',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid input',
+  })
+  async updatePayment(
+    @Param('orderId') orderId: string,
+    @Query('paymentId') paymentId: string,
+  ) {
+    if (!orderId || !paymentId) {
+      throw new BadRequestException('Order ID and Payment ID must be provided');
+    }
+    return this.ordersService.updatePaymentForOrder(orderId, paymentId);
   }
 }
