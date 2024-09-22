@@ -6,6 +6,7 @@ import { ReviewEntity } from '../../reviews/entities/review.entity';
 import { ReceiptEntity } from '../../receipt/entities/receipt.entity';
 import { OrderStatus } from '../utils/order.status.enum';
 import { UserEntity } from '../../user/entities/user.entity';
+import { PaymentEntity } from '../../payment/entities/payment.entity';
 
 @Entity()
 export class OrderEntity {
@@ -75,4 +76,7 @@ export class OrderEntity {
 
   @UpdateDateColumn()
   updatedAt: Date; // Automatically updated when the entity is updated
+
+  @OneToOne(() => PaymentEntity, payment => payment.order) // Update to OneToOne
+  payment: PaymentEntity; // Single payment associated with the order
 }
