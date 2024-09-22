@@ -115,7 +115,7 @@ export class OrdersController {
 
   @Put("assign")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR)
   @ApiOperation({ summary: "Assign an order to an artist" })
   @ApiResponse({
     status: 200,
