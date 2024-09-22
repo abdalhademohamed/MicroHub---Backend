@@ -89,7 +89,10 @@ export class OrdersService {
       invoiceNumber: invoiceNumber,
       comments: [],
       reservation: reservation,
-      branchName: reservation.branch.name, // Save branch name from reservation
+      branch: {
+        id: reservation.branch.id, // Include branch ID
+        name: reservation.branch.name, // Include branch name
+      }, // Return an object with id and name of the branch
       artist: null,
       createdBy, // Set createdBy field with limited user data
     });
@@ -541,25 +544,27 @@ export class OrdersService {
     findOrdersDto: FindOrdersDto
   ): Promise<{ items: OrderEntity[]; total: number }> {
     const { page, limit, sort, employeeName } = findOrdersDto;
-
+  
     try {
       const query = this.orderRepository
         .createQueryBuilder("order")
         .leftJoinAndSelect("order.artist", "artist") // Join artist relation
-        .leftJoinAndSelect("order.createdBy", "createdBy") // Join createdBy relation
-        .leftJoinAndSelect("order.updatedBy", "updatedBy") // Join updatedBy relation
+        .leftJoin("order.createdBy", "createdBy") // Join createdBy without selecting all fields
+        .addSelect(["createdBy.id", "createdBy.username", "createdBy.email", "createdBy.role"]) // Only select specific fields from createdBy
+        .leftJoin("order.updatedBy", "updatedBy") // Join updatedBy relation
+        .addSelect(["updatedBy.id", "updatedBy.username"]) // Select only specific fields from updatedBy
         .take(limit)
         .skip((page - 1) * limit)
         .orderBy("order.date", sort.toUpperCase() as "ASC" | "DESC");
-
+  
       if (employeeName) {
         query.andWhere("artist.englishName ILIKE :employeeName", {
           employeeName: `%${employeeName}%`,
         });
       }
-
+  
       const [items, total] = await query.getManyAndCount();
-
+  
       return { items, total };
     } catch (error) {
       throw new InternalServerErrorException(
@@ -568,7 +573,7 @@ export class OrdersService {
       );
     }
   }
-
+  
   // Method to get the count of each order status
   async getOrderStatusCount(): Promise<{
     items: { [key in OrderStatus]: number };
@@ -605,54 +610,61 @@ export class OrdersService {
     findOrdersByDayDto: FindOrdersByDayDto
   ): Promise<{ items: OrderEntity[]; total: number }> {
     const { page, limit, sort, dayDate } = findOrdersByDayDto;
-  
+
     try {
       // Fetch the employee by userId
       const employee = await this.employeeRepository.findOne({
         where: { id: userId },
-        relations: ['orders'], // Ensure that the 'orders' relation is loaded
+        relations: ["orders"], // Ensure that the 'orders' relation is loaded
       });
-  
+
       if (!employee) {
         throw new NotFoundException(`Employee with userId ${userId} not found`);
       }
-  
+
       // Filter the orders by dayDate (assuming order.date is a date field)
-      const filteredOrders = employee.orders.filter(order =>
+      const filteredOrders = employee.orders.filter((order) =>
         order.date.toString().startsWith(dayDate)
       );
-  
+
       // Apply sorting
       const sortedOrders = filteredOrders.sort((a, b) => {
         const dateA = new Date(a.date);
         const dateB = new Date(b.date);
-        return sort === 'ASC' ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime();
+        return sort === "ASC"
+          ? dateA.getTime() - dateB.getTime()
+          : dateB.getTime() - dateA.getTime();
       });
-  
+
       // Paginate the orders
-      const paginatedOrders = sortedOrders.slice((page - 1) * limit, page * limit);
-  
+      const paginatedOrders = sortedOrders.slice(
+        (page - 1) * limit,
+        page * limit
+      );
+
       // Return paginated result
       return { items: paginatedOrders, total: filteredOrders.length };
     } catch (error) {
-      console.error('Failed to retrieve orders for employee:', error);
+      console.error("Failed to retrieve orders for employee:", error);
       throw new InternalServerErrorException(
-        'Failed to retrieve orders for employee',
-        error.stack,
+        "Failed to retrieve orders for employee",
+        error.stack
       );
     }
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
   async findOrderById(orderId: string): Promise<OrderEntity | null> {
     try {
       return await this.orderRepository.findOne({
         where: { id: orderId },
-        relations: ['createdBy', 'artist'], // Add relations if needed
+        relations: ["createdBy", "artist"], // Add relations if needed
       });
     } catch (error) {
-      throw new InternalServerErrorException('Failed to retrieve the order', error.stack);
+      throw new InternalServerErrorException(
+        "Failed to retrieve the order",
+        error.stack
+      );
     }
   }
 }
