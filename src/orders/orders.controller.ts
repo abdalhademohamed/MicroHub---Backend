@@ -85,7 +85,7 @@ export class OrdersController {
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Patch("status/:orderId")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR)
   @UseInterceptors(FileInterceptor("image")) // Use multer for image upload
   async updateOrderStatus(
     @Request() req: any, // Request object to access the user
@@ -220,6 +220,8 @@ async getOrderStatusCount(@Param('branchId') branchId: string): Promise<{ items:
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   @Put('payment/:orderId')
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR)
   @ApiOperation({ summary: 'Update the payment for a specific order' })
   @ApiParam({
     name: 'orderId',
