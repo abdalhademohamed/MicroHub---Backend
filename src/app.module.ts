@@ -122,8 +122,7 @@ import { AnalysisEntity } from './analysis/entities/analysis.entity';
     ReviewsModule,
     ReceiptModule,
     SlotModule,
-    AnalysisModule
-  ],
+    AnalysisModule  ],
   controllers: [AppController],
   providers: [AppService,CloudinaryProvider],
 })
