@@ -15,6 +15,7 @@ import { WorkingEntity } from "../slots/entities/working.entity";
 import { ReceiptService } from "../receipt/receipt.service";
 import { OrdersService } from "../orders/orders.service";
 import { OrderEntity } from "../orders/entities/order.entity";
+import { PaymentEntity } from "../payment/entities/payment.entity";
 
 
 @Module({
@@ -29,8 +30,9 @@ import { OrderEntity } from "../orders/entities/order.entity";
       UserEntity,
       WorkingEntity,
       SlotsEntity,
-      OrderEntity
-      
+      OrderEntity,
+      UserEntity,
+      PaymentEntity
     ]),
   ],
   controllers: [ReservationController],

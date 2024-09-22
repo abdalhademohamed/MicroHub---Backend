@@ -5,10 +5,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ServiceEntity } from '../service/entities/service.entity';
 import { OfferEntity } from './entities/offer.entity';
 import { BranchEntity } from '../branch/entities/branch.entity';
+import { UserEntity } from '../user/entities/user.entity';
 
 @Module({
  
-  imports: [TypeOrmModule.forFeature([OfferEntity,ServiceEntity,BranchEntity])],
+  imports: [TypeOrmModule.forFeature([OfferEntity,ServiceEntity,BranchEntity,UserEntity])],
   controllers: [OfferController],
   providers: [OfferService],
 })

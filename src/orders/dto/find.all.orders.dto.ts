@@ -19,7 +19,14 @@ export class FindOrdersDto {
   @IsEnum(['asc', 'desc'])
   sort?: 'asc' | 'desc' = 'asc';
 
+
+  @IsOptional()
+  @IsString()
+  branchId?: string;
+  
   @IsOptional()
   @IsString()
   employeeName?: string;
+
+  
 }

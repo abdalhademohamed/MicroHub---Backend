@@ -23,5 +23,6 @@ import { WorkingEntity } from "./entities/working.entity";
   ],
   controllers: [SlotController], // Register the controller
   providers: [SlotService], // Register the service
+  exports: [SlotService], // Make the service available for other modules to use it.
 })
 export class SlotModule {}

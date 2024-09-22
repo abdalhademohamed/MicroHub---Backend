@@ -10,10 +10,18 @@ import { ConfigService } from '@nestjs/config';
 import { AccessTokenStrategy } from './accessToken.strategy';
 import { RefreshTokenStrategy } from './refreshToken.strategy';
 import { CustomI18nService } from '../common/custom.18n.service';
+import { BranchEntity } from '../branch/entities/branch.entity';
+import { EmployeeTypeEntity } from '../employetype/entities/employetype.entity';
+import { PositionEntity } from '../postion/entities/postion.entity';
+import { EmployeeEntity } from '../employee/entities/employee.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserEntity]),
+    TypeOrmModule.forFeature([ UserEntity,
+      BranchEntity,
+      EmployeeTypeEntity,
+      EmployeeEntity,
+      PositionEntity,]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     // JwtModule.registerAsync({
     //   inject: [ConfigService],

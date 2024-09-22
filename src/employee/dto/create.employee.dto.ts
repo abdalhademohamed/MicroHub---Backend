@@ -2,6 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsUUID, IsNotEmpty, IsEmail, Length, IsOptional, IsBoolean, IsEnum } from 'class-validator';
 
 export class CreateEmployeeDto {
+  
+ 
 
   @ApiProperty({
     description: 'The name of the employee in English',

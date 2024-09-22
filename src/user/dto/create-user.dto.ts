@@ -17,17 +17,17 @@ export class CreateUserDto {
   @IsString()
   @MinLength(4)
   @MaxLength(20)
-  readonly username: string;
+   username: string;
 
   @ApiProperty({ description: 'The email of the user' })
   @IsEmail()
-  readonly email: string;
+   email: string;
 
 
   @ApiProperty({ description: 'The phone of the user' })
   @IsOptional()
   // @IsPhoneNumber(null, { message: 'Invalid phone number format' })
-  readonly phone?: string; // Optional phone number field
+   phone?: string; // Optional phone number field
 
   @ApiProperty({ description: 'The password of the user' })
   @MinLength(4)
@@ -35,12 +35,11 @@ export class CreateUserDto {
   // @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
   //     message: 'password is too weak',
   // })
-  readonly password: string;
+   password: string;
 
 
-  @ApiProperty({ description: 'The role of the user' })
-  @IsEnum(Role, { message: 'Role must be either ADMIN, USER, etc.' })
-  readonly role: Role;
+   @IsEnum(Role)
+   role?: Role;
 
-  readonly resetCode?: string;
+   resetCode?: string;
 }

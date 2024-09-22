@@ -28,10 +28,10 @@ export class ServiceController {
   ): Promise<ServiceEntity> {
     return await this.serviceService.createService(createServiceDto, image);
   }
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN,Role.COORDINATOR)
   @Get('sort')
   async getAllServices(
     @Query('page') page: number = 1,
@@ -43,7 +43,7 @@ export class ServiceController {
   }
 
 
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
   @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
@@ -61,7 +61,7 @@ export class ServiceController {
   }
 
 
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
   @Delete(':id')

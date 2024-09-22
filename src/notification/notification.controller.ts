@@ -92,7 +92,7 @@ export class NotificationController {
   })
   async saveToken(
     @Body() body: { token: string },
-    @Req() req: any,
+    @Request() req: any,
   ) {
     const userId = req.user.sub; // Extract user ID from the request object
     const { token } = body;

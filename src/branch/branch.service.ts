@@ -22,6 +22,7 @@ import { UserEntity } from "../user/entities/user.entity";
 import { UserService } from "../user/user.service";
 import { FilterBranchesDto } from "./dto/filter.branch.dto";
 import { FilterBranchCalendarDto } from "./dto/filter.branch.calendar.dto";
+import { BranchDto } from "./dto/branch.employee.dto";
 
 @Injectable()
 export class BranchService {
@@ -114,48 +115,91 @@ export class BranchService {
       );
     }
   }
+
   async getAllBranches(
     filterDto: FilterBranchesDto
   ): Promise<{
-    items: BranchEntity[];
+    items: BranchDto[];
     total: number;
     currentPage: number;
     totalPages: number;
   }> {
     const { page = 1, limit = 10, order = 'ASC' } = filterDto;
-
+  
     // Validate pagination values
     if (page < 1 || limit < 1) {
       throw new BadRequestException('Page and limit must be greater than 0');
     }
-
+  
     // Validate order value
     if (!['ASC', 'DESC'].includes(order)) {
       throw new BadRequestException('Invalid order value. Must be "ASC" or "DESC"');
     }
-
-    // Build query options
-    const queryOptions: any = {
-      skip: (page - 1) * limit,
-      take: limit,
-      order: {
-        name: order, // Sorting by the 'name' field
-      },
-    };
-
-    // Execute the query
-    const [items, total] = await this.BranchRepository.findAndCount(queryOptions);
-
-    // Calculate total pages
-    const totalPages = Math.ceil(total / limit);
-
-    return {
-      items,
-      total,
-      currentPage: page,
-      totalPages,
-    };
+  
+    try {
+      // Build the query
+      const query = this.BranchRepository.createQueryBuilder('branch')
+        .leftJoinAndSelect('branch.employees', 'employee')
+        .select([
+          'branch.id',
+          'branch.name',
+          'branch.location',
+          'branch.image',
+          'branch.createdBy',
+          'branch.updatedBy',
+          'branch.deletedBy',
+          'employee.id',
+          'employee.username',
+          'employee.email',
+          'employee.role',
+          'employee.english_Name',
+          'employee.arabic_Name',
+          'employee.workingHours',
+          'employee.phoneNumber',
+          'employee.image',
+          'employee.totalReviews', // Ensure this field exists in EmployeeEntity
+        ])
+        .skip((page - 1) * limit)
+        .take(limit)
+        .orderBy('branch.name', order.toUpperCase() as 'ASC' | 'DESC');
+  
+      // Execute the query
+      const [branches, total] = await query.getManyAndCount();
+  
+      // Calculate total pages
+      const totalPages = Math.ceil(total / limit);
+  
+      // Map the results to DTO
+      const items = branches.map(branch => {
+        return {
+          ...branch,
+          employees: branch.employees.map(employee => ({
+            id: employee.id,
+            username: employee.username,
+            email: employee.email,
+            role: employee.role,
+            englishName: employee.english_Name,
+            arabicName: employee.arabic_Name,
+            workingHours: employee.workingHours,
+            phoneNumber: employee.phoneNumber,
+            image: employee.image,
+            totalReview: Number(employee.totalReviews), // Ensure it's a number
+          })),
+        };
+      });
+  
+      return {
+        items,
+        total,
+        currentPage: page,
+        totalPages,
+      };
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to get branches', error.stack);
+    }
   }
+  
+
 
   async getBranchWithWorkingHours(branchId: string): Promise<{
     branch: BranchEntity;
@@ -295,7 +339,9 @@ export class BranchService {
   async updateBranch(
     branchId: string,
     updateBranchDto: UpdateBranchDto,
-    userId: string
+    userId: string,   
+    image: Express.Multer.File,
+
   ): Promise<BranchEntity> {
     try {
       // Find the branch by ID
@@ -311,10 +357,18 @@ export class BranchService {
       const originalBranch = { ...branch };
   
       // Update branch properties
-      const { name, location, image } = updateBranchDto;
+      const { name, location } = updateBranchDto;
       branch.name = name ?? branch.name;
       branch.location = location ?? branch.location;
-      branch.image = image ?? branch.image;
+
+      // Handle image upload and update
+      const folderName='branch'
+      if (image) {
+        // Upload the new image
+        const uploadedImage = await this.CloudinaryService.uploadImage(image,folderName); // Adjust according to your Cloudinary service method
+        branch.image = uploadedImage.url; // Assume the Cloudinary service returns a URL
+      }
+      
       branch.updatedBy = userId;
   
       // Save the updated branch

@@ -11,9 +11,9 @@ import {
   OneToOne,
   JoinColumn,
 } from "typeorm";
-import { EmployeeEntity } from "../../employee/entities/employee.entity";
 import { CustomerEntity } from "../../customer/entities/customer.entity";
 import { OrderEntity } from "../../orders/entities/order.entity";
+import { EmployeeEntity } from "../../employee/entities/employee.entity";
 
 @Entity() // Specify table name if necessary
 export class ReservationEntity {
@@ -50,11 +50,9 @@ export class ReservationEntity {
  
   @ManyToMany(() => ServiceEntity, service => service.reservations)
   services: ServiceEntity[];
-  // New relation to employees
-  @ManyToMany(
-    () => EmployeeEntity,
-    (EmployeeEntity) => EmployeeEntity.reservations
-  )
+   
+ 
+  @ManyToMany(() => EmployeeEntity, (employee) => employee.reservations)
   employees: EmployeeEntity[];
 
   @ManyToOne(() => CustomerEntity, (customer) => customer.reservations)

@@ -6,6 +6,7 @@ import { ReviewEntity } from '../../reviews/entities/review.entity';
 import { ReceiptEntity } from '../../receipt/entities/receipt.entity';
 import { OrderStatus } from '../utils/order.status.enum';
 import { UserEntity } from '../../user/entities/user.entity';
+import { PaymentEntity } from '../../payment/entities/payment.entity';
 
 @Entity()
 export class OrderEntity {
@@ -19,7 +20,10 @@ export class OrderEntity {
   date: string; // Reservation date
 
   @Column({ type: 'text' })
-  service: string; // Description of the service
+  serviceEnglish: string; // Description of the service in English
+
+  @Column({ type: 'text' })
+  serviceArabic: string; // Description of the service in Arabic
 
   @Column({ type: 'int', unique: true })
   invoiceNumber: number;  // New field for invoice number
@@ -58,6 +62,9 @@ export class OrderEntity {
 
   @ManyToOne(() => UserEntity, { nullable: true })
   createdBy: UserEntity;
+  
+  @Column({ type: 'json', nullable: true })
+  branch: { id: string; name: string }; // Store branch details as a JSON object
 
 
   @ManyToOne(() => UserEntity, { nullable: true })
@@ -69,4 +76,7 @@ export class OrderEntity {
 
   @UpdateDateColumn()
   updatedAt: Date; // Automatically updated when the entity is updated
+
+  @OneToOne(() => PaymentEntity, payment => payment.order) // Update to OneToOne
+  payment: PaymentEntity; // Single payment associated with the order
 }

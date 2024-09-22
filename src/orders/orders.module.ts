@@ -9,13 +9,15 @@ import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { EmployeeEntity } from '../employee/entities/employee.entity';
 import { ReceiptEntity } from '../receipt/entities/receipt.entity';
 import { UserEntity } from '../user/entities/user.entity';
+import { AuditLogEntity } from '../audit-log/entities/audit.log.entity';
+import { PaymentEntity } from '../payment/entities/payment.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([OrderEntity, CommentEntity, ReservationEntity,EmployeeEntity,ReceiptEntity,UserEntity]),
+    TypeOrmModule.forFeature([OrderEntity, CommentEntity, ReservationEntity,EmployeeEntity,ReceiptEntity,UserEntity,PaymentEntity,]),
   ],
   controllers: [OrdersController],
-  providers: [OrdersService,CloudinaryService],
+  providers: [OrdersService,CloudinaryService], 
   exports: [OrdersService],
 })
 export class OrdersModule {}

@@ -33,11 +33,9 @@ import { Roles } from "../auth/Roles.decorator";
 @Controller("reservation")
 export class ReservationController {
   constructor(private readonly reservationService: ReservationService) {}
-  // @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  // @Roles(Role.SUPERADMIN)
-  @Post()
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
+  @Post()
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   @UseInterceptors(FileInterceptor("deposit_Content")) // Intercept the file upload
   async createReservations(
@@ -64,7 +62,7 @@ export class ReservationController {
       throw new BadRequestException(error.message);
     }
   }
-
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Get("booking/:branchId")
   async getAllBookings(
     @Param("branchId") branchId: string,
@@ -75,11 +73,13 @@ export class ReservationController {
       getReservationsDto
     );
   }
-
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   // @Roles(Role.SUPERADMIN)
   @Get()
   async getAllReservations(
+    @Request() req: any, // Request object to access the user
+
     @Query() getReservationsDto: GetReservationsDto
   ): Promise<{
     items: ReservationEntity[];
@@ -90,7 +90,7 @@ export class ReservationController {
     const { branchId, ...filterDto } = getReservationsDto;
     return this.reservationService.getAllReservations(filterDto, branchId);
   }
-
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   // @Roles(Role.SUPERADMIN)
   // Update a reservation by ID
@@ -98,25 +98,43 @@ export class ReservationController {
   async createCustomer(@Body() body: CreateCustomerDto) {
     return this.reservationService.registerOrLookupCustomer(body);
   }
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR)
   @Put(":id")
   async updateReservationServices(
+    @Request() req: any, // Request object to access the user
+
     @Param("id") id: string,
     @Body() updateReservationDto: UpdateReservationDto
   ) {
+    const userId = req.user.sub; // Extract user ID from request
+
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
     return this.reservationService.updateReservationServices(
       id,
-      updateReservationDto
+      updateReservationDto,
+      userId
     );
   }
-
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Put("time/:id")
   async updateReservationStartTime(
+    @Request() req: any, // Request object to access the user
     @Param("id") id: string,
     @Body() updateReservationDto: UpdateTimeReservationDto
   ) {
-    return this.reservationService.updateTime(id, updateReservationDto);
-  }
+    const userId = req.user.sub; // Extract user ID from request
 
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
+    return this.reservationService.updateTime(id, updateReservationDto, userId);
+  }
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Delete(":id")
   async deleteReservation(@Param("id") id: string) {
     return this.reservationService.deleteReservation(id);

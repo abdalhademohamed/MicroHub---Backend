@@ -1,4 +1,4 @@
-export enum Role{
+export enum Role {
     ADMIN = 'ADMIN',
     SUPERADMIN = 'SUPERADMIN',
     BRANCHMANAGER = 'BRANCHMANAGER',
@@ -6,8 +6,7 @@ export enum Role{
     RECEPTIONIST = 'RECEPTIONIST',
     ACCOUNTANT = 'ACCOUNTANT',
     ARTIST = 'ARTIST',
-    ARTISTMANAGER ='ARTISTMANAGER',
+    ARTISTMANAGER = 'ARTISTMANAGER',
     TABLEMANAGER = 'TABLEMANAGER'
-
-
-}
+  }
+  

@@ -14,11 +14,13 @@ import {
   Put,
   HttpStatus,
   Request,
+  NotFoundException,
+  InternalServerErrorException,
 } from "@nestjs/common";
 import { OrdersService } from "./orders.service";
 import { CreateOrderDto } from "./dto/create-order.dto";
 import { UpdateOrderDto } from "./dto/update-order.dto";
-import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { AccessTokenGuard } from "../auth/guards/accessToken.guard";
 import { RolesGuard } from "../auth/guards/role.guards";
@@ -27,6 +29,7 @@ import { Role } from "../user/utils/user.enum";
 import { OrderEntity } from "./entities/order.entity";
 import { FindOrdersDto } from "./dto/find.all.orders.dto";
 import { OrderStatus } from "./utils/order.status.enum";
+import { FindOrdersByDayDto } from "./dto/find.orders.dto.for.artist";
 
 @ApiTags("orders")
 @Controller("order")
@@ -82,7 +85,7 @@ export class OrdersController {
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Patch("status/:orderId")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR)
   @UseInterceptors(FileInterceptor("image")) // Use multer for image upload
   async updateOrderStatus(
     @Request() req: any, // Request object to access the user
@@ -112,7 +115,7 @@ export class OrdersController {
 
   @Put("assign")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR)
   @ApiOperation({ summary: "Assign an order to an artist" })
   @ApiResponse({
     status: 200,
@@ -128,13 +131,19 @@ export class OrdersController {
     description: "Order or artist not found, or artist is not an artist.",
   })
   async assignOrderToArtist(
+    @Request() req: any, // Request object to access the user
     @Param("orderId") orderId: string,
     @Param("artistId") artistId: string
   ): Promise<OrderEntity> {
+    const userId = req.user.sub; // Extract user ID from request
+
+      if (!userId) {
+        throw new BadRequestException("User not authenticated");
+      }
     if (!orderId || !artistId) {
       throw new BadRequestException("Both orderId and artistId are required");
     }
-    return this.ordersService.assignOrderToArtist(orderId, artistId);
+    return this.ordersService.assignOrderToArtist(orderId, artistId,userId);
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -147,19 +156,21 @@ export class OrdersController {
   async getAllOrders(
     @Query() findOrdersDto: FindOrdersDto
   ): Promise<{ items: OrderEntity[]; total: number }> {
-    return this.ordersService.findAllOrders(findOrdersDto);
+    return await this.ordersService.findAllOrders(findOrdersDto);
+
   }
 
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  @Get('status/count')
-  @ApiOperation({ summary: 'Get count of orders by status' })
-  @ApiResponse({
-    status: 200,
-    description: 'Return the count of each order status',
-    schema: {
-      example: {
+@Get('status/count/:branchId')
+@ApiOperation({ summary: 'Get count of orders by status for a specific branch' })
+@ApiResponse({
+  status: 200,
+  description: 'Return the count of each order status for the specified branch',
+  schema: {
+    example: {
+      items: {
         InProgress: 10,
         InQueue: 5,
         Working: 8,
@@ -168,8 +179,80 @@ export class OrdersController {
         Canceled: 3,
       },
     },
+  },
+})
+async getOrderStatusCount(@Param('branchId') branchId: string): Promise<{ items: { [key in OrderStatus]: number } }> {
+  return await this.ordersService.getOrderStatusCount(branchId);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  @Get('filterd')
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  async getOrdersForEmployee(
+    @Request() req: any, // Request object to access the user
+    @Query() findOrdersByDayDto: FindOrdersByDayDto,
+  ) {
+    const userId = req.user.sub; // Extract user ID from request
+
+      if (!userId) {
+        throw new BadRequestException("User not authenticated");
+      }
+    return this.ordersService.findOrdersByEmployeeAndDay(userId, findOrdersByDayDto);
+  }
+  
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  @Get('/:orderId')
+  async getOrderById(@Param('orderId') orderId: string) {
+    try {
+      const order = await this.ordersService.findOrderById(orderId);
+      if (!order) {
+        throw new NotFoundException(`Order with ID ${orderId} not found`);
+      }
+      return order;
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to retrieve the order', error.stack);
+    }
+  }
+
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  @Put('payment/:orderId')
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR)
+  @ApiOperation({ summary: 'Update the payment for a specific order' })
+  @ApiParam({
+    name: 'orderId',
+    description: 'The ID of the order to update',
+    type: String,
   })
-  async getOrderStatusCount(): Promise<{ items: { [key in OrderStatus]: number } }> {
-    return await this.ordersService.getOrderStatusCount();
+  @ApiQuery({
+    name: 'paymentId',
+    description: 'The ID of the payment to associate with the order',
+    type: String,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'The order with the updated payment',
+    type: OrderEntity, // Update this to match your response DTO if you have one
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Order or payment not found',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid input',
+  })
+  async updatePayment(
+    @Param('orderId') orderId: string,
+    @Query('paymentId') paymentId: string,
+  ) {
+    if (!orderId || !paymentId) {
+      throw new BadRequestException('Order ID and Payment ID must be provided');
+    }
+    return this.ordersService.updatePaymentForOrder(orderId, paymentId);
   }
 }

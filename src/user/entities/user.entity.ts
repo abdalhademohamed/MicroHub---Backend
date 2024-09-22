@@ -1,16 +1,18 @@
 import {
   Column,
+  DeleteDateColumn,
   Entity,
   JoinColumn,
   JoinTable,
   ManyToMany,
   OneToMany,
   PrimaryGeneratedColumn,
+  TableInheritance,
 } from "typeorm";
 import { Role } from "../utils/user.enum";
 import { NotificationEntity } from "../../notification/entities/notification.entity";
 import { FcmTokenEntity } from "../../notification/entities/fcm.token.entity";
-import { BranchEntity } from "../../branch/entities/branch.entity";
+// import { BranchEntity } from "../../branch/entities/branch.entity";
 
 @Entity()
 export class UserEntity {
@@ -32,12 +34,13 @@ export class UserEntity {
   @Column({ nullable: true })
   otpExpiration: Date;
 
-  @ManyToMany(() => BranchEntity)
-  @JoinColumn({ name: "branchId" })
-  branch: BranchEntity;
+  // @ManyToMany(() => BranchEntity)
+  // @JoinColumn({ name: "branchId" })
+  // branch: BranchEntity;
 
   @Column({ nullable: true })
   refreshToken: string;
+
   @Column({
     type: "enum",
     enum: Role,
@@ -58,8 +61,9 @@ export class UserEntity {
   notifications: NotificationEntity[];
 
   @OneToMany(() => FcmTokenEntity, (FcmTokenEntity) => FcmTokenEntity.user)
-  fcmTokens: FcmTokenEntity[];   
+  fcmTokens: FcmTokenEntity[];
 
-
-
+  // Add a soft delete column
+  @DeleteDateColumn({ name: "deleted_at", nullable: true })
+  deletedAt?: Date;
 }
