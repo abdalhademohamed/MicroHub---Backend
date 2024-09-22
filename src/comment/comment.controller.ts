@@ -9,7 +9,7 @@ export class CommentController {
   constructor(private readonly commentService: CommentService) {}
 
 
-  @Get()
+  @Get('sorted')
   async getComments(
     @Query('orderId') orderId: string,
     @Query('page') page: number = 1,
