@@ -464,6 +464,9 @@ export class ReservationService {
   
     await this.ReservationRepository.save(reservation);
   
+    // Create a new order for the updated reservation
+    await this.OrdersService.createOrder(reservation.id, userId);
+  
     // Create an audit log entry for the updated reservation
     const changedColumns = ['start_Time', 'end_Time', 'services', 'totalPrice'];
     const changesDetails = {};
@@ -495,6 +498,7 @@ export class ReservationService {
   
     return { status: 'Reservation updated' };
   }
+  
   
   async updateTime(id: string, body: UpdateTimeReservationDto, userId: string) {
     // Fetch the reservation with necessary relations

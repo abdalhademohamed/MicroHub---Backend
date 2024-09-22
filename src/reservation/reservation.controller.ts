@@ -62,7 +62,7 @@ export class ReservationController {
       throw new BadRequestException(error.message);
     }
   }
-
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Get("booking/:branchId")
   async getAllBookings(
     @Param("branchId") branchId: string,
@@ -73,7 +73,7 @@ export class ReservationController {
       getReservationsDto
     );
   }
-
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   // @Roles(Role.SUPERADMIN)
   @Get()
@@ -90,7 +90,7 @@ export class ReservationController {
     const { branchId, ...filterDto } = getReservationsDto;
     return this.reservationService.getAllReservations(filterDto, branchId);
   }
-
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   // @Roles(Role.SUPERADMIN)
   // Update a reservation by ID
@@ -98,7 +98,10 @@ export class ReservationController {
   async createCustomer(@Body() body: CreateCustomerDto) {
     return this.reservationService.registerOrLookupCustomer(body);
   }
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR)
   @Put(":id")
   async updateReservationServices(
     @Request() req: any, // Request object to access the user
@@ -117,7 +120,7 @@ export class ReservationController {
       userId
     );
   }
-
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Put("time/:id")
   async updateReservationStartTime(
     @Request() req: any, // Request object to access the user
@@ -129,9 +132,9 @@ export class ReservationController {
     if (!userId) {
       throw new BadRequestException("User not authenticated");
     }
-    return this.reservationService.updateTime(id, updateReservationDto,userId);
+    return this.reservationService.updateTime(id, updateReservationDto, userId);
   }
-
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Delete(":id")
   async deleteReservation(@Param("id") id: string) {
     return this.reservationService.deleteReservation(id);
