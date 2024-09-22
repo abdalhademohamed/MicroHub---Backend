@@ -61,8 +61,10 @@ export class OrderEntity {
 
   @ManyToOne(() => UserEntity, { nullable: true })
   createdBy: UserEntity;
-  @Column()
-  branchName: string; // Add this column to store the branch name
+  
+  @Column({ type: 'json', nullable: true })
+  branch: { id: string; name: string }; // Store branch details as a JSON object
+
 
   @ManyToOne(() => UserEntity, { nullable: true })
   updatedBy: UserEntity;
