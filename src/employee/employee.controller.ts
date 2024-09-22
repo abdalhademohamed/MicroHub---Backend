@@ -20,12 +20,13 @@ import { EmployeeService } from "./employee.service";
 import { CreateEmployeeDto } from "./dto/create.employee.dto";
 import { UpdateEmployeeDto } from "./dto/update.employee.dto";
 import { EmployeeEntity } from "./entities/employee.entity";
-import { ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { Roles } from "../auth/Roles.decorator";
 import { Role } from "../user/utils/user.enum";
 import { AccessTokenGuard } from "../auth/guards/accessToken.guard";
 import { RolesGuard } from "../auth/guards/role.guards";
+import { UserProfileDto } from "./dto/get.profile.dto";
 
 @ApiTags("employee")
 @Controller("employee")
@@ -136,5 +137,26 @@ export class EmployeeController {
       throw new BadRequestException("User not authenticated");
     }
     await this.employeeService.softDeleteEmployeeByEmployeeId(employeeId,userId);
+  }
+
+
+
+
+
+
+  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+    // @Roles(Role.SUPERADMIN)
+  @Get('show/profile')
+  @ApiBearerAuth() // To indicate that this route is protected by JWT
+  @ApiOperation({ summary: 'Get user profile' })
+  @ApiResponse({ status: 200, description: 'Return user profile data' })
+  async getProfile(
+    @Request() req: any): Promise<UserProfileDto> {
+    const userId = 'c267c3cf-3be1-409e-865e-a0d737354635'; // Extract user ID from request
+
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
+    return this.employeeService.getProfile(userId);
   }
 }

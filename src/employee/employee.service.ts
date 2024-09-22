@@ -17,6 +17,7 @@ import * as bcrypt from "bcrypt";
 import { AuthService } from "../auth/auth.service";
 import { UserEntity } from "../user/entities/user.entity";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
+import { UserProfileDto } from "./dto/get.profile.dto";
 
 @Injectable()
 export class EmployeeService {
@@ -350,8 +351,46 @@ export class EmployeeService {
     const result = await this.CloudinaryService.uploadImage(file, folderName);
     return result.url; // Return the URL of the uploaded image
   }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+ 
+async getProfile(userId: string): Promise<UserProfileDto> {
+  
 
+  // Retrieve the user from UserEntity repository
+  const user = await this.UserRepository.findOne({
+    where: { id: userId },
+  });
+
+  // Handle case where user is not found
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  // Initialize profile data
+  const profileData: UserProfileDto = {
+    username: user.username,
+    email: user.email,
+    phoneNumber: null,
+    image: null,
+    position: null,
+  };
+
+  // Retrieve additional employee data if user is an employee
+  const employee = await this.employeeRepository.findOne({
+    where: { id: userId },
+    relations: ['position'],
+  });
+
+  // If employee record is found, enrich profile data
+  if (employee) {
+    profileData.phoneNumber = employee.phoneNumber || null;
+    profileData.image = employee.image || null;
+    profileData.position = employee.position || null; // Correctly assign PositionEntity
+  }
+
+  return profileData;
+}
 
   
 }
