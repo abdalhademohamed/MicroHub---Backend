@@ -277,6 +277,6 @@ export class SlotService {
         from: "ASC",
       },
     });
-    return this.createTimeSlots([workingHour], duration);
+    return this.createTimeSlots([workingHour], duration)[0] || null;
   }
 }
