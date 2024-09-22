@@ -318,20 +318,20 @@ export class ReservationService {
       // Granular error handling and categorization
       if (error instanceof NotFoundException) {
         throw new NotFoundException({
-          message: error.message,
+          message: error.stack,
           category: "EntityNotFound", // Custom error category
         });
       } else if (error instanceof BadRequestException) {
         throw new BadRequestException({
-          message: error.message,
+          message: error.stack,
           category: "ValidationError", // Custom error category
         });
       
       } else {
         throw new InternalServerErrorException({
-          message: "Failed to create reservation",
+          message: error.stack,
           category: "InternalServerError", // Custom error category for unexpected errors
-          details: error.message, // Additional details for debugging
+          // details: error.stack, // Additional details for debugging
         });
       }
     }
