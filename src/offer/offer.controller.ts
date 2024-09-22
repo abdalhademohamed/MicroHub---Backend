@@ -43,9 +43,9 @@ export class OfferController {
     }
     return await this.offerService.create(createOfferDto, userId);
   }
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN,Role.COORDINATOR)
   @Get()
   async findAll(
     @Query("page") page: string = "1",
@@ -56,14 +56,14 @@ export class OfferController {
 
     return await this.offerService.findAll(pageNumber, pageSize);
   }
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN,Role.COORDINATOR)
   @Get(":id")
   async findOne(@Param("id") id: string): Promise<OfferEntity> {
     return await this.offerService.findOne(id);
   }
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
   @Put(":offerId")
@@ -79,7 +79,7 @@ export class OfferController {
     }
     return await this.offerService.update(offerId, updateOfferDto,userId);
   }
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
   @Put("update/active/:id")
@@ -89,7 +89,7 @@ export class OfferController {
   ) {
     return this.offerService.updateIsActive(id, UpdateIsActiveDto);
   }
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
   @Delete(":offerId")
