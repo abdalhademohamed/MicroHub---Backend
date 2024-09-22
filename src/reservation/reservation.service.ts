@@ -2,6 +2,7 @@ import {
   BadRequestException,
   HttpException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from "@nestjs/common";
 import { InjectEntityManager, InjectRepository } from "@nestjs/typeorm";
@@ -197,110 +198,145 @@ export class ReservationService {
     image: Express.Multer.File,
     userId: string
   ) {
-    const branch = await this.BranchRepository.findOne({
-      where: { id: body.branch },
-    });
-    if (!branch) {
-      throw new NotFoundException("Branch not found");
-    }
+    try {
+      // Validate branch existence
+      const branch = await this.BranchRepository.findOne({
+        where: { id: body.branch },
+      });
+      if (!branch) {
+        throw new NotFoundException("Branch not found");
+      }
   
-    const serviceIds = body.services;
-    if (!serviceIds || serviceIds.length === 0) {
-      throw new BadRequestException("No services provided");
-    }
+      // Validate service IDs
+      const serviceIds = body.services;
+      if (!serviceIds || serviceIds.length === 0) {
+        throw new BadRequestException("No services provided");
+      }
   
-    // Fetch services based on provided IDs
-    const services = await this.ServiceRepository.find({
-      where: {
-        id: In(serviceIds),
-      },
-    });
+      // Fetch services based on provided IDs
+      const services = await this.ServiceRepository.find({
+        where: { id: In(serviceIds) },
+      });
+      if (services.length !== serviceIds.length) {
+        throw new BadRequestException("Some services were not found");
+      }
   
-    // Ensure all requested services were found
-    if (services.length !== serviceIds.length) {
-      throw new BadRequestException("Some services were not found");
-    }
-  
-    const { duration, price } = await this.calculateTotalDuration(serviceIds);
-    const startTime = new Date(body.customStartTime);
-    const endTime = new Date(startTime.getTime() + duration * 1000 * 60);
-    const workingHours = await this.getWorkingHoursAtSpecificDate(
-      body.branch,
-      startTime
-    );
-    const index = workingHours.findIndex(
-      (w) => w.from <= startTime && w.to >= endTime
-    );
-    if (index === -1) {
-      throw new BadRequestException(
-        "The custom schedule conflicts with an existing reservation."
+      // Calculate total duration and price of services
+      const { duration, price } = await this.calculateTotalDuration(serviceIds);
+      
+      // Handle custom time
+      const startTime = new Date(body.customStartTime);
+      const endTime = new Date(startTime.getTime() + duration * 1000 * 60);
+      
+      // Get working hours for the branch on the specific date
+      const workingHours = await this.getWorkingHoursAtSpecificDate(
+        body.branch,
+        startTime
       );
+  
+      // Check if the working hours allow the reservation
+      const index = workingHours.findIndex(
+        (w) => w.from <= startTime && w.to >= endTime
+      );
+      if (index === -1) {
+        throw new BadRequestException(
+          "The custom schedule conflicts with an existing reservation."
+        );
+      }
+  
+      // Ensure image is provided
+      if (!image) {
+        throw new BadRequestException("Photo is required");
+      }
+  
+      // Upload image to Cloudinary
+      const folderName = "reservation";
+      const result = await this.CloudinaryService.uploadImage(image, folderName);
+  
+      // Validate customer existence
+      const customer = await this.CustomerRepository.findOneBy({
+        phoneNumber: body.phone_Number,
+      });
+      if (!customer) {
+        throw new NotFoundException("Customer not found");
+      }
+  
+      // Create and save reservation
+      const reservation = this.ReservationRepository.create({
+        customer,
+        totalPrice: Math.ceil(price),
+        deposit: body.deposit,
+        start_Time: startTime,
+        end_Time: endTime,
+        reservationDay: startTime.getDate(),
+        reservationMonth: startTime.getMonth() + 1,
+        reservationYear: startTime.getFullYear(),
+        branch,
+        deposit_Content: result.url,
+        services,
+      });
+  
+      await this.ReservationRepository.save(reservation);
+  
+      // Create an order for the reservation
+      await this.OrdersService.createOrder(reservation.id, userId);
+  
+      // Adjust working hours based on the new reservation
+      const newWorkingHours = this.newAddedWorkingHours(
+        {
+          fromOriginal: workingHours[index].from,
+          toOriginal: workingHours[index].to,
+          fromUser: startTime,
+          toUser: endTime,
+        },
+        workingHours[index].slot
+      );
+      
+      await this.WorkingHourEntity.save(newWorkingHours);
+      await this.WorkingHourEntity.delete({ id: workingHours[index].id });
+  
+      // Create an audit log for the reservation creation
+      const log = new AuditLogEntity();
+      log.tableName = "reservation";
+      log.action = "INSERT";
+      log.entityId = reservation.id;
+      log.performedBy = userId;
+  
+      const user = await this.UserRepository.findOne({
+        where: { id: userId },
+        select: ["id", "username", "email", "role"],
+      });
+  
+      if (user) {
+        log.userDetails = user;
+      }
+  
+      await this.entityManager.save(AuditLogEntity, log);
+  
+      return { reservation };
+    } catch (error) {
+      // Granular error handling and categorization
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException({
+          message: error.message,
+          category: "EntityNotFound", // Custom error category
+        });
+      } else if (error instanceof BadRequestException) {
+        throw new BadRequestException({
+          message: error.message,
+          category: "ValidationError", // Custom error category
+        });
+      
+      } else {
+        throw new InternalServerErrorException({
+          message: "Failed to create reservation",
+          category: "InternalServerError", // Custom error category for unexpected errors
+          details: error.message, // Additional details for debugging
+        });
+      }
     }
-  
-    // Ensure image is provided
-    if (!image) {
-      throw new BadRequestException("Photo is required");
-    }
-  
-    // Upload image
-    const folderName = "reservation"; // or any other dynamic name based on context
-    const result = await this.CloudinaryService.uploadImage(image, folderName);
-    const customer = await this.CustomerRepository.findOneBy({
-      phoneNumber: body.phone_Number,
-    });
-    if (!customer) {
-      throw new BadRequestException("Customer not found");
-    }
-  
-    // Create and save reservation
-    const reservation = this.ReservationRepository.create({
-      customer,
-      totalPrice: Math.ceil(price),
-      deposit: body.deposit,
-      start_Time: startTime,
-      end_Time: endTime,
-      reservationDay: startTime.getDate(),
-      reservationMonth: startTime.getMonth() + 1, // Months are 0-indexed
-      reservationYear: startTime.getFullYear(),
-      branch,
-      deposit_Content: result.url,
-      services,
-    });
-  
-    await this.ReservationRepository.save(reservation);
-    await this.OrdersService.createOrder(reservation.id, userId);
-  
-    const newWorkingHours = this.newAddedWorkingHours(
-      {
-        fromOriginal: workingHours[index].from,
-        toOriginal: workingHours[index].to,
-        fromUser: startTime,
-        toUser: endTime,
-      },
-      workingHours[index].slot
-    );
-    await this.WorkingHourEntity.save(newWorkingHours);
-    await this.WorkingHourEntity.delete({ id: workingHours[index].id });
-  
-    // Create an audit log entry for the new reservation
-    const log = new AuditLogEntity();
-    log.tableName = "reservation";
-    log.action = "INSERT";
-    log.entityId = reservation.id;
-    log.performedBy = userId;
-  
-    const user = await this.UserRepository.findOne({
-      where: { id: userId },
-      select: ["id", "username", "email", "role"],
-    });
-    if (user) {
-      log.userDetails = user;
-    }
-  
-    await this.entityManager.save(AuditLogEntity, log);
-  
-    return { reservation };
   }
+  
   
 
   async getAllReservations(

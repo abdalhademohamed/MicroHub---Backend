@@ -33,11 +33,9 @@ import { Roles } from "../auth/Roles.decorator";
 @Controller("reservation")
 export class ReservationController {
   constructor(private readonly reservationService: ReservationService) {}
-  // @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  // @Roles(Role.SUPERADMIN)
-  @Post()
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
+  @Post()
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   @UseInterceptors(FileInterceptor("deposit_Content")) // Intercept the file upload
   async createReservations(
