@@ -11,10 +11,11 @@ import { ReceiptEntity } from '../receipt/entities/receipt.entity';
 import { UserEntity } from '../user/entities/user.entity';
 import { AuditLogEntity } from '../audit-log/entities/audit.log.entity';
 import { PaymentEntity } from '../payment/entities/payment.entity';
+import { PositionEntity } from 'src/postion/entities/postion.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([OrderEntity, CommentEntity, ReservationEntity,EmployeeEntity,ReceiptEntity,UserEntity,PaymentEntity,]),
+    TypeOrmModule.forFeature([OrderEntity, CommentEntity, ReservationEntity,EmployeeEntity,ReceiptEntity,UserEntity,PaymentEntity,PositionEntity]),
   ],
   controllers: [OrdersController],
   providers: [OrdersService,CloudinaryService], 

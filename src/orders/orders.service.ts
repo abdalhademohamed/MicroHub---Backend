@@ -18,6 +18,8 @@ import { UserEntity } from "../user/entities/user.entity";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { FindOrdersByDayDto } from "./dto/find.orders.dto.for.artist";
 import { PaymentEntity } from "../payment/entities/payment.entity";
+import { PositionEntity } from "../postion/entities/postion.entity";
+import { Postion } from "../postion/utils/postion.enum";
 
 @Injectable()
 export class OrdersService {
@@ -37,6 +39,10 @@ export class OrdersService {
 
     @InjectRepository(PaymentEntity)
     private readonly PaymentRepository: Repository<PaymentEntity>,
+
+
+    @InjectRepository(PositionEntity)
+    private readonly PositionRepository: Repository<PositionEntity>,
 
     @InjectEntityManager() private readonly entityManager: EntityManager
   ) {}
@@ -743,4 +749,42 @@ export class OrdersService {
       throw new InternalServerErrorException('Failed to update payment for order', error.stack);
     }
   }
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+async getTopArtistsByOrders(branchId?: string) {
+  const artistPosition = await this.PositionRepository.findOne({ where: { postion: Postion.ARTIST } });
+
+  if (!artistPosition) {
+    throw new NotFoundException('Artist position not found');
+  }
+
+  // Create a base query for employees with the position 'ARTIST'
+  const query = this.employeeRepository
+    .createQueryBuilder('employee')
+    .leftJoinAndSelect('employee.orders', 'order')
+    .where('employee.positionId = :positionId', { positionId: artistPosition.id })
+    .select('employee.id', 'employeeId')
+    .addSelect('employee.english_Name', 'englishName')
+    .addSelect('employee.arabic_Name', 'arabicName')
+    .addSelect('COUNT(order.id)', 'orderCount')
+    .groupBy('employee.id')
+    .orderBy('orderCount', 'DESC')
+    .limit(5); // Limit to top 5 employees
+
+  // If a branch is specified, filter by branch
+  if (branchId) {
+    query.andWhere('employee.branchId = :branchId', { branchId });
+  }
+
+  const result = await query.getRawMany();
+
+  return result.map((item) => ({
+    employeeId: item.employeeId,
+    englishName: item.englishName,
+    arabicName: item.arabicName,
+    orderCount: parseInt(item.orderCount, 10), // Convert to number
+  }));
+}
 }
