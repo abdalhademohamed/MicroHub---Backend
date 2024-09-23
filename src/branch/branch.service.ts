@@ -23,6 +23,7 @@ import { UserService } from "../user/user.service";
 import { FilterBranchesDto } from "./dto/filter.branch.dto";
 import { FilterBranchCalendarDto } from "./dto/filter.branch.calendar.dto";
 import { BranchDto } from "./dto/branch.employee.dto";
+import { Role } from "src/user/utils/user.enum";
 
 @Injectable()
 export class BranchService {
@@ -116,8 +117,93 @@ export class BranchService {
     }
   }
 
+  // async getAllBranches(
+  //   filterDto: FilterBranchesDto
+  // ): Promise<{
+  //   items: BranchDto[];
+  //   total: number;
+  //   currentPage: number;
+  //   totalPages: number;
+  // }> {
+  //   const { page = 1, limit = 10, order = 'ASC' } = filterDto;
+  
+  //   // Validate pagination values
+  //   if (page < 1 || limit < 1) {
+  //     throw new BadRequestException('Page and limit must be greater than 0');
+  //   }
+  
+  //   // Validate order value
+  //   if (!['ASC', 'DESC'].includes(order)) {
+  //     throw new BadRequestException('Invalid order value. Must be "ASC" or "DESC"');
+  //   }
+  
+  //   try {
+  //     // Build the query
+  //     const query = this.BranchRepository.createQueryBuilder('branch')
+  //       .leftJoinAndSelect('branch.employees', 'employee')
+  //       .select([
+  //         'branch.id',
+  //         'branch.name',
+  //         'branch.location',
+  //         'branch.image',
+  //         'branch.createdBy',
+  //         'branch.updatedBy',
+  //         'branch.deletedBy',
+  //         'employee.id',
+  //         'employee.username',
+  //         'employee.email',
+  //         'employee.role',
+  //         'employee.english_Name',
+  //         'employee.arabic_Name',
+  //         'employee.workingHours',
+  //         'employee.phoneNumber',
+  //         'employee.image',
+  //         'employee.totalReviews', // Ensure this field exists in EmployeeEntity
+  //       ])
+  //       .skip((page - 1) * limit)
+  //       .take(limit)
+  //       .orderBy('branch.name', order.toUpperCase() as 'ASC' | 'DESC');
+  
+  //     // Execute the query
+  //     const [branches, total] = await query.getManyAndCount();
+  
+  //     // Calculate total pages
+  //     const totalPages = Math.ceil(total / limit);
+  
+  //     // Map the results to DTO
+  //     const items = branches.map(branch => {
+  //       return {
+  //         ...branch,
+  //         employees: branch.employees.map(employee => ({
+  //           id: employee.id,
+  //           username: employee.username,
+  //           email: employee.email,
+  //           role: employee.role,
+  //           englishName: employee.english_Name,
+  //           arabicName: employee.arabic_Name,
+  //           workingHours: employee.workingHours,
+  //           phoneNumber: employee.phoneNumber,
+  //           image: employee.image,
+  //           totalReview: Number(employee.totalReviews), // Ensure it's a number
+  //         })),
+  //       };
+  //     });
+  
+  //     return {
+  //       items,
+  //       total,
+  //       currentPage: page,
+  //       totalPages,
+  //     };
+  //   } catch (error) {
+  //     throw new InternalServerErrorException('Failed to get branches', error.stack);
+  //   }
+  // }
+  
   async getAllBranches(
-    filterDto: FilterBranchesDto
+    filterDto: FilterBranchesDto,
+    userRole: Role,
+    userId: string
   ): Promise<{
     items: BranchDto[];
     total: number;
@@ -138,8 +224,8 @@ export class BranchService {
   
     try {
       // Build the query
-      const query = this.BranchRepository.createQueryBuilder('branch')
-        .leftJoinAndSelect('branch.employees', 'employee')
+      let query = this.BranchRepository.createQueryBuilder('branch')
+        .leftJoinAndSelect('branch.employees', 'employeeAlias') // Use an alias
         .select([
           'branch.id',
           'branch.name',
@@ -148,20 +234,27 @@ export class BranchService {
           'branch.createdBy',
           'branch.updatedBy',
           'branch.deletedBy',
-          'employee.id',
-          'employee.username',
-          'employee.email',
-          'employee.role',
-          'employee.english_Name',
-          'employee.arabic_Name',
-          'employee.workingHours',
-          'employee.phoneNumber',
-          'employee.image',
-          'employee.totalReviews', // Ensure this field exists in EmployeeEntity
+          'employeeAlias.id', // Use the alias here
+          'employeeAlias.username',
+          'employeeAlias.email',
+          'employeeAlias.role',
+          'employeeAlias.english_Name',
+          'employeeAlias.arabic_Name',
+          'employeeAlias.workingHours',
+          'employeeAlias.phoneNumber',
+          'employeeAlias.image',
+          'employeeAlias.totalReviews', // Ensure this field exists in EmployeeEntity
         ])
         .skip((page - 1) * limit)
         .take(limit)
         .orderBy('branch.name', order.toUpperCase() as 'ASC' | 'DESC');
+  
+      // If the user is not an admin, restrict to the branch they're associated with
+      if (![Role.ADMIN, Role.SUPERADMIN, Role.COORDINATOR].includes(userRole)) {
+        query = query
+          .leftJoin('branch.employees', 'userEmployee') // Alias for user's employee
+          .where('userEmployee.id = :userId', { userId });
+      }
   
       // Execute the query
       const [branches, total] = await query.getManyAndCount();
@@ -170,10 +263,10 @@ export class BranchService {
       const totalPages = Math.ceil(total / limit);
   
       // Map the results to DTO
-      const items = branches.map(branch => {
+      const items = branches.map((branch) => {
         return {
           ...branch,
-          employees: branch.employees.map(employee => ({
+          employees: branch.employees.map((employee) => ({
             id: employee.id,
             username: employee.username,
             email: employee.email,
@@ -198,8 +291,6 @@ export class BranchService {
       throw new InternalServerErrorException('Failed to get branches', error.stack);
     }
   }
-  
-
 
   async getBranchWithWorkingHours(branchId: string): Promise<{
     branch: BranchEntity;
