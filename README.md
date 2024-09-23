@@ -1,4 +1,3 @@
-
 # Center Solution Book
 
 ## Table of Contents
@@ -6,57 +5,55 @@
 1. [Overview](#overview)
 2. [Features](#features)
 3. [Folder Structure](#folder-structure)
-5. [API Documentation](#api-documentation)
-
+4. [API Documentation](#api-documentation)
 
 ## Overview
 
 The center solution system is designed to manage various aspects of a service center with multiple branches. It includes features for online registration, employee management, service offerings, reservations, and user management. The system also incorporates privilege levels to ensure secure access control.
-
-
 
 ## Features
 
 The project is organized into the following main directories:
 
 - **Center Registration:** Allows for the registration and management of different centers within the system.
-- **Branches** 
-- **Employee Management: Handles employee roles and assignments.
-- **Customer Capacity: Manages the number of customers that can be accommodated per day at each branch.
-- **Appointment Scheduling: Allows customers to book appointments at specific branches.
-- **Branch Address Management: Stores and manages the addresses of all branches.
+- **Branches**
+- \*\*Employee Management: Handles employee roles and assignments.
+- \*\*Customer Capacity: Manages the number of customers that can be accommodated per day at each branch.
+- \*\*Appointment Scheduling: Allows customers to book appointments at specific branches.
+- \*\*Branch Address Management: Stores and manages the addresses of all branches.
 
-- **Employee Roles:** 
-- **Accountant: Manages financial transactions and records.
-- **Technical Director: Oversees technical operations and services.
-- **Artist: Provides artistic services.
-- **Offline Receptionist: Handles in-person customer interactions and appointments.
-- **Admin: Manages overall system administration.
-- **Online Coordinator: Manages online customer interactions and coordination.
+- **Employee Roles:**
+- \*\*Accountant: Manages financial transactions and records.
+- \*\*Technical Director: Oversees technical operations and services.
+- \*\*Artist: Provides artistic services.
+- \*\*Offline Receptionist: Handles in-person customer interactions and appointments.
+- \*\*Admin: Manages overall system administration.
+- \*\*Online Coordinator: Manages online customer interactions and coordination.
 
-- **Service Management:** 
-- **Service Details: Includes the service name, price, coordinator, rate, duration, and display status.
+- **Service Management:**
+- \*\*Service Details: Includes the service name, price, coordinator, rate, duration, and display status.
 
-- **Reservation** 
-- **Branch Selection: Customers can choose a branch for their reservation.
-- **Reservation Status: Tracks the status of reservations (e.g., pending, canceled, completed).
-- **Service Notes: Allows for notes related to the service being reserved.
-- **Receipt Photo: Upload and manage photos of payment receipts.
-- **Advance Payment: Tracks the amount paid in advance by the customer.
-- **Customer Information: Stores customer details such as name and contact information.
-- **Total Price: Calculates and stores the total price of the reservation.
-- **Reservation Number: Generates a unique number for each reservation.
-- **Login Time & Date: Tracks the time and date of the reservation.
-- **Services: Lists the services included in the reservation.
-- **Employee Assignment: Tracks which employee is responsible for the reservation.
+- **Reservation**
+- \*\*Branch Selection: Customers can choose a branch for their reservation.
+- \*\*Reservation Status: Tracks the status of reservations (e.g., pending, canceled, completed).
+- \*\*Service Notes: Allows for notes related to the service being reserved.
+- \*\*Receipt Photo: Upload and manage photos of payment receipts.
+- \*\*Advance Payment: Tracks the amount paid in advance by the customer.
+- \*\*Customer Information: Stores customer details such as name and contact information.
+- \*\*Total Price: Calculates and stores the total price of the reservation.
+- \*\*Reservation Number: Generates a unique number for each reservation.
+- \*\*Login Time & Date: Tracks the time and date of the reservation.
+- \*\*Services: Lists the services included in the reservation.
+- \*\*Employee Assignment: Tracks which employee is responsible for the reservation.
 
-- **Status Reservation** 
-- **Pending: Reservation is awaiting confirmation.
-- **Canceled: Reservation has been canceled.
-- **Completed: Service has been completed.
-- **Done or Not: Tracks whether the service was successfully completed or not.
+- **Status Reservation**
+- \*\*Pending: Reservation is awaiting confirmation.
+- \*\*Canceled: Reservation has been canceled.
+- \*\*Completed: Service has been completed.
+- \*\*Done or Not: Tracks whether the service was successfully completed or not.
 
 ## Folder Structure
+
 ```
 {
 src/
@@ -69,8 +66,8 @@ src/
 │   │   ├── login.dto.ts
 │   ├── entities/
 │   │   └── auth.entity.ts
-│   
-│     
+│
+│
 │
 ├── branch/
 │   ├── branch.controller.ts
@@ -164,7 +161,7 @@ src/
 │   ├── guards/
 │   ├── interceptors/
 │   ├── pipes/
-|   ├── swagger 
+|   ├── swagger
 │   └── utils/
 │       ├── appError.ts
 │       └── helperFunctions.ts

@@ -20,7 +20,13 @@ import {
 import { OrdersService } from "./orders.service";
 import { CreateOrderDto } from "./dto/create-order.dto";
 import { UpdateOrderDto } from "./dto/update-order.dto";
-import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
+import {
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { AccessTokenGuard } from "../auth/guards/accessToken.guard";
 import { RolesGuard } from "../auth/guards/role.guards";
@@ -53,7 +59,6 @@ export class OrdersController {
   @UseGuards(AccessTokenGuard, RolesGuard)
   @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER)
   @UseInterceptors(FileInterceptor("image")) // Use multer for image upload
-
   @ApiOperation({ summary: "Update the payment status of an order" })
   @ApiResponse({
     status: 200,
@@ -72,15 +77,19 @@ export class OrdersController {
     @Request() req: any, // Request object to access the user
     @Param("orderId") orderId: string,
     @Body("paymentStatus") paymentStatus: "paid" | "partially paid",
-    @UploadedFile() image: Express.Multer.File // File uploads cannot be passed as query parameters
-
+    @UploadedFile() image: Express.Multer.File, // File uploads cannot be passed as query parameters
   ) {
     const userId = req.user.sub; // Extract user ID from request
 
     if (!userId) {
       throw new BadRequestException("User not authenticated");
     }
-    return await this.ordersService.updatePaymentStatus(orderId, paymentStatus,image,userId);
+    return await this.ordersService.updatePaymentStatus(
+      orderId,
+      paymentStatus,
+      image,
+      userId,
+    );
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Patch("status/:orderId")
@@ -91,7 +100,7 @@ export class OrdersController {
     @Request() req: any, // Request object to access the user
     @Param("orderId") orderId: string,
     @Body("OrderStatus") status: OrderStatus,
-    @UploadedFile() image: Express.Multer.File // File uploads cannot be passed as query parameters
+    @UploadedFile() image: Express.Multer.File, // File uploads cannot be passed as query parameters
   ) {
     if (!Object.values(OrderStatus).includes(status)) {
       throw new BadRequestException("Invalid status");
@@ -103,7 +112,12 @@ export class OrdersController {
       if (!userId) {
         throw new BadRequestException("User not authenticated");
       }
-      return await this.ordersService.updateOrderStatus(orderId, status,image,userId);
+      return await this.ordersService.updateOrderStatus(
+        orderId,
+        status,
+        image,
+        userId,
+      );
     } catch (error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -133,17 +147,17 @@ export class OrdersController {
   async assignOrderToArtist(
     @Request() req: any, // Request object to access the user
     @Param("orderId") orderId: string,
-    @Param("artistId") artistId: string
+    @Param("artistId") artistId: string,
   ): Promise<OrderEntity> {
     const userId = req.user.sub; // Extract user ID from request
 
-      if (!userId) {
-        throw new BadRequestException("User not authenticated");
-      }
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
     if (!orderId || !artistId) {
       throw new BadRequestException("Both orderId and artistId are required");
     }
-    return this.ordersService.assignOrderToArtist(orderId, artistId,userId);
+    return this.ordersService.assignOrderToArtist(orderId, artistId, userId);
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -154,41 +168,43 @@ export class OrdersController {
   @ApiResponse({ status: 200, description: "Orders retrieved successfully." })
   @ApiResponse({ status: 500, description: "Internal server error." })
   async getAllOrders(
-    @Query() findOrdersDto: FindOrdersDto
+    @Query() findOrdersDto: FindOrdersDto,
   ): Promise<{ items: OrderEntity[]; total: number }> {
     return await this.ordersService.findAllOrders(findOrdersDto);
-
   }
-
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-@Get('status/count/:branchId')
-@ApiOperation({ summary: 'Get count of orders by status for a specific branch' })
-@ApiResponse({
-  status: 200,
-  description: 'Return the count of each order status for the specified branch',
-  schema: {
-    example: {
-      items: {
-        InProgress: 10,
-        InQueue: 5,
-        Working: 8,
-        Done: 12,
-        Completed: 20,
-        Canceled: 3,
+  @Get("status/count/:branchId")
+  @ApiOperation({
+    summary: "Get count of orders by status for a specific branch",
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      "Return the count of each order status for the specified branch",
+    schema: {
+      example: {
+        items: {
+          InProgress: 10,
+          InQueue: 5,
+          Working: 8,
+          Done: 12,
+          Completed: 20,
+          Canceled: 3,
+        },
       },
     },
-  },
-})
-async getOrderStatusCount(@Param('branchId') branchId: string): Promise<{ items: { [key in OrderStatus]: number } }> {
-  return await this.ordersService.getOrderStatusCount(branchId);
-}
+  })
+  async getOrderStatusCount(
+    @Param("branchId") branchId: string,
+  ): Promise<{ items: { [key in OrderStatus]: number } }> {
+    return await this.ordersService.getOrderStatusCount(branchId);
+  }
 
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-  @Get('filterd')
+  @Get("filterd")
   @UseGuards(AccessTokenGuard, RolesGuard)
   async getOrdersForEmployee(
     @Request() req: any, // Request object to access the user
@@ -196,15 +212,18 @@ async getOrderStatusCount(@Param('branchId') branchId: string): Promise<{ items:
   ) {
     const userId = req.user.sub; // Extract user ID from request
 
-      if (!userId) {
-        throw new BadRequestException("User not authenticated");
-      }
-    return this.ordersService.findOrdersByEmployeeAndDay(userId, findOrdersByDayDto);
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
+    return this.ordersService.findOrdersByEmployeeAndDay(
+      userId,
+      findOrdersByDayDto,
+    );
   }
-  
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  @Get('/:orderId')
-  async getOrderById(@Param('orderId') orderId: string) {
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  @Get("/:orderId")
+  async getOrderById(@Param("orderId") orderId: string) {
     try {
       const order = await this.ordersService.findOrderById(orderId);
       if (!order) {
@@ -212,46 +231,48 @@ async getOrderStatusCount(@Param('branchId') branchId: string): Promise<{ items:
       }
       return order;
     } catch (error) {
-      throw new InternalServerErrorException('Failed to retrieve the order', error.stack);
+      throw new InternalServerErrorException(
+        "Failed to retrieve the order",
+        error.stack,
+      );
     }
   }
 
-
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  @Put('payment/:orderId')
+  @Put("payment/:orderId")
   @UseGuards(AccessTokenGuard, RolesGuard)
   @Roles(Role.SUPERADMIN, Role.COORDINATOR)
-  @ApiOperation({ summary: 'Update the payment for a specific order' })
+  @ApiOperation({ summary: "Update the payment for a specific order" })
   @ApiParam({
-    name: 'orderId',
-    description: 'The ID of the order to update',
+    name: "orderId",
+    description: "The ID of the order to update",
     type: String,
   })
   @ApiQuery({
-    name: 'paymentId',
-    description: 'The ID of the payment to associate with the order',
+    name: "paymentId",
+    description: "The ID of the payment to associate with the order",
     type: String,
   })
   @ApiResponse({
     status: 200,
-    description: 'The order with the updated payment',
+    description: "The order with the updated payment",
     type: OrderEntity, // Update this to match your response DTO if you have one
   })
   @ApiResponse({
     status: 404,
-    description: 'Order or payment not found',
+    description: "Order or payment not found",
   })
   @ApiResponse({
     status: 400,
-    description: 'Invalid input',
+    description: "Invalid input",
   })
   async updatePayment(
-    @Param('orderId') orderId: string,
-    @Query('paymentId') paymentId: string,
+    @Param("orderId") orderId: string,
+    @Query("paymentId") paymentId: string,
   ) {
     if (!orderId || !paymentId) {
-      throw new BadRequestException('Order ID and Payment ID must be provided');
+      throw new BadRequestException("Order ID and Payment ID must be provided");
     }
     return this.ordersService.updatePaymentForOrder(orderId, paymentId);
   }

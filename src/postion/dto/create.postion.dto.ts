@@ -1,6 +1,6 @@
-import { IsString, IsEnum, IsNotEmpty } from 'class-validator';
-import { Postion } from '../utils/postion.enum';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsEnum, IsNotEmpty } from "class-validator";
+import { Postion } from "../utils/postion.enum";
+import { ApiProperty } from "@nestjs/swagger";
 
 export class CreatePositionDto {
   @ApiProperty()
@@ -16,5 +16,4 @@ export class CreatePositionDto {
   @IsString()
   @IsNotEmpty()
   positionInArabic: string;
-  
 }

@@ -1,11 +1,15 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { CreateCustomerDto } from './dto/create.customer.dto';
-import { UpdateCustomerDto } from './dto/update.customer.dto';
-import { CustomerEntity } from './entities/customer.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { differenceInMilliseconds, formatDistanceToNow } from 'date-fns';
-import { GetCustomerDto } from './dto/get.customer.dto';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from "@nestjs/common";
+import { CreateCustomerDto } from "./dto/create.customer.dto";
+import { UpdateCustomerDto } from "./dto/update.customer.dto";
+import { CustomerEntity } from "./entities/customer.entity";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { differenceInMilliseconds, formatDistanceToNow } from "date-fns";
+import { GetCustomerDto } from "./dto/get.customer.dto";
 
 @Injectable()
 export class CustomerService {
@@ -18,12 +22,14 @@ export class CustomerService {
       // Find the customer by phone number, including relations
       const customer = await this.customerRepository.findOne({
         where: { phoneNumber },
-        relations: ['lastServices', 'lastRootoshes'], // Include relations
+        relations: ["lastServices", "lastRootoshes"], // Include relations
       });
 
       // Handle case where customer is not found
       if (!customer) {
-        throw new NotFoundException(`Customer with phone number ${phoneNumber} not found.`);
+        throw new NotFoundException(
+          `Customer with phone number ${phoneNumber} not found.`,
+        );
       }
 
       // Convert dateOfBirth to a Date object if it's not already
@@ -44,7 +50,7 @@ export class CustomerService {
       return dto;
     } catch (error) {
       // Log the detailed error information
-      console.error('Error in getCustomerByPhoneNumber service method:', {
+      console.error("Error in getCustomerByPhoneNumber service method:", {
         message: error.message,
         stack: error.stack,
         phoneNumber,
@@ -56,7 +62,9 @@ export class CustomerService {
       }
 
       // Handle unexpected errors
-      throw new InternalServerErrorException('An unexpected error occurred while retrieving customer details.');
+      throw new InternalServerErrorException(
+        "An unexpected error occurred while retrieving customer details.",
+      );
     }
   }
 
@@ -81,7 +89,7 @@ export class CustomerService {
       return formatDistanceToNow(nextBirthday, { addSuffix: true });
     } catch (calcError) {
       // Log error during calculation
-      console.error('Error calculating time until birthday:', calcError);
+      console.error("Error calculating time until birthday:", calcError);
       return null; // Return null if there's an error in calculation
     }
   }

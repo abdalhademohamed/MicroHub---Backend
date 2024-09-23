@@ -207,7 +207,9 @@ export class SlotService {
 
       // Loop through the interval and create slots of the given duration
       while (currentStartTime < currentEndTime) {
-        const nextSlotEnd = new Date( currentStartTime.getTime() + duration * 1000 * 60 );
+        const nextSlotEnd = new Date(
+          currentStartTime.getTime() + duration * 1000 * 60,
+        );
 
         // Ensure that we don't exceed the endTime
         if (nextSlotEnd > currentEndTime) {
@@ -218,15 +220,16 @@ export class SlotService {
           endTime: nextSlotEnd,
         };
 
-        const idx = result.findIndex(({ startTime }) =>  startTime.getTime() == obj.startTime.getTime() );
-        if( idx == -1 ){
-          result.push(obj)
+        const idx = result.findIndex(
+          ({ startTime }) => startTime.getTime() == obj.startTime.getTime(),
+        );
+        if (idx == -1) {
+          result.push(obj);
         }
         console.log(result);
 
         // Move the currentStartTime to the next slot's start time
         currentStartTime = nextSlotEnd;
-
       }
     });
     return result;

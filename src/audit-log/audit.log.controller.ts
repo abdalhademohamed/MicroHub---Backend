@@ -1,9 +1,4 @@
-import {
-  Controller,
-  Get,
-  Query,
-  UseGuards,
-} from "@nestjs/common";
+import { Controller, Get, Query, UseGuards } from "@nestjs/common";
 import { AuditLogService } from "./audit.log.service";
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AuditLogEntity } from "./entities/audit.log.entity";
@@ -18,60 +13,59 @@ import { AccessTokenGuard } from "../auth/guards/accessToken.guard";
 export class AuditLogController {
   constructor(private readonly AuditLogService: AuditLogService) {}
 
-
   @UseGuards(AccessTokenGuard, RolesGuard)
   @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER)
   @Get()
-  @ApiOperation({ summary: 'Retrieve a list of audit logs' })
+  @ApiOperation({ summary: "Retrieve a list of audit logs" })
   @ApiQuery({
-    name: 'username',
+    name: "username",
     required: false,
-    description: 'Filter by username',
-    type: String,
-  }) 
-  @ApiQuery({
-    name: 'email',
-    required: false,
-    description: 'Filter by email',
+    description: "Filter by username",
     type: String,
   })
   @ApiQuery({
-    name: 'day',
+    name: "email",
     required: false,
-    description: 'Filter by day (YYYY-MM-DD format)',
+    description: "Filter by email",
     type: String,
   })
   @ApiQuery({
-    name: 'sortBy',
+    name: "day",
     required: false,
-    description: 'Sort by field',
-    enum: ['timestamp'],
+    description: "Filter by day (YYYY-MM-DD format)",
+    type: String,
   })
   @ApiQuery({
-    name: 'sortOrder',
+    name: "sortBy",
     required: false,
-    description: 'Sort order',
-    enum: ['ASC', 'DESC'],
+    description: "Sort by field",
+    enum: ["timestamp"],
   })
   @ApiQuery({
-    name: 'page',
+    name: "sortOrder",
     required: false,
-    description: 'Page number',
+    description: "Sort order",
+    enum: ["ASC", "DESC"],
+  })
+  @ApiQuery({
+    name: "page",
+    required: false,
+    description: "Page number",
     type: Number,
   })
   @ApiQuery({
-    name: 'limit',
+    name: "limit",
     required: false,
-    description: 'Page size',
+    description: "Page size",
     type: Number,
   })
   @ApiResponse({
     status: 200,
-    description: 'List of audit logs with pagination and filtering',
+    description: "List of audit logs with pagination and filtering",
     type: AuditLogEntity,
     isArray: true,
   })
-  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 400, description: "Bad Request" })
   async getAuditLogs(@Query() query: GetAuditLogsDto) {
     return this.AuditLogService.getAuditLogs(query);
   }

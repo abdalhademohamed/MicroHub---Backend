@@ -1,6 +1,6 @@
 export class PaginateResultDto<T> {
-    items: T[];
-    total: number;
-    currentPage: number;
-    totalPages: number;
-  }
+  items: T[];
+  total: number;
+  currentPage: number;
+  totalPages: number;
+}

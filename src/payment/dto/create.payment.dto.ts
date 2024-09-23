@@ -1,4 +1,4 @@
-import { IsString, Length } from 'class-validator';
+import { IsString, Length } from "class-validator";
 
 export class CreatePaymentDto {
   @IsString()
@@ -8,5 +8,4 @@ export class CreatePaymentDto {
   @IsString()
   @Length(2, 255)
   methodArabic: string;
-
 }

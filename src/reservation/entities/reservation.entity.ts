@@ -47,18 +47,17 @@ export class ReservationEntity {
 
   @ManyToOne(() => BranchEntity, (branch) => branch.reservations)
   branch: BranchEntity;
- 
-  @ManyToMany(() => ServiceEntity, service => service.reservations)
+
+  @ManyToMany(() => ServiceEntity, (service) => service.reservations)
   services: ServiceEntity[];
-   
- 
+
   @ManyToMany(() => EmployeeEntity, (employee) => employee.reservations)
   employees: EmployeeEntity[];
 
   @ManyToOne(() => CustomerEntity, (customer) => customer.reservations)
   customer: CustomerEntity; // Relationship to CustomerEntity
 
-  @OneToOne(() => OrderEntity, order => order.reservation, { cascade: true })
+  @OneToOne(() => OrderEntity, (order) => order.reservation, { cascade: true })
   @JoinColumn() // Indicates the owning side of the OneToOne relationship
   order: OrderEntity;
 

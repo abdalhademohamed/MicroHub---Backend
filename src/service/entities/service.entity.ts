@@ -1,17 +1,23 @@
 // import { ReservationEntity } from '../../reservation/entities/reservation.entity';
-import { UUID } from 'crypto';
-import { ReservationEntity } from '../../reservation/entities/reservation.entity';
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToMany, JoinTable, ManyToOne } from 'typeorm';
-import { RootoshEntity } from '../../rootosh/entities/rootosh.entity';
-import { CustomerEntity } from '../../customer/entities/customer.entity';
-import { OfferEntity } from '../../offer/entities/offer.entity';
-import { ReceiptEntity } from '../../receipt/entities/receipt.entity';
-
-
+import { UUID } from "crypto";
+import { ReservationEntity } from "../../reservation/entities/reservation.entity";
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  OneToMany,
+  ManyToMany,
+  JoinTable,
+  ManyToOne,
+} from "typeorm";
+import { RootoshEntity } from "../../rootosh/entities/rootosh.entity";
+import { CustomerEntity } from "../../customer/entities/customer.entity";
+import { OfferEntity } from "../../offer/entities/offer.entity";
+import { ReceiptEntity } from "../../receipt/entities/receipt.entity";
 
 @Entity()
 export class ServiceEntity {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column()
@@ -23,31 +29,32 @@ export class ServiceEntity {
   @Column()
   english_Name: string;
 
-  @Column('decimal', { precision: 10, scale: 2 })
+  @Column("decimal", { precision: 10, scale: 2 })
   price: number;
 
-  @Column('int')
+  @Column("int")
   duration_Mins: number;
 
-  @Column('int')
+  @Column("int")
   rootosh_Number: number;
 
-  @Column('int')
+  @Column("int")
   months_To_Expire: number;
 
-  @ManyToMany(() => ReservationEntity, ReservationEntity => ReservationEntity.services, { cascade: ['insert', 'update'], onDelete: 'SET NULL' })
+  @ManyToMany(
+    () => ReservationEntity,
+    (ReservationEntity) => ReservationEntity.services,
+    { cascade: ["insert", "update"], onDelete: "SET NULL" },
+  )
   @JoinTable()
   reservations: ReservationEntity[];
 
-  @OneToMany(() => RootoshEntity, RootoshEntity => RootoshEntity.service)
+  @OneToMany(() => RootoshEntity, (RootoshEntity) => RootoshEntity.service)
   rootosh: RootoshEntity[]; // Include rootoshes with the service
 
-
-  @ManyToMany(() => CustomerEntity, customer => customer.lastServices)
+  @ManyToMany(() => CustomerEntity, (customer) => customer.lastServices)
   customers: CustomerEntity[];
 
   @ManyToMany(() => OfferEntity, (OfferEntity) => OfferEntity.services)
   offers: OfferEntity[];
-
-
 }

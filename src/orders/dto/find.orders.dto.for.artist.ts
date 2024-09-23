@@ -12,12 +12,19 @@ export class FindOrdersByDayDto {
   @IsInt()
   limit: number = 10;
 
-  @ApiProperty({ description: "Date of the orders (YYYY-MM-DD)", required: true })
+  @ApiProperty({
+    description: "Date of the orders (YYYY-MM-DD)",
+    required: true,
+  })
   @IsDateString()
   dayDate: string; // The specific day for filtering orders
 
-  @ApiProperty({ enum: ['ASC', 'DESC'], default: 'ASC', description: "Sort direction" })
+  @ApiProperty({
+    enum: ["ASC", "DESC"],
+    default: "ASC",
+    description: "Sort direction",
+  })
   @IsOptional()
-  @IsEnum(['ASC', 'DESC'])
-  sort: 'ASC' | 'DESC' = 'ASC'; // Sorting direction (ascending or descending)
+  @IsEnum(["ASC", "DESC"])
+  sort: "ASC" | "DESC" = "ASC"; // Sorting direction (ascending or descending)
 }

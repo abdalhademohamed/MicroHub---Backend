@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength, IsNotEmpty } from 'class-validator';
+import { IsEmail, IsString, MinLength, IsNotEmpty } from "class-validator";
 
 export class RequestPasswordResetDto {
   @IsEmail()
@@ -16,6 +16,6 @@ export class ResetPasswordDto {
   otp: string;
 
   @IsString()
-  @MinLength(8, { message: 'Password must be at least 8 characters long' })
+  @MinLength(8, { message: "Password must be at least 8 characters long" })
   newPassword: string;
 }

@@ -42,16 +42,13 @@ export class EmployeeService {
     private readonly CloudinaryService: CloudinaryService,
     private readonly AuthService: AuthService,
     private readonly entityManager: EntityManager, // Inject EntityManager for transactions
-
   ) {}
 
   async createEmployee(
     createEmployeeDto: CreateEmployeeDto,
-    userId:string
+    userId: string,
   ): Promise<any> {
-   
-
-    return await this.AuthService.createEmployee(createEmployeeDto,userId)
+    return await this.AuthService.createEmployee(createEmployeeDto, userId);
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -60,7 +57,7 @@ export class EmployeeService {
     page: number = 1,
     limit: number = 10,
     employeeTypeName?: string,
-    branchId?: string
+    branchId?: string,
   ): Promise<{
     items: EmployeeEntity[];
     total: number;
@@ -70,12 +67,12 @@ export class EmployeeService {
     // Ensure page and limit are valid
     page = Math.max(page, 1);
     limit = Math.max(limit, 1);
-  
+
     // Initialize the filter object
     const filter: any = {
       deletedAt: null, // Exclude soft-deleted employees
     };
-  
+
     // If employeeTypeName is provided, find matching EmployeeType IDs
     if (employeeTypeName) {
       const employeeTypes = await this.EmployeeTypeRepository.find({
@@ -83,7 +80,7 @@ export class EmployeeService {
           typeEnglish: Like(`%${employeeTypeName}%`), // Adjust based on actual field name
         },
       });
-  
+
       const employeeTypeIds = employeeTypes.map((type) => type.id);
       if (employeeTypeIds.length > 0) {
         filter.employeeType = In(employeeTypeIds);
@@ -97,12 +94,12 @@ export class EmployeeService {
         };
       }
     }
-  
+
     // Add branch filtering if branchId is provided
     if (branchId) {
       filter.branch = { id: branchId }; // Modify this if branch is a relationship
     }
-  
+
     // Find and count employees with optional filtering
     const [items, total] = await this.employeeRepository.findAndCount({
       where: filter, // Soft-deleted employees are excluded here
@@ -110,7 +107,7 @@ export class EmployeeService {
       skip: (page - 1) * limit,
       take: limit,
     });
-  
+
     return {
       items,
       total,
@@ -118,7 +115,7 @@ export class EmployeeService {
       limit,
     };
   }
-  
+
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async getEmployeeById(id: string): Promise<EmployeeEntity> {
     const employee = await this.employeeRepository.findOne({
@@ -133,56 +130,66 @@ export class EmployeeService {
     return employee;
   }
 
- 
-  
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   async updateEmployee(
     id: string,
     updateEmployeeDto: UpdateEmployeeDto,
     userId: string,
-    image: Express.Multer.File
+    image: Express.Multer.File,
   ): Promise<EmployeeEntity> {
     try {
       // Find the employee by ID
       const employee = await this.employeeRepository.findOne({
         where: { id },
-        relations: ['branch', 'position', 'employeeType'],
+        relations: ["branch", "position", "employeeType"],
       });
-  
+
       if (!employee) {
         throw new NotFoundException(`Employee with ID ${id} not found.`);
       }
-  
+
       // Track original values
       const originalEmployee = { ...employee };
-  
+
       // Update employee properties
-      const { english_Name, arabic_Name, workingHours, countryCode, phoneNumber, available, email, password } = updateEmployeeDto;
+      const {
+        english_Name,
+        arabic_Name,
+        workingHours,
+        countryCode,
+        phoneNumber,
+        available,
+        email,
+        password,
+      } = updateEmployeeDto;
       employee.english_Name = english_Name ?? employee.english_Name;
       employee.arabic_Name = arabic_Name ?? employee.arabic_Name;
       employee.workingHours = workingHours ?? employee.workingHours;
       employee.countryCode = countryCode ?? employee.countryCode;
       employee.phoneNumber = phoneNumber ?? employee.phoneNumber;
       employee.available = available ?? employee.available;
-  
+
       // Handle image upload and update
       if (image) {
-        const folderName = 'employee';
+        const folderName = "employee";
         try {
-          const uploadedImage = await this.CloudinaryService.uploadImage(image, folderName);
+          const uploadedImage = await this.CloudinaryService.uploadImage(
+            image,
+            folderName,
+          );
           employee.image = uploadedImage.url;
         } catch (error) {
-          throw new InternalServerErrorException('Failed to upload image');
+          throw new InternalServerErrorException("Failed to upload image");
         }
       }
-  
+
       // Update user details
-      const user = await this.UserRepository.findOne({ where: { id:userId } });
+      const user = await this.UserRepository.findOne({ where: { id: userId } });
       if (!user) {
-        throw new NotFoundException('User not found');
+        throw new NotFoundException("User not found");
       }
-  
+
       if (email) {
         user.email = email;
       }
@@ -192,15 +199,15 @@ export class EmployeeService {
       if (password) {
         user.password = await bcrypt.hash(password, 10); // Hash the new password
       }
-  
+
       // Save the updated user and employee
       const updatedUser = await this.UserRepository.save(user);
       const updatedEmployee = await this.employeeRepository.save(employee);
-  
+
       // Determine which columns have changed and log detailed information
       const changedColumns = [];
       const changesDetails = {};
-  
+
       if (originalEmployee.english_Name !== updatedEmployee.english_Name) {
         changedColumns.push("english_Name");
         changesDetails["english_Name"] = {
@@ -250,7 +257,7 @@ export class EmployeeService {
           newValue: updatedEmployee.image,
         };
       }
-  
+
       // Create an audit log entry
       const auditLog = new AuditLogEntity();
       auditLog.tableName = "employee";
@@ -259,10 +266,12 @@ export class EmployeeService {
       auditLog.performedBy = userId;
       auditLog.changedColumns = changedColumns;
       auditLog.changesDetails = changesDetails;
-  
-       // Fetch user details if needed
-       if (userId) {
-        const user = await this.UserRepository.findOne({ where: { id: userId } });
+
+      // Fetch user details if needed
+      if (userId) {
+        const user = await this.UserRepository.findOne({
+          where: { id: userId },
+        });
         if (user) {
           auditLog.userDetails = {
             id: user.id,
@@ -273,42 +282,49 @@ export class EmployeeService {
         }
       }
       await this.AuditLogRepository.save(auditLog);
-  
+
       return updatedEmployee;
     } catch (error) {
-      console.error('Update Employee Error:', error); // Debug statement
-      throw new InternalServerErrorException('An unexpected error occurred while updating the employee.');
+      console.error("Update Employee Error:", error); // Debug statement
+      throw new InternalServerErrorException(
+        "An unexpected error occurred while updating the employee.",
+      );
     }
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
- 
-  async softDeleteEmployeeByEmployeeId(employeeId: string, performingUserId: string): Promise<void> {
+
+  async softDeleteEmployeeByEmployeeId(
+    employeeId: string,
+    performingUserId: string,
+  ): Promise<void> {
     let employee: EmployeeEntity;
     let user: UserEntity;
-  
+
     await this.entityManager.transaction(async (transactionalEntityManager) => {
       try {
         // Load the employee associated with the employeeId
         employee = await transactionalEntityManager.findOne(EmployeeEntity, {
           where: { id: employeeId },
-          relations: ['branch'],
+          relations: ["branch"],
         });
         if (!employee) {
-          throw new NotFoundException('Employee not found');
+          throw new NotFoundException("Employee not found");
         }
-  
+
         // Load the user entity
-        user = await transactionalEntityManager.findOne(UserEntity, { where: { id: performingUserId } });
+        user = await transactionalEntityManager.findOne(UserEntity, {
+          where: { id: performingUserId },
+        });
         if (!user) {
-          throw new NotFoundException('User not found');
+          throw new NotFoundException("User not found");
         }
-  
+
         // Perform the soft delete by setting the deletedAt field
         employee.deletedAt = new Date();
-  
+
         await transactionalEntityManager.save(EmployeeEntity, employee);
-  
+
         // Create an audit log entry for the deletion
         const auditLog = new AuditLogEntity();
         auditLog.tableName = "employee"; // Log the employee table
@@ -322,10 +338,12 @@ export class EmployeeService {
             newValue: employee.deletedAt,
           },
         };
-  
+
         // Fetch user details if needed
         if (performingUserId) {
-          const performingUser = await this.UserRepository.findOne({ where: { id: performingUserId } });
+          const performingUser = await this.UserRepository.findOne({
+            where: { id: performingUserId },
+          });
           if (performingUser) {
             auditLog.userDetails = {
               id: performingUser.id,
@@ -335,62 +353,58 @@ export class EmployeeService {
             };
           }
         }
-  
+
         await transactionalEntityManager.save(AuditLogEntity, auditLog);
-  
       } catch (error) {
-        console.error('Error performing soft delete on employee:', error);
-        throw new InternalServerErrorException('Failed to soft delete employee');
+        console.error("Error performing soft delete on employee:", error);
+        throw new InternalServerErrorException(
+          "Failed to soft delete employee",
+        );
       }
     });
   }
   async uploadImage(
     file: Express.Multer.File,
-    folderName: string
+    folderName: string,
   ): Promise<string> {
     const result = await this.CloudinaryService.uploadImage(file, folderName);
     return result.url; // Return the URL of the uploaded image
   }
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
- 
-async getProfile(userId: string): Promise<UserProfileDto> {
-  
+  async getProfile(userId: string): Promise<UserProfileDto> {
+    // Retrieve the user from UserEntity repository
+    const user = await this.UserRepository.findOne({
+      where: { id: userId },
+    });
 
-  // Retrieve the user from UserEntity repository
-  const user = await this.UserRepository.findOne({
-    where: { id: userId },
-  });
+    // Handle case where user is not found
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
 
-  // Handle case where user is not found
-  if (!user) {
-    throw new NotFoundException('User not found');
+    // Initialize profile data
+    const profileData: UserProfileDto = {
+      username: user.username,
+      email: user.email,
+      phoneNumber: null,
+      image: null,
+      position: null,
+    };
+
+    // Retrieve additional employee data if user is an employee
+    const employee = await this.employeeRepository.findOne({
+      where: { id: userId },
+      relations: ["position"],
+    });
+
+    // If employee record is found, enrich profile data
+    if (employee) {
+      profileData.phoneNumber = employee.phoneNumber || null;
+      profileData.image = employee.image || null;
+      profileData.position = employee.position || null; // Correctly assign PositionEntity
+    }
+
+    return profileData;
   }
-
-  // Initialize profile data
-  const profileData: UserProfileDto = {
-    username: user.username,
-    email: user.email,
-    phoneNumber: null,
-    image: null,
-    position: null,
-  };
-
-  // Retrieve additional employee data if user is an employee
-  const employee = await this.employeeRepository.findOne({
-    where: { id: userId },
-    relations: ['position'],
-  });
-
-  // If employee record is found, enrich profile data
-  if (employee) {
-    profileData.phoneNumber = employee.phoneNumber || null;
-    profileData.image = employee.image || null;
-    profileData.position = employee.position || null; // Correctly assign PositionEntity
-  }
-
-  return profileData;
-}
-
-  
 }

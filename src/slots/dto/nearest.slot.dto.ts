@@ -6,7 +6,9 @@ export class GetNearestSlot {
   @IsString()
   branch: string;
 
-  @ApiProperty({ example: 'service 1 id,service 2 id, service 3 id,service 4 id' })
+  @ApiProperty({
+    example: "service 1 id,service 2 id, service 3 id,service 4 id",
+  })
   @IsString()
   services: string;
 }

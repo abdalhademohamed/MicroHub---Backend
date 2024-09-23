@@ -1,24 +1,27 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsArray } from 'class-validator';
-import { CreateWorkingBranchDto } from '../../working-branch/dto/create.working.branch.dto';
+import { ApiProperty } from "@nestjs/swagger";
+import { IsString, IsNotEmpty, IsOptional, IsArray } from "class-validator";
+import { CreateWorkingBranchDto } from "../../working-branch/dto/create.working.branch.dto";
 
 export class CreateBranchDto {
-  @ApiProperty({ description: 'Branch name' })
+  @ApiProperty({ description: "Branch name" })
   @IsString()
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ description: 'Location URL of the branch' })
-  @IsString() 
+  @ApiProperty({ description: "Location URL of the branch" })
+  @IsString()
   @IsNotEmpty()
   location: string;
 
-  @ApiProperty({ description: 'Image URL or path' })
+  @ApiProperty({ description: "Image URL or path" })
   // No validation needed here; it's handled by the file upload mechanism
   image: any; // This will be handled by multer
 
-
-  @ApiProperty({ description: 'Array of working hours for each day of the week', type: [CreateWorkingBranchDto], required: false })
+  @ApiProperty({
+    description: "Array of working hours for each day of the week",
+    type: [CreateWorkingBranchDto],
+    required: false,
+  })
   @IsOptional()
   @IsArray()
   workingBranch?: CreateWorkingBranchDto[];
