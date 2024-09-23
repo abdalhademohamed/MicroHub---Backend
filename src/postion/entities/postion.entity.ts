@@ -1,19 +1,17 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
-import { EmployeeEntity } from '../../employee/entities/employee.entity';
-import { Postion } from '../utils/postion.enum';
-
-
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from "typeorm";
+import { EmployeeEntity } from "../../employee/entities/employee.entity";
+import { Postion } from "../utils/postion.enum";
 
 @Entity()
-export class PositionEntity { 
-  @PrimaryGeneratedColumn('uuid')
+export class PositionEntity {
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: Postion,
   })
-  postion:Postion
+  postion: Postion;
 
   @Column()
   positionInEnglish: string;

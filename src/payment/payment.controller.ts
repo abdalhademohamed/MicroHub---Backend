@@ -1,56 +1,61 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFile, UseInterceptors, Put, UseGuards } from '@nestjs/common';
-import { PaymentService } from './payment.service';
-import { CreatePaymentDto } from './dto/create.payment.dto';
-import { UpdatePaymentDto } from './dto/update.payment.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { PaymentEntity } from './entities/payment.entity';
-import { Roles } from '../auth/Roles.decorator';
-import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
-import { RolesGuard } from '../auth/guards/role.guards';
-import { Role } from '../user/utils/user.enum';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UploadedFile,
+  UseInterceptors,
+  Put,
+  UseGuards,
+} from "@nestjs/common";
+import { PaymentService } from "./payment.service";
+import { CreatePaymentDto } from "./dto/create.payment.dto";
+import { UpdatePaymentDto } from "./dto/update.payment.dto";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { PaymentEntity } from "./entities/payment.entity";
+import { Roles } from "../auth/Roles.decorator";
+import { AccessTokenGuard } from "../auth/guards/accessToken.guard";
+import { RolesGuard } from "../auth/guards/role.guards";
+import { Role } from "../user/utils/user.enum";
 
-@Controller('payment')
+@Controller("payment")
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
-
-
-  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(FileInterceptor("image"))
   @Post()
-  create(@Body() createPaymentDto: CreatePaymentDto,
-  @UploadedFile() image: Express.Multer.File, // Handle the uploaded file
-) {
-    return this.paymentService.createPayment(createPaymentDto,image);
+  create(
+    @Body() createPaymentDto: CreatePaymentDto,
+    @UploadedFile() image: Express.Multer.File, // Handle the uploaded file
+  ) {
+    return this.paymentService.createPayment(createPaymentDto, image);
   }
 
- 
-
-  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
   @Get()
   async getAllPayments(): Promise<PaymentEntity[]> {
     return this.paymentService.getAllPayments();
   }
 
-
-
-  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
-  @Get(':id')
-  async getPaymentById(@Param('id') id: string): Promise<PaymentEntity> {
+  @Get(":id")
+  async getPaymentById(@Param("id") id: string): Promise<PaymentEntity> {
     return this.paymentService.getPaymentById(id);
   }
 
-
-
-  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
-  @Put(':id')
-  @UseInterceptors(FileInterceptor('image'))
+  @Put(":id")
+  @UseInterceptors(FileInterceptor("image"))
   async updatePayment(
-    @Param('id') id: string,
+    @Param("id") id: string,
     @Body() updatePaymentDto: UpdatePaymentDto,
     @UploadedFile() file: Express.Multer.File,
   ): Promise<PaymentEntity> {
@@ -61,12 +66,10 @@ export class PaymentController {
     return this.paymentService.updatePayment(id, updatePaymentDto);
   }
 
-
-
-  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
-  @Delete(':id')
-  async removePayment(@Param('id') id: string): Promise<void> {
+  @Delete(":id")
+  async removePayment(@Param("id") id: string): Promise<void> {
     return this.paymentService.removePayment(id);
   }
 }

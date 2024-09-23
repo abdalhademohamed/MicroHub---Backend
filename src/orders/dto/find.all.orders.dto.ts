@@ -1,5 +1,5 @@
-import { IsOptional, IsEnum, IsString, IsInt, Min, Max } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { IsOptional, IsEnum, IsString, IsInt, Min, Max } from "class-validator";
+import { Transform } from "class-transformer";
 
 export class FindOrdersDto {
   @IsOptional()
@@ -16,17 +16,14 @@ export class FindOrdersDto {
   limit?: number = 10;
 
   @IsOptional()
-  @IsEnum(['asc', 'desc'])
-  sort?: 'asc' | 'desc' = 'asc';
-
+  @IsEnum(["asc", "desc"])
+  sort?: "asc" | "desc" = "asc";
 
   @IsOptional()
   @IsString()
   branchId?: string;
-  
+
   @IsOptional()
   @IsString()
   employeeName?: string;
-
-  
 }

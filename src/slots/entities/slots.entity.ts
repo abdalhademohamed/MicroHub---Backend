@@ -16,18 +16,17 @@ export class SlotsEntity {
 
   @Column()
   day: number;
-  
+
   @Column()
   month: number;
 
-  @Column() 
+  @Column()
   year: number;
- 
-  @ManyToOne(() => BranchEntity, (entity) => entity.slots )
+
+  @ManyToOne(() => BranchEntity, (entity) => entity.slots)
   @JoinColumn({ name: "branchId" })
   branch: BranchEntity;
- 
+
   @OneToMany(() => WorkingEntity, (entity) => entity.slot)
   workingEntity: WorkingEntity[];
-
 }

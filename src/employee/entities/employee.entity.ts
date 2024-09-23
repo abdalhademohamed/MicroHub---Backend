@@ -29,15 +29,12 @@ export class EmployeeEntity extends UserEntity {
 
   @Column()
   workingHours: string; // Number of working hours
- 
 
   @Column({ length: 10 })
   countryCode: string; // Country code for the phone number
 
   @Column({ length: 15 })
-  phoneNumber: string; // Employee phone number 
-
-
+  phoneNumber: string; // Employee phone number
 
   @Column()
   image: string; // Store the URL of the image uploaded to Cloudinary
@@ -45,25 +42,29 @@ export class EmployeeEntity extends UserEntity {
   @Column({ default: true })
   available: boolean; // Indicates if the employee is available or not
 
-  @ManyToOne(() => EmployeeTypeEntity, (EmployeeTypeEntity) => EmployeeTypeEntity.employees)
+  @ManyToOne(
+    () => EmployeeTypeEntity,
+    (EmployeeTypeEntity) => EmployeeTypeEntity.employees,
+  )
   employeeType: EmployeeTypeEntity;
   @Column({ default: 0 })
   totalReviews: number; // Total number of reviews for the employee
 
-  @Column({ default: 'working' })
-  status: 'working' | 'completed'; // Status of the employee
-  
+  @Column({ default: "working" })
+  status: "working" | "completed"; // Status of the employee
+
   @ManyToOne(() => BranchEntity, (BranchEntity) => BranchEntity.employees, {
     onDelete: "SET NULL",
   })
-  branch: BranchEntity 
+  branch: BranchEntity;
 
   @ManyToOne(() => PositionEntity, (PositionEntity) => PositionEntity.employees)
-  position: PositionEntity 
+  position: PositionEntity;
 
-
-  
-  @ManyToMany(() => ReservationEntity, (ReservationEntity) => ReservationEntity.employees)
+  @ManyToMany(
+    () => ReservationEntity,
+    (ReservationEntity) => ReservationEntity.employees,
+  )
   reservations: ReservationEntity[];
   // @OneToMany(() => ReservationEntity, ReservationEntity => ReservationEntity.artist)
   // reservations: ReservationEntity[];
@@ -77,9 +78,13 @@ export class EmployeeEntity extends UserEntity {
   @OneToMany(() => ReviewEntity, (ReviewEntity) => ReviewEntity.employee)
   reviews: ReviewEntity[]; // Reviews made by the employee
 
-   // Add a soft delete column
-   @DeleteDateColumn({ name: 'deleted_at', nullable: true })
-   deletedAt?: Date;
+  // Add a soft delete column
+  @DeleteDateColumn({ name: "deleted_at", nullable: true })
+  deletedAt?: Date;
 
-   
+  @Column({ type: "float", default: 0 })
+  oldestAvgRating: number;
+
+  @Column({ type: "float", default: 0 })
+  newestAvgRating: number;
 }

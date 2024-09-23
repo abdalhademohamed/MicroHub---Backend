@@ -1,10 +1,10 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsEnum, IsInt } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { ApiProperty } from "@nestjs/swagger";
+import { IsOptional, IsString, IsEnum, IsInt } from "class-validator";
+import { Transform } from "class-transformer";
 
 export class GetAuditLogsDto {
   @ApiProperty({
-    description: 'Filter by username',
+    description: "Filter by username",
     required: false,
     type: String,
   })
@@ -13,7 +13,7 @@ export class GetAuditLogsDto {
   username?: string;
 
   @ApiProperty({
-    description: 'Filter by email',
+    description: "Filter by email",
     required: false,
     type: String,
   })
@@ -22,7 +22,7 @@ export class GetAuditLogsDto {
   email?: string;
 
   @ApiProperty({
-    description: 'Filter by day (YYYY-MM-DD format)',
+    description: "Filter by day (YYYY-MM-DD format)",
     required: false,
     type: String,
   })
@@ -31,31 +31,31 @@ export class GetAuditLogsDto {
   day?: string;
 
   @ApiProperty({
-    description: 'Sort by field',
+    description: "Sort by field",
     required: false,
-    default: 'timestamp',
+    default: "timestamp",
     type: String,
-    enum: ['timestamp'], // Adjust this enum based on your actual sort fields
+    enum: ["timestamp"], // Adjust this enum based on your actual sort fields
   })
   @IsOptional()
   @IsString()
-  sortBy: string = 'timestamp';
+  sortBy: string = "timestamp";
 
   @ApiProperty({
-    description: 'Sort order',
+    description: "Sort order",
     required: false,
-    default: 'DESC',
+    default: "DESC",
     type: String,
-    enum: ['ASC', 'DESC'],
+    enum: ["ASC", "DESC"],
   })
   @IsOptional()
-  @IsEnum(['ASC', 'DESC'])
-  sortOrder: 'ASC' | 'DESC' = 'DESC';
+  @IsEnum(["ASC", "DESC"])
+  sortOrder: "ASC" | "DESC" = "DESC";
 
   @ApiProperty({
-    description: 'Page number',
+    description: "Page number",
     required: false,
-    default: '1',
+    default: "1",
     type: Number,
   })
   @IsOptional()
@@ -64,9 +64,9 @@ export class GetAuditLogsDto {
   page: number = 1;
 
   @ApiProperty({
-    description: 'Page size',
+    description: "Page size",
     required: false,
-    default: '10',
+    default: "10",
     type: Number,
   })
   @IsOptional()

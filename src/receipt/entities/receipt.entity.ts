@@ -24,9 +24,8 @@ export class ReceiptEntity {
   generatedAt: Date;
 
   // Reservation time slot (can be a timestamp or a string depending on your implementation)
-  @Column({ type: 'varchar', length: 255 }) // Increase length as needed
+  @Column({ type: "varchar", length: 255 }) // Increase length as needed
   reservationTimeSlot: string;
-  
 
   // A message written on the receipt
   @Column({ type: "text", nullable: true })
@@ -36,7 +35,7 @@ export class ReceiptEntity {
   @Column({ type: "decimal", precision: 10, scale: 2 })
   totalPayment: number;
 
-  @Column('text') // Change from 'varchar(100)' to 'text'
+  @Column("text") // Change from 'varchar(100)' to 'text'
   paymentForServices: {
     name: string;
     duration: number;
@@ -54,5 +53,4 @@ export class ReceiptEntity {
   // Created by user reference
   @ManyToOne(() => UserEntity, { nullable: true })
   createdBy: UserEntity;
-
 }

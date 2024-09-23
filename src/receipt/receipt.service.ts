@@ -27,13 +27,11 @@ export class ReceiptService {
 
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
-
-  
   ) {}
 
   async createReceipt(
     createReceiptDto: CreateReceiptDto,
-    userId: string
+    userId: string,
   ): Promise<ReceiptEntity> {
     const { orderId, message, discount } = createReceiptDto;
 
@@ -57,7 +55,7 @@ export class ReceiptService {
       const reservation = order.reservation;
       if (!reservation) {
         throw new NotFoundException(
-          `Reservation not found for Order ID ${orderId}`
+          `Reservation not found for Order ID ${orderId}`,
         );
       }
       // console.log('Fetched reservation:', reservation);
@@ -79,17 +77,17 @@ export class ReceiptService {
           name: service.english_Name,
           duration: service.duration_Mins,
           price: service.price.toString(), // Ensure price is a string
-        })
+        }),
       );
 
       // Format the reservationTimeSlot to "startTime-endTime"
       const startTime = new Date(reservation.start_Time).toLocaleTimeString(
         "en-GB",
-        { hour: "2-digit", minute: "2-digit" }
+        { hour: "2-digit", minute: "2-digit" },
       );
       const endTime = new Date(reservation.end_Time).toLocaleTimeString(
         "en-GB",
-        { hour: "2-digit", minute: "2-digit" }
+        { hour: "2-digit", minute: "2-digit" },
       );
       const reservationTimeSlot = `${startTime}-${endTime}`;
 
@@ -101,7 +99,7 @@ export class ReceiptService {
         paymentForServices: formattedPaymentForServices,
         discount,
         remaining,
-        createdBy
+        createdBy,
         // services,
       });
 
@@ -110,7 +108,7 @@ export class ReceiptService {
       console.error("Error creating receipt:", error); // Log the error
       throw new InternalServerErrorException(
         "Failed to create receipt",
-        error.stack
+        error.stack,
       );
     }
   }

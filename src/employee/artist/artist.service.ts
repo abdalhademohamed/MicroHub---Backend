@@ -24,7 +24,7 @@ export class ArtistService {
     private readonly CloudinaryService: CloudinaryService,
 
     @InjectRepository(EmployeeEntity)
-    private readonly employeeRepository: Repository<EmployeeEntity>
+    private readonly employeeRepository: Repository<EmployeeEntity>,
   ) {}
 
   async addComment(
@@ -32,7 +32,7 @@ export class ArtistService {
     content: string,
     imageBefore: Express.Multer.File,
     imageAfter: Express.Multer.File,
-    userId: string
+    userId: string,
   ): Promise<any> {
     // Find the order
     const order = await this.orderRepository.findOne({
@@ -53,20 +53,26 @@ export class ArtistService {
     // Check if the employee is the owner of the order
     if (order.artist.id !== userId) {
       throw new BadRequestException(
-        "You are not authorized to comment on this order"
+        "You are not authorized to comment on this order",
       );
     }
 
     // Upload image
     const folderName = "reservation"; // or any other dynamic name based on context
-    const resultimagebefore = await this.CloudinaryService.uploadImage(imageBefore, folderName);
-    const resultimageafter = await this.CloudinaryService.uploadImage(imageAfter, folderName);
+    const resultimagebefore = await this.CloudinaryService.uploadImage(
+      imageBefore,
+      folderName,
+    );
+    const resultimageafter = await this.CloudinaryService.uploadImage(
+      imageAfter,
+      folderName,
+    );
 
     // Create and save the comment
     const comment = this.commentRepository.create({
       content,
       imageBeforeUrl: resultimagebefore.url,
-      imageAfterUrl:resultimageafter.url,
+      imageAfterUrl: resultimageafter.url,
       order,
       employee, // Optionally link the comment to the artist
     });
@@ -76,15 +82,8 @@ export class ArtistService {
     } catch (error) {
       throw new InternalServerErrorException(
         "Failed to add comment",
-        error.stack
+        error.stack,
       );
     }
   }
-
-
-
-
-
-
-  
 }

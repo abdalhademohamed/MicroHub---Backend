@@ -1,18 +1,39 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UseGuards, Query, NotFoundException, InternalServerErrorException, Request, BadRequestException } from '@nestjs/common';
-import { ReviewsService } from './reviews.service';
-import { CreateReviewDto } from './dto/create.review.dto';
-import { UpdateReviewDto } from './dto/update.review.dto';
-import { ApiBadRequestResponse, ApiInternalServerErrorResponse, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ReviewEntity } from './entities/review.entity';
-import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
-import { RolesGuard } from '../auth/guards/role.guards';
-import { Role } from '../user/utils/user.enum';
-import { Roles } from '../auth/Roles.decorator';
-import { GetReviewsDto } from './dto/get.reviews.dto';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+  Query,
+  NotFoundException,
+  InternalServerErrorException,
+  Request,
+  BadRequestException,
+} from "@nestjs/common";
+import { ReviewsService } from "./reviews.service";
+import { CreateReviewDto } from "./dto/create.review.dto";
+import { UpdateReviewDto } from "./dto/update.review.dto";
+import {
+  ApiBadRequestResponse,
+  ApiInternalServerErrorResponse,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
+import { ReviewEntity } from "./entities/review.entity";
+import { AccessTokenGuard } from "../auth/guards/accessToken.guard";
+import { RolesGuard } from "../auth/guards/role.guards";
+import { Role } from "../user/utils/user.enum";
+import { Roles } from "../auth/Roles.decorator";
+import { GetReviewsDto } from "./dto/get.reviews.dto";
 
-
-@ApiTags('reviews')
-@Controller('review')
+@ApiTags("reviews")
+@Controller("review")
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
@@ -20,58 +41,76 @@ export class ReviewsController {
   @UseGuards(AccessTokenGuard, RolesGuard)
   @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER)
   @HttpCode(HttpStatus.CREATED)
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Review successfully created', type: ReviewEntity })
-  @ApiBadRequestResponse({ description: 'Invalid input' })
-  @ApiInternalServerErrorResponse({ description: 'Failed to create review' })
-  async createReview(@Body() createReviewDto: CreateReviewDto): Promise<ReviewEntity> {
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: "Review successfully created",
+    type: ReviewEntity,
+  })
+  @ApiBadRequestResponse({ description: "Invalid input" })
+  @ApiInternalServerErrorResponse({ description: "Failed to create review" })
+  async createReview(@Body() createReviewDto: CreateReviewDto) {
     return this.reviewsService.createReview(createReviewDto);
   }
 
-
-
-  @Get('sorted')
+  @Get("sorted")
   @UseGuards(AccessTokenGuard, RolesGuard)
   @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER)
-  @ApiResponse({ status: 200, description: 'Get all reviews', type: [ReviewEntity] })
+  @ApiResponse({
+    status: 200,
+    description: "Get all reviews",
+    type: [ReviewEntity],
+  })
   async getAllReviews(@Query() query: GetReviewsDto) {
     return this.reviewsService.getAllReviews(query);
   }
 
-
-
-
-  @Get('artist/:employeeId')
+  @Get("artist/:employeeId")
   @UseGuards(AccessTokenGuard, RolesGuard)
   @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER)
-  @ApiParam({ name: 'employeeId', type: String, description: 'ID of the artist (employee)' })
+  @ApiParam({
+    name: "employeeId",
+    type: String,
+    description: "ID of the artist (employee)",
+  })
   @ApiResponse({
     status: 200,
-    description: 'Returns reviews for the specified artist.',
+    description: "Returns reviews for the specified artist.",
     type: [ReviewEntity],
   })
-  @ApiResponse({ status: 404, description: 'Artist not found or not an artist' })
-  @ApiResponse({ status: 500, description: 'Failed to retrieve reviews' })
-  async getReviewsForArtist(@Param('employeeId') employeeId: string): Promise<ReviewEntity[]> {
+  @ApiResponse({
+    status: 404,
+    description: "Artist not found or not an artist",
+  })
+  @ApiResponse({ status: 500, description: "Failed to retrieve reviews" })
+  async getReviewsForArtist(
+    @Param("employeeId") employeeId: string,
+  ): Promise<ReviewEntity[]> {
     try {
       return await this.reviewsService.getReviewsForArtist(employeeId);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new InternalServerErrorException('Failed to get reviews for artist', error.stack);
+      throw new InternalServerErrorException(
+        "Failed to get reviews for artist",
+        error.stack,
+      );
     }
   }
 
+  // @Get("mine")
+  // @UseGuards(AccessTokenGuard) // Ensure this route is protected
+  // @ApiResponse({
+  //   status: 200,
+  //   description: "Get reviews for the current user",
+  //   type: [ReviewEntity],
+  // })
+  // async getMyReviews(@Request() req: any): Promise<ReviewEntity[]> {
+  //   const userId = req.user.sub; // Extract user ID from request
 
-  @Get('mine')
-  @UseGuards(AccessTokenGuard) // Ensure this route is protected
-  @ApiResponse({ status: 200, description: 'Get reviews for the current user', type: [ReviewEntity] })
-  async getMyReviews( @Request() req: any): Promise<ReviewEntity[]> {
-    const userId = req.user.sub; // Extract user ID from request
-   
-    if (!userId) {
-      throw new BadRequestException('User not authenticated');
-    }
-    return this.reviewsService.getReviewsForCurrentUser(userId);
-  }
+  //   if (!userId) {
+  //     throw new BadRequestException("User not authenticated");
+  //   }
+  //   return this.reviewsService.getReviewsForCurrentUser(userId);
+  // }
 }

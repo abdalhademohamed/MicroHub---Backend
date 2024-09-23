@@ -15,17 +15,17 @@ export class SlotController {
 
   // Get all available slots that have working entities
   @Get("/available/:branchId")
-  async getAllAvailableSlots(@Param('branchId') branchId: string, @Query() query: AvailableQueryDto) {
+  async getAllAvailableSlots(
+    @Param("branchId") branchId: string,
+    @Query() query: AvailableQueryDto,
+  ) {
     return this.slotService.getAllAvailableSlots(branchId, query);
   }
 
   // Get the first available slot for a given branch and duration
   @Get("/nearest")
   async getFirstSlotAvailable(@Query() query: GetNearestSlot) {
-    const ids = query.services?.split(',') || []
-    return this.slotService.getFirstSlotAvailable(
-      query.branch,
-      ids,
-    );
+    const ids = query.services?.split(",") || [];
+    return this.slotService.getFirstSlotAvailable(query.branch, ids);
   }
 }

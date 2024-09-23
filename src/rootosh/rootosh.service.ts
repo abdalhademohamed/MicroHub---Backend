@@ -1,10 +1,14 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { CreateRootoshDto } from './dto/create-rootosh.dto';
-import { UpdateRootoshDto } from './dto/update-rootosh.dto';
-import { RootoshEntity } from './entities/rootosh.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { ServiceEntity } from '../service/entities/service.entity';
-import { Repository } from 'typeorm';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from "@nestjs/common";
+import { CreateRootoshDto } from "./dto/create-rootosh.dto";
+import { UpdateRootoshDto } from "./dto/update-rootosh.dto";
+import { RootoshEntity } from "./entities/rootosh.entity";
+import { InjectRepository } from "@nestjs/typeorm";
+import { ServiceEntity } from "../service/entities/service.entity";
+import { Repository } from "typeorm";
 
 @Injectable()
 export class RootoshService {
@@ -15,12 +19,14 @@ export class RootoshService {
     private readonly serviceRepository: Repository<ServiceEntity>,
   ) {}
 
-
-  async createRootosh(createRootoshDto: CreateRootoshDto): Promise<RootoshEntity> {
+  async createRootosh(
+    createRootoshDto: CreateRootoshDto,
+  ): Promise<RootoshEntity> {
     const { serviceId, ...rootoshData } = createRootoshDto;
 
     const service = await this.serviceRepository.findOne({
-      where:{id:serviceId}});
+      where: { id: serviceId },
+    });
     if (!service) {
       throw new NotFoundException(`Service with ID ${serviceId} not found.`);
     }
@@ -30,16 +36,21 @@ export class RootoshService {
     try {
       return await this.rootoshRepository.save(rootosh);
     } catch (error) {
-      throw new InternalServerErrorException('Failed to create rootosh.');
+      throw new InternalServerErrorException("Failed to create rootosh.");
     }
-
-
-
   }
 
-  async findAllRootosh(page: number, limit: number): Promise<{ data: RootoshEntity[], total: number, page: number, lastPage: number }> {
+  async findAllRootosh(
+    page: number,
+    limit: number,
+  ): Promise<{
+    data: RootoshEntity[];
+    total: number;
+    page: number;
+    lastPage: number;
+  }> {
     const [data, total] = await this.rootoshRepository.findAndCount({
-      relations: ['service'],
+      relations: ["service"],
       skip: (page - 1) * limit,
       take: limit,
     });
@@ -56,7 +67,7 @@ export class RootoshService {
   async findOneRootosh(id: string): Promise<RootoshEntity> {
     const rootosh = await this.rootoshRepository.findOne({
       where: { id },
-      relations: ['service']
+      relations: ["service"],
     });
     if (!rootosh) {
       throw new NotFoundException(`Rootosh with ID ${id} not found.`);
@@ -64,22 +75,26 @@ export class RootoshService {
     return rootosh;
   }
 
-
   async findOneRootoshByServiceId(serviceId: string): Promise<RootoshEntity> {
     const rootosh = await this.rootoshRepository.findOne({
       where: {
         service: { id: serviceId },
       },
-      relations: ['service'], // Ensure that the related 'service' is included
+      relations: ["service"], // Ensure that the related 'service' is included
     });
-  
+
     if (!rootosh) {
-      throw new NotFoundException(`Rootosh associated with service ID ${serviceId} not found.`);
+      throw new NotFoundException(
+        `Rootosh associated with service ID ${serviceId} not found.`,
+      );
     }
-  
+
     return rootosh;
   }
-  async updateRootosh(id: string, updateRootoshDto: UpdateRootoshDto): Promise<RootoshEntity> {
+  async updateRootosh(
+    id: string,
+    updateRootoshDto: UpdateRootoshDto,
+  ): Promise<RootoshEntity> {
     const rootosh = await this.rootoshRepository.preload({
       id,
       ...updateRootoshDto,
@@ -91,9 +106,12 @@ export class RootoshService {
 
     if (updateRootoshDto.serviceId) {
       const service = await this.serviceRepository.findOne({
-        where:{id:updateRootoshDto.serviceId}});
+        where: { id: updateRootoshDto.serviceId },
+      });
       if (!service) {
-        throw new NotFoundException(`Service with ID ${updateRootoshDto.serviceId} not found.`);
+        throw new NotFoundException(
+          `Service with ID ${updateRootoshDto.serviceId} not found.`,
+        );
       }
       rootosh.service = service;
     }
@@ -101,7 +119,7 @@ export class RootoshService {
     try {
       return await this.rootoshRepository.save(rootosh);
     } catch (error) {
-      throw new InternalServerErrorException('Failed to update rootosh.');
+      throw new InternalServerErrorException("Failed to update rootosh.");
     }
   }
 
