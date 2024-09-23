@@ -17,15 +17,11 @@ export class OfferEntity {
   @Column({ type: "varchar", length: 255 })
   offerName: string;
 
- 
-
   @Column({ type: "timestamp" })
   startDateTime: Date;
 
   @Column({ type: "timestamp" })
   endDateTime: Date;
-
-  
 
   @Column({ type: "decimal", precision: 5, scale: 2 })
   discountPercentage: number;
@@ -41,6 +37,6 @@ export class OfferEntity {
   @JoinTable()
   branches: BranchEntity[];
   // Add a soft delete column
-  @DeleteDateColumn({ name: 'deleted_at', nullable: true })
+  @DeleteDateColumn({ name: "deleted_at", nullable: true })
   deletedAt?: Date;
 }

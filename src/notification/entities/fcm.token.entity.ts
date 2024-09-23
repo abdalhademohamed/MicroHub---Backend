@@ -23,14 +23,13 @@ export class FcmTokenEntity {
   @Column({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
   createdAt: Date;
 
-  
-  @Column({ type: 'timestamp', nullable: true, onUpdate: 'CURRENT_TIMESTAMP' })
+  @Column({ type: "timestamp", nullable: true, onUpdate: "CURRENT_TIMESTAMP" })
   updatedAt: Date;
-  
+
   // Many FCM Tokens can belong to one User
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: "timestamp", nullable: true })
   expiration: Date; // Adding expiration field
-  
+
   @ManyToOne(() => UserEntity, (UserEntity) => UserEntity.fcmTokens)
   @JoinColumn({ name: "userId" })
   user: UserEntity;
@@ -39,7 +38,7 @@ export class FcmTokenEntity {
 
   @OneToMany(
     () => NotificationEntity,
-    (NotificationEntity) => NotificationEntity.fcmToken
+    (NotificationEntity) => NotificationEntity.fcmToken,
   )
   notifications: NotificationEntity[];
 }

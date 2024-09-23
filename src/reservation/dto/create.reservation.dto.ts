@@ -1,50 +1,50 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNumber, IsArray, IsUUID, IsOptional, IsNotEmpty, IsDateString } from 'class-validator';
-import { BranchEntity } from '../../branch/entities/branch.entity';
-import { ServiceEntity } from '../../service/entities/service.entity';
-import { Transform } from 'class-transformer';
+import { ApiProperty } from "@nestjs/swagger";
+import {
+  IsString,
+  IsNumber,
+  IsArray,
+  IsUUID,
+  IsOptional,
+  IsNotEmpty,
+  IsDateString,
+} from "class-validator";
+import { BranchEntity } from "../../branch/entities/branch.entity";
+import { ServiceEntity } from "../../service/entities/service.entity";
+import { Transform } from "class-transformer";
 
 export class CreateReservationDto {
-
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
   phone_Number: string;
 
-  
-
   @ApiProperty()
   @IsString()
   branch: string;
 
-  
   @ApiProperty({
     type: [String],
-    description: 'Array of service IDs',
-    example: ['0414c556-e18a-452a-84e4-4f3813a4bf37', 'b78d5614-b6a3-4d01-97e2-f9749d098265'],
+    description: "Array of service IDs",
+    example: [
+      "0414c556-e18a-452a-84e4-4f3813a4bf37",
+      "b78d5614-b6a3-4d01-97e2-f9749d098265",
+    ],
   })
   @IsArray()
   @Transform(({ value }) => {
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
       // Convert comma-separated string to array
-      return value.split(',').map(id => id.trim());
+      return value.split(",").map((id) => id.trim());
     }
     // Return the value as-is if it's already an array
     return Array.isArray(value) ? value : [];
   })
   services: string[];
 
-
-  @ApiProperty({ description: 'Deposit amount' })
-  @IsNumber({}, { message: 'deposit must be a valid number' })
+  @ApiProperty({ description: "Deposit amount" })
+  @IsNumber({}, { message: "deposit must be a valid number" })
   @Transform(({ value }) => Number(value)) // Transform to number
   deposit: number;
-
-
-
-
-
-
 
   @ApiProperty()
   @IsDateString(
@@ -56,8 +56,6 @@ export class CreateReservationDto {
   })
   customStartTime?: string;
 
-
-
   // @ApiProperty()
   // @IsDateString(
   //   {},
@@ -68,12 +66,8 @@ export class CreateReservationDto {
   // })
   // customEndTime?: string;
 
-
-
-    
   @ApiProperty()
   @IsString()
   @IsOptional()
   deposit_Content: string; // Correct property name
-
 }

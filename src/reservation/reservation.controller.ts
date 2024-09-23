@@ -42,7 +42,7 @@ export class ReservationController {
     @Request() req: any, // Request object to access the user
 
     @Body() CreateCustomerDto: CreateReservationDto, // Array of customer DTOs
-    @UploadedFile() image: Express.Multer.File // Handle the uploaded file
+    @UploadedFile() image: Express.Multer.File, // Handle the uploaded file
   ): Promise<any> {
     try {
       // Call the service to create reservations
@@ -55,7 +55,7 @@ export class ReservationController {
       return await this.reservationService.createReservation(
         CreateCustomerDto,
         image,
-        userId
+        userId,
       );
     } catch (error) {
       // Handle errors appropriately
@@ -66,11 +66,11 @@ export class ReservationController {
   @Get("booking/:branchId")
   async getAllBookings(
     @Param("branchId") branchId: string,
-    @Query() getReservationsDto: GetReservationsDto
+    @Query() getReservationsDto: GetReservationsDto,
   ) {
     return this.reservationService.getBookingBranch(
       branchId,
-      getReservationsDto
+      getReservationsDto,
     );
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -80,7 +80,7 @@ export class ReservationController {
   async getAllReservations(
     @Request() req: any, // Request object to access the user
 
-    @Query() getReservationsDto: GetReservationsDto
+    @Query() getReservationsDto: GetReservationsDto,
   ): Promise<{
     items: ReservationEntity[];
     total: number;
@@ -107,7 +107,7 @@ export class ReservationController {
     @Request() req: any, // Request object to access the user
 
     @Param("id") id: string,
-    @Body() updateReservationDto: UpdateReservationDto
+    @Body() updateReservationDto: UpdateReservationDto,
   ) {
     const userId = req.user.sub; // Extract user ID from request
 
@@ -117,7 +117,7 @@ export class ReservationController {
     return this.reservationService.updateReservationServices(
       id,
       updateReservationDto,
-      userId
+      userId,
     );
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -125,7 +125,7 @@ export class ReservationController {
   async updateReservationStartTime(
     @Request() req: any, // Request object to access the user
     @Param("id") id: string,
-    @Body() updateReservationDto: UpdateTimeReservationDto
+    @Body() updateReservationDto: UpdateTimeReservationDto,
   ) {
     const userId = req.user.sub; // Extract user ID from request
 

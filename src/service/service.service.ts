@@ -3,14 +3,14 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
-} from '@nestjs/common';
-import { CreateServiceDto } from './dto/create.service.dto';
-import { UpdateServiceDto } from './dto/update.service.dto';
-import { ServiceEntity } from './entities/service.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { PaginateResultDto } from '../branch/dto/paginate.result.dto';
-import { CloudinaryService } from '../cloudinary/cloudinary.service';
+} from "@nestjs/common";
+import { CreateServiceDto } from "./dto/create.service.dto";
+import { UpdateServiceDto } from "./dto/update.service.dto";
+import { ServiceEntity } from "./entities/service.entity";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { PaginateResultDto } from "../branch/dto/paginate.result.dto";
+import { CloudinaryService } from "../cloudinary/cloudinary.service";
 
 @Injectable()
 export class ServiceService {
@@ -18,7 +18,6 @@ export class ServiceService {
     @InjectRepository(ServiceEntity)
     private readonly ServiceRepository: Repository<ServiceEntity>,
     private readonly cloudinaryService: CloudinaryService, // Inject CloudinaryService
-
   ) {}
   async createService(
     createServiceDto: CreateServiceDto,
@@ -34,14 +33,17 @@ export class ServiceService {
 
     if (existingService) {
       throw new ConflictException(
-        'A service with the given name already exists.',
+        "A service with the given name already exists.",
       );
     }
 
     try {
       // Upload the photo to Cloudinary
-      const folderName = 'services';
-      const uploadResult = await this.cloudinaryService.uploadImage(file, folderName);
+      const folderName = "services";
+      const uploadResult = await this.cloudinaryService.uploadImage(
+        file,
+        folderName,
+      );
 
       // Create and save the new service
       const service = this.ServiceRepository.create({
@@ -53,15 +55,15 @@ export class ServiceService {
     } catch (error) {
       // Handle unexpected errors
       throw new InternalServerErrorException(
-        'An unexpected error occurred while creating the service.',
+        "An unexpected error occurred while creating the service.",
       );
     }
   }
   async getAllServices(
     page: number = 1,
     limit: number = 10,
-    sortBy: string = 'english_Name',  // Default sorting by 'englishName'
-    order: 'ASC' | 'DESC' = 'ASC'  // Default order 'ASC'
+    sortBy: string = "english_Name", // Default sorting by 'englishName'
+    order: "ASC" | "DESC" = "ASC", // Default order 'ASC'
   ): Promise<PaginateResultDto<ServiceEntity>> {
     try {
       // Ensure pagination parameters are valid
@@ -90,14 +92,18 @@ export class ServiceService {
       // Handle unexpected errors
       // 500 Internal Server Error
       throw new InternalServerErrorException(
-        'An unexpected error occurred while retrieving services.',
+        "An unexpected error occurred while retrieving services.",
       );
     }
   }
 
-  async updateService(id: string, updateServiceDto: CreateServiceDto, image?: Express.Multer.File): Promise<ServiceEntity> {
+  async updateService(
+    id: string,
+    updateServiceDto: CreateServiceDto,
+    image?: Express.Multer.File,
+  ): Promise<ServiceEntity> {
     // Find the existing service or throw a not found exception
-    const service = await this.ServiceRepository.findOne({where:{id}});
+    const service = await this.ServiceRepository.findOne({ where: { id } });
 
     if (!service) {
       throw new NotFoundException(`Service with ID ${id} not found.`);
@@ -105,19 +111,26 @@ export class ServiceService {
 
     // Update properties only if they are provided in the DTO
     service.arabic_Name = updateServiceDto.arabic_Name ?? service.arabic_Name;
-    service.english_Name = updateServiceDto.english_Name ?? service.english_Name;
+    service.english_Name =
+      updateServiceDto.english_Name ?? service.english_Name;
     service.price = updateServiceDto.price ?? service.price;
-    service.duration_Mins = updateServiceDto.duration_Mins ?? service.duration_Mins;
-    service.rootosh_Number = updateServiceDto.rootosh_Number ?? service.rootosh_Number;
-    service.months_To_Expire = updateServiceDto.months_To_Expire ?? service.months_To_Expire;
+    service.duration_Mins =
+      updateServiceDto.duration_Mins ?? service.duration_Mins;
+    service.rootosh_Number =
+      updateServiceDto.rootosh_Number ?? service.rootosh_Number;
+    service.months_To_Expire =
+      updateServiceDto.months_To_Expire ?? service.months_To_Expire;
 
     // Handle image upload if a file is provided
     if (image) {
       try {
-        const uploadedImage = await this.cloudinaryService.uploadImage(image, 'services');
+        const uploadedImage = await this.cloudinaryService.uploadImage(
+          image,
+          "services",
+        );
         service.imageUrl = uploadedImage.url;
       } catch (error) {
-        throw new InternalServerErrorException('Failed to upload image');
+        throw new InternalServerErrorException("Failed to upload image");
       }
     }
 
@@ -125,12 +138,12 @@ export class ServiceService {
     try {
       return await this.ServiceRepository.save(service);
     } catch (error) {
-      console.error('Error updating service:', error);
-      throw new InternalServerErrorException('An unexpected error occurred while updating the service.');
+      console.error("Error updating service:", error);
+      throw new InternalServerErrorException(
+        "An unexpected error occurred while updating the service.",
+      );
     }
   }
-
-
 
   async deleteService(id: string): Promise<void> {
     try {
@@ -148,8 +161,9 @@ export class ServiceService {
     } catch (error) {
       // Handle unexpected errors and throw an InternalServerErrorException
       // Status Code: 500 Internal Server Error
-      throw new InternalServerErrorException('An unexpected error occurred while deleting the service.');
+      throw new InternalServerErrorException(
+        "An unexpected error occurred while deleting the service.",
+      );
     }
   }
 }
-

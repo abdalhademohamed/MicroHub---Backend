@@ -1,4 +1,4 @@
-import { PartialType } from '@nestjs/swagger';
-import { CreateRootoshDto } from './create-rootosh.dto';
+import { PartialType } from "@nestjs/swagger";
+import { CreateRootoshDto } from "./create-rootosh.dto";
 
 export class UpdateRootoshDto extends PartialType(CreateRootoshDto) {}

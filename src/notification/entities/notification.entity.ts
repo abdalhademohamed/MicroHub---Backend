@@ -43,7 +43,7 @@ export class NotificationEntity {
 
   @ManyToOne(
     () => FcmTokenEntity,
-    (FcmTokenEntity) => FcmTokenEntity.notifications
+    (FcmTokenEntity) => FcmTokenEntity.notifications,
   )
   @JoinColumn({ name: "fcmTokenId" }) // Only necessary if you have a column for the foreign key
   fcmToken: FcmTokenEntity;

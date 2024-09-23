@@ -1,10 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import * as admin from 'firebase-admin';
-import { InjectRepository } from '@nestjs/typeorm';
-import { NotificationEntity } from './entities/notification.entity';
-import { Repository } from 'typeorm';
-import { FcmService } from './fcm.service';
-import { FcmTokenService } from './fcm.token.service';
+import { Injectable } from "@nestjs/common";
+import * as admin from "firebase-admin";
+import { InjectRepository } from "@nestjs/typeorm";
+import { NotificationEntity } from "./entities/notification.entity";
+import { Repository } from "typeorm";
+import { FcmService } from "./fcm.service";
+import { FcmTokenService } from "./fcm.token.service";
 
 @Injectable()
 export class NotificationService {
@@ -13,21 +13,20 @@ export class NotificationService {
     private readonly notificationRepository: Repository<NotificationEntity>,
     private readonly fcmService: FcmService,
     private readonly fcmTokenService: FcmTokenService,
-    
   ) {}
 
-
-  
- 
-  
-  async createNotification(userId: string, title: string, message: string): Promise<any> {
+  async createNotification(
+    userId: string,
+    title: string,
+    message: string,
+  ): Promise<any> {
     const fcmToken = await this.fcmTokenService.getTokenByUserId(userId);
 
     if (!fcmToken || !fcmToken.token) {
-      console.error('No FCM token found for this user.');
+      console.error("No FCM token found for this user.");
       return {
         success: false,
-        message: 'No FCM token found for this user.',
+        message: "No FCM token found for this user.",
         response: null,
       };
     }
@@ -35,7 +34,7 @@ export class NotificationService {
     if (isExpired) {
       return {
         success: false,
-        message: 'FCM token has expired',
+        message: "FCM token has expired",
         response: null,
       };
     }
@@ -47,7 +46,8 @@ export class NotificationService {
       fcmToken,
     });
 
-    const savedNotification = await this.notificationRepository.save(notification);
+    const savedNotification =
+      await this.notificationRepository.save(notification);
 
     // Send notification
     const payload = {
@@ -58,7 +58,10 @@ export class NotificationService {
     };
 
     try {
-      const response = await this.fcmService.sendNotification(fcmToken.token, payload);
+      const response = await this.fcmService.sendNotification(
+        fcmToken.token,
+        payload,
+      );
       return response; // Return the response from FCM
     } catch (error) {
       console.error(`Failed to send notification: ${error.message}`);
@@ -72,15 +75,21 @@ export class NotificationService {
     }
   }
 
-  async sendNotificationToUser(userId: string, payload: admin.messaging.MessagingPayload): Promise<any> {
+  async sendNotificationToUser(
+    userId: string,
+    payload: admin.messaging.MessagingPayload,
+  ): Promise<any> {
     const userToken = await this.fcmTokenService.getTokenByUserId(userId);
 
     if (!userToken || !userToken.token) {
-      throw new Error('No FCM token found for this user.');
+      throw new Error("No FCM token found for this user.");
     }
 
     try {
-      const response = await this.fcmService.sendNotification(userToken.token, payload);
+      const response = await this.fcmService.sendNotification(
+        userToken.token,
+        payload,
+      );
       return response; // Return the response from FCM
     } catch (error) {
       console.error(`Failed to send notification: ${error.message}`);
@@ -92,7 +101,11 @@ export class NotificationService {
     }
   }
 
-  async sendNotificationToMultipleUsers(userIds: string[], title: string, message: string): Promise<any> {
+  async sendNotificationToMultipleUsers(
+    userIds: string[],
+    title: string,
+    message: string,
+  ): Promise<any> {
     const tokens = await Promise.all(
       userIds.map(async (userId) => {
         const userToken = await this.fcmTokenService.getTokenByUserId(userId);
@@ -105,7 +118,7 @@ export class NotificationService {
     if (validTokens.length === 0) {
       return {
         success: false,
-        message: 'No valid FCM tokens found for the users.',
+        message: "No valid FCM tokens found for the users.",
         response: null,
       };
     }
@@ -118,7 +131,10 @@ export class NotificationService {
     };
 
     try {
-      const response = await this.fcmService.sendNotificationToMultipleDevices(validTokens, payload);
+      const response = await this.fcmService.sendNotificationToMultipleDevices(
+        validTokens,
+        payload,
+      );
       return response; // Return the response from FCM
     } catch (error) {
       console.error(`Failed to send notification: ${error.message}`);
@@ -130,22 +146,24 @@ export class NotificationService {
     }
   }
 
-
   async markAsSeen(notificationId: string): Promise<any> {
     try {
-      const notification = await this.notificationRepository.findOne({ where: { id: notificationId } });
+      const notification = await this.notificationRepository.findOne({
+        where: { id: notificationId },
+      });
       if (!notification) {
         return {
           success: false,
-          message: 'Notification not found',
+          message: "Notification not found",
           response: null,
         };
       }
       notification.seenAt = new Date();
-      const updatedNotification = await this.notificationRepository.save(notification);
+      const updatedNotification =
+        await this.notificationRepository.save(notification);
       return {
         success: true,
-        message: 'Notification marked as seen',
+        message: "Notification marked as seen",
         response: updatedNotification,
       };
     } catch (error) {
@@ -156,6 +174,4 @@ export class NotificationService {
       };
     }
   }
-
-  
 }

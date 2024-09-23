@@ -1,74 +1,80 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Put, HttpCode, HttpStatus, UploadedFile, UseInterceptors, UseGuards } from '@nestjs/common';
-import { ServiceService } from './service.service';
-import { CreateServiceDto } from './dto/create.service.dto';
-import { UpdateServiceDto } from './dto/update.service.dto';
-import { ServiceEntity } from './entities/service.entity';
-import { PaginateResultDto } from '../branch/dto/paginate.result.dto';
-import { ApiTags } from '@nestjs/swagger';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
-import { RolesGuard } from '../auth/guards/role.guards';
-import { Role } from '../user/utils/user.enum';
-import { Roles } from '../auth/Roles.decorator';
-@ApiTags('service')
-
-@Controller('service')
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  Put,
+  HttpCode,
+  HttpStatus,
+  UploadedFile,
+  UseInterceptors,
+  UseGuards,
+} from "@nestjs/common";
+import { ServiceService } from "./service.service";
+import { CreateServiceDto } from "./dto/create.service.dto";
+import { UpdateServiceDto } from "./dto/update.service.dto";
+import { ServiceEntity } from "./entities/service.entity";
+import { PaginateResultDto } from "../branch/dto/paginate.result.dto";
+import { ApiTags } from "@nestjs/swagger";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { AccessTokenGuard } from "../auth/guards/accessToken.guard";
+import { RolesGuard } from "../auth/guards/role.guards";
+import { Role } from "../user/utils/user.enum";
+import { Roles } from "../auth/Roles.decorator";
+@ApiTags("service")
+@Controller("service")
 export class ServiceController {
   constructor(private readonly serviceService: ServiceService) {}
 
-
-  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @UseInterceptors(FileInterceptor('image')) // Use the FileInterceptor to handle file uploads
+  @UseInterceptors(FileInterceptor("image")) // Use the FileInterceptor to handle file uploads
   async createService(
     @Body() createServiceDto: CreateServiceDto,
     @UploadedFile() image: Express.Multer.File,
   ): Promise<ServiceEntity> {
     return await this.serviceService.createService(createServiceDto, image);
   }
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN,Role.COORDINATOR)
-  @Get('sort')
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR)
+  @Get("sort")
   async getAllServices(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
-    @Query('sortBy') sortBy: string = 'english_Name',  // Default sorting by 'englishName'
-    @Query('order') order: 'ASC' | 'DESC' = 'ASC'  // Default order 'ASC'
+    @Query("page") page: number = 1,
+    @Query("limit") limit: number = 10,
+    @Query("sortBy") sortBy: string = "english_Name", // Default sorting by 'englishName'
+    @Query("order") order: "ASC" | "DESC" = "ASC", // Default order 'ASC'
   ): Promise<PaginateResultDto<ServiceEntity>> {
     return this.serviceService.getAllServices(page, limit, sortBy, order);
   }
 
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
-  @Put(':id')
-  @UseInterceptors(FileInterceptor('image')) // Use interceptor for file uploads
-
+  @Put(":id")
+  @UseInterceptors(FileInterceptor("image")) // Use interceptor for file uploads
   async updateService(
-    @Param('id') id: string,
+    @Param("id") id: string,
     @Body() updateServiceDto: CreateServiceDto,
     @UploadedFile() image: Express.Multer.File, // If uploading a file
-
   ): Promise<ServiceEntity> {
-    return this.serviceService.updateService(id, updateServiceDto,image);
+    return this.serviceService.updateService(id, updateServiceDto, image);
   }
 
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
-  @Delete(':id')
+  @Delete(":id")
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteService(
-    @Param('id') id: string
-  ): Promise<void> {
+  async deleteService(@Param("id") id: string): Promise<void> {
     return this.serviceService.deleteService(id);
   }
 }

@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { PositionEntity } from '../../postion/entities/postion.entity';
+import { ApiProperty } from "@nestjs/swagger";
+import { PositionEntity } from "../../postion/entities/postion.entity";
 
 export class UserProfileDto {
   @ApiProperty()

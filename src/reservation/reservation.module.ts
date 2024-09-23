@@ -17,7 +17,6 @@ import { OrdersService } from "../orders/orders.service";
 import { OrderEntity } from "../orders/entities/order.entity";
 import { PaymentEntity } from "../payment/entities/payment.entity";
 
-
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -32,11 +31,14 @@ import { PaymentEntity } from "../payment/entities/payment.entity";
       SlotsEntity,
       OrderEntity,
       UserEntity,
-      PaymentEntity
+      PaymentEntity,
     ]),
   ],
   controllers: [ReservationController],
-  providers: [ReservationService, OrdersService, CloudinaryService // Add OrdersService here
+  providers: [
+    ReservationService,
+    OrdersService,
+    CloudinaryService, // Add OrdersService here
     // ReceiptService
   ],
   exports: [ReservationService],

@@ -34,7 +34,7 @@ export class OfferController {
   async create(
     @Request() req: any, // Request object to access the user
 
-    @Body() createOfferDto: CreateOfferDto
+    @Body() createOfferDto: CreateOfferDto,
   ): Promise<OfferEntity> {
     const userId = req.user.sub; // Extract user ID from request
 
@@ -43,63 +43,65 @@ export class OfferController {
     }
     return await this.offerService.create(createOfferDto, userId);
   }
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN,Role.COORDINATOR)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR)
   @Get()
   async findAll(
     @Query("page") page: string = "1",
-    @Query("limit") limit: string = "10"
+    @Query("limit") limit: string = "10",
   ): Promise<{ items: OfferEntity[]; total: number }> {
     const pageNumber = parseInt(page, 10);
     const pageSize = parseInt(limit, 10);
 
     return await this.offerService.findAll(pageNumber, pageSize);
   }
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN,Role.COORDINATOR)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR)
   @Get(":id")
   async findOne(@Param("id") id: string): Promise<OfferEntity> {
     return await this.offerService.findOne(id);
   }
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
   @Put(":offerId")
   async update(
     @Request() req: any, // Request object to access the user
     @Param("offerId") offerId: string,
-    @Body() updateOfferDto: UpdateOfferDto
+    @Body() updateOfferDto: UpdateOfferDto,
   ): Promise<OfferEntity> {
     const userId = req.user.sub; // Extract user ID from request
 
     if (!userId) {
       throw new BadRequestException("User not authenticated");
     }
-    return await this.offerService.update(offerId, updateOfferDto,userId);
+    return await this.offerService.update(offerId, updateOfferDto, userId);
   }
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
   @Put("update/active/:id")
   async updateOfferIsActive(
     @Param("id") id: string,
-    @Body() UpdateIsActiveDto: UpdateIsActiveDto
+    @Body() UpdateIsActiveDto: UpdateIsActiveDto,
   ) {
     return this.offerService.updateIsActive(id, UpdateIsActiveDto);
   }
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
   @Delete(":offerId")
-  async remove(    @Request() req: any, // Request object to access the user
-  @Param("offerId") offerId: string): Promise<void> {
+  async remove(
+    @Request() req: any, // Request object to access the user
+    @Param("offerId") offerId: string,
+  ): Promise<void> {
     const userId = req.user.sub; // Extract user ID from request
 
     if (!userId) {
       throw new BadRequestException("User not authenticated");
     }
-    return await this.offerService.remove(offerId,userId);
+    return await this.offerService.remove(offerId, userId);
   }
 }

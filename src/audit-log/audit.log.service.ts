@@ -11,18 +11,16 @@ import { BadRequestException } from "@nestjs/common";
 export class AuditLogService {
   constructor(
     @InjectRepository(AuditLogEntity)
-    private readonly AuditLogRepository: Repository<AuditLogEntity>
+    private readonly AuditLogRepository: Repository<AuditLogEntity>,
   ) {}
 
- 
- 
   async getAuditLogs(queryParams: GetAuditLogsDto) {
     const {
       username,
       email,
       day,
-      sortBy = 'timestamp',
-      sortOrder = 'DESC',
+      sortBy = "timestamp",
+      sortOrder = "DESC",
       page = 1,
       limit = 10,
     } = queryParams;
@@ -85,19 +83,22 @@ export class AuditLogService {
         countParameters.push(day);
       }
 
-      const [totalResult] = await this.AuditLogRepository.query(countSql, countParameters);
+      const [totalResult] = await this.AuditLogRepository.query(
+        countSql,
+        countParameters,
+      );
       const total = parseInt(totalResult.count, 10);
 
       return this.formatResponse(result, total, page, limit);
     } catch (error) {
-      console.error('Query Execution Error:', error.message);
-      throw new BadRequestException('Error executing query');
+      console.error("Query Execution Error:", error.message);
+      throw new BadRequestException("Error executing query");
     }
   }
 
   private validateSortParams(sortBy: string, sortOrder: string) {
-    const validSortBy = ['timestamp'];
-    const validSortOrder = ['ASC', 'DESC'];
+    const validSortBy = ["timestamp"];
+    const validSortOrder = ["ASC", "DESC"];
 
     if (!validSortBy.includes(sortBy)) {
       throw new BadRequestException(`Invalid sort field: ${sortBy}`);
@@ -109,20 +110,25 @@ export class AuditLogService {
   }
 
   private validateInputs(username: string, email: string, day: string) {
-    if (username && typeof username !== 'string') {
-      throw new BadRequestException('Invalid username format');
+    if (username && typeof username !== "string") {
+      throw new BadRequestException("Invalid username format");
     }
 
     if (email && !/^\S+@\S+\.\S+$/.test(email)) {
-      throw new BadRequestException('Invalid email format');
+      throw new BadRequestException("Invalid email format");
     }
 
     if (day && !/^\d{4}-\d{2}-\d{2}$/.test(day)) {
-      throw new BadRequestException('Invalid date format');
+      throw new BadRequestException("Invalid date format");
     }
   }
 
-  private formatResponse(result: AuditLogEntity[], total: number, page: number, limit: number) {
+  private formatResponse(
+    result: AuditLogEntity[],
+    total: number,
+    page: number,
+    limit: number,
+  ) {
     return {
       items: result,
       meta: {

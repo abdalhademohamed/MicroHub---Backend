@@ -20,7 +20,12 @@ import { EmployeeService } from "./employee.service";
 import { CreateEmployeeDto } from "./dto/create.employee.dto";
 import { UpdateEmployeeDto } from "./dto/update.employee.dto";
 import { EmployeeEntity } from "./entities/employee.entity";
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { Roles } from "../auth/Roles.decorator";
 import { Role } from "../user/utils/user.enum";
@@ -33,7 +38,7 @@ import { UserProfileDto } from "./dto/get.profile.dto";
 export class EmployeeController {
   constructor(private readonly employeeService: EmployeeService) {}
 
-  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
   @UseInterceptors(FileInterceptor("image")) // 'file' is the name of the field in the form-data
   @Post()
@@ -41,7 +46,7 @@ export class EmployeeController {
     @Request() req: any, // Request object to access the user
 
     @Body() createEmployeeDto: CreateEmployeeDto,
-    @UploadedFile() image: Express.Multer.File
+    @UploadedFile() image: Express.Multer.File,
   ): Promise<EmployeeEntity> {
     if (!image) {
       throw new BadRequestException("Photo is required");
@@ -59,13 +64,13 @@ export class EmployeeController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN,Role.COORDINATOR)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR)
   @Get()
   async getAllEmployees(
     @Query("page") page: number = 1,
     @Query("limit") limit: number = 10,
     @Query("employeeType") employeeType?: string, // Optional query parameter for filtering
-    @Query("branchId") branchId?: string // Optional query parameter for filtering
+    @Query("branchId") branchId?: string, // Optional query parameter for filtering
   ): Promise<{
     items: EmployeeEntity[];
     total: number;
@@ -76,7 +81,7 @@ export class EmployeeController {
       page,
       limit,
       employeeType,
-      branchId
+      branchId,
     );
   }
 
@@ -95,7 +100,7 @@ export class EmployeeController {
     @Request() req: any, // Request object to access the user
     @Param("id") id: string,
     @Body() updateEmployeeDto: UpdateEmployeeDto,
-    @UploadedFile() image: Express.Multer.File // If uploading a file
+    @UploadedFile() image: Express.Multer.File, // If uploading a file
   ): Promise<EmployeeEntity> {
     try {
       // If there's a file, add it to the DTO or handle it separately
@@ -111,7 +116,7 @@ export class EmployeeController {
         id,
         updateEmployeeDto,
         userId,
-        image
+        image,
       );
     } catch (error) {
       if (error instanceof NotFoundException) {
@@ -119,7 +124,7 @@ export class EmployeeController {
       } else {
         throw new InternalServerErrorException(
           "Failed to update employee",
-          error.stack
+          error.stack,
         );
       }
     }
@@ -128,31 +133,29 @@ export class EmployeeController {
   // @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
   // @Roles(Role.SUPERADMIN)
   @Delete(":employeeId")
-  async deleteEmployee(    
+  async deleteEmployee(
     @Request() req: any, // Request object to access the user
-  @Param("employeeId") employeeId: string): Promise<void> {
+    @Param("employeeId") employeeId: string,
+  ): Promise<void> {
     const userId = req.user.sub; // Extract user ID from request
 
     if (!userId) {
       throw new BadRequestException("User not authenticated");
     }
-    await this.employeeService.softDeleteEmployeeByEmployeeId(employeeId,userId);
+    await this.employeeService.softDeleteEmployeeByEmployeeId(
+      employeeId,
+      userId,
+    );
   }
 
-
-
-
-
-
-  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
-    // @Roles(Role.SUPERADMIN)
-  @Get('show/profile')
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  // @Roles(Role.SUPERADMIN)
+  @Get("show/profile")
   @ApiBearerAuth() // To indicate that this route is protected by JWT
-  @ApiOperation({ summary: 'Get user profile' })
-  @ApiResponse({ status: 200, description: 'Return user profile data' })
-  async getProfile(
-    @Request() req: any): Promise<UserProfileDto> {
-    const userId = 'c267c3cf-3be1-409e-865e-a0d737354635'; // Extract user ID from request
+  @ApiOperation({ summary: "Get user profile" })
+  @ApiResponse({ status: 200, description: "Return user profile data" })
+  async getProfile(@Request() req: any): Promise<UserProfileDto> {
+    const userId = "c267c3cf-3be1-409e-865e-a0d737354635"; // Extract user ID from request
 
     if (!userId) {
       throw new BadRequestException("User not authenticated");
