@@ -110,34 +110,85 @@ export class AuthService {
       );
     }
   }
-
-  async signIn(
-    LoginAuthDto: LoginAuthDto,
-  ): Promise<{ accessToken: string; refreshToken: string }> {
+  
+  async signIn(LoginAuthDto: LoginAuthDto): Promise<{ accessToken: string; refreshToken: string }> {
     const { email, password } = LoginAuthDto;
-    const user = await this.validateUser(email, password);
-
-    // Invalidate the previous refresh token
-    await this.invalidateOldRefreshToken(user.id);
-    // return { accessToken };
-    const tokens = await this.generateTokens(user.id, user.email, user.role);
-    // Update the user's record with the new refresh token
-    await this.updateRefreshToken(user.id, tokens.refreshToken);
-    return {
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-    };
-  }
-
-  async invalidateOldRefreshToken(userId: string): Promise<void> {
-    // Fetch the user and check if there is an existing refresh token
-    const user = await this.UserRepository.findOne({ where: { id: userId } });
-
-    if (user && user.refreshToken) {
-      // Invalidate the old refresh token, e.g., by deleting it or marking it as invalid
-      await this.UserRepository.update(userId, { refreshToken: null });
+    const startTime = Date.now();
+  
+    try {
+      // Validate user
+      const user = await this.validateUser(email, password);
+      console.log(`validateUser: ${Date.now() - startTime}ms`);
+  
+      try {
+        // Invalidate the previous refresh token
+        await this.invalidateOldRefreshToken(user.id);
+        console.log(`invalidateOldRefreshToken: ${Date.now() - startTime}ms`);
+   
+        try {
+          // Generate tokens
+          const tokens = await this.generateTokens(user.id, user.username, user.email, user.role);
+          console.log(`generateTokens: ${Date.now() - startTime}ms`);
+  
+          try {
+            // Update the user's record with the new refresh token
+            await this.updateRefreshToken(user.id, tokens.refreshToken);
+            console.log(`updateRefreshToken: ${Date.now() - startTime}ms`);
+  
+            // Return the generated tokens
+            return {
+              accessToken: tokens.accessToken,
+              refreshToken: tokens.refreshToken,
+            };
+          } catch (updateError) {
+            console.error('Error updating refresh token:', updateError.message);
+            throw new InternalServerErrorException(
+              'Failed to update the refresh token. Please try again later.',
+              updateError.stack
+            );
+          }
+        } catch (generateTokensError) {
+          console.error('Error generating tokens:', generateTokensError.message);
+          throw new InternalServerErrorException(
+            'Failed to generate tokens. Please try again later.',
+            generateTokensError.stack
+          );
+        }
+      } catch (invalidateTokenError) {
+        console.error('Error invalidating old refresh token:', invalidateTokenError.message);
+        throw new InternalServerErrorException(
+          'Failed to invalidate the old refresh token. Please try again later.',
+          invalidateTokenError.stack
+        );
+      }
+    } catch (validateUserError) {
+      console.error('Error validating user:', validateUserError.message);
+      throw new UnauthorizedException(
+        'Invalid email or password. Please check your credentials and try again.',
+        validateUserError.stack
+      );
     }
   }
+  
+  
+
+  async invalidateOldRefreshToken(userId: string): Promise<void> {
+    const startTime = Date.now();
+  
+    try {
+      // Directly update the refreshToken field to null or an invalid state
+      await this.UserRepository.update(userId, { refreshToken: null });
+  
+      console.log(`invalidateOldRefreshToken: ${Date.now() - startTime}ms`);
+    } catch (error) {
+      console.error('Error invalidating old refresh token:', error.message);
+      throw new InternalServerErrorException(
+        'Failed to invalidate old refresh token. Please try again later.',
+        error.stack
+      );
+    }
+  }
+ 
 
   async validateUser(email: string, password: string): Promise<UserEntity> {
     const user = await this.UserRepository.findOne({ where: { email } });
@@ -380,7 +431,7 @@ export class AuthService {
     }
 
     // Generate new tokens
-    const tokens = await this.generateTokens(user.id, user.username, user.role);
+    const tokens = await this.generateTokens(user.id, user.username,user.email, user.role);
 
     // Update refresh token in the database
     await this.updateRefreshToken(user.id, tokens.refreshToken);
@@ -388,26 +439,42 @@ export class AuthService {
     return tokens;
   }
 
-  private async generateTokens(userId: string, username: string, role: string) {
-    const [accessToken, refreshToken] = await Promise.all([
-      this.JwtService.signAsync(
-        { sub: userId, username, role },
-        { secret: process.env.JWT_ACCESS_SECRET, expiresIn: "20h" },
-      ),
-      this.JwtService.signAsync(
-        { sub: userId, username, role },
-        { secret: process.env.JWT_REFRESH_SECRET, expiresIn: "7d" },
-      ),
-    ]);
-
-    return { accessToken, refreshToken };
+  async generateTokens(
+    userId: string,
+    username: string,
+    email: string,
+    role: string
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    const startTime = Date.now();
+  
+    try {
+      // Define token payload and options
+      const payload = { sub: userId, username, email, role };
+      const accessOptions = { secret: process.env.JWT_ACCESS_SECRET, expiresIn: "10h" };
+      const refreshOptions = { secret: process.env.JWT_REFRESH_SECRET, expiresIn: "7d" };
+  
+      // Generate access and refresh tokens
+      const accessToken = await this.JwtService.signAsync(payload, accessOptions);
+      const refreshToken = await this.JwtService.signAsync(payload, refreshOptions);
+  
+      console.log(`generateTokens: ${Date.now() - startTime}ms`);
+  
+      return { accessToken, refreshToken };
+    } catch (error) {
+      console.error('Error generating tokens:', error.message);
+      throw new InternalServerErrorException(
+        'Failed to generate tokens. Please try again later.',
+        error.stack
+      );
+    }
   }
-  private async updateRefreshToken(userId: string, refreshToken: string) {
-    const salt = await bcrypt.genSalt();
-    const hashedRefreshToken = await bcrypt.hash(refreshToken, salt);
-    await this.UserRepository.update(userId, {
-      refreshToken: hashedRefreshToken,
-    });
+  async updateRefreshToken(userId: string, refreshToken: string): Promise<void> {
+    const startTime = Date.now();
+  
+    // Update the user's refresh token
+    await this.UserRepository.update(userId, { refreshToken });
+  
+    console.log(`updateRefreshToken: ${Date.now() - startTime}ms`);
   }
 
   async createEmployee(
