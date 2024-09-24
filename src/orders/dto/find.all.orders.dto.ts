@@ -26,4 +26,8 @@ export class FindOrdersDto {
   @IsOptional()
   @IsString()
   employeeName?: string;
+
+  @IsOptional()
+  @IsString()
+  dayDate?: string; // Format: 'yyyy-MM-dd'
 }

@@ -16,7 +16,7 @@ import { ReceiptEntity } from "../../receipt/entities/receipt.entity";
 import { OrderStatus } from "../utils/order.status.enum";
 import { UserEntity } from "../../user/entities/user.entity";
 import { PaymentEntity } from "../../payment/entities/payment.entity";
-import { CustomerEntity } from "src/customer/entities/customer.entity";
+import { CustomerEntity } from "../../customer/entities/customer.entity";
 
 @Entity()
 export class OrderEntity {
