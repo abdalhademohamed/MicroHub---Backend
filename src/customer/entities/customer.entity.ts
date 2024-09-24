@@ -1,4 +1,4 @@
-import { OrderEntity } from "src/orders/entities/order.entity";
+import { OrderEntity } from "../../orders/entities/order.entity";
 import { ReservationEntity } from "../../reservation/entities/reservation.entity";
 import { RootoshEntity } from "../../rootosh/entities/rootosh.entity";
 import { ServiceEntity } from "../../service/entities/service.entity";
