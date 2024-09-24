@@ -23,7 +23,7 @@ import { UserService } from "../user/user.service";
 import { FilterBranchesDto } from "./dto/filter.branch.dto";
 import { FilterBranchCalendarDto } from "./dto/filter.branch.calendar.dto";
 import { BranchDto } from "./dto/branch.employee.dto";
-import { Role } from "src/user/utils/user.enum";
+import { Role } from "../user/utils/user.enum";
 
 @Injectable()
 export class BranchService {
