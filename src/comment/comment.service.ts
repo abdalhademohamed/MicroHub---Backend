@@ -1,11 +1,9 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
-import { CreateCommentDto } from "./dto/create-comment.dto";
-import { UpdateCommentDto } from "./dto/update-comment.dto";
+
 import { Between, Repository } from "typeorm";
 import { CommentEntity } from "./entities/comment.entity";
 import { InjectRepository } from "@nestjs/typeorm";
-import { OrderEntity } from "src/orders/entities/order.entity";
-import { EmployeeEntity } from "src/employee/entities/employee.entity";
+
 
 @Injectable()
 export class CommentService {
@@ -42,7 +40,7 @@ export class CommentService {
         order: { createdAt: "DESC" }, // Order by most recent comments
         skip: offset,
         take: limit,
-        relations: ["order", "employee", "parentComment"], // Include relations
+        relations: ["order", "employee"], // Include relations
       });
 
       // Return paginated comments
