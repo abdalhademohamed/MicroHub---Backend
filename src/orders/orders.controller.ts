@@ -126,39 +126,28 @@ export class OrdersController {
     }
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-  @Put("assign")
+  @Patch('assign')
   @UseGuards(AccessTokenGuard, RolesGuard)
   @Roles(Role.SUPERADMIN, Role.COORDINATOR)
-  @ApiOperation({ summary: "Assign an order to an artist" })
-  @ApiResponse({
-    status: 200,
-    description: "Order assigned successfully.",
-    type: OrderEntity,
-  })
-  @ApiResponse({
-    status: 400,
-    description: "Bad request, orderId or artistId is missing.",
-  })
-  @ApiResponse({
-    status: 404,
-    description: "Order or artist not found, or artist is not an artist.",
-  })
   async assignOrderToArtist(
     @Request() req: any, // Request object to access the user
-    @Param("orderId") orderId: string,
-    @Param("artistId") artistId: string,
+    @Query('orderId') orderId: string,
+    @Query('artistId') artistId: string,
   ): Promise<OrderEntity> {
+    console.log('Received orderId:', orderId);
+    console.log('Received artistId:', artistId);
+
     const userId = req.user.sub; // Extract user ID from request
 
     if (!userId) {
-      throw new BadRequestException("User not authenticated");
+      throw new BadRequestException('User not authenticated');
     }
     if (!orderId || !artistId) {
-      throw new BadRequestException("Both orderId and artistId are required");
+      throw new BadRequestException('Both orderId and artistId are required');
     }
     return this.ordersService.assignOrderToArtist(orderId, artistId, userId);
   }
+ 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   @Get("sorted")
@@ -275,5 +264,23 @@ export class OrdersController {
       throw new BadRequestException("Order ID and Payment ID must be provided");
     }
     return this.ordersService.updatePaymentForOrder(orderId, paymentId);
+  }
+
+
+  @ApiOperation({ summary: 'Get top 5 artists based on orders' })
+  @ApiQuery({ name: 'branchId', required: false, type: String })
+  @Get('top/artists')
+  async getTopArtists(
+    @Query('branchId') branchId?: string,
+  ) {
+     // Fetch the top 5 artists by orders, filtered by branch if provided
+     const topArtists = await this.ordersService.getTopArtistsByOrders(branchId);
+
+     // Check if any artists were found
+     if (!topArtists || topArtists.length === 0) {
+       throw new NotFoundException('No top artists found');
+     }
+
+     return topArtists 
   }
 }
