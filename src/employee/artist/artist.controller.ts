@@ -45,7 +45,7 @@ export class ArtistController {
       throw new BadRequestException("OrderId and content are required");
     }
 
-    const userId = 'c267c3cf-3be1-409e-865e-a0d737354635'; // Hardcoded user ID for now
+    const userId = req.user.sub; // Hardcoded user ID for now
 
     if (!userId) {
       throw new BadRequestException("User not authenticated");
