@@ -1,9 +1,12 @@
-import { Injectable, InternalServerErrorException } from "@nestjs/common";
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from "@nestjs/common";
 
 import { Between, Repository } from "typeorm";
 import { CommentEntity } from "./entities/comment.entity";
 import { InjectRepository } from "@nestjs/typeorm";
-
 
 @Injectable()
 export class CommentService {
@@ -12,49 +15,59 @@ export class CommentService {
     // private readonly orderRepository: Repository<OrderEntity>,
 
     @InjectRepository(CommentEntity)
-    private readonly commentRepository: Repository<CommentEntity>,
+    private readonly commentRepository: Repository<CommentEntity>
 
     // private readonly CloudinaryService: CloudinaryService,
 
     // @InjectRepository(EmployeeEntity)
     // private readonly employeeRepository: Repository<EmployeeEntity>
   ) {}
-  async getCommentsByOrderId(
-    orderId: string,
-    page: number = 1,
-    limit: number = 10,
-  ): Promise<{
-    total: number;
-    page: number;
-    limit: number;
-    comments: CommentEntity[];
-  }> {
-    const offset = (page - 1) * limit;
-
+  async getCommentByOrderId(orderId: string): Promise<CommentEntity | null> {
     try {
-      // Find comments by orderId with pagination
-      const [comments, total] = await this.commentRepository.findAndCount({
+      // Find the comment by orderId
+      const comment = await this.commentRepository.findOne({
         where: {
-          order: { id: orderId }, // Filter by orderId
+          order: { id: orderId },
         },
-        order: { createdAt: "DESC" }, // Order by most recent comments
-        skip: offset,
-        take: limit,
         relations: ["order", "employee"], // Include relations
       });
-
-      // Return paginated comments
+  
+      // Return null if no comment exists for this order
+      if (!comment) {
+        return null;
+      }
+  
+      // Manually map the employee fields to include only what you need
+      const employee = comment.employee
+        ? {
+            id: comment.employee.id,
+            username: comment.employee.username,
+            email: comment.employee.email,
+            role: comment.employee.role,
+            english_Name: comment.employee.english_Name,
+            arabic_Name: comment.employee.arabic_Name,
+            workingHours: comment.employee.workingHours,
+            phoneNumber: comment.employee.phoneNumber,
+            image: comment.employee.image,
+            available: comment.employee.available,
+            totalReviews: comment.employee.totalReviews,
+            status: comment.employee.status,
+            oldestAvgRating: comment.employee.oldestAvgRating,
+            newestAvgRating: comment.employee.newestAvgRating,
+          }
+        : null;
+  
+      // Return the comment with the mapped employee
       return {
-        total,
-        page,
-        limit,
-        comments,
+        ...comment,
+        employee, // Use the mapped employee here
       };
     } catch (error) {
       throw new InternalServerErrorException(
-        "Failed to retrieve comments",
+        "Failed to retrieve comment",
         error.stack,
       );
     }
   }
+  
 }
