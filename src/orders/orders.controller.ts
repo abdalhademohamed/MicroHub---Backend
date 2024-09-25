@@ -135,7 +135,7 @@ export class OrdersController {
     @Query('artistId') artistId: string,
   ): Promise<OrderEntity> {
     console.log('Received orderId:', orderId);
-    console.log('Received artistId:', artistId);
+    console.log('Received artistId:', artistId); 
 
     const userId = req.user.sub; // Extract user ID from request
 
