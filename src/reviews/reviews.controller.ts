@@ -39,7 +39,7 @@ export class ReviewsController {
 
   @Post()
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER)
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ARTISTMANAGER)
   @HttpCode(HttpStatus.CREATED)
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -54,7 +54,7 @@ export class ReviewsController {
 
   @Get("sorted")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER)
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ARTISTMANAGER)
   @ApiResponse({
     status: 200,
     description: "Get all reviews",
@@ -66,7 +66,7 @@ export class ReviewsController {
 
   @Get("artist/:employeeId")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER)
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ARTISTMANAGER,Role.ARTIST)
   @ApiParam({
     name: "employeeId",
     type: String,

@@ -152,7 +152,7 @@ export class OrdersController {
 
   @Get("sorted")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.RECEPTIONIST,Role.COORDINATOR)
+  @Roles(Role.SUPERADMIN, Role.RECEPTIONIST,Role.COORDINATOR,Role.ARTISTMANAGER)
   @ApiOperation({
     summary: "Get all orders with pagination, sorting, and filtering",
   })
@@ -197,7 +197,7 @@ export class OrdersController {
 
   @Get("filterd")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.ARTIST)
+  @Roles(Role.ARTIST)
 
   async getOrdersForEmployee(
     @Request() req: any, // Request object to access the user
@@ -217,7 +217,7 @@ export class OrdersController {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Get("/:orderId")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.RECEPTIONIST)
+  @Roles(Role.SUPERADMIN, Role.RECEPTIONIST,Role.ARTISTMANAGER)
   async getOrderById(@Param("orderId") orderId: string) {
     try {
       const order = await this.ordersService.findOrderById(orderId);

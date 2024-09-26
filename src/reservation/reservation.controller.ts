@@ -43,7 +43,7 @@ export class ReservationController {
 
     @Body() CreateCustomerDto: CreateReservationDto, // Array of customer DTOs
     @UploadedFile() image: Express.Multer.File, // Handle the uploaded file
-  ): Promise<any> {
+  ): Promise<any> { 
     try {
       // Call the service to create reservations
       // console.log("data:",CreateCustomerDto)
