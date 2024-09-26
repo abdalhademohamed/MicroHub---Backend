@@ -64,7 +64,7 @@ export class EmployeeController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST)
   @Get()
   async getAllEmployees(
     @Query("page") page: number = 1,
