@@ -57,7 +57,7 @@ export class OrdersController {
 
   @Patch("payment/status/:orderId")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.BRANCHMANAGER,Role.RECEPTIONIST)
   @UseInterceptors(FileInterceptor("image")) // Use multer for image upload
   @ApiOperation({ summary: "Update the payment status of an order" })
   @ApiResponse({
@@ -94,7 +94,7 @@ export class OrdersController {
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Patch("status/:orderId")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ARTIST)
   @UseInterceptors(FileInterceptor("image")) // Use multer for image upload
   async updateOrderStatus(
     @Request() req: any, // Request object to access the user
@@ -151,6 +151,8 @@ export class OrdersController {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   @Get("sorted")
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN, Role.RECEPTIONIST)
   @ApiOperation({
     summary: "Get all orders with pagination, sorting, and filtering",
   })
@@ -195,6 +197,8 @@ export class OrdersController {
 
   @Get("filterd")
   @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN, Role.ARTIST)
+
   async getOrdersForEmployee(
     @Request() req: any, // Request object to access the user
     @Query() findOrdersByDayDto: FindOrdersByDayDto,
@@ -212,6 +216,8 @@ export class OrdersController {
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Get("/:orderId")
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN, Role.RECEPTIONIST)
   async getOrderById(@Param("orderId") orderId: string) {
     try {
       const order = await this.ordersService.findOrderById(orderId);

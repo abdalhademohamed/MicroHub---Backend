@@ -28,6 +28,7 @@ export class OrdersService {
   constructor(
     @InjectRepository(OrderEntity)
     private readonly orderRepository: Repository<OrderEntity>,
+    
     private readonly CloudinaryService: CloudinaryService,
 
     @InjectRepository(ReservationEntity)
@@ -699,10 +700,11 @@ export class OrdersService {
       const employee = await this.employeeRepository.findOne({
         where: { id: userId },
         relations: [
-          'orders', 
+          'orders',
           'orders.customer', // Ensure 'customer' relation is loaded
           'orders.payment', // Ensure 'payment' relation is loaded
           'orders.artist',  // Ensure 'artist' relation is loaded
+          'branch',         // Ensure 'branch' relation is loaded
         ],
       });
   
@@ -735,7 +737,7 @@ export class OrdersService {
         page * limit
       );
   
-      // Map orders to include artist, payment, and customer details
+      // Map orders to include artist, payment, customer, and branch details
       const mappedOrders = paginatedOrders.map(order => ({
         id: order.id,
         date: order.date.toString(), // Ensure correct date format
@@ -777,6 +779,11 @@ export class OrdersService {
           fullName: order.customer.fullName,
           dateOfBirth: order.customer.dateOfBirth,
         } : null,
+        branch: employee.branch ? {
+          id: employee.branch.id,
+          name: employee.branch.name,
+          // Add more branch fields as needed
+        } : null,
       }));
   
       // Return paginated result
@@ -789,6 +796,7 @@ export class OrdersService {
       );
     }
   }
+  
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   async findOrderById(orderId: string): Promise<OrderEntity | null> {
