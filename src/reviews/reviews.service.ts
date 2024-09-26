@@ -1,4 +1,5 @@
 import {
+  HttpException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -28,15 +29,17 @@ export class ReviewsService {
   ) {}
   @OnEvent("review:changed")
   async onHandleReviewChanged({ ids }: { ids: string[] }) {
+    console.log(ids);
     for (let id of ids) {
       const aggregationResult = await this.reviewRepository
         .createQueryBuilder("review")
         .select("review.orderFirstTime", "orderFirstTime") // Group by orderFirstTime (true/false)
-        .addSelect("COUNT(review.id)", "count") // Count reviews for each group
+        // .addSelect("COUNT(review.id)", "count") // Count reviews for each group
         .addSelect("AVG(review.rating)", "averageRating") // Calculate average rating for each group
-        .where("review.artistId = :artistId", { id }) // Filter by artistId
+        .where("review.artistId = :artistId", { artistId :id }) // Filter by artistId
         .groupBy("review.orderFirstTime") // Group by the orderFirstTime field
         .getRawMany(); // Get raw results
+        // console.log(aggregationResult);
       await this.employeeRepository.update(
         { id },
         {
@@ -51,37 +54,29 @@ export class ReviewsService {
 
     const newestOrder = await this.orderRepository.findOne({
       where: { id: order },
-      // relations: {
-      //   reservation: {
-      //     customer: true,
-      //   },
-      //   artist: true,
-      // },
       relations: ["reservation.customer", "artist"],
     });
 
     if (!newestOrder) {
       throw new NotFoundException(`Order with ID ${order} not found`);
     }
+    if(!newestOrder.artist?.id){
+      throw new HttpException(`Order with ID not associated with artist `, 400)
+    }
+    // console.log(newestOrder.artist?.id)
 
     const employee = await this.employeeRepository.findOneBy({
       id: body.employee,
     });
-
+    // console.log(employee);
     const [orders, count] = await this.orderRepository.findAndCount({
       where: {
         createdAt: LessThan(newestOrder.createdAt),
         reservation: {
           customer: { id: newestOrder.reservation.customer.id },
         },
-      }, // Find order created before the newest
-      order: { createdAt: "DESC" }, // Sort in descending order
-      // relations: {
-      //   artist: true,
-      //   reservation: {
-      //     customer: true,
-      //   },
-      // },
+      },
+      order: { createdAt: "DESC" },
       relations: ["reservation.customer", "artist"],
     });
     let reviews = [];
@@ -92,26 +87,40 @@ export class ReviewsService {
       orderFirstTime: count == 0 ? true : false,
       rating: body.newestRating ?? 0,
       employee,
+      image: 'after'
     });
+    // console.log(review);
     await this.reviewRepository.save(review);
     reviews.push(review);
     ids.push(newestOrder.artist.id);
+    console.log(ids)
     if (count == 0) {
       this.eventEmitter.emit("review:changed", { ids });
       return { items: reviews };
     }
     review = this.reviewRepository.create({
       artist: orders[0].artist,
-      order: orders[0],
+      order: newestOrder,
       orderFirstTime: false,
       rating: body.oldestRating ?? 0,
       employee,
+      image: 'before'
     });
     ids.push(orders[0].artist.id);
     reviews.push(review);
     this.eventEmitter.emit("review:changed", { ids });
     reviews.push(review);
     return { items: reviews };
+  }
+  async updateReview(reviewId: string, rating: number){
+    const review = await this.reviewRepository.findOne({where: { id: reviewId } , relations: ['artist'] });
+    if (!review) {
+      throw new NotFoundException(`Review with ID ${reviewId} not found`);
+    }
+    review.rating = rating;
+    await this.reviewRepository.save(review);
+    this.eventEmitter.emit("review:changed", { ids: [ review.artist.id ] });
+    return review;
   }
 
   async getAllReviews({
