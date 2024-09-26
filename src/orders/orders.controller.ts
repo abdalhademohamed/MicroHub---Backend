@@ -128,7 +128,7 @@ export class OrdersController {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Patch('assign')
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST)
   async assignOrderToArtist(
     @Request() req: any, // Request object to access the user
     @Query('orderId') orderId: string,
