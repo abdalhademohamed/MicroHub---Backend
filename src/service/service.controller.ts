@@ -44,7 +44,7 @@ export class ServiceController {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST)
   @Get("sort")
   async getAllServices(
     @Query("page") page: number = 1,
