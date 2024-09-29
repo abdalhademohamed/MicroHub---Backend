@@ -741,9 +741,8 @@ export class OrdersService {
   async findAllOrders(
     findOrdersDto: FindOrdersDto
   ): Promise<{ items: OrderEntity[]; total: number }> {
-    const { page, limit, sort, employeeName, branchId, dayDate } =
-      findOrdersDto;
-
+    const { page, limit, sort, employeeName, branchId, dayDate } = findOrdersDto;
+  
     try {
       // Build the query
       const query = this.orderRepository
@@ -756,42 +755,50 @@ export class OrdersService {
         .addSelect(["cb.id", "cb.username", "cb.email", "cb.role"]) // Select specific fields from createdBy
         .leftJoin("o.updatedBy", "ub") // Join updatedBy relation with alias "ub"
         .addSelect(["ub.id", "ub.username"]) // Select specific fields from updatedBy
+        .leftJoinAndSelect("o.reservation", "r") // Join reservation relation with alias "r"
+        .addSelect([
+          "r.id", 
+          "r.start_Time", 
+          "r.end_Time", 
+          "r.totalPrice", 
+          "r.services"
+        ]) // Select specific fields from reservation
         .take(limit)
         .skip((page - 1) * limit)
         .orderBy(`o.date`, sort.toUpperCase() as "ASC" | "DESC"); // Order by date
-
+  
       // Filter by employee name if provided
       if (employeeName) {
         query.andWhere("a.englishName ILIKE :employeeName", {
           employeeName: `%${employeeName}%`,
         });
       }
-
+  
       // Filter by branch ID if provided
       if (branchId) {
         query.andWhere("CAST(o.branch ->> 'id' AS uuid) = :branchId", {
           branchId,
         });
       }
-
+  
       // Filter by day date if provided
       if (dayDate) {
         const startDate = new Date(dayDate);
         const endDate = new Date(dayDate);
         endDate.setDate(startDate.getDate() + 1); // End of the day
-
+  
         query.andWhere("o.date >= :startDate AND o.date < :endDate", {
           startDate: startDate.toISOString(),
           endDate: endDate.toISOString(),
         });
       }
-
+  
       // Log the generated SQL query for debugging
       // console.log(query.getSql());
-
+  
       // Execute the query and get results
       const [items, total] = await query.getManyAndCount();
-
+  
       return { items, total };
     } catch (error) {
       if (error instanceof NotFoundException) {
@@ -812,6 +819,7 @@ export class OrdersService {
       }
     }
   }
+  
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Method to get the count of each order status
   async getOrderStatusCount(
