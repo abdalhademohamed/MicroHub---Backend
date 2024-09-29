@@ -48,8 +48,14 @@ export class ReviewsController {
   })
   @ApiBadRequestResponse({ description: "Invalid input" })
   @ApiInternalServerErrorResponse({ description: "Failed to create review" })
-  async createReview(@Body() createReviewDto: CreateReviewDto) {
-    return this.reviewsService.createReview(createReviewDto);
+  async createReview(    @Request() req: any, // Request object to access the user
+  @Body() createReviewDto: CreateReviewDto) {
+    const userId = req.user.sub; // Hardcoded user ID for now
+
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
+    return this.reviewsService.createReview(createReviewDto,userId);
   }
 
   @Get("sorted")
@@ -94,23 +100,12 @@ export class ReviewsController {
       throw new InternalServerErrorException(
         "Failed to get reviews for artist",
         error.stack,
-      );
+      ); 
     }
   }
 
-  // @Get("mine")
-  // @UseGuards(AccessTokenGuard) // Ensure this route is protected
-  // @ApiResponse({
-  //   status: 200,
-  //   description: "Get reviews for the current user",
-  //   type: [ReviewEntity],
-  // })
-  // async getMyReviews(@Request() req: any): Promise<ReviewEntity[]> {
-  //   const userId = req.user.sub; // Extract user ID from request
-
-  //   if (!userId) {
-  //     throw new BadRequestException("User not authenticated");
-  //   }
-  //   return this.reviewsService.getReviewsForCurrentUser(userId);
-  // }
+  @Get('order/:orderId')
+  async getReviewsByOrderId(@Param('orderId') orderId: string): Promise<ReviewEntity[]> {
+    return this.reviewsService.getReviewsByOrderId(orderId);
+  }
 }

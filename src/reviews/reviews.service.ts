@@ -12,6 +12,9 @@ import { OrderEntity } from "../orders/entities/order.entity";
 import { LessThan, Repository } from "typeorm";
 import { GetReviewsDto } from "./dto/get.reviews.dto";
 import { EventEmitter2, OnEvent } from "@nestjs/event-emitter";
+import { AuditLogEntity } from "src/audit-log/entities/audit.log.entity";
+import { UserEntity } from "src/user/entities/user.entity";
+import { UserService } from "src/user/user.service";
 
 @Injectable()
 export class ReviewsService {
@@ -24,7 +27,11 @@ export class ReviewsService {
 
     @InjectRepository(OrderEntity)
     private readonly orderRepository: Repository<OrderEntity>,
+    @InjectRepository(UserEntity)
+    private readonly UserRepository: Repository<UserEntity>,
 
+    @InjectRepository(AuditLogEntity)
+    private readonly AuditLogRepository: Repository<AuditLogEntity>,
     private eventEmitter: EventEmitter2,
   ) {}
   @OnEvent("review:changed")
@@ -49,80 +56,113 @@ export class ReviewsService {
       );
     }
   }
-  async createReview(body: CreateReviewDto) {
+  async createReview(body: CreateReviewDto, userId: string) {
     const { order } = body;
 
-    const newestOrder = await this.orderRepository.findOne({
-      where: { id: order },
-      relations: ["reservation.customer", "artist"],
-    });
+    try {
+      // 1. Find the associated order
+      const newestOrder = await this.orderRepository.findOne({
+        where: { id: order },
+        relations: ['reservation.customer', 'artist'],
+      });
 
-    if (!newestOrder) {
-      throw new NotFoundException(`Order with ID ${order} not found`);
-    }
-    if(!newestOrder.artist?.id){
-      throw new HttpException(`Order with ID not associated with artist `, 400)
-    }
-    // console.log(newestOrder.artist?.id)
+      if (!newestOrder) {
+        throw new NotFoundException(`Order with ID ${order} not found`);
+      }
 
-    const employee = await this.employeeRepository.findOneBy({
-      id: body.employee,
-    });
-    // console.log(employee);
-    const [orders, count] = await this.orderRepository.findAndCount({
-      where: {
-        createdAt: LessThan(newestOrder.createdAt),
-        reservation: {
-          customer: { id: newestOrder.reservation.customer.id },
+      if (!newestOrder.artist?.id) {
+        throw new HttpException(`Order with ID not associated with artist`, 400);
+      }
+
+      // 2. Find the associated employee
+      const employee = await this.employeeRepository.findOneBy({
+        id: body.employee,
+      });
+
+      // 3. Find previous orders for the same customer
+      const [orders, count] = await this.orderRepository.findAndCount({
+        where: {
+          createdAt: LessThan(newestOrder.createdAt),
+          reservation: {
+            customer: { id: newestOrder.reservation.customer.id },
+          },
         },
-      },
-      order: { createdAt: "DESC" },
-      relations: ["reservation.customer", "artist"],
-    });
-    let reviews = [];
-    const ids = [];
-    let review = this.reviewRepository.create({
-      artist: newestOrder.artist,
-      order: newestOrder,
-      orderFirstTime: count == 0 ? true : false,
-      rating: body.newestRating ?? 0,
-      employee,
-      image: 'after'
-    });
-    // console.log(review);
-    await this.reviewRepository.save(review);
-    reviews.push(review);
-    ids.push(newestOrder.artist.id);
-    console.log(ids)
-    if (count == 0) {
-      this.eventEmitter.emit("review:changed", { ids });
+        order: { createdAt: 'DESC' },
+        relations: ['reservation.customer', 'artist'],
+      });
+
+      const reviews = [];
+      const ids = [];
+
+      // 4. Create the first review
+      const firstReview = this.reviewRepository.create({
+        artist: newestOrder.artist,
+        order: newestOrder,
+        orderFirstTime: count === 0,
+        rating: body.newestRating ?? 0,
+        employee,
+        image: 'after',
+      });
+
+      // Save the first review and audit log
+      await this.saveReviewAndAuditLog(firstReview, userId);
+      reviews.push(firstReview);
+      ids.push(newestOrder.artist.id);
+
+      // Emit event if this is the first order for the customer
+      if (count === 0) {
+        this.eventEmitter.emit('review:changed', { ids });
+        return { items: reviews };
+      }
+
+      // 5. Create the second review if previous orders exist
+      const secondReview = this.reviewRepository.create({
+        artist: orders[0].artist,
+        order: newestOrder,
+        orderFirstTime: false,
+        rating: body.oldestRating ?? 0,
+        employee,
+        image: 'before',
+      });
+
+      // Save the second review and audit log
+      await this.saveReviewAndAuditLog(secondReview, userId);
+      reviews.push(secondReview);
+      ids.push(orders[0].artist.id);
+
+      // Emit event for review changes
+      this.eventEmitter.emit('review:changed', { ids });
+
       return { items: reviews };
+    } catch (error) {
+      // Handle categorized errors
+      if (error instanceof NotFoundException || error instanceof HttpException) {
+        throw error; // Rethrow specific errors
+      }
+      throw new HttpException('An error occurred while creating the review', 500);
     }
-    review = this.reviewRepository.create({
-      artist: orders[0].artist,
-      order: newestOrder,
-      orderFirstTime: false,
-      rating: body.oldestRating ?? 0,
-      employee,
-      image: 'before'
-    });
-    ids.push(orders[0].artist.id);
-    reviews.push(review);
-    this.eventEmitter.emit("review:changed", { ids });
-    reviews.push(review);
-    return { items: reviews };
-  }
-  async updateReview(reviewId: string, rating: number){
-    const review = await this.reviewRepository.findOne({where: { id: reviewId } , relations: ['artist'] });
-    if (!review) {
-      throw new NotFoundException(`Review with ID ${reviewId} not found`);
-    }
-    review.rating = rating;
-    await this.reviewRepository.save(review);
-    this.eventEmitter.emit("review:changed", { ids: [ review.artist.id ] });
-    return review;
   }
 
+  private async saveReviewAndAuditLog(review: ReviewEntity, userId: string) {
+    // Save the review
+    await this.reviewRepository.save(review);
+
+    // Create and save the audit log
+    const auditLog = new AuditLogEntity();
+    auditLog.tableName = 'Review';
+    auditLog.action = 'INSERT';
+    auditLog.entityId = review.id;
+    auditLog.performedBy = userId;
+
+    // Fetch user details for audit log
+    const userDetails = await this.UserRepository.findOne({ where: { id: userId } });
+    if (userDetails) {
+      auditLog.userDetails = userDetails;
+    }
+
+    // Save the audit log
+    await this.AuditLogRepository.save(auditLog); // Assuming you have a repository for AuditLogEntity
+  }
   async getAllReviews({
     page = 1,
     limit = 10,
@@ -179,5 +219,22 @@ export class ReviewsService {
         error.stack,
       );
     }
+  }
+
+
+  async getReviewsByOrderId(orderId: string): Promise<ReviewEntity[]> {
+    // Check if the order exists
+    const order = await this.orderRepository.findOne({ where: { id: orderId } });
+    if (!order) {
+      throw new NotFoundException(`Order with ID ${orderId} not found`);
+    }
+
+    // Retrieve reviews associated with the order
+    const reviews = await this.reviewRepository.find({
+      where: { order: { id: orderId } },
+      relations: ['employee'], // Include related entities if needed
+    });
+
+    return reviews;
   }
 }

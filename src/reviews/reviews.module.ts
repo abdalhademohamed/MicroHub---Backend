@@ -5,10 +5,14 @@ import { ReviewEntity } from "./entities/review.entity";
 import { EmployeeEntity } from "../employee/entities/employee.entity";
 import { OrderEntity } from "../orders/entities/order.entity";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { UserEntity } from "src/user/entities/user.entity";
+import { UserService } from "src/user/user.service";
+import { UserModule } from "src/user/user.module";
+import { AuditLogEntity } from "src/audit-log/entities/audit.log.entity";
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ReviewEntity, EmployeeEntity, OrderEntity]), // Add OrderEntity here
+    TypeOrmModule.forFeature([ReviewEntity, EmployeeEntity, OrderEntity,UserEntity,AuditLogEntity]), // Add OrderEntity here
   ],
   controllers: [ReviewsController],
   providers: [ReviewsService],
