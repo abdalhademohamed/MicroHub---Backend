@@ -12,9 +12,9 @@ import { OrderEntity } from "../orders/entities/order.entity";
 import { LessThan, Repository } from "typeorm";
 import { GetReviewsDto } from "./dto/get.reviews.dto";
 import { EventEmitter2, OnEvent } from "@nestjs/event-emitter";
-import { AuditLogEntity } from "src/audit-log/entities/audit.log.entity";
-import { UserEntity } from "src/user/entities/user.entity";
-import { UserService } from "src/user/user.service";
+import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
+import { UserEntity } from "../user/entities/user.entity";
+import { UserService } from "../user/user.service";
 
 @Injectable()
 export class ReviewsService {

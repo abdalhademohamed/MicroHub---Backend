@@ -5,10 +5,10 @@ import { ReviewEntity } from "./entities/review.entity";
 import { EmployeeEntity } from "../employee/entities/employee.entity";
 import { OrderEntity } from "../orders/entities/order.entity";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { UserEntity } from "src/user/entities/user.entity";
-import { UserService } from "src/user/user.service";
-import { UserModule } from "src/user/user.module";
-import { AuditLogEntity } from "src/audit-log/entities/audit.log.entity";
+import { UserEntity } from "../user/entities/user.entity";
+import { UserService } from "../user/user.service";
+import { UserModule } from "../user/user.module";
+import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 
 @Module({
   imports: [
