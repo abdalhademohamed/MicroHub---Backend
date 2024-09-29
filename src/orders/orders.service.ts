@@ -739,82 +739,75 @@ export class OrdersService {
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async findAllOrders(
-    findOrdersDto: FindOrdersDto
+    findOrdersDto: FindOrdersDto,
   ): Promise<{ items: OrderEntity[]; total: number }> {
     const { page, limit, sort, employeeName, branchId, dayDate } = findOrdersDto;
-  
+
     try {
       // Build the query
       const query = this.orderRepository
-        .createQueryBuilder("o")
-        .leftJoinAndSelect("o.artist", "a") // Join artist relation with alias "a"
-        .leftJoinAndSelect("o.payment", "p") // Join payment relation with alias "p"
-        .leftJoinAndSelect("o.customer", "c") // Join customer relation with alias "c"
-        .addSelect(["c.id", "c.fullName", "c.phoneNumber"]) // Select specific fields from customer
-        .leftJoin("o.createdBy", "cb") // Join createdBy relation with alias "cb"
-        .addSelect(["cb.id", "cb.username", "cb.email", "cb.role"]) // Select specific fields from createdBy
-        .leftJoin("o.updatedBy", "ub") // Join updatedBy relation with alias "ub"
-        .addSelect(["ub.id", "ub.username"]) // Select specific fields from updatedBy
-        .leftJoinAndSelect("o.reservation", "r") // Join reservation relation with alias "r"
-        .addSelect([
-          "r.id", 
-          "r.start_Time", 
-          "r.end_Time", 
-          "r.totalPrice", 
-          "r.services"
-        ]) // Select specific fields from reservation
+        .createQueryBuilder('o')
+        .leftJoinAndSelect('o.artist', 'a') // Join artist relation with alias "a"
+        .leftJoinAndSelect('o.payment', 'p') // Join payment relation with alias "p"
+        .leftJoinAndSelect('o.customer', 'c') // Join customer relation with alias "c"
+        .addSelect(['c.id', 'c.fullName', 'c.phoneNumber']) // Select specific fields from customer
+        .leftJoin('o.createdBy', 'cb') // Join createdBy relation with alias "cb"
+        .addSelect(['cb.id', 'cb.username', 'cb.email', 'cb.role']) // Select specific fields from createdBy
+        .leftJoin('o.updatedBy', 'ub') // Join updatedBy relation with alias "ub"
+        .addSelect(['ub.id', 'ub.username']) // Select specific fields from updatedBy
+        .leftJoinAndSelect('o.reservation', 'r') // Join reservation relation with alias "r"
+        .leftJoinAndSelect('r.services', 's') // Add this line to join services
+        .addSelect(['r.id', 'r.start_Time', 'r.end_Time', 'r.totalPrice']) // Select specific fields from reservation
         .take(limit)
         .skip((page - 1) * limit)
-        .orderBy(`o.date`, sort.toUpperCase() as "ASC" | "DESC"); // Order by date
-  
+        .orderBy(`o.date`, sort.toUpperCase() as 'ASC' | 'DESC'); // Order by date
+
       // Filter by employee name if provided
       if (employeeName) {
-        query.andWhere("a.englishName ILIKE :employeeName", {
+        query.andWhere('a.english_Name ILIKE :employeeName', {
           employeeName: `%${employeeName}%`,
         });
       }
-  
+
       // Filter by branch ID if provided
       if (branchId) {
-        query.andWhere("CAST(o.branch ->> 'id' AS uuid) = :branchId", {
+        query.andWhere('CAST(o.branch ->> \'id\' AS uuid) = :branchId', {
           branchId,
         });
       }
-  
+
       // Filter by day date if provided
       if (dayDate) {
         const startDate = new Date(dayDate);
         const endDate = new Date(dayDate);
         endDate.setDate(startDate.getDate() + 1); // End of the day
-  
-        query.andWhere("o.date >= :startDate AND o.date < :endDate", {
+
+        query.andWhere('o.date >= :startDate AND o.date < :endDate', {
           startDate: startDate.toISOString(),
           endDate: endDate.toISOString(),
         });
       }
-  
-      // Log the generated SQL query for debugging
-      // console.log(query.getSql());
-  
+
       // Execute the query and get results
       const [items, total] = await query.getManyAndCount();
-  
+
       return { items, total };
     } catch (error) {
+      // Error handling
       if (error instanceof NotFoundException) {
         throw new NotFoundException({
-          message: error.message || "Entity not found",
-          category: "EntityNotFound",
+          message: error.message || 'Entity not found',
+          category: 'EntityNotFound',
         });
       } else if (error instanceof BadRequestException) {
         throw new BadRequestException({
-          message: error.message || "Bad request",
-          category: "ValidationError",
+          message: error.message || 'Bad request',
+          category: 'ValidationError',
         });
       } else {
         throw new InternalServerErrorException({
-          message: error.message || "Internal server error",
-          category: "InternalServerError",
+          message: error.message || 'Internal server error',
+          category: 'InternalServerError',
         });
       }
     }

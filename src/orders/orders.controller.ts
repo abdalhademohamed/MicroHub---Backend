@@ -152,7 +152,7 @@ export class OrdersController {
 
   @Get("sorted")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.RECEPTIONIST,Role.COORDINATOR,Role.ARTISTMANAGER)
+  @Roles(Role.SUPERADMIN,Role.RECEPTIONIST,Role.COORDINATOR,Role.ARTISTMANAGER)
   @ApiOperation({
     summary: "Get all orders with pagination, sorting, and filtering",
   })
