@@ -159,9 +159,16 @@ export class OrdersController {
   @ApiResponse({ status: 200, description: "Orders retrieved successfully." })
   @ApiResponse({ status: 500, description: "Internal server error." })
   async getAllOrders(
+    @Request() req: any, // Request object to access the user
+
     @Query() findOrdersDto: FindOrdersDto,
   ): Promise<{ items: OrderEntity[]; total: number }> {
-    return await this.ordersService.findAllOrders(findOrdersDto);
+    const userId = req.user.sub; // Extract user ID from request
+
+    if (!userId) {
+      throw new BadRequestException('User not authenticated');
+    }
+    return await this.ordersService.findAllOrders(findOrdersDto,userId);
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
