@@ -755,7 +755,7 @@ export class OrdersService {
       });
   
       // If employee exists and is a receptionist or coordinator, use their branch ID
-      if (employee && (employee.role === Role.RECEPTIONIST || employee.role === Role.COORDINATOR) && employee.branch) {
+      if (employee && (employee.role === Role.RECEPTIONIST || employee.role === Role.ARTISTMANAGER) && employee.branch) {
         branchId = employee.branch.id; // Reassign branchId if conditions are met
       }
   
