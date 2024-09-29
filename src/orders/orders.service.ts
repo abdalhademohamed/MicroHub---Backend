@@ -112,9 +112,7 @@ export class OrdersService {
       paymentStatus: "partially paid",
       invoiceNumber: invoiceNumber,
       comments: [],
-      reservation: {
-        id: reservation.id, // Include reservation ID
-      },
+      reservation: reservation,
       branch: {
         id: reservation.branch.id, // Include branch ID
         name: reservation.branch.name, // Include branch name
