@@ -6,6 +6,7 @@ import { ReceiptEntity } from "./entities/receipt.entity";
 import { OrderEntity } from "../orders/entities/order.entity";
 import { UserEntity } from "../user/entities/user.entity";
 import { ServiceEntity } from "../service/entities/service.entity";
+import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { ServiceEntity } from "../service/entities/service.entity";
       OrderEntity,
       UserEntity,
       ServiceEntity,
+      AuditLogEntity
     ]),
   ],
   controllers: [ReceiptController],
