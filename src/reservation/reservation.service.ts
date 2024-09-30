@@ -680,4 +680,21 @@ export class ReservationService {
     });
     await this.WorkingHourEntity.save(workingSlot);
   }
+
+
+
+  async getTop5Reservations(startDate: string, endDate: string): Promise<ReservationEntity[]> {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setDate(end.getDate() + 1); // Include the end date in the query
+
+    const topReservations = await this.ReservationRepository
+      .createQueryBuilder('reservation')
+      .where('reservation.createdAt BETWEEN :start AND :end', { start, end })
+      .orderBy('reservation.totalPrice', 'DESC')
+      .take(5) // Limit the results to top 5
+      .getMany();
+
+    return topReservations;
+  }
 }
