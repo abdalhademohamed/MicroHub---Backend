@@ -5,13 +5,13 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { WorkingBranchEntity } from "../working-branch/entities/working.branch.entity";
 import { MoreThanOrEqual, Repository } from "typeorm";
 import { BranchEntity } from "../branch/entities/branch.entity";
-
 import { Role } from "../user/utils/user.enum";
 import { UserEntity } from "../user/entities/user.entity";
 import { ReservationService } from "../reservation/reservation.service";
 import { SlotsEntity } from "./entities/slots.entity";
 import { WorkingEntity } from "./entities/working.entity";
 import { AvailableQueryDto } from "./dto/query.available.dto";
+import { EmployeeEntity } from "../employee/entities/employee.entity";
 
 @Injectable()
 export class SlotService {
@@ -26,6 +26,8 @@ export class SlotService {
     private readonly WorkingRepository: Repository<WorkingEntity>,
     @InjectRepository(UserEntity)
     private readonly UserRepository: Repository<UserEntity>,
+    @InjectRepository(EmployeeEntity)
+    private readonly EmployeeRepository: Repository<EmployeeEntity>,
     private reservationService: ReservationService,
   ) {}
   async getNextFourWeeksDatesForDay(
@@ -64,11 +66,11 @@ export class SlotService {
     }
   }
   artistCount(branchId: string) {
-    return this.UserRepository.countBy({
+    return this.EmployeeRepository.countBy({
       role: Role.ARTIST,
-      // branch: {
-      //   id: branchId,
-      // },
+      branch: {
+        id: branchId,
+      },
     });
   }
   branchWorkingHours(branchId: string, dayOfWeek: WeekDays) {
@@ -252,22 +254,26 @@ export class SlotService {
         from: "ASC",
       },
     });
+    if (slots.length === 0) {
+      return [];
+    }
     return this.createTimeSlots(slots, duration);
   }
   async getFirstSlotAvailable(branchId: string, ids: string[]) {
-    const month = new Date().getMonth() + 1;
-    const year = new Date().getFullYear();
-    const day = new Date().getDate();
+    // const month = new Date().getMonth() + 1;
+    // const year = new Date().getFullYear();
+    // const day = new Date().getDate();
     const { duration } =
       await this.reservationService.calculateTotalDuration(ids);
     const workingHour = await this.WorkingRepository.findOne({
       where: {
         slot: {
           branch: { id: branchId },
-          day: MoreThanOrEqual(day),
-          year: MoreThanOrEqual(year),
-          month: MoreThanOrEqual(month),
+          // day: MoreThanOrEqual(day),
+          // year: MoreThanOrEqual(year),
+          // month: MoreThanOrEqual(month),
         },
+        from : MoreThanOrEqual( new Date() ),
         duration: MoreThanOrEqual(duration),
       },
       relations: { slot: { branch: true } },
@@ -280,6 +286,9 @@ export class SlotService {
         from: "ASC",
       },
     });
+    if (!workingHour) {
+      throw new Error("No available slots found.");
+    };
     return this.createTimeSlots([workingHour], duration)[0] || null;
   }
 }
