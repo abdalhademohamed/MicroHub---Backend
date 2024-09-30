@@ -50,7 +50,7 @@ export class ReservationController {
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   @UseInterceptors(FileInterceptor("deposit_Content")) // Intercept the file upload
   async createReservations(
-    @Request() req: any, // Request object to access the user
+    @Req() req: any, // Request object to access the user
 
     @Body() CreateCustomerDto: CreateReservationDto, // Array of customer DTOs
     @UploadedFile() image: Express.Multer.File // Handle the uploaded file
@@ -89,7 +89,7 @@ export class ReservationController {
   // @Roles(Role.SUPERADMIN)
   @Get()
   async getAllReservations(
-    @Request() req: any, // Request object to access the user
+    @Req() req: any, // Request object to access the user
 
     @Query() getReservationsDto: GetReservationsDto
   ): Promise<{
