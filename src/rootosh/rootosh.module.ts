@@ -4,9 +4,11 @@ import { RootoshController } from "./rootosh.controller";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { RootoshEntity } from "./entities/rootosh.entity";
 import { ServiceEntity } from "../service/entities/service.entity";
+import { UserEntity } from "../user/entities/user.entity";
+import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([RootoshEntity, ServiceEntity])],
+  imports: [TypeOrmModule.forFeature([RootoshEntity, ServiceEntity,UserEntity,AuditLogEntity])],
 
   controllers: [RootoshController],
   providers: [RootoshService],

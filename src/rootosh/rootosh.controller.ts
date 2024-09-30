@@ -9,6 +9,8 @@ import {
   Delete,
   Query,
   UseGuards,
+  Request,
+  BadRequestException,
 } from "@nestjs/common";
 import { CreateRootoshDto } from "./dto/create-rootosh.dto";
 import { RootoshEntity } from "./entities/rootosh.entity";
@@ -28,8 +30,14 @@ export class RootoshController {
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
   @Post()
-  async create(@Body() createRootoshDto: CreateRootoshDto): Promise<any> {
-    return this.RootoshService.createRootosh(createRootoshDto);
+  async create(    @Request() req: any, 
+  @Body() createRootoshDto: CreateRootoshDto): Promise<any> {
+    const userId = req.user.sub; // Hardcoded user ID for now
+
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
+    return this.RootoshService.createRootosh(createRootoshDto,userId);
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
@@ -79,10 +87,16 @@ export class RootoshController {
   @Roles(Role.SUPERADMIN)
   @Put(":id")
   async update(
+    @Request() req: any,
     @Param("id") id: string,
     @Body() updateRootoshDto: UpdateRootoshDto,
   ): Promise<RootoshEntity> {
-    return this.RootoshService.updateRootosh(id, updateRootoshDto);
+    const userId = req.user.sub; // Hardcoded user ID for now
+
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
+    return this.RootoshService.updateRootosh(id, updateRootoshDto,userId);
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
