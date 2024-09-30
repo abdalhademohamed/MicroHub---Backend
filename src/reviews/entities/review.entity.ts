@@ -7,9 +7,11 @@ export class ReviewEntity {
   @PrimaryGeneratedColumn("uuid")
   id: string;
   
+  
   @Column()
-  image: string;
+  imageOrder: string; // before after 
 
+  
   @Column({ type: "int", default: 1 })
   rating: number;
 
