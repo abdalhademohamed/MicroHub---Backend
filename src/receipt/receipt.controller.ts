@@ -23,6 +23,7 @@ import { Role } from "../user/utils/user.enum";
 import { AccessTokenGuard } from "../auth/guards/accessToken.guard";
 import { RolesGuard } from "../auth/guards/role.guards";
 import { Response as ExpressResponse } from "express";
+import { ReceiptEntity } from "./entities/receipt.entity";
 
 @ApiTags("receipt")
 @Controller("receipt")
@@ -58,6 +59,13 @@ export class ReceiptController {
     }
   }
 
+
+  @Get(':orderId')
+  async getReceiptByOrderId(
+    @Param('orderId') orderId: string,
+  ): Promise<ReceiptEntity> {
+    return this.receiptService.getReceiptByOrderId(orderId);
+  }
   // //  Endpoint to generate and download the receipt PDF
   // @Get('download/:id')
   // @UseGuards(AccessTokenGuard,RolesGuard)  // Ensure AccessTokenGuard is first

@@ -313,4 +313,17 @@ export class ReceiptService {
   //   // Send the PDF to the client
   //   response.send(pdfBytes);
   // }
+
+
+  async getReceiptByOrderId(orderId: string): Promise<ReceiptEntity> {
+    const receipt = await this.receiptRepository.findOne({
+      where: { order: { id: orderId } },
+    });
+
+    if (!receipt) {
+      throw new NotFoundException(`Receipt not found for Order ID: ${orderId}`);
+    }
+
+    return receipt;
+  }
 }
