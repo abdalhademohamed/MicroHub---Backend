@@ -32,6 +32,15 @@ import { Roles } from "../auth/Roles.decorator";
 export class ServiceController {
   constructor(private readonly serviceService: ServiceService) {}
 
+
+
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN)
+  @Get('/count')
+  async getServiceCount(): Promise<{ count: number }> {
+    const count = await this.serviceService.countServices();
+    return { count };
+  }
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
   @Post()
