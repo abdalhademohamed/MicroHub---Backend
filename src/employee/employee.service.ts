@@ -407,4 +407,16 @@ export class EmployeeService {
 
     return profileData;
   }
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  async countEmployees(branchId?: string): Promise<number> {
+    const query = this.employeeRepository.createQueryBuilder('employee');
+
+    if (branchId) {
+      query.where('employee.branchId = :branchId', { branchId });
+    }
+
+    return await query.getCount();
+  }
 }

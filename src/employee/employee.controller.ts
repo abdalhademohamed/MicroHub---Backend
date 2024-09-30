@@ -37,7 +37,14 @@ import { UserProfileDto } from "./dto/get.profile.dto";
 @Controller("employee")
 export class EmployeeController {
   constructor(private readonly employeeService: EmployeeService) {}
-
+  
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST)
+  @Get('/count')
+  async getEmployeeCount(@Query('branchId') branchId?: string): Promise<{ count: number }> {
+    const count = await this.employeeService.countEmployees(branchId);
+    return { count };
+  }
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
   @UseInterceptors(FileInterceptor("image")) // 'file' is the name of the field in the form-data
@@ -147,7 +154,7 @@ export class EmployeeController {
       userId,
     );
   }
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   // @Roles(Role.SUPERADMIN)
   @Get("show/profile")
@@ -155,11 +162,15 @@ export class EmployeeController {
   @ApiOperation({ summary: "Get user profile" })
   @ApiResponse({ status: 200, description: "Return user profile data" })
   async getProfile(@Request() req: any): Promise<UserProfileDto> {
-    const userId = "c267c3cf-3be1-409e-865e-a0d737354635"; // Extract user ID from request
+    const userId = req.user.sub; // Extract user ID from request
 
     if (!userId) {
       throw new BadRequestException("User not authenticated");
     }
     return this.employeeService.getProfile(userId);
   }
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 }
