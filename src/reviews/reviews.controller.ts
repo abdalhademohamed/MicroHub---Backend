@@ -14,6 +14,7 @@ import {
   InternalServerErrorException,
   Request,
   BadRequestException,
+  Req,
 } from "@nestjs/common";
 import { ReviewsService } from "./reviews.service";
 import { CreateReviewDto } from "./dto/create.review.dto";
@@ -48,7 +49,7 @@ export class ReviewsController {
   })
   @ApiBadRequestResponse({ description: "Invalid input" })
   @ApiInternalServerErrorResponse({ description: "Failed to create review" })
-  async createReview(    @Request() req: any, // Request object to access the user
+  async createReview(    @Req() req: any, // Request object to access the user
   @Body() createReviewDto: CreateReviewDto) {
     const userId = req.user.sub; // Hardcoded user ID for now
 

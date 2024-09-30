@@ -14,6 +14,7 @@ import {
   ValidationPipe,
   UseGuards,
   Request,
+  Req,
 } from "@nestjs/common";
 import { ReservationService } from "./reservation.service";
 import { UpdateReservationDto } from "./dto/update.reservation.dto";
@@ -114,7 +115,7 @@ export class ReservationController {
   @Roles(Role.SUPERADMIN, Role.COORDINATOR)
   @Put(":id")
   async updateReservationServices(
-    @Request() req: any, // Request object to access the user
+    @Req() req: any, // Request object to access the user
 
     @Param("id") id: string,
     @Body() updateReservationDto: UpdateReservationDto
@@ -132,8 +133,10 @@ export class ReservationController {
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Put("time/:id")
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR)
   async updateReservationStartTime(
-    @Request() req: any, // Request object to access the user
+    @Req() req: any, // Request object to access the user
     @Param("id") id: string,
     @Body() updateReservationDto: UpdateTimeReservationDto
   ) {

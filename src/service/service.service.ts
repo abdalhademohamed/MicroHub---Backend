@@ -46,16 +46,16 @@ export class ServiceService {
   
     try {
       // Upload the photo to Cloudinary
-      const folderName = "services";
-      const uploadResult = await this.cloudinaryService.uploadImage(
-        file,
-        folderName,
-      );
+      // const folderName = "services";
+      // const uploadResult = await this.cloudinaryService.uploadImage(
+      //   file,
+      //   folderName,
+      // );
   
       // Create and save the new service
       const service = this.ServiceRepository.create({
         ...createServiceDto,
-        imageUrl: uploadResult.secure_url, // Save the image URL in the database
+        imageUrl: 'uploadResult', // Save the image URL in the database
       });
   
       const savedService = await this.ServiceRepository.save(service);
