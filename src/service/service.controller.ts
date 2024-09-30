@@ -13,6 +13,8 @@ import {
   UploadedFile,
   UseInterceptors,
   UseGuards,
+  BadRequestException,
+  Request,
 } from "@nestjs/common";
 import { ServiceService } from "./service.service";
 import { CreateServiceDto } from "./dto/create.service.dto";
@@ -36,10 +38,16 @@ export class ServiceController {
   @HttpCode(HttpStatus.CREATED)
   @UseInterceptors(FileInterceptor("image")) // Use the FileInterceptor to handle file uploads
   async createService(
+    @Request() req: any, 
     @Body() createServiceDto: CreateServiceDto,
     @UploadedFile() image: Express.Multer.File,
   ): Promise<ServiceEntity> {
-    return await this.serviceService.createService(createServiceDto, image);
+    const userId = req.user.sub; // Hardcoded user ID for now
+
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
+    return await this.serviceService.createService(createServiceDto, image,userId);
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -62,11 +70,18 @@ export class ServiceController {
   @Put(":id")
   @UseInterceptors(FileInterceptor("image")) // Use interceptor for file uploads
   async updateService(
+    @Request() req: any, 
+
     @Param("id") id: string,
     @Body() updateServiceDto: CreateServiceDto,
     @UploadedFile() image: Express.Multer.File, // If uploading a file
   ): Promise<ServiceEntity> {
-    return this.serviceService.updateService(id, updateServiceDto, image);
+    const userId = req.user.sub; // Hardcoded user ID for now
+
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
+    return this.serviceService.updateService(id, updateServiceDto,userId,image);
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
