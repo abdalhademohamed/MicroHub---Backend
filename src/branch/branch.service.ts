@@ -564,4 +564,9 @@ export class BranchService {
       );
     }
   }
+
+
+  async countBranches(): Promise<number> {
+    return await this.BranchRepository.count();
+  }
 }

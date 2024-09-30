@@ -49,6 +49,14 @@ export class BranchController {
     private readonly CloudinaryService: CloudinaryService,
   ) {}
 
+
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER)
+  @Get('count')
+  async getBranchCount(): Promise<{ count: number }> {
+    const count = await this.branchService.countBranches();
+    return { count };
+  }
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER)
   @Post()
