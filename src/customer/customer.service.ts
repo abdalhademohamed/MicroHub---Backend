@@ -140,6 +140,8 @@ export class CustomerService {
     }
   }
 
-
+  async countCustomers(): Promise<number> {
+    return await this.customerRepository.count();
+  }
 
 }
