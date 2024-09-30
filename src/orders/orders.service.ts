@@ -18,12 +18,18 @@ import { UserEntity } from "../user/entities/user.entity";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { FindOrdersByDayDto } from "./dto/find.orders.dto.for.artist";
 import { PaymentEntity } from "../payment/entities/payment.entity";
+import { PositionEntity } from "../postion/entities/postion.entity";
+import { Postion } from "../postion/utils/postion.enum";
+import { ArtistDto } from "./dto/artist.dto";
+import { format } from "date-fns/format";
+import { Role } from "../user/utils/user.enum";
 
 @Injectable()
 export class OrdersService {
   constructor(
     @InjectRepository(OrderEntity)
     private readonly orderRepository: Repository<OrderEntity>,
+
     private readonly CloudinaryService: CloudinaryService,
 
     @InjectRepository(ReservationEntity)
@@ -38,7 +44,10 @@ export class OrdersService {
     @InjectRepository(PaymentEntity)
     private readonly PaymentRepository: Repository<PaymentEntity>,
 
-    @InjectEntityManager() private readonly entityManager: EntityManager,
+    @InjectRepository(PositionEntity)
+    private readonly PositionRepository: Repository<PositionEntity>,
+
+    @InjectEntityManager() private readonly entityManager: EntityManager
   ) {}
   // Method to generate a unique incremental invoice number
   private async generateUniqueInvoiceNumber(): Promise<number> {
@@ -57,6 +66,7 @@ export class OrdersService {
   async createOrder(
     reservationId: string,
     userId: string,
+    paymentId: string
   ): Promise<OrderEntity> {
     // Fetch reservation with related services
     const reservation = await this.reservationRepository.findOne({
@@ -79,11 +89,13 @@ export class OrdersService {
 
     // Find the payment method with 'Visa'
     const visaPayment = await this.PaymentRepository.findOne({
-      where: { methodEnglish: "Visa" },
+      where: { id: paymentId },
     });
 
     if (!visaPayment) {
-      throw new NotFoundException("Visa payment method not found");
+      throw new NotFoundException(
+        "Visa payment method not found, please add payment method called Visa in English & arabic"
+      );
     }
 
     const invoiceNumber = await this.generateUniqueInvoiceNumber();
@@ -117,7 +129,7 @@ export class OrdersService {
           // Save the new order
           const savedOrder = await transactionalEntityManager.save(
             OrderEntity,
-            newOrder,
+            newOrder
           );
 
           // Create an audit log entry
@@ -145,22 +157,168 @@ export class OrdersService {
           await transactionalEntityManager.save(AuditLogEntity, auditLog);
 
           return savedOrder;
-        },
+        }
       );
     } catch (error) {
       throw new InternalServerErrorException(
         "Failed to create order",
-        error.stack,
+        error.stack
+      );
+    }
+  }
+  async updateOrderServicesFromReservation(
+    reservationId: string,
+    userId: string
+  ): Promise<OrderEntity> {
+    const UpdateBy = await this.userRepository.findOne({
+      where: { id: userId },
+      select: ["id", "username", "email", "role"], // Only return these fields
+    });
+    if (!UpdateBy) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+    const reservation = await this.reservationRepository.findOne({
+      where: { id: reservationId },
+    });
+
+    if (!reservation) {
+      throw new NotFoundException("Reservation not found");
+    }
+
+    const order = await this.orderRepository.findOne({
+      where: { reservation: { id: reservationId } },
+    });
+
+    if (!order) {
+      throw new NotFoundException("Order not found for this reservation");
+    }
+
+    // Update order details based on the updated reservation
+    order.serviceEnglish = reservation.services
+      .map((service) => service.english_Name)
+      .join(", ");
+    order.serviceArabic = reservation.services
+      .map((service) => service.arabic_Name)
+      .join(", ");
+    order.updatedBy = UpdateBy;
+    try {
+      return await this.entityManager.transaction(
+        async (transactionalEntityManager) => {
+          // Save the updated order
+          const updatedOrder = await transactionalEntityManager.save(
+            OrderEntity,
+            order
+          );
+
+          // Create an audit log entry for the order update
+          const auditLog = new AuditLogEntity();
+          auditLog.tableName = "order";
+          auditLog.action = "UPDATE";
+          auditLog.entityId = updatedOrder.id; // ID of the updated order
+          auditLog.performedBy = userId; // User who updated the order
+          // Fetch user details if needed
+          if (userId) {
+            const user = await transactionalEntityManager.findOne(UserEntity, {
+              where: { id: userId },
+            });
+            if (user) {
+              auditLog.userDetails = {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+              };
+            }
+          }
+          await transactionalEntityManager.save(AuditLogEntity, auditLog);
+
+          return updatedOrder;
+        }
+      );
+    } catch (error) {
+      throw new InternalServerErrorException(
+        "Failed to update order",
+        error.stack
       );
     }
   }
 
+  async updateOrderTimeFromReservation(
+    reservationId: string,
+    userId: string
+  ): Promise<OrderEntity> {
+    const UpdateBy = await this.userRepository.findOne({
+      where: { id: userId },
+      select: ["id", "username", "email", "role"], // Only return these fields
+    });
+    if (!UpdateBy) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+    const reservation = await this.reservationRepository.findOne({
+      where: { id: reservationId },
+    });
+
+    if (!reservation) {
+      throw new NotFoundException("Reservation not found");
+    }
+
+    const order = await this.orderRepository.findOne({
+      where: { reservation: { id: reservationId } },
+    });
+
+    if (!order) {
+      throw new NotFoundException("Order not found for this reservation");
+    }
+
+    order.date = `${reservation.reservationYear}-${reservation.reservationMonth}-${reservation.reservationDay}`;
+    order.updatedBy = UpdateBy;
+    try {
+      return await this.entityManager.transaction(
+        async (transactionalEntityManager) => {
+          // Save the updated order
+          const updatedOrder = await transactionalEntityManager.save(
+            OrderEntity,
+            order
+          );
+
+          // Create an audit log entry for the order update
+          const auditLog = new AuditLogEntity();
+          auditLog.tableName = "order";
+          auditLog.action = "UPDATE";
+          auditLog.entityId = updatedOrder.id; // ID of the updated order
+          auditLog.performedBy = userId; // User who updated the order
+          // Fetch user details if needed
+          if (userId) {
+            const user = await transactionalEntityManager.findOne(UserEntity, {
+              where: { id: userId },
+            });
+            if (user) {
+              auditLog.userDetails = {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+              };
+            }
+          }
+          await transactionalEntityManager.save(AuditLogEntity, auditLog);
+
+          return updatedOrder;
+        }
+      );
+    } catch (error) {
+      throw new InternalServerErrorException(
+        "Failed to update order",
+        error.stack
+      );
+    }
+  }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async updatePaymentStatus(
     orderId: string,
     newPaymentStatus: "paid" | "partially paid",
     image: Express.Multer.File,
-    userId: string, // Optional parameter for the user ID
+    userId: string // Optional parameter for the user ID
   ): Promise<OrderEntity> {
     let updatedOrder: OrderEntity;
 
@@ -183,7 +341,7 @@ export class OrdersService {
         const folderName = "orders-payment-status"; // or any other dynamic name based on context
         const resultImage = await this.CloudinaryService.uploadImage(
           image,
-          folderName,
+          folderName
         );
         if (resultImage) {
           console.log(`Updating image URL for order ID ${orderId}`);
@@ -210,7 +368,7 @@ export class OrdersService {
           // Save the updated order
           const savedOrder = await transactionalEntityManager.save(
             OrderEntity,
-            order,
+            order
           );
 
           // Create an audit log entry
@@ -226,7 +384,7 @@ export class OrdersService {
           // Collect old values from the database
           const oldOrder = await transactionalEntityManager.findOne(
             OrderEntity,
-            { where: { id: savedOrder.id } },
+            { where: { id: savedOrder.id } }
           );
 
           if (oldOrder) {
@@ -263,7 +421,7 @@ export class OrdersService {
           await transactionalEntityManager.save(AuditLogEntity, auditLog);
 
           return savedOrder;
-        },
+        }
       );
     } catch (error) {
       if (error instanceof NotFoundException) {
@@ -271,7 +429,7 @@ export class OrdersService {
       } else {
         throw new InternalServerErrorException(
           "Error updating payment status",
-          error.stack,
+          error.stack
         );
       }
     }
@@ -284,7 +442,7 @@ export class OrdersService {
     orderId: string,
     newStatus: OrderStatus,
     image: Express.Multer.File,
-    userId: string, // Optional parameter for the user ID
+    userId: string // Optional parameter for the user ID
   ): Promise<OrderEntity | { paymentAmount: number }> {
     let order: OrderEntity;
 
@@ -305,7 +463,7 @@ export class OrdersService {
       } else {
         throw new InternalServerErrorException(
           "Error fetching the order",
-          error.stack,
+          error.stack
         );
       }
     }
@@ -314,7 +472,7 @@ export class OrdersService {
       try {
         if (!order.reservation) {
           throw new NotFoundException(
-            `No reservation found for order with ID ${orderId}`,
+            `No reservation found for order with ID ${orderId}`
           );
         }
 
@@ -324,7 +482,7 @@ export class OrdersService {
         if (order.paymentStatus === "paid") {
           if (order.receipts.length === 0) {
             throw new NotFoundException(
-              `No receipt found for order with ID ${orderId}`,
+              `No receipt found for order with ID ${orderId}`
             );
           }
 
@@ -334,7 +492,7 @@ export class OrdersService {
           paymentAmount = deposit;
         } else {
           throw new InternalServerErrorException(
-            `Invalid payment status: ${order.paymentStatus}`,
+            `Invalid payment status: ${order.paymentStatus}`
           );
         }
 
@@ -346,7 +504,7 @@ export class OrdersService {
         } else {
           throw new InternalServerErrorException(
             "Error processing payment details",
-            error.stack,
+            error.stack
           );
         }
       }
@@ -360,7 +518,7 @@ export class OrdersService {
       const folderName = "orders-status";
       const resultImage = await this.CloudinaryService.uploadImage(
         image,
-        folderName,
+        folderName
       );
       if (resultImage) {
         order.image_order_status_Url = resultImage.url;
@@ -384,7 +542,7 @@ export class OrdersService {
       } else {
         throw new InternalServerErrorException(
           "Error fetching user details",
-          error.stack,
+          error.stack
         );
       }
     }
@@ -398,7 +556,7 @@ export class OrdersService {
         async (transactionalEntityManager) => {
           const oldOrder = await transactionalEntityManager.findOne(
             OrderEntity,
-            { where: { id: updatedOrder.id } },
+            { where: { id: updatedOrder.id } }
           );
 
           const log = new AuditLogEntity();
@@ -440,7 +598,7 @@ export class OrdersService {
           }
 
           await transactionalEntityManager.save(AuditLogEntity, log);
-        },
+        }
       );
 
       return updatedOrder;
@@ -448,7 +606,7 @@ export class OrdersService {
       console.error("Failed to update order status:", error);
       throw new InternalServerErrorException(
         "Failed to update order status",
-        error.stack,
+        error.stack
       );
     }
   }
@@ -456,7 +614,7 @@ export class OrdersService {
   async assignOrderToArtist(
     orderId: string,
     artistId: string,
-    userId: string, // Include userId for logging
+    userId: string // Include userId for logging
   ): Promise<OrderEntity> {
     let order: OrderEntity;
     let artist: EmployeeEntity;
@@ -471,28 +629,42 @@ export class OrdersService {
         throw new NotFoundException(`Order with ID ${orderId} not found`);
       }
 
-      // Fetch the artist
+      // Fetch the artist with their position
       artist = await this.employeeRepository.findOne({
         where: { id: artistId },
-        relations: ["employeeType", "orders"], // Ensure employeeType and orders are included
+        relations: ["position"], // Ensure position is included
       });
 
       if (!artist) {
         throw new NotFoundException(`Artist with ID ${artistId} not found`);
       }
 
-      // Verify if the employee is an artist
-      if (artist.employeeType.typeEnglish !== "Artist") {
+      // Verify if the employee's position is "Artist"
+      if (artist.position.postion !== Postion.ARTIST) {
         throw new NotFoundException(
-          `Employee with ID ${artistId} is not an artist`,
+          `Employee with ID ${artistId} does not have the position of Artist`
         );
       }
 
-      // Assign the order to the artist
-      order.artist = artist;
-      artist.orders.push(order);
-      // Save the updated artist with their assigned orders
-      await this.employeeRepository.save(artist);
+      // Map the artist entity to ArtistDto
+      const artistDto: ArtistDto = {
+        id: artist.id,
+        username: artist.username,
+        email: artist.email,
+        role: artist.role,
+        englishName: artist.english_Name,
+        arabicName: artist.arabic_Name,
+        workingHours: artist.workingHours,
+        phoneNumber: artist.phoneNumber,
+        image: artist.image,
+        oldestAvgRating: artist.oldestAvgRating,
+        newestAvgRating: artist.newestAvgRating,
+        position: artist.position.postion,
+      };
+
+      // Assign the DTO to the order
+      order.artist = artistDto as any; // Type assertion to bypass TypeScript checks
+
       // Save the updated order
       const updatedOrder = await this.orderRepository.save(order);
 
@@ -502,7 +674,7 @@ export class OrdersService {
           // Find the old order for comparison
           const oldOrder = await transactionalEntityManager.findOne(
             OrderEntity,
-            { where: { id: updatedOrder.id } },
+            { where: { id: updatedOrder.id } }
           );
 
           const log = new AuditLogEntity();
@@ -536,13 +708,18 @@ export class OrdersService {
 
           if (user) {
             log.performedBy = user.id;
-            log.userDetails = user; // Include user details in the log
+            log.userDetails = {
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              role: user.role,
+            };
           } else {
             log.performedBy = null;
           }
 
           await transactionalEntityManager.save(AuditLogEntity, log);
-        },
+        }
       );
 
       return updatedOrder;
@@ -550,83 +727,116 @@ export class OrdersService {
       console.error("Failed to assign order to artist:", error);
       throw new InternalServerErrorException(
         "Failed to assign order to artist",
-        error.stack,
+        error.stack
       );
     }
   }
+
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async findAllOrders(
     findOrdersDto: FindOrdersDto,
+    userId: string // User ID extracted from the token
   ): Promise<{ items: OrderEntity[]; total: number }> {
-    const { page, limit, sort, employeeName, branchId } = findOrdersDto;
-
+    const { page, limit, sort, employeeName, dayDate, endDate, paymentStatus, orderStatus } = findOrdersDto;
+  
+    let branchId = findOrdersDto.branchId; // Declare branchId with let to allow reassignment
+  
     try {
+      // If the user is a receptionist or coordinator, fetch their branch ID
+      const employee = await this.employeeRepository.findOne({
+        where: { id: userId }, // Using userId to fetch employee
+        relations: ["branch"], // Ensure the branch relation is loaded
+      });
+  
+      // If employee exists and is a receptionist or coordinator, use their branch ID
+      if (
+        employee &&
+        (employee.role === Role.RECEPTIONIST || employee.role === Role.ARTISTMANAGER) &&
+        employee.branch
+      ) {
+        branchId = employee.branch.id; // Reassign branchId if conditions are met
+      }
+  
       // Build the query
       const query = this.orderRepository
         .createQueryBuilder("o")
-        .leftJoinAndSelect("o.artist", "a") // Join artist relation with alias "a"
-        .leftJoinAndSelect("o.payment", "p") // Join payment relation with alias "p"
-        .leftJoin("o.createdBy", "cb") // Join createdBy relation with alias "cb"
-        .addSelect(["cb.id", "cb.username", "cb.email", "cb.role"]) // Select specific fields from createdBy
-        .leftJoin("o.updatedBy", "ub") // Join updatedBy relation with alias "ub"
-        .addSelect(["ub.id", "ub.username"]) // Select specific fields from updatedBy
+        .leftJoinAndSelect("o.artist", "a")
+        .leftJoinAndSelect("o.customer", "c")
+        .addSelect(["c.id", "c.fullName", "c.phoneNumber"])
+        .leftJoin("o.createdBy", "cb")
+        .addSelect(["cb.id", "cb.username", "cb.email", "cb.role"])
+        .leftJoin("o.updatedBy", "ub")
+        .addSelect(["ub.id", "ub.username"])
+        .leftJoinAndSelect("o.reservation", "r")
+        .leftJoinAndSelect("r.services", "s")
+        .addSelect(["r.id", "r.start_Time", "r.end_Time", "r.totalPrice"])
         .take(limit)
         .skip((page - 1) * limit)
-        .orderBy(`o.date`, sort.toUpperCase() as "ASC" | "DESC"); // Order by date
-
+        .orderBy(`o.date`, sort.toUpperCase() as "ASC" | "DESC");
+  
       // Filter by employee name if provided
       if (employeeName) {
-        query.andWhere("a.englishName ILIKE :employeeName", {
+        query.andWhere("a.english_Name ILIKE :employeeName", {
           employeeName: `%${employeeName}%`,
         });
       }
-
-      // Filter by branch ID if provided
+  
+      // Filter by branch ID if available
       if (branchId) {
         query.andWhere("CAST(o.branch ->> 'id' AS uuid) = :branchId", {
           branchId,
         });
       }
-
-      // Log the generated SQL query for debugging
-      console.log(query.getSql());
-
+  
+      // Filter by date range if provided
+      if (dayDate || endDate) {
+        if (dayDate) {
+          query.andWhere("o.date >= :fromDayDate", {
+            fromDayDate: new Date(dayDate).toISOString(),
+          });
+        }
+        if (endDate) {
+          query.andWhere("o.date < :toDayDate", {
+            toDayDate: new Date(endDate).toISOString(),
+          });
+        }
+      }
+  
+      // Filter by payment status if provided
+      if (paymentStatus) {
+        query.andWhere("o.paymentStatus = :paymentStatus", { paymentStatus });
+      }
+  
+      // Filter by order status if provided
+      if (orderStatus) {
+        query.andWhere("o.status = :orderStatus", { orderStatus });
+      }
+  
       // Execute the query and get results
       const [items, total] = await query.getManyAndCount();
-
+  
       return { items, total };
     } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw new NotFoundException({
-          message: error.message || "Entity not found",
-          category: "EntityNotFound",
-        });
-      } else if (error instanceof BadRequestException) {
-        throw new BadRequestException({
-          message: error.message || "Bad request",
-          category: "ValidationError",
-        });
-      } else {
-        throw new InternalServerErrorException({
-          message: error.message || "Internal server error",
-          category: "InternalServerError",
-        });
-      }
+      console.error("Error fetching orders:", error);
+      throw new Error("Unable to fetch orders.");
     }
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Method to get the count of each order status
-  async getOrderStatusCount(
-    branchId: string,
-  ): Promise<{ items: { [key in OrderStatus]: number } }> {
-    const orders = await this.orderRepository
+  async getOrderStatusCount(branchId?: string): Promise<any> {
+    const queryBuilder = this.orderRepository
       .createQueryBuilder("order")
       .innerJoin("order.reservation", "reservation")
       .select("order.status", "status")
       .addSelect("COUNT(order.id)", "count")
-      .where("reservation.branchId = :branchId", { branchId })
-      .groupBy("order.status")
-      .getRawMany();
+      .groupBy("order.status");
+
+    // Conditionally add the where clause based on the presence of branchId
+    if (branchId) {
+      queryBuilder.where("reservation.branchId = :branchId", { branchId });
+    }
+
+    const orders = await queryBuilder.getRawMany();
 
     // Initialize the status count object with all possible statuses
     const orderStatusCounts: { [key in OrderStatus]: number } = {
@@ -643,57 +853,126 @@ export class OrdersService {
       orderStatusCounts[order.status] = parseInt(order.count, 10);
     });
 
-    return { items: orderStatusCounts };
+    return orderStatusCounts;
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   async findOrdersByEmployeeAndDay(
     userId: string,
-    findOrdersByDayDto: FindOrdersByDayDto,
-  ): Promise<{ items: OrderEntity[]; total: number }> {
+    findOrdersByDayDto: FindOrdersByDayDto
+  ): Promise<{ items: any[]; total: number }> {
     const { page, limit, sort, dayDate } = findOrdersByDayDto;
 
     try {
-      // Fetch the employee by userId
+      // Fetch the employee by userId, including relations
       const employee = await this.employeeRepository.findOne({
         where: { id: userId },
-        relations: ["orders"], // Ensure that the 'orders' relation is loaded
+        relations: [
+          "orders",
+          "orders.customer", // Ensure 'customer' relation is loaded
+          "orders.payment", // Ensure 'payment' relation is loaded
+          "orders.artist", // Ensure 'artist' relation is loaded
+          "branch", // Ensure 'branch' relation is loaded
+        ],
       });
 
       if (!employee) {
         throw new NotFoundException(`Employee with userId ${userId} not found`);
       }
 
-      // Filter the orders by dayDate (assuming order.date is a date field)
-      const filteredOrders = employee.orders.filter((order) =>
-        order.date.toString().startsWith(dayDate),
-      );
+      // Filter orders by dayDate using range for better accuracy
+      const dayStart = new Date(dayDate);
+      const dayEnd = new Date(dayDate);
+      dayEnd.setDate(dayEnd.getDate() + 1); // Next day
+
+      const filteredOrders = employee.orders.filter((order) => {
+        const orderDate = new Date(order.date);
+        return orderDate >= dayStart && orderDate < dayEnd;
+      });
 
       // Apply sorting
       const sortedOrders = filteredOrders.sort((a, b) => {
         const dateA = new Date(a.date);
         const dateB = new Date(b.date);
-        return sort === "ASC"
-          ? dateA.getTime() - dateB.getTime()
-          : dateB.getTime() - dateA.getTime();
+        if (sort === "ASC") return dateA.getTime() - dateB.getTime();
+        if (sort === "DESC") return dateB.getTime() - dateA.getTime();
+        return 0; // Default if sort is invalid
       });
 
       // Paginate the orders
       const paginatedOrders = sortedOrders.slice(
         (page - 1) * limit,
-        page * limit,
+        page * limit
       );
 
+      // Map orders to include artist, payment, customer, and branch details
+      const mappedOrders = paginatedOrders.map((order) => ({
+        id: order.id,
+        date: order.date.toString(), // Ensure correct date format
+        serviceEnglish: order.serviceEnglish,
+        serviceArabic: order.serviceArabic,
+        invoiceNumber: order.invoiceNumber,
+        status: order.status,
+        paymentStatus: order.paymentStatus,
+        image_order_status_Url: order.image_order_status_Url,
+        image_order_payment_status_Url: order.image_order_payment_status_Url,
+        artist: order.artist
+          ? {
+              id: order.artist.id,
+              username: order.artist.username,
+              email: order.artist.email,
+              role: order.artist.role,
+              english_Name: order.artist.english_Name,
+              arabic_Name: order.artist.arabic_Name,
+              workingHours: order.artist.workingHours,
+              countryCode: order.artist.countryCode,
+              phoneNumber: order.artist.phoneNumber,
+              image: order.artist.image,
+              available: order.artist.available,
+              totalReviews: order.artist.totalReviews,
+              status: order.artist.status,
+              oldestAvgRating: order.artist.oldestAvgRating,
+              newestAvgRating: order.artist.newestAvgRating,
+            }
+          : null,
+        payment: order.payment
+          ? {
+              id: order.payment.id,
+              methodEnglish: order.payment.methodEnglish,
+              methodArabic: order.payment.methodArabic,
+              image: order.payment.image,
+              createdAt: order.payment.createdAt.toISOString(),
+            }
+          : null,
+        customer: order.customer
+          ? {
+              id: order.customer.id,
+              country_Code: order.customer.country_Code,
+              phoneNumber: order.customer.phoneNumber,
+              fullName: order.customer.fullName,
+              dateOfBirth: order.customer.dateOfBirth,
+            }
+          : null,
+        branch: employee.branch
+          ? {
+              id: employee.branch.id,
+              name: employee.branch.name,
+              // Add more branch fields as needed
+            }
+          : null,
+      }));
+
       // Return paginated result
-      return { items: paginatedOrders, total: filteredOrders.length };
+      return { items: mappedOrders, total: filteredOrders.length };
     } catch (error) {
       console.error("Failed to retrieve orders for employee:", error);
       throw new InternalServerErrorException(
         "Failed to retrieve orders for employee",
-        error.stack,
+        error.stack
       );
     }
   }
+
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   async findOrderById(orderId: string): Promise<OrderEntity | null> {
@@ -705,7 +984,7 @@ export class OrdersService {
     } catch (error) {
       throw new InternalServerErrorException(
         "Failed to retrieve the order",
-        error.stack,
+        error.stack
       );
     }
   }
@@ -713,7 +992,7 @@ export class OrdersService {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async updatePaymentForOrder(
     orderId: string,
-    paymentId: string,
+    paymentId: string
   ): Promise<OrderEntity> {
     try {
       // Find the order by ID
@@ -743,8 +1022,134 @@ export class OrdersService {
     } catch (error) {
       throw new InternalServerErrorException(
         "Failed to update payment for order",
-        error.stack,
+        error.stack
       );
     }
   }
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  async getTopArtistsByOrders(branchId?: string) {
+    // Find the position ID for the "ARTIST" role
+    const artistPosition = await this.PositionRepository.findOne({
+      where: { postion: Postion.ARTIST },
+    });
+
+    if (!artistPosition) {
+      throw new NotFoundException("Artist position not found");
+    }
+
+    // Create the base query for employees with the position 'ARTIST'
+    const query = this.employeeRepository
+      .createQueryBuilder("employee")
+      .leftJoin("employee.orders", "order")
+      .where("employee.positionId = :positionId", {
+        positionId: artistPosition.id,
+      })
+      .select("employee.id", "employeeId")
+      .addSelect("employee.english_Name", "englishName")
+      .addSelect("employee.arabic_Name", "arabicName")
+      .addSelect("employee.email", "email") // Add email
+      .addSelect("employee.role", "role") // Add role
+      .addSelect("employee.branchId", "branchId") // Add branchId
+      .addSelect("COUNT(order.id)", "orderCount") // Count the number of orders
+      .groupBy("employee.id")
+      .addGroupBy("employee.email") // Ensure email is included in group by
+      .addGroupBy("employee.role") // Ensure role is included in group by
+      .addGroupBy("employee.branchId") // Ensure branchId is included in group by
+      .orderBy("COUNT(order.id)", "DESC") // Sort by the number of orders
+      .limit(5); // Limit to top 5 employees
+
+    // If a branchId is provided, filter employees by that branch
+    if (branchId) {
+      query.andWhere("employee.branchId = :branchId", { branchId });
+    }
+
+    // Log the generated SQL query for debugging
+    // console.log(query.getSql());
+
+    // Execute the query and return the results
+    const result = await query.getRawMany();
+
+    // Return the mapped results with the required fields
+    return result.map((item) => ({
+      employeeId: item.employeeId,
+      englishName: item.englishName,
+      arabicName: item.arabicName,
+      email: item.email,
+      role: item.role,
+      branchId: item.branchId,
+      orderCount: item.orderCount ? parseInt(item.orderCount, 10) : 0, // Parse order count as a number, default to 0 if null
+    }));
+  }
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  async getOrderCount(branchId?: string): Promise<number> {
+    const queryBuilder = this.orderRepository.createQueryBuilder("order");
+
+    if (branchId) {
+      queryBuilder.where("order.branch->>id = :branchId", { branchId });
+    }
+
+    const count = await queryBuilder.getCount();
+    return count;
+  }
+
+  async getOrderStatusCountForArtist(
+    userId: string,
+    branchId?: string,
+    artistId?: string // Optional artistId parameter for ADMIN role
+  ): Promise<{ [key in OrderStatus]: number }> {
+    // Initialize the result object with all order statuses set to zero
+    const orderStatusCounts: { [key in OrderStatus]: number } = {
+      [OrderStatus.InProgress]: 0,
+      [OrderStatus.InQueue]: 0,
+      [OrderStatus.Working]: 0,
+      [OrderStatus.Done]: 0,
+      [OrderStatus.Completed]: 0,
+      [OrderStatus.Canceled]: 0,
+    };
+  
+    // Retrieve the user based on userId
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+  
+    // Determine the artistId based on the user's role
+    const effectiveArtistId = user.role === Role.ARTIST ? user.id : artistId;
+  
+    if (!effectiveArtistId) {
+      throw new BadRequestException("Artist ID must be provided for ADMIN role or user must be an ARTIST.");
+    }
+  
+    // Query the repository to get counts based on artistId and optional branchId
+    const ordersQuery = this.orderRepository.createQueryBuilder('order')
+      .select('order.status', 'order_status') // Aliasing here
+      .addSelect('COUNT(order.id)', 'count')
+      .where('order.artistId = :artistId', { artistId: effectiveArtistId });
+  
+    if (branchId) {
+      ordersQuery.andWhere('order.branchId = :branchId', { branchId });
+    }
+  
+    // Group by order status
+    ordersQuery.groupBy('order.status');
+  
+    const results = await ordersQuery.getRawMany();
+    // console.log('Query Results:', results); // Log the results for debugging
+  
+    // Populate the count object based on the results
+    for (const result of results) {
+      const status = result.order_status as OrderStatus; // Use 'order_status' to match the query result
+      if (OrderStatus[status]) {
+        orderStatusCounts[status] = parseInt(result.count, 10);
+      } else {
+        console.warn(`Unexpected order status: ${status}`); // Log unexpected statuses
+      }
+    }
+  
+    return orderStatusCounts;
+  }
+  
 }

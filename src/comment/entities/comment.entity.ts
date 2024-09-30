@@ -25,7 +25,7 @@ export class CommentEntity {
   order: OrderEntity;
 
   @ManyToOne(() => EmployeeEntity, (employee) => employee.comments)
-  employee: EmployeeEntity;
+  employee:  Partial<EmployeeEntity>;;
 
   @CreateDateColumn()
   createdAt: Date; // Automatically set the date when the comment is created

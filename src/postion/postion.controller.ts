@@ -8,6 +8,8 @@ import {
   Delete,
   UseGuards,
   Put,
+  Request,
+  BadRequestException,
 } from "@nestjs/common";
 import { PostionService } from "./postion.service";
 import { UpdatePostionDto } from "./dto/update.postion.dto";
@@ -28,9 +30,16 @@ export class PostionController {
   // Create a new position
   @Post()
   async createPosition(
+    @Request() req: any, // Request object to access the user
+
     @Body() createPositionDto: CreatePositionDto,
   ): Promise<PositionEntity> {
-    return this.postionService.createPosition(createPositionDto);
+    const userId = req.user.sub; // Extract user ID from request
+
+    if (!userId) {
+      throw new BadRequestException('User not authenticated');
+    }
+    return this.postionService.createPosition(createPositionDto,userId);
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
@@ -45,10 +54,16 @@ export class PostionController {
   @Roles(Role.SUPERADMIN)
   @Put(":id")
   async updatePosition(
+    @Request() req: any, // Request object to access the user
+
     @Param("id") id: string,
     @Body() updatePositionDto: UpdatePostionDto,
   ): Promise<PositionEntity> {
-    return this.postionService.updatePosition(id, updatePositionDto);
+    const userId = req.user.sub; // Extract user ID from request
+
+    if (!userId) {
+      throw new BadRequestException('User not authenticated');
+    }    return this.postionService.updatePosition(id, updatePositionDto,userId);
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first

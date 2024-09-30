@@ -198,6 +198,7 @@ export class ReservationService {
     body: CreateReservationDto,
     image: Express.Multer.File,
     userId: string,
+
   ) {
     try {
       // Validate branch existence
@@ -283,7 +284,7 @@ export class ReservationService {
       await this.ReservationRepository.save(reservation);
 
       // Create an order for the reservation
-      await this.OrdersService.createOrder(reservation.id, userId);
+      await this.OrdersService.createOrder(reservation.id, userId,body.paymentId      );
 
       // Adjust working hours based on the new reservation
       const newWorkingHours = this.newAddedWorkingHours(
@@ -484,9 +485,10 @@ export class ReservationService {
 
     await this.ReservationRepository.save(reservation);
 
-    // Create a new order for the updated reservation
-    await this.OrdersService.createOrder(reservation.id, userId);
-
+    // // Create a new order for the updated reservation
+    // await this.OrdersService.createOrder(reservation.id, userId,body.paymentId);
+  // Call to update the associated order with the updated services
+  const updatedOrder=await this.OrdersService.updateOrderServicesFromReservation(reservation.id, userId);
     // Create an audit log entry for the updated reservation
     const changedColumns = ["start_Time", "end_Time", "services", "totalPrice"];
     const changesDetails = {};
@@ -516,7 +518,7 @@ export class ReservationService {
 
     await this.entityManager.save(AuditLogEntity, log);
 
-    return { status: "Reservation updated" };
+    return { status: "Reservation updated",updatedOrder };
   }
 
   async updateTime(id: string, body: UpdateTimeReservationDto, userId: string) {
@@ -585,6 +587,7 @@ export class ReservationService {
     reservation.end_Time = endTime;
 
     await this.ReservationRepository.save(reservation);
+    const updatedOrder=await this.OrdersService.updateOrderTimeFromReservation(reservation.id, userId);
 
     // Create an audit log entry
     const changedColumns = ["start_Time", "end_Time"];
@@ -615,7 +618,7 @@ export class ReservationService {
 
     await this.entityManager.save(AuditLogEntity, log);
 
-    return { status: "Time updated" };
+    return { status: "Time updated",updatedOrder };
   }
 
   async deleteReservation(id: string) {
@@ -676,5 +679,22 @@ export class ReservationService {
       duration: Math.ceil((start.getTime() - end.getTime()) / (1000 * 60)),
     });
     await this.WorkingHourEntity.save(workingSlot);
+  }
+
+
+
+  async getTop5Reservations(startDate: string, endDate: string): Promise<ReservationEntity[]> {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setDate(end.getDate() + 1); // Include the end date in the query
+
+    const topReservations = await this.ReservationRepository
+      .createQueryBuilder('reservation')
+      .where('reservation.createdAt BETWEEN :start AND :end', { start, end })
+      .orderBy('reservation.totalPrice', 'DESC')
+      .take(5) // Limit the results to top 5
+      .getMany();
+
+    return topReservations;
   }
 }

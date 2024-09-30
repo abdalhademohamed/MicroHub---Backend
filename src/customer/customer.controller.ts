@@ -20,6 +20,15 @@ import { ApiTags } from "@nestjs/swagger";
 export class CustomerController {
   constructor(private readonly customerService: CustomerService) {}
 
+
+
+
+  @Get('count')
+  async getCustomerCount(): Promise<{ count: number }> {
+    const count = await this.customerService.countCustomers();
+    return { count };
+  }
+  
   @Get(":phoneNumber")
   async getCustomerByPhoneNumber(
     @Param("phoneNumber") phoneNumber: string,

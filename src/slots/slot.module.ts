@@ -9,6 +9,7 @@ import { SlotService } from "./slots.service";
 import { ReservationModule } from "../reservation/reservation.module";
 import { SlotsEntity } from "./entities/slots.entity";
 import { WorkingEntity } from "./entities/working.entity";
+import { EmployeeEntity } from "../employee/entities/employee.entity";
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { WorkingEntity } from "./entities/working.entity";
       WorkingBranchEntity,
       BranchEntity,
       UserEntity,
+      EmployeeEntity
     ]), // Register the necessary entities with TypeORM
     ReservationModule,
   ],

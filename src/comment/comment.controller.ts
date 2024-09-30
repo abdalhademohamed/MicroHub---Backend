@@ -1,16 +1,15 @@
-import { Controller, Get, Query } from "@nestjs/common";
+import { Controller, Get, Param, Query } from "@nestjs/common";
 import { CommentService } from "./comment.service";
 
 @Controller("comment")
 export class CommentController {
   constructor(private readonly commentService: CommentService) {}
 
-  @Get("sorted")
+  @Get(':orderId')
   async getComments(
-    @Query("orderId") orderId: string,
-    @Query("page") page: number = 1,
-    @Query("limit") limit: number = 10,
+    @Param("orderId") orderId: string,
+ 
   ) {
-    return this.commentService.getCommentsByOrderId(orderId, page, limit);
+    return this.commentService.getCommentByOrderId(orderId);
   }
 }

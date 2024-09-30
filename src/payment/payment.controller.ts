@@ -37,14 +37,14 @@ export class PaymentController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN,Role.COORDINATOR)
   @Get()
   async getAllPayments(): Promise<PaymentEntity[]> {
     return this.paymentService.getAllPayments();
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN,Role.COORDINATOR)
   @Get(":id")
   async getPaymentById(@Param("id") id: string): Promise<PaymentEntity> {
     return this.paymentService.getPaymentById(id);

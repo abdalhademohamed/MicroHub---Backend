@@ -11,6 +11,7 @@ import { ReservationService } from "../reservation/reservation.service";
 import { SlotsEntity } from "./entities/slots.entity";
 import { WorkingEntity } from "./entities/working.entity";
 import { AvailableQueryDto } from "./dto/query.available.dto";
+import { EmployeeEntity } from "../employee/entities/employee.entity";
 
 @Injectable()
 export class SlotService {
@@ -25,6 +26,8 @@ export class SlotService {
     private readonly WorkingRepository: Repository<WorkingEntity>,
     @InjectRepository(UserEntity)
     private readonly UserRepository: Repository<UserEntity>,
+    @InjectRepository(EmployeeEntity)
+    private readonly EmployeeRepository: Repository<EmployeeEntity>,
     private reservationService: ReservationService,
   ) {}
   async getNextFourWeeksDatesForDay(
@@ -63,11 +66,11 @@ export class SlotService {
     }
   }
   artistCount(branchId: string) {
-    return this.UserRepository.countBy({
+    return this.EmployeeRepository.countBy({
       role: Role.ARTIST,
-      // branch: {
-      //   id: branchId,
-      // },
+      branch: {
+        id: branchId,
+      },
     });
   }
   branchWorkingHours(branchId: string, dayOfWeek: WeekDays) {

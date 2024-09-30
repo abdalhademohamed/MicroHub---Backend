@@ -1,6 +1,4 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { ServiceEntity } from "../../service/entities/service.entity";
-import { RootoshEntity } from "../../rootosh/entities/rootosh.entity";
 
 export class GetCustomerDto {
   @ApiProperty({ description: "Unique identifier of the customer" })
@@ -20,8 +18,60 @@ export class GetCustomerDto {
     type: String,
     nullable: true,
   })
-  dateOfBirth: string; // ISO 8601 string format
+  dateOfBirth?: string; // ISO 8601 string format or null
 
-  @ApiProperty({ description: "Time remaining until the next birthday" })
-  timeUntilBirthday: string;
+  @ApiProperty({ description: "Time remaining until the next birthday", nullable: true })
+  timeUntilBirthday?: string; // Time until next birthday or null
+
+  @ApiProperty({
+    description: "List of last services availed by the customer",
+    type: [Object],
+    nullable: true,
+  })
+  lastServices?: Array<{
+    id: string;
+    name: string;
+    duration: number;
+    price: number;
+  }>; // Array of service details
+
+  @ApiProperty({
+    description: "List of last rootoshes availed by the customer",
+    type: [Object],
+    nullable: true,
+  })
+  lastRootoshes?: Array<{
+    id: string;
+    name: string;
+    description: string;
+  }>; // Array of rootosh details
+
+  @ApiProperty({
+    description: "List of reservations made by the customer",
+    type: [Object],
+    nullable: true,
+  })
+  reservations?: Array<{
+    id: string;
+    reservationDate: string; // ISO 8601 string format
+    services: Array<{
+      id: string;
+      name: string;
+      duration: number;
+      price: number;
+    }>; // Array of service details
+  }>;
+
+  @ApiProperty({
+    description: "List of orders made by the customer",
+    type: [Object],
+    nullable: true,
+  })
+  orders?: Array<{
+    id: string;
+    date: string; // ISO 8601 string format
+  }>;
+
+  @ApiProperty({ description: "Count of orders for the customer" })
+  orderCount?: number; // Count of orders
 }

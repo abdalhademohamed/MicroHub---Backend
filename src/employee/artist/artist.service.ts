@@ -24,7 +24,7 @@ export class ArtistService {
     private readonly CloudinaryService: CloudinaryService,
 
     @InjectRepository(EmployeeEntity)
-    private readonly employeeRepository: Repository<EmployeeEntity>,
+    private readonly employeeRepository: Repository<EmployeeEntity>
   ) {}
 
   async addComment(
@@ -32,40 +32,46 @@ export class ArtistService {
     content: string,
     imageBefore: Express.Multer.File,
     imageAfter: Express.Multer.File,
-    userId: string,
+    userId: string
   ): Promise<any> {
     // Find the order
     const order = await this.orderRepository.findOne({
       where: { id: orderId },
+      relations: ["artist"], // Ensure artist relation is loaded
     });
 
+    // Check if the order exists
     if (!order) {
       throw new NotFoundException("Order not found");
     }
 
-    if (!imageBefore || !imageAfter) {
-      throw new BadRequestException("Photo is required");
-    }
-    // Find the employee
-    const employee = await this.employeeRepository.findOne({
-      where: { id: userId },
-    });
-    // Check if the employee is the owner of the order
-    if (order.artist.id !== userId) {
+    // Check if the order has an associated artist and the artist's ID matches the user ID
+    if (!order.artist || order.artist.id !== userId) {
       throw new BadRequestException(
-        "You are not authorized to comment on this order",
+        "You are not authorized to comment on this order"
       );
     }
+
+    // // Find the employee
+    // const employee = await this.employeeRepository.findOne({
+    //   where: { id: userId },
+    // });
+    // Check if the employee is the owner of the order
+    // if (order.artist.id !== userId) {
+    //   throw new BadRequestException(
+    //     "You are not authorized to comment on this order"
+    //   );
+    // }
 
     // Upload image
     const folderName = "reservation"; // or any other dynamic name based on context
     const resultimagebefore = await this.CloudinaryService.uploadImage(
       imageBefore,
-      folderName,
+      folderName
     );
     const resultimageafter = await this.CloudinaryService.uploadImage(
       imageAfter,
-      folderName,
+      folderName
     );
 
     // Create and save the comment
@@ -74,7 +80,7 @@ export class ArtistService {
       imageBeforeUrl: resultimagebefore.url,
       imageAfterUrl: resultimageafter.url,
       order,
-      employee, // Optionally link the comment to the artist
+      employee:order.artist, // Optionally link the comment to the artist
     });
 
     try {
@@ -82,7 +88,7 @@ export class ArtistService {
     } catch (error) {
       throw new InternalServerErrorException(
         "Failed to add comment",
-        error.stack,
+        error.stack
       );
     }
   }
