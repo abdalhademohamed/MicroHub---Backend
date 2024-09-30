@@ -170,8 +170,6 @@ export class OrdersService {
     reservationId: string,
     userId: string
   ): Promise<OrderEntity> {
-
-
     const UpdateBy = await this.userRepository.findOne({
       where: { id: userId },
       select: ["id", "username", "email", "role"], // Only return these fields
@@ -202,7 +200,7 @@ export class OrdersService {
     order.serviceArabic = reservation.services
       .map((service) => service.arabic_Name)
       .join(", ");
-    order.updatedBy=UpdateBy
+    order.updatedBy = UpdateBy;
     try {
       return await this.entityManager.transaction(
         async (transactionalEntityManager) => {
@@ -245,13 +243,10 @@ export class OrdersService {
     }
   }
 
-
   async updateOrderTimeFromReservation(
     reservationId: string,
     userId: string
   ): Promise<OrderEntity> {
-
-
     const UpdateBy = await this.userRepository.findOne({
       where: { id: userId },
       select: ["id", "username", "email", "role"], // Only return these fields
@@ -275,9 +270,8 @@ export class OrdersService {
       throw new NotFoundException("Order not found for this reservation");
     }
 
-   
     order.date = `${reservation.reservationYear}-${reservation.reservationMonth}-${reservation.reservationDay}`;
-    order.updatedBy=UpdateBy
+    order.updatedBy = UpdateBy;
     try {
       return await this.entityManager.transaction(
         async (transactionalEntityManager) => {
@@ -741,66 +735,81 @@ export class OrdersService {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async findAllOrders(
     findOrdersDto: FindOrdersDto,
-    userId: string, // User ID extracted from the token
+    userId: string // User ID extracted from the token
   ): Promise<{ items: OrderEntity[]; total: number }> {
-    const { page, limit, sort, employeeName, dayDate } = findOrdersDto;
-    
+    const { page, limit, sort, employeeName, dayDate, endDate, paymentStatus, orderStatus } = findOrdersDto;
+  
     let branchId = findOrdersDto.branchId; // Declare branchId with let to allow reassignment
   
     try {
       // If the user is a receptionist or coordinator, fetch their branch ID
       const employee = await this.employeeRepository.findOne({
         where: { id: userId }, // Using userId to fetch employee
-        relations: ['branch'], // Ensure the branch relation is loaded
+        relations: ["branch"], // Ensure the branch relation is loaded
       });
   
       // If employee exists and is a receptionist or coordinator, use their branch ID
-      if (employee && (employee.role === Role.RECEPTIONIST || employee.role === Role.ARTISTMANAGER) && employee.branch) {
+      if (
+        employee &&
+        (employee.role === Role.RECEPTIONIST || employee.role === Role.ARTISTMANAGER) &&
+        employee.branch
+      ) {
         branchId = employee.branch.id; // Reassign branchId if conditions are met
       }
   
       // Build the query
       const query = this.orderRepository
-        .createQueryBuilder('o')
-        .leftJoinAndSelect('o.artist', 'a')
-        .leftJoinAndSelect('o.payment', 'p')
-        .leftJoinAndSelect('o.customer', 'c')
-        .addSelect(['c.id', 'c.fullName', 'c.phoneNumber'])
-        .leftJoin('o.createdBy', 'cb')
-        .addSelect(['cb.id', 'cb.username', 'cb.email', 'cb.role'])
-        .leftJoin('o.updatedBy', 'ub')
-        .addSelect(['ub.id', 'ub.username'])
-        .leftJoinAndSelect('o.reservation', 'r')
-        .leftJoinAndSelect('r.services', 's')
-        .addSelect(['r.id', 'r.start_Time', 'r.end_Time', 'r.totalPrice'])
+        .createQueryBuilder("o")
+        .leftJoinAndSelect("o.artist", "a")
+        .leftJoinAndSelect("o.customer", "c")
+        .addSelect(["c.id", "c.fullName", "c.phoneNumber"])
+        .leftJoin("o.createdBy", "cb")
+        .addSelect(["cb.id", "cb.username", "cb.email", "cb.role"])
+        .leftJoin("o.updatedBy", "ub")
+        .addSelect(["ub.id", "ub.username"])
+        .leftJoinAndSelect("o.reservation", "r")
+        .leftJoinAndSelect("r.services", "s")
+        .addSelect(["r.id", "r.start_Time", "r.end_Time", "r.totalPrice"])
         .take(limit)
         .skip((page - 1) * limit)
-        .orderBy(`o.date`, sort.toUpperCase() as 'ASC' | 'DESC');
+        .orderBy(`o.date`, sort.toUpperCase() as "ASC" | "DESC");
   
       // Filter by employee name if provided
       if (employeeName) {
-        query.andWhere('a.english_Name ILIKE :employeeName', {
+        query.andWhere("a.english_Name ILIKE :employeeName", {
           employeeName: `%${employeeName}%`,
         });
       }
   
       // Filter by branch ID if available
       if (branchId) {
-        query.andWhere('CAST(o.branch ->> \'id\' AS uuid) = :branchId', {
+        query.andWhere("CAST(o.branch ->> 'id' AS uuid) = :branchId", {
           branchId,
         });
       }
   
-      // Filter by day date if provided
-      if (dayDate) {
-        const startDate = new Date(dayDate);
-        const endDate = new Date(dayDate);
-        endDate.setDate(startDate.getDate() + 1); // End of the day
+      // Filter by date range if provided
+      if (dayDate || endDate) {
+        if (dayDate) {
+          query.andWhere("o.date >= :fromDayDate", {
+            fromDayDate: new Date(dayDate).toISOString(),
+          });
+        }
+        if (endDate) {
+          query.andWhere("o.date < :toDayDate", {
+            toDayDate: new Date(endDate).toISOString(),
+          });
+        }
+      }
   
-        query.andWhere('o.date >= :startDate AND o.date < :endDate', {
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString(),
-        });
+      // Filter by payment status if provided
+      if (paymentStatus) {
+        query.andWhere("o.paymentStatus = :paymentStatus", { paymentStatus });
+      }
+  
+      // Filter by order status if provided
+      if (orderStatus) {
+        query.andWhere("o.status = :orderStatus", { orderStatus });
       }
   
       // Execute the query and get results
@@ -808,22 +817,26 @@ export class OrdersService {
   
       return { items, total };
     } catch (error) {
-      // Error handling remains unchanged
+      console.error("Error fetching orders:", error);
+      throw new Error("Unable to fetch orders.");
     }
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Method to get the count of each order status
-  async getOrderStatusCount(
-    branchId: string
-  ): Promise<{ items: { [key in OrderStatus]: number } }> {
-    const orders = await this.orderRepository
+  async getOrderStatusCount(branchId?: string): Promise<any> {
+    const queryBuilder = this.orderRepository
       .createQueryBuilder("order")
       .innerJoin("order.reservation", "reservation")
       .select("order.status", "status")
       .addSelect("COUNT(order.id)", "count")
-      .where("reservation.branchId = :branchId", { branchId })
-      .groupBy("order.status")
-      .getRawMany();
+      .groupBy("order.status");
+
+    // Conditionally add the where clause based on the presence of branchId
+    if (branchId) {
+      queryBuilder.where("reservation.branchId = :branchId", { branchId });
+    }
+
+    const orders = await queryBuilder.getRawMany();
 
     // Initialize the status count object with all possible statuses
     const orderStatusCounts: { [key in OrderStatus]: number } = {
@@ -840,7 +853,7 @@ export class OrdersService {
       orderStatusCounts[order.status] = parseInt(order.count, 10);
     });
 
-    return { items: orderStatusCounts };
+    return orderStatusCounts;
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1068,4 +1081,75 @@ export class OrdersService {
       orderCount: item.orderCount ? parseInt(item.orderCount, 10) : 0, // Parse order count as a number, default to 0 if null
     }));
   }
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  async getOrderCount(branchId?: string): Promise<number> {
+    const queryBuilder = this.orderRepository.createQueryBuilder("order");
+
+    if (branchId) {
+      queryBuilder.where("order.branch->>id = :branchId", { branchId });
+    }
+
+    const count = await queryBuilder.getCount();
+    return count;
+  }
+
+  async getOrderStatusCountForArtist(
+    userId: string,
+    branchId?: string,
+    artistId?: string // Optional artistId parameter for ADMIN role
+  ): Promise<{ [key in OrderStatus]: number }> {
+    // Initialize the result object with all order statuses set to zero
+    const orderStatusCounts: { [key in OrderStatus]: number } = {
+      [OrderStatus.InProgress]: 0,
+      [OrderStatus.InQueue]: 0,
+      [OrderStatus.Working]: 0,
+      [OrderStatus.Done]: 0,
+      [OrderStatus.Completed]: 0,
+      [OrderStatus.Canceled]: 0,
+    };
+  
+    // Retrieve the user based on userId
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+  
+    // Determine the artistId based on the user's role
+    const effectiveArtistId = user.role === Role.ARTIST ? user.id : artistId;
+  
+    if (!effectiveArtistId) {
+      throw new BadRequestException("Artist ID must be provided for ADMIN role or user must be an ARTIST.");
+    }
+  
+    // Query the repository to get counts based on artistId and optional branchId
+    const ordersQuery = this.orderRepository.createQueryBuilder('order')
+      .select('order.status', 'order_status') // Aliasing here
+      .addSelect('COUNT(order.id)', 'count')
+      .where('order.artistId = :artistId', { artistId: effectiveArtistId });
+  
+    if (branchId) {
+      ordersQuery.andWhere('order.branchId = :branchId', { branchId });
+    }
+  
+    // Group by order status
+    ordersQuery.groupBy('order.status');
+  
+    const results = await ordersQuery.getRawMany();
+    // console.log('Query Results:', results); // Log the results for debugging
+  
+    // Populate the count object based on the results
+    for (const result of results) {
+      const status = result.order_status as OrderStatus; // Use 'order_status' to match the query result
+      if (OrderStatus[status]) {
+        orderStatusCounts[status] = parseInt(result.count, 10);
+      } else {
+        console.warn(`Unexpected order status: ${status}`); // Log unexpected statuses
+      }
+    }
+  
+    return orderStatusCounts;
+  }
+  
 }

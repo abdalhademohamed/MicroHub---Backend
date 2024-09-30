@@ -42,22 +42,65 @@ import { FindOrdersByDayDto } from "./dto/find.orders.dto.for.artist";
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
-  // @Post(':reservationId')
-  // @ApiOperation({ summary: 'Create an order from a reservation' })
-  // @ApiResponse({ status: 201, description: 'Order created successfully.' })
-  // @ApiResponse({ status: 404, description: 'Reservation not found.' })
-  // async createOrder(
-  //   @Param('reservationId') reservationId: string
-  // ) {
-  //   return this.ordersService.createOrder(reservationId);
-  // }
+  @Get("count")
+  async getOrderCount(
+    @Query("branchId") branchId?: string
+  ): Promise<{ count: string }> {
+    const count = await this.ordersService.getOrderCount(branchId);
+    return { count: count.toString() }; // Return the count as a string
+  }
 
-  // Endpoint to update the order status
+  @Get('/sorted')
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(
+    Role.SUPERADMIN,
+    Role.RECEPTIONIST,
+    Role.COORDINATOR,
+    Role.ARTISTMANAGER
+  )
+  async findAllOrders(
+    @Query() findOrdersDto: FindOrdersDto,
+    @Request() req: any, // Request object to access the user
+  ) {
+    const userId = req.user.sub; // Assuming user ID is stored in the request
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
+    return this.ordersService.findAllOrders(findOrdersDto, userId);
+  }
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+@UseGuards(AccessTokenGuard, RolesGuard)
+@Roles(
+  Role.SUPERADMIN,
+  Role.COORDINATOR,
+  Role.BRANCHMANAGER,
+  Role.RECEPTIONIST,
+  Role.ARTISTMANAGER,
+  Role.ARTIST
+)
+@Get('artist/status/count')
+async getOrderStatusCountForArtist(
+  @Request() req: any, // Request object to access the user
+  @Query('branchId') branchId?: string,
+  @Query('artistId') artistId?: string // Optional artistId for ADMIN role
+): Promise<{ [key in OrderStatus]: number }> {
+  const userId = req.user.sub; // Get the authenticated user from the request
+  if (!userId) {
+    throw new BadRequestException("User not authenticated");
+  }
+
+  // Pass userId, branchId, and artistId to the service
+  return this.ordersService.getOrderStatusCountForArtist(userId, branchId, artistId);
+}
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
   @Patch("payment/status/:orderId")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.BRANCHMANAGER,Role.RECEPTIONIST)
+  @Roles(
+    Role.SUPERADMIN,
+    Role.COORDINATOR,
+    Role.BRANCHMANAGER,
+    Role.RECEPTIONIST
+  )
   @UseInterceptors(FileInterceptor("image")) // Use multer for image upload
   @ApiOperation({ summary: "Update the payment status of an order" })
   @ApiResponse({
@@ -77,7 +120,7 @@ export class OrdersController {
     @Request() req: any, // Request object to access the user
     @Param("orderId") orderId: string,
     @Body("paymentStatus") paymentStatus: "paid" | "partially paid",
-    @UploadedFile() image: Express.Multer.File, // File uploads cannot be passed as query parameters
+    @UploadedFile() image: Express.Multer.File // File uploads cannot be passed as query parameters
   ) {
     const userId = req.user.sub; // Extract user ID from request
 
@@ -88,19 +131,19 @@ export class OrdersController {
       orderId,
       paymentStatus,
       image,
-      userId,
+      userId
     );
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Patch("status/:orderId")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ARTIST)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST, Role.ARTIST)
   @UseInterceptors(FileInterceptor("image")) // Use multer for image upload
   async updateOrderStatus(
     @Request() req: any, // Request object to access the user
     @Param("orderId") orderId: string,
     @Body("OrderStatus") status: OrderStatus,
-    @UploadedFile() image: Express.Multer.File, // File uploads cannot be passed as query parameters
+    @UploadedFile() image: Express.Multer.File // File uploads cannot be passed as query parameters
   ) {
     if (!Object.values(OrderStatus).includes(status)) {
       throw new BadRequestException("Invalid status");
@@ -116,7 +159,7 @@ export class OrdersController {
         orderId,
         status,
         image,
-        userId,
+        userId
       );
     } catch (error) {
       return {
@@ -126,78 +169,39 @@ export class OrdersController {
     }
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  @Patch('assign')
+  @Patch("assign")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST)
   async assignOrderToArtist(
     @Request() req: any, // Request object to access the user
-    @Query('orderId') orderId: string,
-    @Query('artistId') artistId: string,
+    @Query("orderId") orderId: string,
+    @Query("artistId") artistId: string
   ): Promise<OrderEntity> {
-    console.log('Received orderId:', orderId);
-    console.log('Received artistId:', artistId); 
+    console.log("Received orderId:", orderId);
+    console.log("Received artistId:", artistId);
 
     const userId = req.user.sub; // Extract user ID from request
 
     if (!userId) {
-      throw new BadRequestException('User not authenticated');
+      throw new BadRequestException("User not authenticated");
     }
     if (!orderId || !artistId) {
-      throw new BadRequestException('Both orderId and artistId are required');
+      throw new BadRequestException("Both orderId and artistId are required");
     }
     return this.ordersService.assignOrderToArtist(orderId, artistId, userId);
   }
- 
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-  @Get("sorted")
-  @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN,Role.RECEPTIONIST,Role.COORDINATOR,Role.ARTISTMANAGER)
-  @ApiOperation({
-    summary: "Get all orders with pagination, sorting, and filtering",
-  })
-  @ApiResponse({ status: 200, description: "Orders retrieved successfully." })
-  @ApiResponse({ status: 500, description: "Internal server error." })
-  async getAllOrders(
-    @Request() req: any, // Request object to access the user
-
-    @Query() findOrdersDto: FindOrdersDto,
-  ): Promise<{ items: OrderEntity[]; total: number }> {
-    const userId = req.user.sub; // Extract user ID from request
-
-    if (!userId) {
-      throw new BadRequestException('User not authenticated');
-    }
-    return await this.ordersService.findAllOrders(findOrdersDto,userId);
-  }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  @Get("status/count/:branchId")
-  @ApiOperation({
-    summary: "Get count of orders by status for a specific branch",
-  })
-  @ApiResponse({
-    status: 200,
-    description:
-      "Return the count of each order status for the specified branch",
-    schema: {
-      example: {
-        items: {
-          InProgress: 10,
-          InQueue: 5,
-          Working: 8,
-          Done: 12,
-          Completed: 20,
-          Canceled: 3,
-        },
-      },
-    },
-  })
+  
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  @Get("status/count")
   async getOrderStatusCount(
-    @Param("branchId") branchId: string,
-  ): Promise<{ items: { [key in OrderStatus]: number } }> {
-    return await this.ordersService.getOrderStatusCount(branchId);
+    @Query("branchId") branchId?: string
+  ): Promise<{ [key in OrderStatus]: number }> {
+    return this.ordersService.getOrderStatusCount(branchId);
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -205,10 +209,9 @@ export class OrdersController {
   @Get("filterd")
   @UseGuards(AccessTokenGuard, RolesGuard)
   @Roles(Role.ARTIST)
-
   async getOrdersForEmployee(
     @Request() req: any, // Request object to access the user
-    @Query() findOrdersByDayDto: FindOrdersByDayDto,
+    @Query() findOrdersByDayDto: FindOrdersByDayDto
   ) {
     const userId = req.user.sub; // Extract user ID from request
 
@@ -217,14 +220,14 @@ export class OrdersController {
     }
     return this.ordersService.findOrdersByEmployeeAndDay(
       userId,
-      findOrdersByDayDto,
+      findOrdersByDayDto
     );
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Get("/:orderId")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.RECEPTIONIST,Role.ARTISTMANAGER)
+  @Roles(Role.SUPERADMIN, Role.RECEPTIONIST, Role.ARTISTMANAGER)
   async getOrderById(@Param("orderId") orderId: string) {
     try {
       const order = await this.ordersService.findOrderById(orderId);
@@ -235,7 +238,7 @@ export class OrdersController {
     } catch (error) {
       throw new InternalServerErrorException(
         "Failed to retrieve the order",
-        error.stack,
+        error.stack
       );
     }
   }
@@ -271,29 +274,29 @@ export class OrdersController {
   })
   async updatePayment(
     @Param("orderId") orderId: string,
-    @Query("paymentId") paymentId: string,
+    @Query("paymentId") paymentId: string
   ) {
     if (!orderId || !paymentId) {
       throw new BadRequestException("Order ID and Payment ID must be provided");
     }
     return this.ordersService.updatePaymentForOrder(orderId, paymentId);
   }
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+  @ApiOperation({ summary: "Get top 5 artists based on orders" })
+  @ApiQuery({ name: "branchId", required: false, type: String })
+  @Get("top/artists")
+  async getTopArtists(@Query("branchId") branchId?: string) {
+    // Fetch the top 5 artists by orders, filtered by branch if provided
+    const topArtists = await this.ordersService.getTopArtistsByOrders(branchId);
 
-  @ApiOperation({ summary: 'Get top 5 artists based on orders' })
-  @ApiQuery({ name: 'branchId', required: false, type: String })
-  @Get('top/artists')
-  async getTopArtists(
-    @Query('branchId') branchId?: string,
-  ) {
-     // Fetch the top 5 artists by orders, filtered by branch if provided
-     const topArtists = await this.ordersService.getTopArtistsByOrders(branchId);
+    // Check if any artists were found
+    if (!topArtists || topArtists.length === 0) {
+      throw new NotFoundException("No top artists found");
+    }
 
-     // Check if any artists were found
-     if (!topArtists || topArtists.length === 0) {
-       throw new NotFoundException('No top artists found');
-     }
-
-     return topArtists 
+    return topArtists;
   }
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }

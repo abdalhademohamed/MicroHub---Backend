@@ -1,5 +1,11 @@
 import { IsOptional, IsEnum, IsString, IsInt, Min, Max } from "class-validator";
 import { Transform } from "class-transformer";
+import { OrderStatus } from "../utils/order.status.enum";
+
+export enum PaymentStatus {
+  PAID = "paid",
+  PARTIALLY_PAID = "partially paid", // Update here
+}
 
 export class FindOrdersDto {
   @IsOptional()
@@ -30,4 +36,16 @@ export class FindOrdersDto {
   @IsOptional()
   @IsString()
   dayDate?: string; // Format: 'yyyy-MM-dd'
+
+  @IsOptional()
+  @IsEnum(PaymentStatus) // Reference the updated PaymentStatus enum
+  paymentStatus?: PaymentStatus;
+
+  @IsOptional()
+  @IsEnum(OrderStatus)
+  orderStatus?: OrderStatus;
+
+  @IsOptional()
+  @IsString()
+  endDate?: string; // Format: 'yyyy-MM-dd'
 }
