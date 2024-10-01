@@ -22,13 +22,13 @@ export class CreateReceiptDto {
   @IsString()
   message?: string;
 
-  @ApiProperty({
-    description: "Discount applied to the order (percentage)",
-    example: 10,
-  })
-  @IsOptional()
-  @IsNumber({}, { message: "Discount must be a valid number" })
-  @Min(0, { message: "Discount cannot be negative" })
-  @Max(100, { message: "Discount cannot be more than 100" })
-  discount?: number;
+  // @ApiProperty({
+  //   description: "Discount applied to the order (percentage)",
+  //   example: 10,
+  // })
+  // @IsOptional()
+  // @IsNumber({}, { message: "Discount must be a valid number" })
+  // @Min(0, { message: "Discount cannot be negative" })
+  // @Max(100, { message: "Discount cannot be more than 100" })
+  // discount?: number;
 }
