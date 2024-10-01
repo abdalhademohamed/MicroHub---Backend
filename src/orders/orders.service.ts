@@ -737,7 +737,7 @@ export class OrdersService {
     findOrdersDto: FindOrdersDto,
     userId: string // User ID extracted from the token
   ): Promise<{ items: OrderEntity[]; total: number }> {
-    const { page, limit, sort, employeeName, dayDate, endDate, paymentStatus, orderStatus } = findOrdersDto;
+    const { page, limit, sort, employeeName, dayDate, endDate, paymentStatus, orderStatus, serviceId } = findOrdersDto;
   
     let branchId = findOrdersDto.branchId; // Declare branchId with let to allow reassignment
   
@@ -810,6 +810,11 @@ export class OrdersService {
       // Filter by order status if provided
       if (orderStatus) {
         query.andWhere("o.status = :orderStatus", { orderStatus });
+      }
+  
+      // Filter by service ID if provided
+      if (serviceId) {
+        query.andWhere("s.id = :serviceId", { serviceId }); // Filter by service ID
       }
   
       // Execute the query and get results
