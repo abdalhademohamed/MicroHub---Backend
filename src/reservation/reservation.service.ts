@@ -450,7 +450,7 @@ export class ReservationService {
       await this.ReservationRepository.save(reservation);
   
       // Create an order for the reservation
-      await this.OrdersService.createOrder(reservation.id, userId, body.paymentId);
+      await this.OrdersService.createOrder(reservation.id, userId, body.paymentId,body.offerId);
   
       // Adjust working hours based on the new reservation
       const newWorkingHours = this.newAddedWorkingHours(
