@@ -46,12 +46,20 @@ export class ReviewsService {
         .where("review.artistId = :artistId", { artistId :id }) // Filter by artistId
         .groupBy("review.orderFirstTime") // Group by the orderFirstTime field
         .getRawMany(); // Get raw results
-        // console.log(aggregationResult);
+        let oldestRating = 0;
+        let newestRating = 0;
+        aggregationResult.forEach(result => {
+          if (result.orderFirstTime === false) {
+            oldestRating = result.averageRating;
+          } else if (result.orderFirstTime === true) {
+            newestRating = result.averageRating;
+          }
+        });
       await this.employeeRepository.update(
         { id },
         {
-          oldestAvgRating: aggregationResult[1]?.averageRating,
-          newestAvgRating: aggregationResult[0]?.averageRating,
+          oldestAvgRating: oldestRating,
+          newestAvgRating: newestRating,
         },
       );
     }
