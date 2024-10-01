@@ -47,7 +47,7 @@ export class RootoshController {
     @Query("page") page: number = 1, // Default page is 1
     @Query("limit") limit: number = 10, // Default limit is 10
   ): Promise<{
-    data: RootoshEntity[];
+    items: RootoshEntity[];
     total: number;
     page: number;
     lastPage: number;

@@ -80,12 +80,12 @@ export class RootoshService {
     page: number,
     limit: number,
   ): Promise<{
-    data: RootoshEntity[];
+    items: RootoshEntity[];
     total: number;
     page: number;
     lastPage: number;
   }> {
-    const [data, total] = await this.rootoshRepository.findAndCount({
+    const [items, total] = await this.rootoshRepository.findAndCount({
       relations: ["service"],
       skip: (page - 1) * limit,
       take: limit,
@@ -94,7 +94,7 @@ export class RootoshService {
     const lastPage = Math.ceil(total / limit);
 
     return {
-      data,
+      items,
       total,
       page,
       lastPage,
