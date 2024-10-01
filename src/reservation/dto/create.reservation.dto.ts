@@ -30,16 +30,17 @@ export class CreateReservationDto {
       "b78d5614-b6a3-4d01-97e2-f9749d098265",
     ],
   })
+  @IsOptional() // Make services optional
   @IsArray()
   @Transform(({ value }) => {
     if (typeof value === "string") {
-      // Convert comma-separated string to array
+      // Convert comma-separated string to array 
       return value.split(",").map((id) => id.trim());
     }
-    // Return the value as-is if it's already an array
+    // Return the value as-is if it's already an array or undefined
     return Array.isArray(value) ? value : [];
   })
-  services: string[];
+  services?: string[]; // Optional field
 
   @ApiProperty({ description: "Deposit amount" })
   @IsNumber({}, { message: "deposit must be a valid number" })
@@ -74,5 +75,7 @@ export class CreateReservationDto {
   @IsString()
 
   paymentId:string
-
+  @IsOptional()
+  @IsString()
+  offerId?: string; // New property for offer ID
 }

@@ -16,6 +16,7 @@ import { ReceiptService } from "../receipt/receipt.service";
 import { OrdersService } from "../orders/orders.service";
 import { OrderEntity } from "../orders/entities/order.entity";
 import { PaymentEntity } from "../payment/entities/payment.entity";
+import { OfferEntity } from "src/offer/entities/offer.entity";
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { PaymentEntity } from "../payment/entities/payment.entity";
       OrderEntity,
       UserEntity,
       PaymentEntity,
+      OfferEntity
     ]),
   ],
   controllers: [ReservationController],

@@ -26,6 +26,7 @@ import { OrderEntity } from "../orders/entities/order.entity";
 import { OrdersService } from "../orders/orders.service";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { UserEntity } from "../user/entities/user.entity";
+import { OfferEntity } from "src/offer/entities/offer.entity";
 
 @Injectable()
 export class ReservationService {
@@ -46,6 +47,9 @@ export class ReservationService {
     private readonly OrdersService: OrdersService, // Inject the new service
     @InjectRepository(UserEntity)
     private UserRepository: Repository<UserEntity>,
+
+    @InjectRepository(OfferEntity)
+    private OfferRepository: Repository<OfferEntity>,
 
     @InjectEntityManager() private readonly entityManager: EntityManager,
     // private readonly ReceiptService: ReceiptService, // Inject the new service
@@ -194,11 +198,158 @@ export class ReservationService {
   }
 
   // Implement the other methods like calculateTotalDuration and getWorkingHoursAtSpecificDate
+  // async createReservation(
+  //   body: CreateReservationDto,
+  //   image: Express.Multer.File,
+  //   userId: string,
+
+  // ) {
+  //   try {
+  //     // Validate branch existence
+  //     const branch = await this.BranchRepository.findOne({
+  //       where: { id: body.branch },
+  //     });
+  //     if (!branch) {
+  //       throw new NotFoundException("Branch not found");
+  //     }
+
+  //     // Validate service IDs
+  //     const serviceIds = body.services;
+  //     if (!serviceIds || serviceIds.length === 0) {
+  //       throw new BadRequestException("No services provided");
+  //     }
+
+  //     // Fetch services based on provided IDs
+  //     const services = await this.ServiceRepository.find({
+  //       where: { id: In(serviceIds) },
+  //     });
+  //     if (services.length !== serviceIds.length) {
+  //       throw new BadRequestException("Some services were not found");
+  //     }
+
+  //     // Calculate total duration and price of services
+  //     const { duration, price } = await this.calculateTotalDuration(serviceIds);
+
+  //     // Handle custom time
+  //     const startTime = new Date(body.customStartTime);
+  //     const endTime = new Date(startTime.getTime() + duration * 1000 * 60);
+
+  //     // Get working hours for the branch on the specific date
+  //     const workingHours = await this.getWorkingHoursAtSpecificDate(
+  //       body.branch,
+  //       startTime,
+  //     );
+
+  //     // Check if the working hours allow the reservation
+  //     const index = workingHours.findIndex(
+  //       (w) => w.from <= startTime && w.to >= endTime,
+  //     );
+  //     if (index === -1) {
+  //       throw new BadRequestException(
+  //         "The custom schedule conflicts with an existing reservation.",
+  //       );
+  //     }
+
+  //     // Ensure image is provided
+  //     if (!image) {
+  //       throw new BadRequestException("Photo is required");
+  //     }
+
+  //     // Upload image to Cloudinary
+  //     const folderName = "reservation";
+  //     const result = await this.CloudinaryService.uploadImage(
+  //       image,
+  //       folderName,
+  //     );
+
+  //     // Validate customer existence
+  //     const customer = await this.CustomerRepository.findOneBy({
+  //       phoneNumber: body.phone_Number,
+  //     });
+  //     if (!customer) {
+  //       throw new NotFoundException("Customer not found");
+  //     }
+
+  //     // Create and save reservation
+  //     const reservation = this.ReservationRepository.create({
+  //       customer,
+  //       totalPrice: Math.ceil(price),
+  //       deposit: body.deposit,
+  //       start_Time: startTime,
+  //       end_Time: endTime,
+  //       reservationDay: startTime.getDate(),
+  //       reservationMonth: startTime.getMonth() + 1,
+  //       reservationYear: startTime.getFullYear(),
+  //       branch,
+  //       deposit_Content: result.url,
+  //       services,
+  //     });
+
+  //     await this.ReservationRepository.save(reservation);
+
+  //     // Create an order for the reservation
+  //     await this.OrdersService.createOrder(reservation.id, userId,body.paymentId      );
+
+  //     // Adjust working hours based on the new reservation
+  //     const newWorkingHours = this.newAddedWorkingHours(
+  //       {
+  //         fromOriginal: workingHours[index].from,
+  //         toOriginal: workingHours[index].to,
+  //         fromUser: startTime,
+  //         toUser: endTime,
+  //       },
+  //       workingHours[index].slot,
+  //     );
+
+  //     await this.WorkingHourEntity.save(newWorkingHours);
+  //     await this.WorkingHourEntity.delete({ id: workingHours[index].id });
+
+  //     // Create an audit log for the reservation creation
+  //     const log = new AuditLogEntity();
+  //     log.tableName = "reservation";
+  //     log.action = "INSERT";
+  //     log.entityId = reservation.id;
+  //     log.performedBy = userId;
+
+  //     const user = await this.UserRepository.findOne({
+  //       where: { id: userId },
+  //       select: ["id", "username", "email", "role"],
+  //     });
+
+  //     if (user) {
+  //       log.userDetails = user;
+  //     }
+
+  //     await this.entityManager.save(AuditLogEntity, log);
+
+  //     return { reservation };
+  //   } catch (error) {
+  //     // Granular error handling and categorization
+  //     if (error instanceof NotFoundException) {
+  //       throw new NotFoundException({
+  //         message: error.stack,
+  //         category: "EntityNotFound", // Custom error category
+  //       });
+  //     } else if (error instanceof BadRequestException) {
+  //       throw new BadRequestException({
+  //         message: error.stack,
+  //         category: "ValidationError", // Custom error category
+  //       });
+  //     } else {
+  //       throw new InternalServerErrorException({
+  //         message: error.stack,
+  //         category: "InternalServerError", // Custom error category for unexpected errors
+  //         // details: error.stack, // Additional details for debugging
+  //       });
+  //     }
+  //   }
+  // }
+
+
   async createReservation(
     body: CreateReservationDto,
     image: Express.Multer.File,
     userId: string,
-
   ) {
     try {
       // Validate branch existence
@@ -208,34 +359,49 @@ export class ReservationService {
       if (!branch) {
         throw new NotFoundException("Branch not found");
       }
-
-      // Validate service IDs
-      const serviceIds = body.services;
-      if (!serviceIds || serviceIds.length === 0) {
-        throw new BadRequestException("No services provided");
+  
+      let serviceIds: string[] = [];
+      let services: ServiceEntity[] = [];
+      
+      // Check if either services or offerId is provided
+      if (body.services && body.services.length > 0) {
+        serviceIds = body.services;
+  
+        // Fetch services based on provided IDs
+        services = await this.ServiceRepository.find({
+          where: { id: In(serviceIds) },
+        });
+        if (services.length !== serviceIds.length) {
+          throw new BadRequestException("Some services were not found");
+        }
+      } else if (body.offerId) {
+        const offer = await this.OfferRepository.findOne({
+          where: { id: body.offerId },
+          relations: ["services"],
+        });
+        if (!offer) {
+          throw new NotFoundException("Offer not found");
+        }
+        serviceIds = offer.services.map(service => service.id); // Extract service IDs from the offer
+        services = offer.services; // Use services from the offer
+      } else {
+        // Throw an error if neither services nor offerId is provided
+        throw new BadRequestException("At least one of services or offerId must be provided");
       }
-
-      // Fetch services based on provided IDs
-      const services = await this.ServiceRepository.find({
-        where: { id: In(serviceIds) },
-      });
-      if (services.length !== serviceIds.length) {
-        throw new BadRequestException("Some services were not found");
-      }
-
+  
       // Calculate total duration and price of services
       const { duration, price } = await this.calculateTotalDuration(serviceIds);
-
+  
       // Handle custom time
       const startTime = new Date(body.customStartTime);
       const endTime = new Date(startTime.getTime() + duration * 1000 * 60);
-
+  
       // Get working hours for the branch on the specific date
       const workingHours = await this.getWorkingHoursAtSpecificDate(
         body.branch,
         startTime,
       );
-
+  
       // Check if the working hours allow the reservation
       const index = workingHours.findIndex(
         (w) => w.from <= startTime && w.to >= endTime,
@@ -245,19 +411,19 @@ export class ReservationService {
           "The custom schedule conflicts with an existing reservation.",
         );
       }
-
+  
       // Ensure image is provided
       if (!image) {
         throw new BadRequestException("Photo is required");
       }
-
+  
       // Upload image to Cloudinary
       const folderName = "reservation";
       const result = await this.CloudinaryService.uploadImage(
         image,
         folderName,
       );
-
+  
       // Validate customer existence
       const customer = await this.CustomerRepository.findOneBy({
         phoneNumber: body.phone_Number,
@@ -265,7 +431,7 @@ export class ReservationService {
       if (!customer) {
         throw new NotFoundException("Customer not found");
       }
-
+  
       // Create and save reservation
       const reservation = this.ReservationRepository.create({
         customer,
@@ -280,12 +446,12 @@ export class ReservationService {
         deposit_Content: result.url,
         services,
       });
-
+  
       await this.ReservationRepository.save(reservation);
-
+  
       // Create an order for the reservation
-      await this.OrdersService.createOrder(reservation.id, userId,body.paymentId      );
-
+      await this.OrdersService.createOrder(reservation.id, userId, body.paymentId);
+  
       // Adjust working hours based on the new reservation
       const newWorkingHours = this.newAddedWorkingHours(
         {
@@ -296,28 +462,28 @@ export class ReservationService {
         },
         workingHours[index].slot,
       );
-
+  
       await this.WorkingHourEntity.save(newWorkingHours);
       await this.WorkingHourEntity.delete({ id: workingHours[index].id });
-
+  
       // Create an audit log for the reservation creation
       const log = new AuditLogEntity();
       log.tableName = "reservation";
       log.action = "INSERT";
       log.entityId = reservation.id;
       log.performedBy = userId;
-
+  
       const user = await this.UserRepository.findOne({
         where: { id: userId },
         select: ["id", "username", "email", "role"],
       });
-
+  
       if (user) {
         log.userDetails = user;
       }
-
+  
       await this.entityManager.save(AuditLogEntity, log);
-
+  
       return { reservation };
     } catch (error) {
       // Granular error handling and categorization
@@ -335,11 +501,11 @@ export class ReservationService {
         throw new InternalServerErrorException({
           message: error.stack,
           category: "InternalServerError", // Custom error category for unexpected errors
-          // details: error.stack, // Additional details for debugging
         });
       }
     }
   }
+  
 
   async getAllReservations(
     getReservationsDto: GetReservationsDto,
