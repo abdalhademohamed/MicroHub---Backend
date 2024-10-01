@@ -28,6 +28,7 @@ import { AccessTokenGuard } from "../auth/guards/accessToken.guard";
 import { RolesGuard } from "../auth/guards/role.guards";
 import { Role } from "../user/utils/user.enum";
 import { Roles } from "../auth/Roles.decorator";
+import { GetReservationsTimesDto } from "./dto/get.reservations.timings.dto";
 
 @ApiTags("reservation")
 @Controller("reservation")
@@ -42,7 +43,15 @@ export class ReservationController {
   ): Promise<ReservationEntity[]> {
     return this.reservationService.getTop5Reservations(startDate, endDate);
   }
-
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  @Get('times')
+  async getReservations(
+    @Query() GetReservationsTimesDto: GetReservationsTimesDto,
+  ): Promise<{ items: any[]; total: number }> {
+    const result = await this.reservationService.getReservationsTimes(GetReservationsTimesDto);
+    return result;
+  }
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN, Role.COORDINATOR)
   @Post()

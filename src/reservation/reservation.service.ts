@@ -27,6 +27,7 @@ import { OrdersService } from "../orders/orders.service";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { UserEntity } from "../user/entities/user.entity";
 import { OfferEntity } from "src/offer/entities/offer.entity";
+import { GetReservationsTimesDto } from "./dto/get.reservations.timings.dto";
 
 @Injectable()
 export class ReservationService {
@@ -887,4 +888,44 @@ export class ReservationService {
 
     return topReservations;
   }
+
+
+
+
+
+
+
+  async getReservationsTimes(
+    GetReservationsTimesDto: GetReservationsTimesDto,
+  ): Promise<{ items: ReservationEntity[]; total: number }> {
+    const { branchId, fromDate, toDate, page = '1', limit = '10' } = GetReservationsTimesDto;
+  
+    const query = this.ReservationRepository.createQueryBuilder('reservation')
+      .select(['reservation.id', 'reservation.start_Time', 'reservation.end_Time']) // Include the primary key
+      .leftJoin('reservation.branch', 'branch'); // Just join without selecting branch fields
+  
+    // Filter by branchId
+    if (branchId) {
+      query.andWhere('branch.id = :branchId', { branchId });
+    }
+  
+    // Filter by date range
+    if (fromDate) {
+      query.andWhere('reservation.start_Time >= :fromDate', { fromDate });
+    }
+    if (toDate) {
+      query.andWhere('reservation.end_Time <= :toDate', { toDate });
+    }
+  
+    // Pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    query.skip(skip).take(parseInt(limit));
+  
+    // Execute the query
+    const [reservations, total] = await query.getManyAndCount();
+  
+    return { items: reservations, total };
+  }
+  
 }
+
