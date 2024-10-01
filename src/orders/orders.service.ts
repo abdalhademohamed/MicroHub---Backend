@@ -66,7 +66,9 @@ export class OrdersService {
   async createOrder(
     reservationId: string,
     userId: string,
-    paymentId: string
+    paymentId: string,
+    offerId?: string
+
   ): Promise<OrderEntity> {
     // Fetch reservation with related services
     const reservation = await this.reservationRepository.findOne({
@@ -121,6 +123,7 @@ export class OrdersService {
       artist: null,
       createdBy, // Set createdBy field with limited user data
       payment: visaPayment, // Assign the Visa payment method to the order
+      offerId
     });
 
     try {
