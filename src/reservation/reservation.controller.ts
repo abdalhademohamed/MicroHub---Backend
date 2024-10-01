@@ -131,6 +131,8 @@ export class ReservationController {
     );
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR)
   @Put("time/:id")
   async updateReservationStartTime(
     @Request() req: any, // Request object to access the user

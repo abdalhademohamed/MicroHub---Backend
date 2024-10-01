@@ -522,104 +522,128 @@ export class ReservationService {
   }
 
   async updateTime(id: string, body: UpdateTimeReservationDto, userId: string) {
-    // Fetch the reservation with necessary relations
-    const reservation = await this.ReservationRepository.findOne({
-      where: { id },
-      relations: {
-        branch: true,
-        services: true,
-      },
-    });
-
-    if (!reservation) {
-      throw new NotFoundException(`Reservation with ID ${id} not found`);
-    }
-
-    // Calculate total price and duration of services
-    const acc = { price: 0, duration: 0 };
-    for (const service of reservation.services) {
-      acc.price += service.price;
-      acc.duration += service.duration_Mins;
-    }
-
-    // Determine new start and end times
-    const startTime = new Date(body.startTime);
-    const endTime = new Date(startTime.getTime() + 1000 * 60 * acc.duration);
-
-    // Check if the new times fit within working hours
-    const workingHours = await this.getWorkingHoursAtSpecificDate(
-      reservation.branch.id,
-      startTime,
-    );
-    const index = workingHours.findIndex(
-      (w) => w.from <= startTime && w.to >= endTime,
-    );
-    if (index === -1) {
-      throw new BadRequestException(
-        "The custom schedule conflicts with an existing reservation.",
+    try {
+      // Fetch the reservation with necessary relations
+      const reservation = await this.ReservationRepository.findOne({
+        where: { id },
+        relations: {
+          branch: true,
+          services: true,
+        },
+      });
+  
+      if (!reservation) {
+        throw new NotFoundException(`Reservation with ID ${id} not found`);
+      }
+  
+      // Calculate total price and duration of services
+      const acc = { price: 0, duration: 0 };
+      for (const service of reservation.services) {
+        acc.price += service.price;
+        acc.duration += service.duration_Mins;
+      }
+  
+      // Determine new start and end times
+      const startTime = new Date(body.startTime);
+      const endTime = new Date(startTime.getTime() + 1000 * 60 * acc.duration);
+  
+      // Check if the new times fit within working hours
+      const workingHours = await this.getWorkingHoursAtSpecificDate(
+        reservation.branch.id,
+        startTime,
       );
+      const index = workingHours.findIndex(
+        (w) => w.from <= startTime && w.to >= endTime,
+      );
+      if (index === -1) {
+        throw new BadRequestException(
+          "The custom schedule conflicts with an existing reservation.",
+        );
+      }
+  
+      // Prepare new working hours and update
+      const newWorkingHours = this.newAddedWorkingHours(
+        {
+          fromOriginal: workingHours[index].from,
+          toOriginal: workingHours[index].to,
+          fromUser: startTime,
+          toUser: endTime,
+        },
+        workingHours[index].slot,
+      );
+  
+      await this.cancelReservationAndAddSlot(
+        reservation.start_Time,
+        reservation.end_Time,
+        reservation.branch.id,
+      );
+      await this.WorkingHourEntity.save(newWorkingHours);
+      await this.WorkingHourEntity.delete({ id: workingHours[index].id });
+  
+      // Log the changes before updating the reservation
+      const oldReservation = { ...reservation }; // Clone the old reservation for comparison
+  
+      // Update the reservation with new times
+      reservation.start_Time = startTime;
+      reservation.end_Time = endTime;
+  
+      await this.ReservationRepository.save(reservation);
+      const updatedOrder = await this.OrdersService.updateOrderTimeFromReservation(reservation.id, userId);
+  
+      // Create an audit log entry
+      const changedColumns = ["start_Time", "end_Time"];
+      const changesDetails = {};
+  
+      changedColumns.forEach((column) => {
+        changesDetails[column] = {
+          oldValue: oldReservation[column],
+          newValue: reservation[column],
+        };
+      });
+  
+      const log = new AuditLogEntity();
+      log.tableName = "reservation";
+      log.action = "UPDATE";
+      log.entityId = reservation.id;
+      log.changedColumns = changedColumns;
+      log.changesDetails = changesDetails;
+      log.performedBy = userId;
+  
+      const user = await this.UserRepository.findOne({
+        where: { id: userId },
+        select: ["id", "username", "email", "role"],
+      });
+      if (user) {
+        log.userDetails = user;
+      }
+  
+      await this.entityManager.save(AuditLogEntity, log);
+  
+      return { status: "Time updated", updatedOrder };
+  
+    } catch (error) {
+      // Categorize and log errors
+      if (error instanceof NotFoundException) {
+        // Log specific error for not found exception
+        console.error(`Error: ${error.message}`, { error });
+        throw error; // Re-throw to preserve the original exception
+      } else if (error instanceof BadRequestException) {
+        // Log specific error for bad request exception
+        console.error(`Error: ${error.message}`, { error });
+        throw error; // Re-throw to preserve the original exception
+      } else {
+        // Log unexpected errors
+        console.error('An unexpected error occurred during updateTime:', {
+          error,
+          id,
+          userId,
+          body,
+        });
+        throw new InternalServerErrorException('An error occurred while updating the reservation.');
+      }
     }
-
-    // Prepare new working hours and update
-    const newWorkingHours = this.newAddedWorkingHours(
-      {
-        fromOriginal: workingHours[index].from,
-        toOriginal: workingHours[index].to,
-        fromUser: startTime,
-        toUser: endTime,
-      },
-      workingHours[index].slot,
-    );
-
-    await this.cancelReservationAndAddSlot(
-      reservation.start_Time,
-      reservation.end_Time,
-      reservation.branch.id,
-    );
-    await this.WorkingHourEntity.save(newWorkingHours);
-    await this.WorkingHourEntity.delete({ id: workingHours[index].id });
-
-    // Log the changes before updating the reservation
-    const oldReservation = { ...reservation }; // Clone the old reservation for comparison
-
-    // Update the reservation with new times
-    reservation.start_Time = startTime;
-    reservation.end_Time = endTime;
-
-    await this.ReservationRepository.save(reservation);
-    const updatedOrder=await this.OrdersService.updateOrderTimeFromReservation(reservation.id, userId);
-
-    // Create an audit log entry
-    const changedColumns = ["start_Time", "end_Time"];
-    const changesDetails = {};
-
-    changedColumns.forEach((column) => {
-      changesDetails[column] = {
-        oldValue: oldReservation[column],
-        newValue: reservation[column],
-      };
-    });
-
-    const log = new AuditLogEntity();
-    log.tableName = "reservation";
-    log.action = "UPDATE";
-    log.entityId = reservation.id;
-    log.changedColumns = changedColumns;
-    log.changesDetails = changesDetails;
-    log.performedBy = userId;
-
-    const user = await this.UserRepository.findOne({
-      where: { id: userId },
-      select: ["id", "username", "email", "role"],
-    });
-    if (user) {
-      log.userDetails = user;
-    }
-
-    await this.entityManager.save(AuditLogEntity, log);
-
-    return { status: "Time updated",updatedOrder };
   }
+  
 
   async deleteReservation(id: string) {
     const reservation = await this.ReservationRepository.findOne({
