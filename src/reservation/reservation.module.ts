@@ -16,7 +16,9 @@ import { ReceiptService } from "../receipt/receipt.service";
 import { OrdersService } from "../orders/orders.service";
 import { OrderEntity } from "../orders/entities/order.entity";
 import { PaymentEntity } from "../payment/entities/payment.entity";
-import { OfferEntity } from "src/offer/entities/offer.entity";
+import { OfferEntity } from "../offer/entities/offer.entity";
+import { SharableOfferEntity } from "../sharable-offer/entities/sharable-offer.entity";
+import { GiftCouponEntity } from "../gift-coupon/entities/gift-coupon.entity";
 
 @Module({
   imports: [
@@ -33,7 +35,9 @@ import { OfferEntity } from "src/offer/entities/offer.entity";
       OrderEntity,
       UserEntity,
       PaymentEntity,
-      OfferEntity
+      OfferEntity,
+      SharableOfferEntity,
+      GiftCouponEntity
     ]),
   ],
   controllers: [ReservationController],
