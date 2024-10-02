@@ -16,7 +16,7 @@ import { OrderEntity } from "../orders/entities/order.entity";
 import { UserEntity } from "../user/entities/user.entity";
 import { ServiceEntity } from "../service/entities/service.entity";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
-import { OfferEntity } from "src/offer/entities/offer.entity";
+import { OfferEntity } from "../offer/entities/offer.entity";
 
 @Injectable()
 export class ReceiptService {
@@ -89,6 +89,16 @@ export class ReceiptService {
         }
       }
   
+      if (order.sharableOfferId) {
+        offer = await this.OfferRepository.findOne({
+          where: { id: order.sharableOfferId },
+        });
+        if (!offer) {
+          // If the offer is not found, set it to null
+          offer = null;
+        }
+      }
+     
       // Calculate total payment
       const totalPayment = reservation.totalPrice;
       let discountPayment = totalPayment; // Default to totalPayment
