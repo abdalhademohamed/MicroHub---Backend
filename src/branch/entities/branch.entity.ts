@@ -10,7 +10,7 @@ import {
 } from "typeorm";
 import { WorkingBranchEntity } from "../../working-branch/entities/working.branch.entity";
 import { SlotsEntity } from "../../slots/entities/slots.entity";
-import { SharableOfferEntity } from "src/sharable-offer/entities/sharable-offer.entity";
+import { SharableOfferEntity } from "../../sharable-offer/entities/sharable-offer.entity";
 
 @Entity()
 export class BranchEntity {
