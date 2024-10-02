@@ -15,34 +15,34 @@ export class AnalysisService {
     private readonly PaymentRepository: Repository<PaymentEntity>,
   ) {}
 
-  async getAllDeposits({ start_Time, end_Time }: AnalysisDto) {
-    if (!start_Time || !end_Time) {
-      start_Time = new Date();
-      end_Time = new Date(Date.now() - 24 * 3600 * 1000 * 7);
+  async getAllDeposits({ fromDate, toDate }: AnalysisDto) {
+    if (!fromDate || !toDate) {
+      fromDate = new Date();
+      toDate = new Date(Date.now() - 24 * 3600 * 1000 * 7);
     }
 
     const deposits = await this.ReservationRepository.createQueryBuilder(
       "reservation",
     )
       .select("SUM(reservation.deposit)", "totalDeposit")
-      .where("reservation.createdAt >= :startTime", { startTime: start_Time })
-      .andWhere("reservation.createdAt <= :endTime", { endTime: end_Time })
+      .where("reservation.createdAt >= :startTime", { startTime: fromDate })
+      .andWhere("reservation.createdAt <= :endTime", { endTime: toDate })
       .getRawOne();
 
     return parseFloat(deposits.totalDeposit || "0");
   }
 
-  async getDepositsByBranch({ start_Time, end_Time, branchId }: AnalysisDto) {
-    if (!start_Time || !end_Time) {
-      start_Time = new Date();
-      end_Time = new Date(Date.now() - 24 * 3600 * 1000 * 7);
+  async getDepositsByBranch({ fromDate, toDate, branchId }: AnalysisDto) {
+    if (!fromDate || !toDate) {
+      fromDate = new Date();
+      toDate = new Date(Date.now() - 24 * 3600 * 1000 * 7);
     }
     const deposits = await this.ReservationRepository.createQueryBuilder(
       "reservation",
     )
       .select("SUM(reservation.deposit)", "totalDeposit")
-      .where("reservation.createdAt >= :startTime", { startTime: start_Time })
-      .andWhere("reservation.createdAt <= :endTime", { endTime: end_Time })
+      .where("reservation.createdAt >= :fromDate", { fromDate: fromDate })
+      .andWhere("reservation.createdAt <= :toDate", { toDate: toDate })
       .andWhere("reservation.branchId = :branchId", { branchId })
       .getRawOne();
 

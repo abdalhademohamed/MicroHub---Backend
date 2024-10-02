@@ -18,32 +18,32 @@ export class AnalysisController {
 
   @Get("remaining-amount-by-branch")
   async getRemainingAmountByBranch(
-    @Query("start_Time") start_Time: Date,
-    @Query("end_Time") end_Time: Date,
+    @Query("fromDate") fromDate: Date,
+    @Query("toDate") toDate: Date,
     @Query("branchId") branchId: string,
   ) {
     return this.analysisService.getRemainingAmountByBranch(
-      start_Time,
-      end_Time,
+      fromDate,
+      toDate,
       branchId,
     );
   }
 
   @Get("total-remaining-amount")
   async getTotalRemainingAmount(
-    @Query("start_Time") start_Time: Date,
-    @Query("end_Time") end_Time: Date,
+    @Query("fromDate") fromDate: Date,
+    @Query("toDate") toDate: Date,
   ) {
-    return this.analysisService.getTotalRemainingAmount(start_Time, end_Time);
+    return this.analysisService.getTotalRemainingAmount(fromDate, toDate);
   }
   @Get("returned-amount")
   async getTotalReturnedAmount(
-    @Query("start_Time") start_Time: Date,
-    @Query("end_Time") end_Time: Date,
+    @Query("fromDate") fromDate: Date,
+    @Query("toDate") toDate: Date,
   ) {
     return this.analysisService.getTotalReturnedMoneyFromCanceledOrdersByTimeRange(
-      start_Time,
-      end_Time,
+      fromDate,
+      toDate,
     );
   }
   @Get("all-prices")
