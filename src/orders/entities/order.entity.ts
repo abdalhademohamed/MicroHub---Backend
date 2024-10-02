@@ -88,4 +88,11 @@ export class OrderEntity {
 
   @Column({ nullable: true }) // Optional column for the offer ID
   offerId?: string; // Add offer ID as an optional field
+
+
+  @Column({ nullable: true }) // Optional column for the offer ID
+  sharableOfferId?: string; // Add offer ID as an optional field
+  
+
+  
 }

@@ -67,7 +67,9 @@ export class OrdersService {
     reservationId: string,
     userId: string,
     paymentId: string,
-    offerId?: string
+    offerId?: string,
+    sharableOfferId?: string,
+
 
   ): Promise<OrderEntity> {
     // Fetch reservation with related services
@@ -123,7 +125,8 @@ export class OrdersService {
       artist: null,
       createdBy, // Set createdBy field with limited user data
       payment: visaPayment, // Assign the Visa payment method to the order
-      offerId
+      offerId,
+      sharableOfferId,
     });
 
     try {
