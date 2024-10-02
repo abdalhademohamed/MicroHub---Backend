@@ -13,5 +13,5 @@ export class AnalysisDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  branch?: string;
+  branchId?: string;
 }

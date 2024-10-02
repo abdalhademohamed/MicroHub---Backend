@@ -32,7 +32,7 @@ export class AnalysisService {
     return parseFloat(deposits.totalDeposit || "0");
   }
 
-  async getDepositsByBranch({ start_Time, end_Time, branch }: AnalysisDto) {
+  async getDepositsByBranch({ start_Time, end_Time, branchId }: AnalysisDto) {
     if (!start_Time || !end_Time) {
       start_Time = new Date();
       end_Time = new Date(Date.now() - 24 * 3600 * 1000 * 7);
@@ -43,7 +43,7 @@ export class AnalysisService {
       .select("SUM(reservation.deposit)", "totalDeposit")
       .where("reservation.createdAt >= :startTime", { startTime: start_Time })
       .andWhere("reservation.createdAt <= :endTime", { endTime: end_Time })
-      .andWhere("reservation.branchId = :branchId", { branchId: branch })
+      .andWhere("reservation.branchId = :branchId", { branchId })
       .getRawOne();
 
     return parseFloat(deposits.totalDeposit || "0");
