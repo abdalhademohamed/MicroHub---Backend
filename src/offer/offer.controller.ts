@@ -42,7 +42,16 @@ export class OfferController {
       throw new BadRequestException("User not authenticated");
     }
     return await this.offerService.create(createOfferDto, userId);
+
   }
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+  // @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+//   @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST)
+  @Get('active') // Route to get active sharable offers
+  async findActiveSharableOffer(): Promise<OfferEntity[]> {
+    return await this.offerService.findActiveOffers();
+  }
+
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST)
@@ -63,6 +72,10 @@ export class OfferController {
   async findOne(@Param("id") id: string): Promise<OfferEntity> {
     return await this.offerService.findOne(id);
   }
+
+
+
+
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
