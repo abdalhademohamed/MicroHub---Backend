@@ -196,12 +196,16 @@ async getOrderStatusCountForArtist(
   
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-  @Get("status/count")
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST,Role.ARTISTMANAGER)
+  @Get('status/count')
   async getOrderStatusCount(
-    @Query("branchId") branchId?: string
+    @Query('branchId') branchId?: string,
+    @Query('fromDate') fromDate?: string,
+    @Query('toDate') toDate?: string,
+    @Query('employeeId') employeeId?: string  // New query parameter for employeeId
   ): Promise<{ [key in OrderStatus]: number }> {
-    return this.ordersService.getOrderStatusCount(branchId);
+    return this.ordersService.getOrderStatusCount(branchId, fromDate, toDate, employeeId);
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
