@@ -136,132 +136,153 @@ export class EmployeeService {
     updateEmployeeDto: UpdateEmployeeDto,
     userId: string,
     image: Express.Multer.File,
-  ): Promise<EmployeeEntity> {
+): Promise<EmployeeEntity> {
     try {
-      // Step 1: Find the employee by ID
-      const employee = await this.employeeRepository.findOne({
-        where: { id },
-        relations: ["branch", "position", "employeeType"],
-      });
-  
-      if (!employee) {
-        throw new NotFoundException(`Employee with ID ${id} not found.`);
-      }
-  
-      // Step 2: Track original values for auditing purposes
-      const originalEmployee = { ...employee };
-  
-      // Step 3: Destructure and update employee details from DTO
-      const {
-        english_Name,
-        arabic_Name,
-        workingHours,
-        countryCode,
-        phoneNumber,
-        available,
-        email,
-        password,
-      } = updateEmployeeDto;
-  
-      employee.english_Name = english_Name ?? employee.english_Name;
-      employee.arabic_Name = arabic_Name ?? employee.arabic_Name;
-      employee.workingHours = workingHours ?? employee.workingHours;
-      employee.countryCode = countryCode ?? employee.countryCode;
-      employee.phoneNumber = phoneNumber ?? employee.phoneNumber;
-      employee.available = available ?? employee.available;
-  
-      // Log the updated employee object for debugging
-      console.log("Updated employee before save:", employee);
-  
-      // Step 4: Handle image upload
-      if (image) {
-        const folderName = "employee";
-        try {
-          const uploadedImage = await this.CloudinaryService.uploadImage(
-            image,
-            folderName,
-          );
-          employee.image = uploadedImage.url;
-        } catch (error) {
-          throw new InternalServerErrorException("Failed to upload image");
+        // Step 1: Find the employee by ID
+        const employee = await this.employeeRepository.findOne({
+            where: { id },
+            relations: ["branch", "position", "employeeType"],
+        });
+
+        if (!employee) {
+            throw new NotFoundException(`Employee with ID ${id} not found.`);
         }
-      }
-  
-      // Step 5: Find and update user details
-      const user = await this.UserRepository.findOne({ where: { id } });
-      if (!user) {
-        throw new NotFoundException("User not found");
-      }
-  
-      // Step 6: Update user email and username if necessary
-      let isUserUpdated = false;
-  
-      if (email && email.trim().toLowerCase() !== user.email.trim().toLowerCase()) {
-        user.email = email.trim();
-        employee.email=email.trim()
-        isUserUpdated = true;
-      }
-  
-      if (english_Name && english_Name !== user.username) {
-        user.username = english_Name;
-        isUserUpdated = true;
-      }
-  
-      if (password) {
-        user.password = await bcrypt.hash(password, 10);
-        isUserUpdated = true;
-      }
-  
-      // Save the user entity if any updates were made
-      if (isUserUpdated) {
-        await this.UserRepository.save(user);
-      }
-  
-      // Step 7: Save updated employee details
-      const updatedEmployee = await this.employeeRepository.save(employee);
-  
-      // Step 8: Audit log - Track changes
-      const changedColumns = [];
-      const changesDetails = {};
-  
-      this.logChangedField("english_Name", originalEmployee, updatedEmployee, changedColumns, changesDetails);
-      this.logChangedField("arabic_Name", originalEmployee, updatedEmployee, changedColumns, changesDetails);
-      this.logChangedField("workingHours", originalEmployee, updatedEmployee, changedColumns, changesDetails);
-      this.logChangedField("countryCode", originalEmployee, updatedEmployee, changedColumns, changesDetails);
-      this.logChangedField("phoneNumber", originalEmployee, updatedEmployee, changedColumns, changesDetails);
-      this.logChangedField("available", originalEmployee, updatedEmployee, changedColumns, changesDetails);
-      this.logChangedField("image", originalEmployee, updatedEmployee, changedColumns, changesDetails);
-  
-      // Step 9: Create an audit log entry
-      const auditLog = new AuditLogEntity();
-      auditLog.tableName = "employee";
-      auditLog.action = "UPDATE";
-      auditLog.entityId = employee.id;
-      auditLog.performedBy = userId;
-      auditLog.changedColumns = changedColumns;
-      auditLog.changesDetails = changesDetails;
-  
-      if (userId) {
-        auditLog.userDetails = {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          role: user.role,
-        };
-      }
-      await this.AuditLogRepository.save(auditLog);
-  
-      // Log the updated employee after saving
-      console.log("Employee updated successfully:", updatedEmployee);
-  
-      return updatedEmployee;
+
+        // Step 2: Track original values for auditing purposes
+        const originalEmployee = { ...employee };
+
+        // Step 3: Destructure and update employee details from DTO
+        const {
+            english_Name,
+            arabic_Name,
+            workingHours,
+            countryCode,
+            phoneNumber,
+            available,
+            email,
+            password,
+            employeeType, // Update employee type
+            branch, // Update branch
+            position, // Update position
+        } = updateEmployeeDto;
+
+        employee.english_Name = english_Name ?? employee.english_Name;
+        employee.arabic_Name = arabic_Name ?? employee.arabic_Name;
+        employee.workingHours = workingHours ?? employee.workingHours;
+        employee.countryCode = countryCode ?? employee.countryCode;
+        employee.phoneNumber = phoneNumber ?? employee.phoneNumber;
+        employee.available = available ?? employee.available;
+
+        // Update the branch if branchId is provided
+        if (branch) {
+            const newBranch = await this.branchRepository.findOne({ where: { id: branch } });
+            if (!newBranch) {
+                throw new NotFoundException(`Branch with ID ${branch} not found.`);
+            }
+            employee.branch = newBranch; // Update the employee's branch
+        }
+
+        // Update the position if positionId is provided
+        if (position) {
+            const newPosition = await this.positionRepository.findOne({ where: { id: position } });
+            if (!newPosition) {
+                throw new NotFoundException(`Position with ID ${position} not found.`);
+            }
+            employee.position = newPosition; // Update the employee's position
+        }
+
+        // Log the updated employee object for debugging
+        console.log("Updated employee before save:", employee);
+
+        // Step 4: Handle image upload
+        if (image) {
+            const folderName = "employee";
+            try {
+                const uploadedImage = await this.CloudinaryService.uploadImage(image, folderName);
+                employee.image = uploadedImage.url;
+            } catch (error) {
+                throw new InternalServerErrorException("Failed to upload image");
+            }
+        }
+
+        // Step 5: Find and update user details
+        const user = await this.UserRepository.findOne({ where: { id } });
+        if (!user) {
+            throw new NotFoundException("User not found");
+        }
+
+        // Step 6: Update user email and username if necessary
+        let isUserUpdated = false;
+
+        if (email && email.trim().toLowerCase() !== user.email.trim().toLowerCase()) {
+            user.email = email.trim();
+            employee.email = email.trim();
+            isUserUpdated = true;
+        }
+
+        if (english_Name && english_Name !== user.username) {
+            user.username = english_Name;
+            isUserUpdated = true;
+        }
+
+        if (password) {
+            user.password = await bcrypt.hash(password, 10);
+            isUserUpdated = true;
+        }
+
+        // Save the user entity if any updates were made
+        if (isUserUpdated) {
+            await this.UserRepository.save(user);
+        }
+
+        // Step 7: Save updated employee details
+        const updatedEmployee = await this.employeeRepository.save(employee);
+
+        // Step 8: Audit log - Track changes
+        const changedColumns = [];
+        const changesDetails = {};
+
+        this.logChangedField("english_Name", originalEmployee, updatedEmployee, changedColumns, changesDetails);
+        this.logChangedField("arabic_Name", originalEmployee, updatedEmployee, changedColumns, changesDetails);
+        this.logChangedField("workingHours", originalEmployee, updatedEmployee, changedColumns, changesDetails);
+        this.logChangedField("countryCode", originalEmployee, updatedEmployee, changedColumns, changesDetails);
+        this.logChangedField("phoneNumber", originalEmployee, updatedEmployee, changedColumns, changesDetails);
+        this.logChangedField("available", originalEmployee, updatedEmployee, changedColumns, changesDetails);
+        this.logChangedField("image", originalEmployee, updatedEmployee, changedColumns, changesDetails);
+        this.logChangedField("branch", originalEmployee, updatedEmployee, changedColumns, changesDetails); // Track branch changes
+        this.logChangedField("position", originalEmployee, updatedEmployee, changedColumns, changesDetails); // Track position changes
+
+        // Step 9: Create an audit log entry
+        const auditLog = new AuditLogEntity();
+        auditLog.tableName = "employee";
+        auditLog.action = "UPDATE";
+        auditLog.entityId = employee.id;
+        auditLog.performedBy = userId;
+        auditLog.changedColumns = changedColumns;
+        auditLog.changesDetails = changesDetails;
+
+        if (userId) {
+            auditLog.userDetails = {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+            };
+        }
+        await this.AuditLogRepository.save(auditLog);
+
+        // Log the updated employee after saving
+        console.log("Employee updated successfully:", updatedEmployee);
+
+        return updatedEmployee;
     } catch (error) {
-      console.error("Update Employee Error:", error);
-      throw new InternalServerErrorException(
-        "An unexpected error occurred while updating the employee.",
-      );
+        console.error("Update Employee Error:", error);
+        throw new InternalServerErrorException(
+            "An unexpected error occurred while updating the employee.",
+        );
     }
-  }
+}
+
   
   
   // Helper method to track field changes
