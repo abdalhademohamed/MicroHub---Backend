@@ -984,7 +984,16 @@ export class ReservationService {
   async getReservationsTimes(
     dto: GetReservationsTimesDto,
   ): Promise<{
-    items: { reservation: ReservationEntity; customer: CustomerEntity }[];
+    items: {
+      id: string;
+      start_Time: Date;
+      end_Time: Date;
+      customer: {
+        id: string;
+        phoneNumber: string;
+        fullName: string;
+      };
+    }[];
     total: number;
   }> {
     const {
@@ -1020,7 +1029,6 @@ export class ReservationService {
         'customer.id',          // Customer ID
         'customer.fullName',    // Customer full name
         'customer.phoneNumber',  // Customer phone number
-        // Add any other fields you want to include from CustomerEntity
       ]);
   
     // Filter by branchId
@@ -1043,13 +1051,20 @@ export class ReservationService {
     // Execute the query
     const [reservations, total] = await query.getManyAndCount();
   
-    // Map the results to include reservation and customer details
+    // Map the results to flatten the response
     const items = reservations.map((reservation) => ({
-      reservation,
-      customer: reservation.customer, // Directly include the customer from the reservation
+      id: reservation.id,
+      start_Time: reservation.start_Time,
+      end_Time: reservation.end_Time,
+      customer: {
+        id: reservation.customer.id,
+        phoneNumber: reservation.customer.phoneNumber,
+        fullName: reservation.customer.fullName,
+      },
     }));
   
     return { items, total };
   }
+  
   
 }
