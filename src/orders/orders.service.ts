@@ -174,7 +174,144 @@ export class OrdersService {
   }
 
 
-
+  // async createOrder(
+  //   reservationId: string,
+  //   userId: string,
+  //   paymentId: string,
+  //   offerId?: string,
+  //   sharableOfferId?: string
+  // ): Promise<OrderEntity> {
+  //   // Fetch reservation with related services
+  //   const reservation = await this.reservationRepository.findOne({
+  //     where: { id: reservationId },
+  //     relations: ["services", "customer", "branch"],
+  //   });
+  
+  //   if (!reservation) {
+  //     throw new NotFoundException("Reservation not found");
+  //   }
+  
+  //   // Fetch the user who is creating the order, limiting the fields returned
+  //   const createdBy = await this.userRepository.findOne({
+  //     where: { id: userId },
+  //     select: ["id", "username", "email", "role"], // Only return these fields
+  //   });
+  //   if (!createdBy) {
+  //     throw new NotFoundException(`User with ID ${userId} not found`);
+  //   }
+  
+  //   // Find the payment method with 'Visa'
+  //   const visaPayment = await this.PaymentRepository.findOne({
+  //     where: { id: paymentId },
+  //   });
+  
+  //   if (!visaPayment) {
+  //     throw new NotFoundException(
+  //       "Visa payment method not found, please add payment method called Visa in English & Arabic"
+  //     );
+  //   }
+  
+  //   const invoiceNumber = await this.generateUniqueInvoiceNumber();
+  
+  //   // Create new order
+  //   const newOrder = this.orderRepository.create({
+  //     customer: reservation.customer,
+  //     date: `${reservation.reservationYear}-${reservation.reservationMonth}-${reservation.reservationDay}`,
+  //     serviceEnglish: reservation.services
+  //       .map((service) => service.english_Name)
+  //       .join(", "),
+  //     serviceArabic: reservation.services
+  //       .map((service) => service.arabic_Name)
+  //       .join(", "),
+  //     status: OrderStatus.Completed,
+  //     paymentStatus: "partially paid",
+  //     invoiceNumber: invoiceNumber,
+  //     comments: [],
+  //     reservation: reservation,
+  //     branch: {
+  //       id: reservation.branch.id, // Include branch ID
+  //       name: reservation.branch.name, // Include branch name
+  //     },
+  //     artist: null,
+  //     createdBy, // Set createdBy field with limited user data
+  //     payment: visaPayment, // Assign the Visa payment method to the order
+  //     offerId,
+  //     sharableOfferId,
+  //   });
+  
+  //   try {
+  //     return await this.entityManager.transaction(
+  //       async (transactionalEntityManager) => {
+  //         // Save the new order
+  //         const savedOrder = await transactionalEntityManager.save(
+  //           OrderEntity,
+  //           newOrder
+  //         );
+  
+  //         // Update customer's last services list and rootosh list
+  //         const customer = await transactionalEntityManager.findOne(CustomerEntity, {
+  //           where: { id: reservation.customer.id },
+  //           relations: ["lastServices", "lastRootosh"], // Assuming these are the names of the fields in your Customer entity
+  //         });
+  
+  //         if (customer) {
+  //           // Get services from the reservation
+  //           const services = reservation.services;
+  
+  //           // Update last services list
+  //           if (customer.lastServices) {
+  //             customer.lastServices.push(...services);
+  //           } else {
+  //             customer.lastServices = [...services];
+  //           }
+  
+  //           // Update last rootosh list from services
+  //           const rootoshList = services.flatMap((service) => service.rootosh); // Assuming `rootosh` is a property of the service
+  //           if (customer.lastRootoshes) {
+  //             customer.lastRootoshes.push(...rootoshList);
+  //           } else {
+  //             customer.lastRootoshes = [...rootoshList];
+  //           }
+  
+  //           // Save the updated customer
+  //           await transactionalEntityManager.save(CustomerEntity, customer);
+  //         }
+  
+  //         // Create an audit log entry
+  //         const auditLog = new AuditLogEntity();
+  //         auditLog.tableName = "order";
+  //         auditLog.action = "INSERT";
+  //         auditLog.entityId = savedOrder.id; // ID of the created order
+  //         auditLog.performedBy = userId; // User who created the order
+  
+  //         // Fetch user details if needed
+  //         if (userId) {
+  //           const user = await transactionalEntityManager.findOne(UserEntity, {
+  //             where: { id: userId },
+  //           });
+  //           if (user) {
+  //             auditLog.userDetails = {
+  //               id: user.id,
+  //               username: user.username,
+  //               email: user.email,
+  //               role: user.role,
+  //             };
+  //           }
+  //         }
+  
+  //         await transactionalEntityManager.save(AuditLogEntity, auditLog);
+  
+  //         return savedOrder;
+  //       }
+  //     );
+  //   } catch (error) {
+  //     throw new InternalServerErrorException(
+  //       "Failed to create order",
+  //       error.stack
+  //     );
+  //   }
+  // }
+  
   async updateOrderServicesFromReservation(
     reservationId: string,
     userId: string
