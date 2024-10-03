@@ -51,6 +51,9 @@ export class CustomerEntity {
   @JoinTable() // This will create a join table
   lastRootoshes: RootoshEntity[];
 
+  @Column({ type: "date", nullable: true }) // Expiration date can be null
+  rootoshesexpirationDate: Date ;
+  
   @OneToMany(
     () => ReservationEntity,
     (ReservationEntity) => ReservationEntity.customer
