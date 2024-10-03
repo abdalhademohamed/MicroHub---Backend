@@ -55,7 +55,7 @@ export class ServiceService {
       // Create and save the new service
       const service = this.ServiceRepository.create({
         ...createServiceDto,
-        imageUrl: uploadResult.secure_url, // Save the image URL in the database
+        imageUrl: uploadResult.url, // Save the image URL in the database
       });
   
       const savedService = await this.ServiceRepository.save(service);

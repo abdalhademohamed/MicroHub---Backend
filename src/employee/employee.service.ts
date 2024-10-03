@@ -127,11 +127,10 @@ export class EmployeeService {
       throw new NotFoundException(`Employee with ID ${id} not found`);
     }
 
-    return employee;
+    return employee
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
   async updateEmployee(
     id: string,
     updateEmployeeDto: UpdateEmployeeDto,
@@ -139,20 +138,20 @@ export class EmployeeService {
     image: Express.Multer.File,
   ): Promise<EmployeeEntity> {
     try {
-      // Find the employee by ID
+      // Step 1: Find the employee by ID
       const employee = await this.employeeRepository.findOne({
         where: { id },
         relations: ["branch", "position", "employeeType"],
       });
-
+  
       if (!employee) {
         throw new NotFoundException(`Employee with ID ${id} not found.`);
       }
-
-      // Track original values
+  
+      // Step 2: Track original values for auditing purposes
       const originalEmployee = { ...employee };
-
-      // Update employee properties
+  
+      // Step 3: Destructure and update employee details from DTO
       const {
         english_Name,
         arabic_Name,
@@ -163,14 +162,18 @@ export class EmployeeService {
         email,
         password,
       } = updateEmployeeDto;
+  
       employee.english_Name = english_Name ?? employee.english_Name;
       employee.arabic_Name = arabic_Name ?? employee.arabic_Name;
       employee.workingHours = workingHours ?? employee.workingHours;
       employee.countryCode = countryCode ?? employee.countryCode;
       employee.phoneNumber = phoneNumber ?? employee.phoneNumber;
       employee.available = available ?? employee.available;
-
-      // Handle image upload and update
+  
+      // Log the updated employee object for debugging
+      console.log("Updated employee before save:", employee);
+  
+      // Step 4: Handle image upload
       if (image) {
         const folderName = "employee";
         try {
@@ -183,82 +186,53 @@ export class EmployeeService {
           throw new InternalServerErrorException("Failed to upload image");
         }
       }
-
-      // Update user details
-      const user = await this.UserRepository.findOne({ where: { id: userId } });
+  
+      // Step 5: Find and update user details
+      const user = await this.UserRepository.findOne({ where: { id } });
       if (!user) {
         throw new NotFoundException("User not found");
       }
-
-      if (email) {
-        user.email = email;
+  
+      // Step 6: Update user email and username if necessary
+      let isUserUpdated = false;
+  
+      if (email && email.trim().toLowerCase() !== user.email.trim().toLowerCase()) {
+        user.email = email.trim();
+        employee.email=email.trim()
+        isUserUpdated = true;
       }
-      if (updateEmployeeDto.english_Name) {
-        user.username = updateEmployeeDto.english_Name;
+  
+      if (english_Name && english_Name !== user.username) {
+        user.username = english_Name;
+        isUserUpdated = true;
       }
+  
       if (password) {
-        user.password = await bcrypt.hash(password, 10); // Hash the new password
+        user.password = await bcrypt.hash(password, 10);
+        isUserUpdated = true;
       }
-
-      // Save the updated user and employee
-      const updatedUser = await this.UserRepository.save(user);
+  
+      // Save the user entity if any updates were made
+      if (isUserUpdated) {
+        await this.UserRepository.save(user);
+      }
+  
+      // Step 7: Save updated employee details
       const updatedEmployee = await this.employeeRepository.save(employee);
-
-      // Determine which columns have changed and log detailed information
+  
+      // Step 8: Audit log - Track changes
       const changedColumns = [];
       const changesDetails = {};
-
-      if (originalEmployee.english_Name !== updatedEmployee.english_Name) {
-        changedColumns.push("english_Name");
-        changesDetails["english_Name"] = {
-          oldValue: originalEmployee.english_Name,
-          newValue: updatedEmployee.english_Name,
-        };
-      }
-      if (originalEmployee.arabic_Name !== updatedEmployee.arabic_Name) {
-        changedColumns.push("arabic_Name");
-        changesDetails["arabic_Name"] = {
-          oldValue: originalEmployee.arabic_Name,
-          newValue: updatedEmployee.arabic_Name,
-        };
-      }
-      if (originalEmployee.workingHours !== updatedEmployee.workingHours) {
-        changedColumns.push("workingHours");
-        changesDetails["workingHours"] = {
-          oldValue: originalEmployee.workingHours,
-          newValue: updatedEmployee.workingHours,
-        };
-      }
-      if (originalEmployee.countryCode !== updatedEmployee.countryCode) {
-        changedColumns.push("countryCode");
-        changesDetails["countryCode"] = {
-          oldValue: originalEmployee.countryCode,
-          newValue: updatedEmployee.countryCode,
-        };
-      }
-      if (originalEmployee.phoneNumber !== updatedEmployee.phoneNumber) {
-        changedColumns.push("phoneNumber");
-        changesDetails["phoneNumber"] = {
-          oldValue: originalEmployee.phoneNumber,
-          newValue: updatedEmployee.phoneNumber,
-        };
-      }
-      if (originalEmployee.available !== updatedEmployee.available) {
-        changedColumns.push("available");
-        changesDetails["available"] = {
-          oldValue: originalEmployee.available,
-          newValue: updatedEmployee.available,
-        };
-      }
-      if (originalEmployee.image !== updatedEmployee.image) {
-        changedColumns.push("image");
-        changesDetails["image"] = {
-          oldValue: originalEmployee.image,
-          newValue: updatedEmployee.image,
-        };
-      }
-
-      // Create an audit log entry
+  
+      this.logChangedField("english_Name", originalEmployee, updatedEmployee, changedColumns, changesDetails);
+      this.logChangedField("arabic_Name", originalEmployee, updatedEmployee, changedColumns, changesDetails);
+      this.logChangedField("workingHours", originalEmployee, updatedEmployee, changedColumns, changesDetails);
+      this.logChangedField("countryCode", originalEmployee, updatedEmployee, changedColumns, changesDetails);
+      this.logChangedField("phoneNumber", originalEmployee, updatedEmployee, changedColumns, changesDetails);
+      this.logChangedField("available", originalEmployee, updatedEmployee, changedColumns, changesDetails);
+      this.logChangedField("image", originalEmployee, updatedEmployee, changedColumns, changesDetails);
+  
+      // Step 9: Create an audit log entry
       const auditLog = new AuditLogEntity();
       auditLog.tableName = "employee";
       auditLog.action = "UPDATE";
@@ -266,31 +240,47 @@ export class EmployeeService {
       auditLog.performedBy = userId;
       auditLog.changedColumns = changedColumns;
       auditLog.changesDetails = changesDetails;
-
-      // Fetch user details if needed
+  
       if (userId) {
-        const user = await this.UserRepository.findOne({
-          where: { id: userId },
-        });
-        if (user) {
-          auditLog.userDetails = {
-            id: user.id,
-            username: user.username,
-            email: user.email,
-            role: user.role,
-          };
-        }
+        auditLog.userDetails = {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+        };
       }
       await this.AuditLogRepository.save(auditLog);
-
+  
+      // Log the updated employee after saving
+      console.log("Employee updated successfully:", updatedEmployee);
+  
       return updatedEmployee;
     } catch (error) {
-      console.error("Update Employee Error:", error); // Debug statement
+      console.error("Update Employee Error:", error);
       throw new InternalServerErrorException(
         "An unexpected error occurred while updating the employee.",
       );
     }
   }
+  
+  
+  // Helper method to track field changes
+  private logChangedField(
+    field: string,
+    originalEmployee: EmployeeEntity,
+    updatedEmployee: EmployeeEntity,
+    changedColumns: string[],
+    changesDetails: Record<string, any>,
+  ) {
+    if (originalEmployee[field] !== updatedEmployee[field]) {
+      changedColumns.push(field);
+      changesDetails[field] = {
+        oldValue: originalEmployee[field],
+        newValue: updatedEmployee[field],
+      };
+    }
+  }
+  
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

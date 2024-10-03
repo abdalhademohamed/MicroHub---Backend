@@ -12,38 +12,39 @@ export class AnalysisService {
     @InjectRepository(ReservationEntity)
     private readonly ReservationRepository: Repository<ReservationEntity>,
     @InjectRepository(PaymentEntity)
+
     private readonly PaymentRepository: Repository<PaymentEntity>,
   ) {}
 
-  async getAllDeposits({ start_Time, end_Time }: AnalysisDto) {
-    if (!start_Time || !end_Time) {
-      start_Time = new Date();
-      end_Time = new Date(Date.now() - 24 * 3600 * 1000 * 7);
+  async getAllDeposits({ fromDate, toDate }: AnalysisDto) {
+    if (!fromDate || !toDate) {
+      fromDate = new Date();
+      toDate = new Date(Date.now() - 24 * 3600 * 1000 * 7);
     }
 
     const deposits = await this.ReservationRepository.createQueryBuilder(
       "reservation",
     )
       .select("SUM(reservation.deposit)", "totalDeposit")
-      .where("reservation.createdAt >= :startTime", { startTime: start_Time })
-      .andWhere("reservation.createdAt <= :endTime", { endTime: end_Time })
+      .where("reservation.createdAt >= :fromDate", { fromDate: fromDate })
+      .andWhere("reservation.createdAt <= :toDate", { toDate: toDate })
       .getRawOne();
 
     return parseFloat(deposits.totalDeposit || "0");
   }
 
-  async getDepositsByBranch({ start_Time, end_Time, branch }: AnalysisDto) {
-    if (!start_Time || !end_Time) {
-      start_Time = new Date();
-      end_Time = new Date(Date.now() - 24 * 3600 * 1000 * 7);
+  async getDepositsByBranch({ fromDate, toDate, branchId }: AnalysisDto) {
+    if (!fromDate || !toDate) {
+      fromDate = new Date();
+      toDate = new Date(Date.now() - 24 * 3600 * 1000 * 7);
     }
     const deposits = await this.ReservationRepository.createQueryBuilder(
       "reservation",
     )
       .select("SUM(reservation.deposit)", "totalDeposit")
-      .where("reservation.createdAt >= :startTime", { startTime: start_Time })
-      .andWhere("reservation.createdAt <= :endTime", { endTime: end_Time })
-      .andWhere("reservation.branchId = :branchId", { branchId: branch })
+      .where("reservation.createdAt >= :fromDate", { fromDate: fromDate })
+      .andWhere("reservation.createdAt <= :toDate", { toDate: toDate })
+      .andWhere("reservation.branchId = :branchId", { branchId })
       .getRawOne();
 
     return parseFloat(deposits.totalDeposit || "0");
@@ -51,13 +52,13 @@ export class AnalysisService {
 
   // Get totalPrice - deposit for a specific branch
   async getRemainingAmountByBranch(
-    start_Time: Date,
-    end_Time: Date,
+    fromDate: Date,
+    toDate: Date,
     branchId: string,
   ) {
-    if (!start_Time || !end_Time) {
-      start_Time = new Date();
-      end_Time = new Date(Date.now() + 24 * 3600 * 1000 * 7);
+    if (!fromDate || !toDate) {
+      fromDate = new Date();
+      toDate = new Date(Date.now() + 24 * 3600 * 1000 * 7);
     }
 
     const result = await this.ReservationRepository.createQueryBuilder(
@@ -67,18 +68,18 @@ export class AnalysisService {
         "SUM(reservation.totalPrice - reservation.deposit)",
         "remainingAmount",
       )
-      .where("reservation.start_Time >= :startTime", { startTime: start_Time })
-      .andWhere("reservation.start_Time <= :endTime", { endTime: end_Time })
+      .where("reservation.start_Time >= :fromDate", { fromDate: fromDate })
+      .andWhere("reservation.start_Time <= :toDate", { toDate: toDate })
       .andWhere("reservation.branchId = :branchId", { branchId })
       .getRawOne();
 
     return parseFloat(result.remainingAmount || "0");
   }
 
-  async getTotalRemainingAmount(start_Time: Date, end_Time: Date) {
-    if (!start_Time || !end_Time) {
-      start_Time = new Date();
-      end_Time = new Date(Date.now() - 24 * 3600 * 1000 * 7);
+  async getTotalRemainingAmount(fromDate: Date, toDate: Date) {
+    if (!fromDate || !toDate) {
+      fromDate = new Date();
+      toDate = new Date(Date.now() - 24 * 3600 * 1000 * 7);
     }
 
     const result = await this.ReservationRepository.createQueryBuilder(
@@ -88,8 +89,8 @@ export class AnalysisService {
         "SUM(reservation.totalPrice - reservation.deposit)",
         "remainingAmount",
       )
-      .where("reservation.start_Time >= :startTime", { startTime: start_Time })
-      .andWhere("reservation.start_Time <= :endTime", { endTime: end_Time })
+      .where("reservation.start_Time >= :fromDate", { fromDate: fromDate })
+      .andWhere("reservation.start_Time <= :toDate", { toDate: toDate })
       .getRawOne();
 
     return parseFloat(result.remainingAmount || "0");
@@ -116,20 +117,20 @@ export class AnalysisService {
     }, {});
   }
   async getTotalReturnedMoneyFromCanceledOrdersByTimeRange(
-    startTime: Date,
-    endTime: Date,
+    fromDate: Date,
+    toDate: Date,
   ) {
-    if (!startTime || !endTime) {
-      startTime = new Date();
-      endTime = new Date(Date.now() - 24 * 3600 * 1000 * 7);
+    if (!fromDate || !toDate) {
+      fromDate = new Date();
+      toDate = new Date(Date.now() - 24 * 3600 * 1000 * 7);
     }
     const reservationsWithinTimeRange =
       await this.ReservationRepository.createQueryBuilder("reservation")
         .leftJoinAndSelect("reservation.order", "order")
         .where("order.status = :status", { status: OrderStatus.Canceled })
-        .andWhere("reservation.start_Time BETWEEN :start AND :end", {
-          start: startTime,
-          end: endTime,
+        .andWhere("reservation.start_Time BETWEEN :fromDate AND :toDate", {
+          fromDate: fromDate,
+          toDate: toDate,
         })
         .select([
           "reservation.id",

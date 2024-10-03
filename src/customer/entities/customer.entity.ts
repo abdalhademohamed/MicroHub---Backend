@@ -10,6 +10,7 @@ import {
   JoinTable,
   OneToMany,
 } from "typeorm";
+import { GiftCouponEntity } from "../../gift-coupon/entities/gift-coupon.entity";
 
 @Entity()
 export class CustomerEntity {
@@ -52,10 +53,16 @@ export class CustomerEntity {
 
   @OneToMany(
     () => ReservationEntity,
-    (ReservationEntity) => ReservationEntity.customer,
+    (ReservationEntity) => ReservationEntity.customer
   )
   reservations: ReservationEntity[]; // Relation to reservations
 
   @OneToMany(() => OrderEntity, (doc) => doc.customer)
   orders: OrderEntity[]; // Relation to reservations
+
+
+
+   // Relation to gift coupons (coupons gifted to the customer)
+   @OneToMany(() => GiftCouponEntity, (GiftCouponEntity) => GiftCouponEntity.ownedBy)
+   receivedCoupons: GiftCouponEntity[];
 }

@@ -10,6 +10,7 @@ import {
 } from "typeorm";
 import { WorkingBranchEntity } from "../../working-branch/entities/working.branch.entity";
 import { SlotsEntity } from "../../slots/entities/slots.entity";
+import { SharableOfferEntity } from "../../sharable-offer/entities/sharable-offer.entity";
 
 @Entity()
 export class BranchEntity {
@@ -49,6 +50,8 @@ export class BranchEntity {
   @OneToMany(() => SlotsEntity, (entity) => entity.branch)
   slots: SlotsEntity[];
 
+  @OneToMany(() => SharableOfferEntity, (SharableOfferEntity) => SharableOfferEntity.branch)
+  sharableOffers: SharableOfferEntity[];
   @Column({ name: "created_by", nullable: true })
   createdBy: string;
 

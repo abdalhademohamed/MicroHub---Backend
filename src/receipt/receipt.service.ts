@@ -16,6 +16,7 @@ import { OrderEntity } from "../orders/entities/order.entity";
 import { UserEntity } from "../user/entities/user.entity";
 import { ServiceEntity } from "../service/entities/service.entity";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
+import { OfferEntity } from "../offer/entities/offer.entity";
 
 @Injectable()
 export class ReceiptService {
@@ -31,13 +32,17 @@ export class ReceiptService {
    
     @InjectRepository(AuditLogEntity)
     private readonly AuditLogRepository: Repository<AuditLogEntity>,
+
+
+    @InjectRepository(OfferEntity)
+    private readonly OfferRepository: Repository<OfferEntity>,
   ) {}
 
   async createReceipt(
     createReceiptDto: CreateReceiptDto,
     userId: string,
   ): Promise<ReceiptEntity> {
-    const { orderId, message, discount } = createReceiptDto;
+    const { orderId, message } = createReceiptDto;
   
     try {
       // Fetch the user who created the receipt
@@ -70,9 +75,37 @@ export class ReceiptService {
         throw new NotFoundException("No services found for the reservation");
       }
   
-      // Calculate discount and remaining payment
+      // Declare the offer variable outside the if block
+      let offer = null;
+  
+      // Fetch the offer if offerId exists
+      if (order.offerId) {
+        offer = await this.OfferRepository.findOne({
+          where: { id: order.offerId },
+        });
+        if (!offer) {
+          // If the offer is not found, set it to null
+          offer = null;
+        }
+      }
+  
+      if (order.sharableOfferId) {
+        offer = await this.OfferRepository.findOne({
+          where: { id: order.sharableOfferId },
+        });
+        if (!offer) {
+          // If the offer is not found, set it to null
+          offer = null;
+        }
+      }
+     
+      // Calculate total payment
       const totalPayment = reservation.totalPrice;
-      const discountPayment = totalPayment - totalPayment * (discount / 100);
+      let discountPayment = totalPayment; // Default to totalPayment
+  
+      // Apply discount if offer exists
+      const discountPercentage = offer ? offer.discountPercentage : 0; // Set discount to 0 if no offer
+      discountPayment -= totalPayment * (discountPercentage / 100);
       const remaining = discountPayment - reservation.deposit;
   
       // Format the services for receipt
@@ -100,7 +133,7 @@ export class ReceiptService {
         message,
         totalPayment: discountPayment,
         paymentForServices: formattedPaymentForServices,
-        discount,
+        discount: discountPercentage, // Set discount value
         remaining,
         createdBy,
       });
@@ -119,6 +152,7 @@ export class ReceiptService {
       );
     }
   }
+  
   
   // Save the audit log for the create action
   private async saveAuditLogForCreate(receipt: ReceiptEntity, userId: string) {

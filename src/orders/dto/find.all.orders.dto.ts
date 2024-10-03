@@ -48,4 +48,8 @@ export class FindOrdersDto {
   @IsOptional()
   @IsString()
   endDate?: string; // Format: 'yyyy-MM-dd'
+  
+  @IsOptional()
+  @IsString()
+  serviceId?: string; // New property to filter by specific service
 }

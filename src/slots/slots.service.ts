@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { HttpException, Injectable } from "@nestjs/common";
 import { WeekDays } from "../branch/utils/days.enum";
 import { CreateSlotDto } from "./dto/create.slot.dto";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -260,18 +260,12 @@ export class SlotService {
     return this.createTimeSlots(slots, duration);
   }
   async getFirstSlotAvailable(branchId: string, ids: string[]) {
-    // const month = new Date().getMonth() + 1;
-    // const year = new Date().getFullYear();
-    // const day = new Date().getDate();
     const { duration } =
       await this.reservationService.calculateTotalDuration(ids);
     const workingHour = await this.WorkingRepository.findOne({
       where: {
         slot: {
           branch: { id: branchId },
-          // day: MoreThanOrEqual(day),
-          // year: MoreThanOrEqual(year),
-          // month: MoreThanOrEqual(month),
         },
         from : MoreThanOrEqual( new Date() ),
         duration: MoreThanOrEqual(duration),
@@ -287,7 +281,7 @@ export class SlotService {
       },
     });
     if (!workingHour) {
-      throw new Error("No available slots found.");
+      throw new HttpException("No available slots found.", 400);
     };
     return this.createTimeSlots([workingHour], duration)[0] || null;
   }

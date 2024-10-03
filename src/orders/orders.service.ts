@@ -66,7 +66,9 @@ export class OrdersService {
   async createOrder(
     reservationId: string,
     userId: string,
-    paymentId: string
+    paymentId: string,
+    offerId?: string,
+    sharableOfferId?: string
   ): Promise<OrderEntity> {
     // Fetch reservation with related services
     const reservation = await this.reservationRepository.findOne({
@@ -121,6 +123,8 @@ export class OrdersService {
       artist: null,
       createdBy, // Set createdBy field with limited user data
       payment: visaPayment, // Assign the Visa payment method to the order
+      offerId,
+      sharableOfferId,
     });
 
     try {
@@ -737,26 +741,37 @@ export class OrdersService {
     findOrdersDto: FindOrdersDto,
     userId: string // User ID extracted from the token
   ): Promise<{ items: OrderEntity[]; total: number }> {
-    const { page, limit, sort, employeeName, dayDate, endDate, paymentStatus, orderStatus } = findOrdersDto;
-  
+    const {
+      page,
+      limit,
+      sort,
+      employeeName,
+      dayDate,
+      endDate,
+      paymentStatus,
+      orderStatus,
+      serviceId,
+    } = findOrdersDto;
+
     let branchId = findOrdersDto.branchId; // Declare branchId with let to allow reassignment
-  
+
     try {
       // If the user is a receptionist or coordinator, fetch their branch ID
       const employee = await this.employeeRepository.findOne({
         where: { id: userId }, // Using userId to fetch employee
         relations: ["branch"], // Ensure the branch relation is loaded
       });
-  
+
       // If employee exists and is a receptionist or coordinator, use their branch ID
       if (
         employee &&
-        (employee.role === Role.RECEPTIONIST || employee.role === Role.ARTISTMANAGER) &&
+        (employee.role === Role.RECEPTIONIST ||
+          employee.role === Role.ARTISTMANAGER) &&
         employee.branch
       ) {
         branchId = employee.branch.id; // Reassign branchId if conditions are met
       }
-  
+
       // Build the query
       const query = this.orderRepository
         .createQueryBuilder("o")
@@ -773,21 +788,21 @@ export class OrdersService {
         .take(limit)
         .skip((page - 1) * limit)
         .orderBy(`o.date`, sort.toUpperCase() as "ASC" | "DESC");
-  
+
       // Filter by employee name if provided
       if (employeeName) {
         query.andWhere("a.english_Name ILIKE :employeeName", {
           employeeName: `%${employeeName}%`,
         });
       }
-  
+
       // Filter by branch ID if available
       if (branchId) {
         query.andWhere("CAST(o.branch ->> 'id' AS uuid) = :branchId", {
           branchId,
         });
       }
-  
+
       // Filter by date range if provided
       if (dayDate || endDate) {
         if (dayDate) {
@@ -801,20 +816,25 @@ export class OrdersService {
           });
         }
       }
-  
+
       // Filter by payment status if provided
       if (paymentStatus) {
         query.andWhere("o.paymentStatus = :paymentStatus", { paymentStatus });
       }
-  
+
       // Filter by order status if provided
       if (orderStatus) {
         query.andWhere("o.status = :orderStatus", { orderStatus });
       }
-  
+
+      // Filter by service ID if provided
+      if (serviceId) {
+        query.andWhere("s.id = :serviceId", { serviceId }); // Filter by service ID
+      }
+
       // Execute the query and get results
       const [items, total] = await query.getManyAndCount();
-  
+
       return { items, total };
     } catch (error) {
       console.error("Error fetching orders:", error);
@@ -823,21 +843,43 @@ export class OrdersService {
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Method to get the count of each order status
-  async getOrderStatusCount(branchId?: string): Promise<any> {
+  async getOrderStatusCount(
+    branchId?: string,
+    fromDate?: string,
+    toDate?: string,
+    employeeId?: string // Add employeeId as a parameter
+  ): Promise<any> {
     const queryBuilder = this.orderRepository
-      .createQueryBuilder("order")
-      .innerJoin("order.reservation", "reservation")
-      .select("order.status", "status")
-      .addSelect("COUNT(order.id)", "count")
-      .groupBy("order.status");
-
-    // Conditionally add the where clause based on the presence of branchId
+      .createQueryBuilder('order')
+      .innerJoin('order.reservation', 'reservation')
+      .leftJoin('order.artist', 'employee') // Ensure you're using the correct relation name
+      .select('order.status', 'status')
+      .addSelect('COUNT(order.id)', 'count')
+      .groupBy('order.status');
+  
+    // Conditionally add the where clause based on branchId, fromDate, toDate, and employeeId
     if (branchId) {
-      queryBuilder.where("reservation.branchId = :branchId", { branchId });
+      queryBuilder.andWhere('reservation.branchId = :branchId', { branchId });
     }
-
+  
+    if (fromDate) {
+      const startOfDay = new Date(fromDate);
+      startOfDay.setHours(0, 0, 0, 0); // Set time to 00:00:00
+      queryBuilder.andWhere('reservation.start_Time >= :fromDate', { fromDate: startOfDay });
+    }
+  
+    if (toDate) {
+      const endOfDay = new Date(toDate);
+      endOfDay.setHours(23, 59, 59, 999); // Set time to 23:59:59
+      queryBuilder.andWhere('reservation.start_Time <= :toDate', { toDate: endOfDay });
+    }
+  
+    if (employeeId) {
+      queryBuilder.andWhere('employee.id = :employeeId', { employeeId }); // Filter by employee ID
+    }
+  
     const orders = await queryBuilder.getRawMany();
-
+    
     // Initialize the status count object with all possible statuses
     const orderStatusCounts: { [key in OrderStatus]: number } = {
       [OrderStatus.InProgress]: 0,
@@ -847,12 +889,76 @@ export class OrdersService {
       [OrderStatus.Completed]: 0,
       [OrderStatus.Canceled]: 0,
     };
-
+  
     // Populate the orderStatusCounts object with the results from the query
     orders.forEach((order) => {
       orderStatusCounts[order.status] = parseInt(order.count, 10);
     });
-
+  
+    return orderStatusCounts;
+  }
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Method to get the count of each order status
+  async getOrderStatusCountByArtist(
+    userId: string, // User ID from the token
+    fromDate?: string,
+    toDate?: string
+  ): Promise<{ [key in OrderStatus]: number }> {
+    // Fetch the employee (artist) associated with the userId to get the branchId
+    const employee = await this.employeeRepository.findOne({
+      where: { id: userId },
+      relations: ['branch'], // Ensure to include the relation to branch
+    });
+  
+    if (!employee || !employee.branch) {
+      throw new BadRequestException("Employee or branch not found");
+    }
+  
+    const branchId = employee.branch.id; // Get the branchId from the employee
+  
+    const queryBuilder = this.orderRepository
+      .createQueryBuilder('order')
+      .innerJoin('order.reservation', 'reservation')
+      .leftJoin('order.artist', 'employee') // Ensure you're using the correct relation name
+      .select('order.status', 'status')
+      .addSelect('COUNT(order.id)', 'count')
+      .groupBy('order.status');
+  
+    // Add the where clause based on branchId and optional date range
+    queryBuilder.andWhere('reservation.branchId = :branchId', { branchId });
+  
+    if (fromDate) {
+      const startOfDay = new Date(fromDate);
+      startOfDay.setHours(0, 0, 0, 0); // Set time to 00:00:00
+      queryBuilder.andWhere('reservation.start_Time >= :fromDate', { fromDate: startOfDay });
+    }
+  
+    if (toDate) {
+      const endOfDay = new Date(toDate);
+      endOfDay.setHours(23, 59, 59, 999); // Set time to 23:59:59
+      queryBuilder.andWhere('reservation.start_Time <= :toDate', { toDate: endOfDay });
+    }
+  
+    // Add a condition to filter by employeeId (userId)
+    queryBuilder.andWhere('employee.id = :userId', { userId }); // Filter by user ID (employee)
+  
+    const orders = await queryBuilder.getRawMany();
+    
+    // Initialize the status count object with all possible statuses
+    const orderStatusCounts: { [key in OrderStatus]: number } = {
+      [OrderStatus.InProgress]: 0,
+      [OrderStatus.InQueue]: 0,
+      [OrderStatus.Working]: 0,
+      [OrderStatus.Done]: 0,
+      [OrderStatus.Completed]: 0,
+      [OrderStatus.Canceled]: 0,
+    };
+  
+    // Populate the orderStatusCounts object with the results from the query
+    orders.forEach((order) => {
+      orderStatusCounts[order.status] = parseInt(order.count, 10);
+    });
+  
     return orderStatusCounts;
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1109,36 +1215,39 @@ export class OrdersService {
       [OrderStatus.Completed]: 0,
       [OrderStatus.Canceled]: 0,
     };
-  
+
     // Retrieve the user based on userId
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException("User not found");
     }
-  
+
     // Determine the artistId based on the user's role
     const effectiveArtistId = user.role === Role.ARTIST ? user.id : artistId;
-  
+
     if (!effectiveArtistId) {
-      throw new BadRequestException("Artist ID must be provided for ADMIN role or user must be an ARTIST.");
+      throw new BadRequestException(
+        "Artist ID must be provided for ADMIN role or user must be an ARTIST."
+      );
     }
-  
+
     // Query the repository to get counts based on artistId and optional branchId
-    const ordersQuery = this.orderRepository.createQueryBuilder('order')
-      .select('order.status', 'order_status') // Aliasing here
-      .addSelect('COUNT(order.id)', 'count')
-      .where('order.artistId = :artistId', { artistId: effectiveArtistId });
-  
+    const ordersQuery = this.orderRepository
+      .createQueryBuilder("order")
+      .select("order.status", "order_status") // Aliasing here
+      .addSelect("COUNT(order.id)", "count")
+      .where("order.artistId = :artistId", { artistId: effectiveArtistId });
+
     if (branchId) {
-      ordersQuery.andWhere('order.branchId = :branchId', { branchId });
+      ordersQuery.andWhere("order.branchId = :branchId", { branchId });
     }
-  
+
     // Group by order status
-    ordersQuery.groupBy('order.status');
-  
+    ordersQuery.groupBy("order.status");
+
     const results = await ordersQuery.getRawMany();
     // console.log('Query Results:', results); // Log the results for debugging
-  
+
     // Populate the count object based on the results
     for (const result of results) {
       const status = result.order_status as OrderStatus; // Use 'order_status' to match the query result
@@ -1148,8 +1257,7 @@ export class OrdersService {
         console.warn(`Unexpected order status: ${status}`); // Log unexpected statuses
       }
     }
-  
+
     return orderStatusCounts;
   }
-  
 }

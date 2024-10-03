@@ -149,10 +149,12 @@ export class OfferService {
     return await this.OfferRepository.find({
       where: {
         endDateTime: MoreThan(now),
+        isActive: true, // Ensure the offer is active
       },
       relations: ["services", "branches"],
     });
   }
+  
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async findOne(id: string): Promise<OfferEntity> {
     const offer = await this.OfferRepository.findOne({

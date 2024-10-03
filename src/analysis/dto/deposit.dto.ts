@@ -5,13 +5,13 @@ export class AnalysisDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsDate()
-  start_Time?: Date;
+  fromDate?: Date;
   @ApiPropertyOptional()
   @IsOptional()
   @IsDate()
-  end_Time?: Date;
+  toDate?: Date;
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  branch?: string;
+  branchId?: string;
 }
