@@ -965,20 +965,34 @@ export class ReservationService {
   async getTop5Reservations(
     startDate: string,
     endDate: string
-  ): Promise<ReservationEntity[]> {
+  ): Promise<any[]> { // Use a generic type here since we're transforming the response
     const start = new Date(startDate);
     const end = new Date(endDate);
     end.setDate(end.getDate() + 1); // Include the end date in the query
-
-    const topReservations = await this.ReservationRepository.createQueryBuilder(
-      "reservation"
-    )
+  
+    const topReservations = await this.ReservationRepository.createQueryBuilder("reservation")
+      .leftJoinAndSelect("reservation.customer", "customer") // Adjust this if the relationship name is different
       .where("reservation.createdAt BETWEEN :start AND :end", { start, end })
       .orderBy("reservation.totalPrice", "DESC")
       .take(5) // Limit the results to top 5
       .getMany();
-
-    return topReservations;
+  
+    // Map the results to the desired structure
+    return topReservations.map(reservation => ({
+      id: reservation.id,
+      start_Time: reservation.start_Time,
+      end_Time: reservation.end_Time,
+      totalPrice: reservation.totalPrice,
+      deposit: reservation.deposit,
+      createdAt: reservation.createdAt,
+      isDeleted: reservation.isDeleted,
+      customer: {
+        id: reservation.customer.id, // Ensure this property exists in the Customer entity
+        name: reservation.customer.fullName, // Replace with the actual property names from the Customer entity
+        email: reservation.customer.phoneNumber // Replace with the actual property names from the Customer entity
+        // Add any other customer details you need
+      }
+    }));
   }
 
   async getReservationsTimes(
