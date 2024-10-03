@@ -28,30 +28,30 @@ export class RootoshService {
 
   async createRootosh(
     createRootoshDto: CreateRootoshDto,
-    userId: string,  // Accept userId as a parameter for audit logging
+    userId: string, // Accept userId for audit logging
   ): Promise<RootoshEntity> {
     const { serviceId, ...rootoshData } = createRootoshDto;
-  
-    // Find the service by its ID
+
+    // Find the related service
     const service = await this.serviceRepository.findOne({
       where: { id: serviceId },
     });
-  
-    // If the service is not found, throw a 404 exception
+
     if (!service) {
       throw new NotFoundException(`Service with ID ${serviceId} not found.`);
     }
-  
+
     // Create the rootosh entity
     const rootosh = this.rootoshRepository.create({ ...rootoshData, service });
-  
+
+
     try {
-      // Save the rootosh entity to the database
+      // Save the rootosh to the database
       const savedRootosh = await this.rootoshRepository.save(rootosh);
-  
-      // Save the audit log for the creation action
+
+      // Save audit log
       await this.saveAuditLogForCreate(savedRootosh, userId);
-  
+
       return savedRootosh;
     } catch (error) {
       // Handle unexpected errors
