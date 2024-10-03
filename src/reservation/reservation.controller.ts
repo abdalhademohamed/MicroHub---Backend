@@ -64,7 +64,7 @@ export class ReservationController {
     @UploadedFile() image: Express.Multer.File // Handle the uploaded file
   ): Promise<any> {
     try {
-      // Call the service to create reservations
+      // Call the service to create reservations 
       // console.log("data:",CreateCustomerDto)
       const userId = req.user.sub; // Extract user ID from request
 

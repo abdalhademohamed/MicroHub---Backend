@@ -23,6 +23,8 @@ import { Postion } from "../postion/utils/postion.enum";
 import { ArtistDto } from "./dto/artist.dto";
 import { format } from "date-fns/format";
 import { Role } from "../user/utils/user.enum";
+import { RootoshEntity } from "src/rootosh/entities/rootosh.entity";
+import { CustomerEntity } from "src/customer/entities/customer.entity";
 
 @Injectable()
 export class OrdersService {
@@ -170,6 +172,146 @@ export class OrdersService {
       );
     }
   }
+
+
+  // async createOrder(
+  //   reservationId: string,
+  //   userId: string,
+  //   paymentId: string,
+  //   offerId?: string,
+  //   sharableOfferId?: string
+  // ): Promise<OrderEntity> {
+  //   // Fetch reservation with related services
+  //   const reservation = await this.reservationRepository.findOne({
+  //     where: { id: reservationId },
+  //     relations: ["services", "customer", "branch"],
+  //   });
+  
+  //   if (!reservation) {
+  //     throw new NotFoundException("Reservation not found");
+  //   }
+  
+  //   // Fetch the user who is creating the order, limiting the fields returned
+  //   const createdBy = await this.userRepository.findOne({
+  //     where: { id: userId },
+  //     select: ["id", "username", "email", "role"], // Only return these fields
+  //   });
+  //   if (!createdBy) {
+  //     throw new NotFoundException(`User with ID ${userId} not found`);
+  //   }
+  
+  //   // Find the payment method with 'Visa'
+  //   const visaPayment = await this.PaymentRepository.findOne({
+  //     where: { id: paymentId },
+  //   });
+  
+  //   if (!visaPayment) {
+  //     throw new NotFoundException(
+  //       "Visa payment method not found, please add payment method called Visa in English & Arabic"
+  //     );
+  //   }
+  
+  //   const invoiceNumber = await this.generateUniqueInvoiceNumber();
+  
+  //   // Create new order
+  //   const newOrder = this.orderRepository.create({
+  //     customer: reservation.customer,
+  //     date: `${reservation.reservationYear}-${reservation.reservationMonth}-${reservation.reservationDay}`,
+  //     serviceEnglish: reservation.services
+  //       .map((service) => service.english_Name)
+  //       .join(", "),
+  //     serviceArabic: reservation.services
+  //       .map((service) => service.arabic_Name)
+  //       .join(", "),
+  //     status: OrderStatus.Completed,
+  //     paymentStatus: "partially paid",
+  //     invoiceNumber: invoiceNumber,
+  //     comments: [],
+  //     reservation: reservation,
+  //     branch: {
+  //       id: reservation.branch.id, // Include branch ID
+  //       name: reservation.branch.name, // Include branch name
+  //     },
+  //     artist: null,
+  //     createdBy, // Set createdBy field with limited user data
+  //     payment: visaPayment, // Assign the Visa payment method to the order
+  //     offerId,
+  //     sharableOfferId,
+  //   });
+  
+  //   try {
+  //     return await this.entityManager.transaction(
+  //       async (transactionalEntityManager) => {
+  //         // Save the new order
+  //         const savedOrder = await transactionalEntityManager.save(
+  //           OrderEntity,
+  //           newOrder
+  //         );
+  
+  //         // Update customer's last services list and rootosh list
+  //         const customer = await transactionalEntityManager.findOne(CustomerEntity, {
+  //           where: { id: reservation.customer.id },
+  //           relations: ["lastServices", "lastRootosh"], // Assuming these are the names of the fields in your Customer entity
+  //         });
+  
+  //         if (customer) {
+  //           // Get services from the reservation
+  //           const services = reservation.services;
+  
+  //           // Update last services list
+  //           if (customer.lastServices) {
+  //             customer.lastServices.push(...services);
+  //           } else {
+  //             customer.lastServices = [...services];
+  //           }
+  
+  //           // Update last rootosh list from services
+  //           const rootoshList = services.flatMap((service) => service.rootosh); // Assuming `rootosh` is a property of the service
+  //           if (customer.lastRootoshes) {
+  //             customer.lastRootoshes.push(...rootoshList);
+  //           } else {
+  //             customer.lastRootoshes = [...rootoshList];
+  //           }
+  
+  //           // Save the updated customer
+  //           await transactionalEntityManager.save(CustomerEntity, customer);
+  //         }
+  
+  //         // Create an audit log entry
+  //         const auditLog = new AuditLogEntity();
+  //         auditLog.tableName = "order";
+  //         auditLog.action = "INSERT";
+  //         auditLog.entityId = savedOrder.id; // ID of the created order
+  //         auditLog.performedBy = userId; // User who created the order
+  
+  //         // Fetch user details if needed
+  //         if (userId) {
+  //           const user = await transactionalEntityManager.findOne(UserEntity, {
+  //             where: { id: userId },
+  //           });
+  //           if (user) {
+  //             auditLog.userDetails = {
+  //               id: user.id,
+  //               username: user.username,
+  //               email: user.email,
+  //               role: user.role,
+  //             };
+  //           }
+  //         }
+  
+  //         await transactionalEntityManager.save(AuditLogEntity, auditLog);
+  
+  //         return savedOrder;
+  //       }
+  //     );
+  //   } catch (error) {
+  //     throw new InternalServerErrorException(
+  //       "Failed to create order",
+  //       error.stack
+  //     );
+  //   }
+  // }
+  
   async updateOrderServicesFromReservation(
     reservationId: string,
     userId: string
@@ -740,107 +882,108 @@ export class OrdersService {
   async findAllOrders(
     findOrdersDto: FindOrdersDto,
     userId: string // User ID extracted from the token
-  ): Promise<{ items: OrderEntity[]; total: number }> {
+): Promise<{ items: OrderEntity[]; total: number }> {
     const {
-      page,
-      limit,
-      sort,
-      employeeName,
-      dayDate,
-      endDate,
-      paymentStatus,
-      orderStatus,
-      serviceId,
+        page,
+        limit,
+        sort,
+        employeeName,
+        fromDate, // Changed from dayDate to fromDate
+        toDate,   // Changed from endDate to toDate
+        paymentStatus,
+        orderStatus,
+        serviceId,
     } = findOrdersDto;
 
     let branchId = findOrdersDto.branchId; // Declare branchId with let to allow reassignment
 
     try {
-      // If the user is a receptionist or coordinator, fetch their branch ID
-      const employee = await this.employeeRepository.findOne({
-        where: { id: userId }, // Using userId to fetch employee
-        relations: ["branch"], // Ensure the branch relation is loaded
-      });
-
-      // If employee exists and is a receptionist or coordinator, use their branch ID
-      if (
-        employee &&
-        (employee.role === Role.RECEPTIONIST ||
-          employee.role === Role.ARTISTMANAGER) &&
-        employee.branch
-      ) {
-        branchId = employee.branch.id; // Reassign branchId if conditions are met
-      }
-
-      // Build the query
-      const query = this.orderRepository
-        .createQueryBuilder("o")
-        .leftJoinAndSelect("o.artist", "a")
-        .leftJoinAndSelect("o.customer", "c")
-        .addSelect(["c.id", "c.fullName", "c.phoneNumber"])
-        .leftJoin("o.createdBy", "cb")
-        .addSelect(["cb.id", "cb.username", "cb.email", "cb.role"])
-        .leftJoin("o.updatedBy", "ub")
-        .addSelect(["ub.id", "ub.username"])
-        .leftJoinAndSelect("o.reservation", "r")
-        .leftJoinAndSelect("r.services", "s")
-        .addSelect(["r.id", "r.start_Time", "r.end_Time", "r.totalPrice"])
-        .take(limit)
-        .skip((page - 1) * limit)
-        .orderBy(`o.date`, sort.toUpperCase() as "ASC" | "DESC");
-
-      // Filter by employee name if provided
-      if (employeeName) {
-        query.andWhere("a.english_Name ILIKE :employeeName", {
-          employeeName: `%${employeeName}%`,
+        // If the user is a receptionist or coordinator, fetch their branch ID
+        const employee = await this.employeeRepository.findOne({
+            where: { id: userId }, // Using userId to fetch employee
+            relations: ["branch"], // Ensure the branch relation is loaded
         });
-      }
 
-      // Filter by branch ID if available
-      if (branchId) {
-        query.andWhere("CAST(o.branch ->> 'id' AS uuid) = :branchId", {
-          branchId,
-        });
-      }
-
-      // Filter by date range if provided
-      if (dayDate || endDate) {
-        if (dayDate) {
-          query.andWhere("o.date >= :fromDayDate", {
-            fromDayDate: new Date(dayDate).toISOString(),
-          });
+        // If employee exists and is a receptionist or coordinator, use their branch ID
+        if (
+            employee &&
+            (employee.role === Role.RECEPTIONIST ||
+                employee.role === Role.ARTISTMANAGER) &&
+            employee.branch
+        ) {
+            branchId = employee.branch.id; // Reassign branchId if conditions are met
         }
-        if (endDate) {
-          query.andWhere("o.date < :toDayDate", {
-            toDayDate: new Date(endDate).toISOString(),
-          });
+
+        // Build the query
+        const query = this.orderRepository
+            .createQueryBuilder("o")
+            .leftJoinAndSelect("o.artist", "a")
+            .leftJoinAndSelect("o.customer", "c")
+            .addSelect(["c.id", "c.fullName", "c.phoneNumber"])
+            .leftJoin("o.createdBy", "cb")
+            .addSelect(["cb.id", "cb.username", "cb.email", "cb.role"])
+            .leftJoin("o.updatedBy", "ub")
+            .addSelect(["ub.id", "ub.username"])
+            .leftJoinAndSelect("o.reservation", "r")
+            .leftJoinAndSelect("r.services", "s")
+            .addSelect(["r.id", "r.start_Time", "r.end_Time", "r.totalPrice"])
+            .take(limit)
+            .skip((page - 1) * limit)
+            .orderBy(`o.date`, sort.toUpperCase() as "ASC" | "DESC");
+
+        // Filter by employee name if provided
+        if (employeeName) {
+            query.andWhere("a.english_Name ILIKE :employeeName", {
+                employeeName: `%${employeeName}%`,
+            });
         }
-      }
 
-      // Filter by payment status if provided
-      if (paymentStatus) {
-        query.andWhere("o.paymentStatus = :paymentStatus", { paymentStatus });
-      }
+        // Filter by branch ID if available
+        if (branchId) {
+            query.andWhere("CAST(o.branch ->> 'id' AS uuid) = :branchId", {
+                branchId,
+            });
+        }
 
-      // Filter by order status if provided
-      if (orderStatus) {
-        query.andWhere("o.status = :orderStatus", { orderStatus });
-      }
+        // Filter by date range if provided
+        if (fromDate || toDate) {
+            if (fromDate) { // Changed from dayDate to fromDate
+                query.andWhere("o.date >= :fromDate", {
+                    fromDate: new Date(fromDate).toISOString(),
+                });
+            }
+            if (toDate) { // Changed from endDate to toDate
+                query.andWhere("o.date < :toDate", {
+                    toDate: new Date(toDate).toISOString(),
+                });
+            }
+        }
 
-      // Filter by service ID if provided
-      if (serviceId) {
-        query.andWhere("s.id = :serviceId", { serviceId }); // Filter by service ID
-      }
+        // Filter by payment status if provided
+        if (paymentStatus) {
+            query.andWhere("o.paymentStatus = :paymentStatus", { paymentStatus });
+        }
 
-      // Execute the query and get results
-      const [items, total] = await query.getManyAndCount();
+        // Filter by order status if provided
+        if (orderStatus) {
+            query.andWhere("o.status = :orderStatus", { orderStatus });
+        }
 
-      return { items, total };
+        // Filter by service ID if provided
+        if (serviceId) {
+            query.andWhere("s.id = :serviceId", { serviceId }); // Filter by service ID
+        }
+
+        // Execute the query and get results
+        const [items, total] = await query.getManyAndCount();
+
+        return { items, total };
     } catch (error) {
-      console.error("Error fetching orders:", error);
-      throw new Error("Unable to fetch orders.");
+        console.error("Error fetching orders:", error);
+        throw new Error("Unable to fetch orders.");
     }
-  }
+}
+
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Method to get the count of each order status
   async getOrderStatusCount(

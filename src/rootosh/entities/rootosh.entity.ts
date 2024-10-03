@@ -16,12 +16,18 @@ export class RootoshEntity {
   @Column()
   name: string;
 
+  // New field to store the duration until expiration (in days, for example)
+  @Column({nullable:true})
+  expireduration: number; // Duration in days, weeks, etc.
+
+ 
+  
   @Column()
   description: string;
 
   @ManyToOne(() => ServiceEntity, (ServiceEntity) => ServiceEntity.rootosh)
   service: ServiceEntity; // Link to the main service
-
+ 
   @ManyToMany(() => CustomerEntity, (customer) => customer.lastRootoshes)
   customers: CustomerEntity[];
 }
