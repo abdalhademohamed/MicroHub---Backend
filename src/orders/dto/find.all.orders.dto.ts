@@ -35,7 +35,7 @@ export class FindOrdersDto {
 
   @IsOptional()
   @IsString()
-  dayDate?: string; // Format: 'yyyy-MM-dd'
+  fromDate?: string; // Format: 'yyyy-MM-dd'
 
   @IsOptional()
   @IsEnum(PaymentStatus) // Reference the updated PaymentStatus enum
@@ -47,7 +47,7 @@ export class FindOrdersDto {
 
   @IsOptional()
   @IsString()
-  endDate?: string; // Format: 'yyyy-MM-dd'
+  toDate?: string; // Format: 'yyyy-MM-dd'
   
   @IsOptional()
   @IsString()
