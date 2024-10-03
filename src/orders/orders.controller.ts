@@ -69,29 +69,7 @@ export class OrdersController {
     return this.ordersService.findAllOrders(findOrdersDto, userId);
   }
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-@UseGuards(AccessTokenGuard, RolesGuard)
-@Roles(
-  Role.SUPERADMIN,
-  Role.COORDINATOR,
-  Role.BRANCHMANAGER,
-  Role.RECEPTIONIST,
-  Role.ARTISTMANAGER,
-  Role.ARTIST
-)
-@Get('artist/status/count')
-async getOrderStatusCountForArtist(
-  @Request() req: any, // Request object to access the user
-  @Query('branchId') branchId?: string,
-  @Query('artistId') artistId?: string // Optional artistId for ADMIN role
-): Promise<{ [key in OrderStatus]: number }> {
-  const userId = req.user.sub; // Get the authenticated user from the request
-  if (!userId) {
-    throw new BadRequestException("User not authenticated");
-  }
-
-  // Pass userId, branchId, and artistId to the service
-  return this.ordersService.getOrderStatusCountForArtist(userId, branchId, artistId);
-}
+// 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Patch("payment/status/:orderId")
   @UseGuards(AccessTokenGuard, RolesGuard)
@@ -193,7 +171,22 @@ async getOrderStatusCountForArtist(
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.ARTIST)
+  @Get('artist/status/count')
+  async getOrderStatusCountByArtist(
+    @Request() req: any, // Request object to access the user
+    @Query('fromDate') fromDate?: string,
+    @Query('toDate') toDate?: string,
+     // New query parameter for employeeId
+  ): Promise<{ [key in OrderStatus]: number }> {
+    const userId = req.user.sub; // Extract user ID from request
+
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
+    return this.ordersService.getOrderStatusCountByArtist(userId,fromDate,toDate);
+  }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard)
@@ -207,7 +200,8 @@ async getOrderStatusCountForArtist(
   ): Promise<{ [key in OrderStatus]: number }> {
     return this.ordersService.getOrderStatusCount(branchId, fromDate, toDate, employeeId);
   }
-
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   @Get("filterd")
