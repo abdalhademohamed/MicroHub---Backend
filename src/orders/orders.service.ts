@@ -23,8 +23,7 @@ import { Postion } from "../postion/utils/postion.enum";
 import { ArtistDto } from "./dto/artist.dto";
 import { format } from "date-fns/format";
 import { Role } from "../user/utils/user.enum";
-import { RootoshEntity } from "src/rootosh/entities/rootosh.entity";
-import { CustomerEntity } from "src/customer/entities/customer.entity";
+import { CustomerEntity } from "../customer/entities/customer.entity";
 
 @Injectable()
 export class OrdersService {
@@ -65,6 +64,114 @@ export class OrdersService {
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // async createOrder(
+  //   reservationId: string,
+  //   userId: string,
+  //   paymentId: string,
+  //   offerId?: string,
+  //   sharableOfferId?: string
+  // ): Promise<OrderEntity> {
+  //   // Fetch reservation with related services
+  //   const reservation = await this.reservationRepository.findOne({
+  //     where: { id: reservationId },
+  //     relations: ["services", "customer", "branch"],
+  //   });
+
+  //   if (!reservation) {
+  //     throw new NotFoundException("Reservation not found");
+  //   }
+
+  //   // Fetch the user who is creating the order, limiting the fields returned
+  //   const createdBy = await this.userRepository.findOne({
+  //     where: { id: userId },
+  //     select: ["id", "username", "email", "role"], // Only return these fields
+  //   });
+  //   if (!createdBy) {
+  //     throw new NotFoundException(`User with ID ${userId} not found`);
+  //   }
+
+  //   // Find the payment method with 'Visa'
+  //   const visaPayment = await this.PaymentRepository.findOne({
+  //     where: { id: paymentId },
+  //   });
+
+  //   if (!visaPayment) {
+  //     throw new NotFoundException(
+  //       "Visa payment method not found, please add payment method called Visa in English & arabic"
+  //     );
+  //   }
+
+  //   const invoiceNumber = await this.generateUniqueInvoiceNumber();
+
+  //   const newOrder = this.orderRepository.create({
+  //     customer: reservation.customer,
+  //     date: `${reservation.reservationYear}-${reservation.reservationMonth}-${reservation.reservationDay}`,
+  //     serviceEnglish: reservation.services
+  //       .map((service) => service.english_Name)
+  //       .join(", "),
+  //     serviceArabic: reservation.services
+  //       .map((service) => service.arabic_Name)
+  //       .join(", "),
+  //     status: OrderStatus.Completed,
+  //     paymentStatus: "partially paid",
+  //     invoiceNumber: invoiceNumber,
+  //     comments: [],
+  //     reservation: reservation,
+  //     branch: {
+  //       id: reservation.branch.id, // Include branch ID
+  //       name: reservation.branch.name, // Include branch name
+  //     }, // Return an object with id and name of the branch
+  //     artist: null,
+  //     createdBy, // Set createdBy field with limited user data
+  //     payment: visaPayment, // Assign the Visa payment method to the order
+  //     offerId,
+  //     sharableOfferId,
+  //   });
+
+  //   try {
+  //     return await this.entityManager.transaction(
+  //       async (transactionalEntityManager) => {
+  //         // Save the new order
+  //         const savedOrder = await transactionalEntityManager.save(
+  //           OrderEntity,
+  //           newOrder
+  //         );
+
+  //         // Create an audit log entry
+  //         const auditLog = new AuditLogEntity();
+  //         auditLog.tableName = "order";
+  //         auditLog.action = "INSERT";
+  //         auditLog.entityId = savedOrder.id; // ID of the created order
+  //         auditLog.performedBy = userId; // User who created the order
+
+  //         // Fetch user details if needed
+  //         if (userId) {
+  //           const user = await transactionalEntityManager.findOne(UserEntity, {
+  //             where: { id: userId },
+  //           });
+  //           if (user) {
+  //             auditLog.userDetails = {
+  //               id: user.id,
+  //               username: user.username,
+  //               email: user.email,
+  //               role: user.role,
+  //             };
+  //           }
+  //         }
+
+  //         await transactionalEntityManager.save(AuditLogEntity, auditLog);
+
+  //         return savedOrder;
+  //       }
+  //     );
+  //   } catch (error) {
+  //     throw new InternalServerErrorException(
+  //       "Failed to create order",
+  //       error.stack
+  //     );
+  //   }
+  // }
+
   async createOrder(
     reservationId: string,
     userId: string,
@@ -98,12 +205,13 @@ export class OrdersService {
 
     if (!visaPayment) {
       throw new NotFoundException(
-        "Visa payment method not found, please add payment method called Visa in English & arabic"
+        "Visa payment method not found, please add payment method called Visa in English & Arabic"
       );
     }
 
     const invoiceNumber = await this.generateUniqueInvoiceNumber();
 
+    // Create new order
     const newOrder = this.orderRepository.create({
       customer: reservation.customer,
       date: `${reservation.reservationYear}-${reservation.reservationMonth}-${reservation.reservationDay}`,
@@ -113,7 +221,7 @@ export class OrdersService {
       serviceArabic: reservation.services
         .map((service) => service.arabic_Name)
         .join(", "),
-      status: OrderStatus.Completed,
+      status: OrderStatus.InProgress,
       paymentStatus: "partially paid",
       invoiceNumber: invoiceNumber,
       comments: [],
@@ -121,7 +229,7 @@ export class OrdersService {
       branch: {
         id: reservation.branch.id, // Include branch ID
         name: reservation.branch.name, // Include branch name
-      }, // Return an object with id and name of the branch
+      },
       artist: null,
       createdBy, // Set createdBy field with limited user data
       payment: visaPayment, // Assign the Visa payment method to the order
@@ -137,6 +245,50 @@ export class OrdersService {
             OrderEntity,
             newOrder
           );
+
+          // Update customer's last services list and rootosh list
+          const customer = await transactionalEntityManager.findOne(
+            CustomerEntity,
+            {
+              where: { id: reservation.customer.id },
+              relations: ["lastServices", "lastRootosh"], // Assuming these are the names of the fields in your Customer entity
+            }
+          );
+
+          if (customer) {
+            // Get services from the reservation
+            const services = reservation.services;
+
+            // Update last services list
+            if (customer.lastServices) {
+              customer.lastServices.push(...services);
+            } else {
+              customer.lastServices = [...services];
+            }
+
+            // Update last rootosh list from services
+            const rootoshList = services.flatMap((service) => service.rootosh); // Assuming `rootosh` is a property of the service
+            // Add rootosh expiration date logic
+            for (const rootosh of rootoshList) {
+              if (rootosh.expireduration) {
+                const expirationDate = new Date();
+                expirationDate.setDate(
+                  expirationDate.getDate() + rootosh.expireduration
+                );
+
+                // Assign calculated expiration date
+                customer.rootoshesexpirationDate = expirationDate;
+              }
+            }
+            if (customer.lastRootoshes) {
+              customer.lastRootoshes.push(...rootoshList);
+            } else {
+              customer.lastRootoshes = [...rootoshList];
+            }
+
+            // Save the updated customer
+            await transactionalEntityManager.save(CustomerEntity, customer);
+          }
 
           // Create an audit log entry
           const auditLog = new AuditLogEntity();
@@ -173,145 +325,6 @@ export class OrdersService {
     }
   }
 
-
-  // async createOrder(
-  //   reservationId: string,
-  //   userId: string,
-  //   paymentId: string,
-  //   offerId?: string,
-  //   sharableOfferId?: string
-  // ): Promise<OrderEntity> {
-  //   // Fetch reservation with related services
-  //   const reservation = await this.reservationRepository.findOne({
-  //     where: { id: reservationId },
-  //     relations: ["services", "customer", "branch"],
-  //   });
-  
-  //   if (!reservation) {
-  //     throw new NotFoundException("Reservation not found");
-  //   }
-  
-  //   // Fetch the user who is creating the order, limiting the fields returned
-  //   const createdBy = await this.userRepository.findOne({
-  //     where: { id: userId },
-  //     select: ["id", "username", "email", "role"], // Only return these fields
-  //   });
-  //   if (!createdBy) {
-  //     throw new NotFoundException(`User with ID ${userId} not found`);
-  //   }
-  
-  //   // Find the payment method with 'Visa'
-  //   const visaPayment = await this.PaymentRepository.findOne({
-  //     where: { id: paymentId },
-  //   });
-  
-  //   if (!visaPayment) {
-  //     throw new NotFoundException(
-  //       "Visa payment method not found, please add payment method called Visa in English & Arabic"
-  //     );
-  //   }
-  
-  //   const invoiceNumber = await this.generateUniqueInvoiceNumber();
-  
-  //   // Create new order
-  //   const newOrder = this.orderRepository.create({
-  //     customer: reservation.customer,
-  //     date: `${reservation.reservationYear}-${reservation.reservationMonth}-${reservation.reservationDay}`,
-  //     serviceEnglish: reservation.services
-  //       .map((service) => service.english_Name)
-  //       .join(", "),
-  //     serviceArabic: reservation.services
-  //       .map((service) => service.arabic_Name)
-  //       .join(", "),
-  //     status: OrderStatus.Completed,
-  //     paymentStatus: "partially paid",
-  //     invoiceNumber: invoiceNumber,
-  //     comments: [],
-  //     reservation: reservation,
-  //     branch: {
-  //       id: reservation.branch.id, // Include branch ID
-  //       name: reservation.branch.name, // Include branch name
-  //     },
-  //     artist: null,
-  //     createdBy, // Set createdBy field with limited user data
-  //     payment: visaPayment, // Assign the Visa payment method to the order
-  //     offerId,
-  //     sharableOfferId,
-  //   });
-  
-  //   try {
-  //     return await this.entityManager.transaction(
-  //       async (transactionalEntityManager) => {
-  //         // Save the new order
-  //         const savedOrder = await transactionalEntityManager.save(
-  //           OrderEntity,
-  //           newOrder
-  //         );
-  
-  //         // Update customer's last services list and rootosh list
-  //         const customer = await transactionalEntityManager.findOne(CustomerEntity, {
-  //           where: { id: reservation.customer.id },
-  //           relations: ["lastServices", "lastRootosh"], // Assuming these are the names of the fields in your Customer entity
-  //         });
-  
-  //         if (customer) {
-  //           // Get services from the reservation
-  //           const services = reservation.services;
-  
-  //           // Update last services list
-  //           if (customer.lastServices) {
-  //             customer.lastServices.push(...services);
-  //           } else {
-  //             customer.lastServices = [...services];
-  //           }
-  
-  //           // Update last rootosh list from services
-  //           const rootoshList = services.flatMap((service) => service.rootosh); // Assuming `rootosh` is a property of the service
-  //           if (customer.lastRootoshes) {
-  //             customer.lastRootoshes.push(...rootoshList);
-  //           } else {
-  //             customer.lastRootoshes = [...rootoshList];
-  //           }
-  
-  //           // Save the updated customer
-  //           await transactionalEntityManager.save(CustomerEntity, customer);
-  //         }
-  
-  //         // Create an audit log entry
-  //         const auditLog = new AuditLogEntity();
-  //         auditLog.tableName = "order";
-  //         auditLog.action = "INSERT";
-  //         auditLog.entityId = savedOrder.id; // ID of the created order
-  //         auditLog.performedBy = userId; // User who created the order
-  
-  //         // Fetch user details if needed
-  //         if (userId) {
-  //           const user = await transactionalEntityManager.findOne(UserEntity, {
-  //             where: { id: userId },
-  //           });
-  //           if (user) {
-  //             auditLog.userDetails = {
-  //               id: user.id,
-  //               username: user.username,
-  //               email: user.email,
-  //               role: user.role,
-  //             };
-  //           }
-  //         }
-  
-  //         await transactionalEntityManager.save(AuditLogEntity, auditLog);
-  
-  //         return savedOrder;
-  //       }
-  //     );
-  //   } catch (error) {
-  //     throw new InternalServerErrorException(
-  //       "Failed to create order",
-  //       error.stack
-  //     );
-  //   }
-  // }
-  
   async updateOrderServicesFromReservation(
     reservationId: string,
     userId: string
@@ -764,34 +777,47 @@ export class OrdersService {
   ): Promise<OrderEntity> {
     let order: OrderEntity;
     let artist: EmployeeEntity;
-
+  
     try {
       // Fetch the order
       order = await this.orderRepository.findOne({
         where: { id: orderId },
       });
-
+  
       if (!order) {
         throw new NotFoundException(`Order with ID ${orderId} not found`);
       }
-
+  
       // Fetch the artist with their position
       artist = await this.employeeRepository.findOne({
         where: { id: artistId },
         relations: ["position"], // Ensure position is included
       });
-
+  
       if (!artist) {
         throw new NotFoundException(`Artist with ID ${artistId} not found`);
       }
-
+  
       // Verify if the employee's position is "Artist"
       if (artist.position.postion !== Postion.ARTIST) {
         throw new NotFoundException(
           `Employee with ID ${artistId} does not have the position of Artist`
         );
       }
-
+  
+      // Check if the order date matches today's date
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Reset time part to compare only date
+  
+      const orderDate = new Date(order.date); // Assuming 'order.date' contains the order date
+      orderDate.setHours(0, 0, 0, 0); // Reset time part to compare only date
+  
+      if (orderDate.getTime() !== today.getTime()) {
+        throw new BadRequestException(
+          `Order date ${orderDate.toDateString()} does not match today's date`
+        );
+      }
+  
       // Map the artist entity to ArtistDto
       const artistDto: ArtistDto = {
         id: artist.id,
@@ -807,13 +833,13 @@ export class OrdersService {
         newestAvgRating: artist.newestAvgRating,
         position: artist.position.postion,
       };
-
+  
       // Assign the DTO to the order
       order.artist = artistDto as any; // Type assertion to bypass TypeScript checks
-
+  
       // Save the updated order
       const updatedOrder = await this.orderRepository.save(order);
-
+  
       // Create an audit log entry
       await this.entityManager.transaction(
         async (transactionalEntityManager) => {
@@ -822,15 +848,15 @@ export class OrdersService {
             OrderEntity,
             { where: { id: updatedOrder.id } }
           );
-
+  
           const log = new AuditLogEntity();
           log.tableName = "order";
           log.action = "UPDATE";
           log.entityId = updatedOrder.id;
-
+  
           const changedColumns = [];
           const changesDetails = {};
-
+  
           if (oldOrder) {
             Object.keys(updatedOrder).forEach((key) => {
               if (oldOrder[key] !== updatedOrder[key]) {
@@ -842,16 +868,16 @@ export class OrdersService {
               }
             });
           }
-
+  
           log.changedColumns = changedColumns;
           log.changesDetails = changesDetails;
-
+  
           // Fetch user details
           const user = await transactionalEntityManager.findOne(UserEntity, {
             where: { id: userId },
             select: ["id", "username", "email", "role"],
           });
-
+  
           if (user) {
             log.performedBy = user.id;
             log.userDetails = {
@@ -863,11 +889,11 @@ export class OrdersService {
           } else {
             log.performedBy = null;
           }
-
+  
           await transactionalEntityManager.save(AuditLogEntity, log);
         }
       );
-
+  
       return updatedOrder;
     } catch (error) {
       console.error("Failed to assign order to artist:", error);
@@ -877,112 +903,115 @@ export class OrdersService {
       );
     }
   }
+  
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async findAllOrders(
     findOrdersDto: FindOrdersDto,
     userId: string // User ID extracted from the token
-): Promise<{ items: OrderEntity[]; total: number }> {
+  ): Promise<{ items: OrderEntity[]; total: number }> {
     const {
-        page,
-        limit,
-        sort,
-        employeeName,
-        fromDate, // Changed from dayDate to fromDate
-        toDate,   // Changed from endDate to toDate
-        paymentStatus,
-        orderStatus,
-        serviceId,
+      page,
+      limit,
+      sort,
+      employeeName,
+      fromDate, // Changed from dayDate to fromDate
+      toDate, // Changed from endDate to toDate
+      paymentStatus,
+      orderStatus,
+      serviceId,
     } = findOrdersDto;
 
     let branchId = findOrdersDto.branchId; // Declare branchId with let to allow reassignment
 
     try {
-        // If the user is a receptionist or coordinator, fetch their branch ID
-        const employee = await this.employeeRepository.findOne({
-            where: { id: userId }, // Using userId to fetch employee
-            relations: ["branch"], // Ensure the branch relation is loaded
+      // If the user is a receptionist or coordinator, fetch their branch ID
+      const employee = await this.employeeRepository.findOne({
+        where: { id: userId }, // Using userId to fetch employee
+        relations: ["branch"], // Ensure the branch relation is loaded
+      });
+
+      // If employee exists and is a receptionist or coordinator, use their branch ID
+      if (
+        employee &&
+        (employee.role === Role.RECEPTIONIST ||
+          employee.role === Role.ARTISTMANAGER) &&
+        employee.branch
+      ) {
+        branchId = employee.branch.id; // Reassign branchId if conditions are met
+      }
+
+      // Build the query
+      const query = this.orderRepository
+        .createQueryBuilder("o")
+        .leftJoinAndSelect("o.artist", "a")
+        .leftJoinAndSelect("o.customer", "c")
+        .addSelect(["c.id", "c.fullName", "c.phoneNumber"])
+        .leftJoin("o.createdBy", "cb")
+        .addSelect(["cb.id", "cb.username", "cb.email", "cb.role"])
+        .leftJoin("o.updatedBy", "ub")
+        .addSelect(["ub.id", "ub.username"])
+        .leftJoinAndSelect("o.reservation", "r")
+        .leftJoinAndSelect("r.services", "s")
+        .addSelect(["r.id", "r.start_Time", "r.end_Time", "r.totalPrice"])
+        .take(limit)
+        .skip((page - 1) * limit)
+        .orderBy(`o.date`, sort.toUpperCase() as "ASC" | "DESC");
+
+      // Filter by employee name if provided
+      if (employeeName) {
+        query.andWhere("a.english_Name ILIKE :employeeName", {
+          employeeName: `%${employeeName}%`,
         });
+      }
 
-        // If employee exists and is a receptionist or coordinator, use their branch ID
-        if (
-            employee &&
-            (employee.role === Role.RECEPTIONIST ||
-                employee.role === Role.ARTISTMANAGER) &&
-            employee.branch
-        ) {
-            branchId = employee.branch.id; // Reassign branchId if conditions are met
+      // Filter by branch ID if available
+      if (branchId) {
+        query.andWhere("CAST(o.branch ->> 'id' AS uuid) = :branchId", {
+          branchId,
+        });
+      }
+
+      // Filter by date range if provided
+      if (fromDate || toDate) {
+        if (fromDate) {
+          // Changed from dayDate to fromDate
+          query.andWhere("o.date >= :fromDate", {
+            fromDate: new Date(fromDate).toISOString(),
+          });
         }
-
-        // Build the query
-        const query = this.orderRepository
-            .createQueryBuilder("o")
-            .leftJoinAndSelect("o.artist", "a")
-            .leftJoinAndSelect("o.customer", "c")
-            .addSelect(["c.id", "c.fullName", "c.phoneNumber"])
-            .leftJoin("o.createdBy", "cb")
-            .addSelect(["cb.id", "cb.username", "cb.email", "cb.role"])
-            .leftJoin("o.updatedBy", "ub")
-            .addSelect(["ub.id", "ub.username"])
-            .leftJoinAndSelect("o.reservation", "r")
-            .leftJoinAndSelect("r.services", "s")
-            .addSelect(["r.id", "r.start_Time", "r.end_Time", "r.totalPrice"])
-            .take(limit)
-            .skip((page - 1) * limit)
-            .orderBy(`o.date`, sort.toUpperCase() as "ASC" | "DESC");
-
-        // Filter by employee name if provided
-        if (employeeName) {
-            query.andWhere("a.english_Name ILIKE :employeeName", {
-                employeeName: `%${employeeName}%`,
-            });
+        if (toDate) {
+          // Changed from endDate to toDate
+          query.andWhere("o.date < :toDate", {
+            toDate: new Date(toDate).toISOString(),
+          });
         }
+      }
 
-        // Filter by branch ID if available
-        if (branchId) {
-            query.andWhere("CAST(o.branch ->> 'id' AS uuid) = :branchId", {
-                branchId,
-            });
-        }
+      // Filter by payment status if provided
+      if (paymentStatus) {
+        query.andWhere("o.paymentStatus = :paymentStatus", { paymentStatus });
+      }
 
-        // Filter by date range if provided
-        if (fromDate || toDate) {
-            if (fromDate) { // Changed from dayDate to fromDate
-                query.andWhere("o.date >= :fromDate", {
-                    fromDate: new Date(fromDate).toISOString(),
-                });
-            }
-            if (toDate) { // Changed from endDate to toDate
-                query.andWhere("o.date < :toDate", {
-                    toDate: new Date(toDate).toISOString(),
-                });
-            }
-        }
+      // Filter by order status if provided
+      if (orderStatus) {
+        query.andWhere("o.status = :orderStatus", { orderStatus });
+      }
 
-        // Filter by payment status if provided
-        if (paymentStatus) {
-            query.andWhere("o.paymentStatus = :paymentStatus", { paymentStatus });
-        }
+      // Filter by service ID if provided
+      if (serviceId) {
+        query.andWhere("s.id = :serviceId", { serviceId }); // Filter by service ID
+      }
 
-        // Filter by order status if provided
-        if (orderStatus) {
-            query.andWhere("o.status = :orderStatus", { orderStatus });
-        }
+      // Execute the query and get results
+      const [items, total] = await query.getManyAndCount();
 
-        // Filter by service ID if provided
-        if (serviceId) {
-            query.andWhere("s.id = :serviceId", { serviceId }); // Filter by service ID
-        }
-
-        // Execute the query and get results
-        const [items, total] = await query.getManyAndCount();
-
-        return { items, total };
+      return { items, total };
     } catch (error) {
-        console.error("Error fetching orders:", error);
-        throw new Error("Unable to fetch orders.");
+      console.error("Error fetching orders:", error);
+      throw new Error("Unable to fetch orders.");
     }
-}
+  }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Method to get the count of each order status
@@ -993,36 +1022,40 @@ export class OrdersService {
     employeeId?: string // Add employeeId as a parameter
   ): Promise<any> {
     const queryBuilder = this.orderRepository
-      .createQueryBuilder('order')
-      .innerJoin('order.reservation', 'reservation')
-      .leftJoin('order.artist', 'employee') // Ensure you're using the correct relation name
-      .select('order.status', 'status')
-      .addSelect('COUNT(order.id)', 'count')
-      .groupBy('order.status');
-  
+      .createQueryBuilder("order")
+      .innerJoin("order.reservation", "reservation")
+      .leftJoin("order.artist", "employee") // Ensure you're using the correct relation name
+      .select("order.status", "status")
+      .addSelect("COUNT(order.id)", "count")
+      .groupBy("order.status");
+
     // Conditionally add the where clause based on branchId, fromDate, toDate, and employeeId
     if (branchId) {
-      queryBuilder.andWhere('reservation.branchId = :branchId', { branchId });
+      queryBuilder.andWhere("reservation.branchId = :branchId", { branchId });
     }
-  
+
     if (fromDate) {
       const startOfDay = new Date(fromDate);
       startOfDay.setHours(0, 0, 0, 0); // Set time to 00:00:00
-      queryBuilder.andWhere('reservation.start_Time >= :fromDate', { fromDate: startOfDay });
+      queryBuilder.andWhere("reservation.start_Time >= :fromDate", {
+        fromDate: startOfDay,
+      });
     }
-  
+
     if (toDate) {
       const endOfDay = new Date(toDate);
       endOfDay.setHours(23, 59, 59, 999); // Set time to 23:59:59
-      queryBuilder.andWhere('reservation.start_Time <= :toDate', { toDate: endOfDay });
+      queryBuilder.andWhere("reservation.start_Time <= :toDate", {
+        toDate: endOfDay,
+      });
     }
-  
+
     if (employeeId) {
-      queryBuilder.andWhere('employee.id = :employeeId', { employeeId }); // Filter by employee ID
+      queryBuilder.andWhere("employee.id = :employeeId", { employeeId }); // Filter by employee ID
     }
-  
+
     const orders = await queryBuilder.getRawMany();
-    
+
     // Initialize the status count object with all possible statuses
     const orderStatusCounts: { [key in OrderStatus]: number } = {
       [OrderStatus.InProgress]: 0,
@@ -1032,12 +1065,12 @@ export class OrdersService {
       [OrderStatus.Completed]: 0,
       [OrderStatus.Canceled]: 0,
     };
-  
+
     // Populate the orderStatusCounts object with the results from the query
     orders.forEach((order) => {
       orderStatusCounts[order.status] = parseInt(order.count, 10);
     });
-  
+
     return orderStatusCounts;
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1050,43 +1083,47 @@ export class OrdersService {
     // Fetch the employee (artist) associated with the userId to get the branchId
     const employee = await this.employeeRepository.findOne({
       where: { id: userId },
-      relations: ['branch'], // Ensure to include the relation to branch
+      relations: ["branch"], // Ensure to include the relation to branch
     });
-  
+
     if (!employee || !employee.branch) {
       throw new BadRequestException("Employee or branch not found");
     }
-  
+
     const branchId = employee.branch.id; // Get the branchId from the employee
-  
+
     const queryBuilder = this.orderRepository
-      .createQueryBuilder('order')
-      .innerJoin('order.reservation', 'reservation')
-      .leftJoin('order.artist', 'employee') // Ensure you're using the correct relation name
-      .select('order.status', 'status')
-      .addSelect('COUNT(order.id)', 'count')
-      .groupBy('order.status');
-  
+      .createQueryBuilder("order")
+      .innerJoin("order.reservation", "reservation")
+      .leftJoin("order.artist", "employee") // Ensure you're using the correct relation name
+      .select("order.status", "status")
+      .addSelect("COUNT(order.id)", "count")
+      .groupBy("order.status");
+
     // Add the where clause based on branchId and optional date range
-    queryBuilder.andWhere('reservation.branchId = :branchId', { branchId });
-  
+    queryBuilder.andWhere("reservation.branchId = :branchId", { branchId });
+
     if (fromDate) {
       const startOfDay = new Date(fromDate);
       startOfDay.setHours(0, 0, 0, 0); // Set time to 00:00:00
-      queryBuilder.andWhere('reservation.start_Time >= :fromDate', { fromDate: startOfDay });
+      queryBuilder.andWhere("reservation.start_Time >= :fromDate", {
+        fromDate: startOfDay,
+      });
     }
-  
+
     if (toDate) {
       const endOfDay = new Date(toDate);
       endOfDay.setHours(23, 59, 59, 999); // Set time to 23:59:59
-      queryBuilder.andWhere('reservation.start_Time <= :toDate', { toDate: endOfDay });
+      queryBuilder.andWhere("reservation.start_Time <= :toDate", {
+        toDate: endOfDay,
+      });
     }
-  
+
     // Add a condition to filter by employeeId (userId)
-    queryBuilder.andWhere('employee.id = :userId', { userId }); // Filter by user ID (employee)
-  
+    queryBuilder.andWhere("employee.id = :userId", { userId }); // Filter by user ID (employee)
+
     const orders = await queryBuilder.getRawMany();
-    
+
     // Initialize the status count object with all possible statuses
     const orderStatusCounts: { [key in OrderStatus]: number } = {
       [OrderStatus.InProgress]: 0,
@@ -1096,12 +1133,12 @@ export class OrdersService {
       [OrderStatus.Completed]: 0,
       [OrderStatus.Canceled]: 0,
     };
-  
+
     // Populate the orderStatusCounts object with the results from the query
     orders.forEach((order) => {
       orderStatusCounts[order.status] = parseInt(order.count, 10);
     });
-  
+
     return orderStatusCounts;
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
