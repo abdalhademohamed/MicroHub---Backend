@@ -30,14 +30,16 @@ export class RootoshController {
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
   @Post()
-  async create(    @Request() req: any, 
-  @Body() createRootoshDto: CreateRootoshDto): Promise<any> {
+  async create(
+    @Request() req: any,
+    @Body() createRootoshDto: CreateRootoshDto
+  ): Promise<any> {
     const userId = req.user.sub; // Hardcoded user ID for now
 
     if (!userId) {
       throw new BadRequestException("User not authenticated");
     }
-    return this.RootoshService.createRootosh(createRootoshDto,userId);
+    return this.RootoshService.createRootosh(createRootoshDto, userId);
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
@@ -45,7 +47,7 @@ export class RootoshController {
   @Get()
   async findAllRootosh(
     @Query("page") page: number = 1, // Default page is 1
-    @Query("limit") limit: number = 10, // Default limit is 10
+    @Query("limit") limit: number = 10 // Default limit is 10
   ): Promise<{
     items: RootoshEntity[];
     total: number;
@@ -62,25 +64,14 @@ export class RootoshController {
     return this.RootoshService.findOneRootosh(id);
   }
 
-  @Get(":serviceId")
+
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
-  @ApiOperation({ summary: "Get Rootosh by Service ID" })
-  @ApiParam({
-    name: "serviceId",
-    required: true,
-    description: "The ID of the service",
-  })
-  @ApiResponse({
-    status: 200,
-    description: "Rootosh found",
-    type: RootoshEntity,
-  })
-  @ApiResponse({ status: 404, description: "Rootosh not found" })
-  async findOneRootoshByServiceId(
-    @Param("serviceId") serviceId: string,
-  ): Promise<RootoshEntity> {
-    return this.RootoshService.findOneRootoshByServiceId(serviceId);
+  @Get("service/:serviceId")
+  async getRootoshesByServiceId(
+    @Param("serviceId") serviceId: string
+  ): Promise<RootoshEntity[]> {
+    return this.RootoshService.getRootoshesByServiceId(serviceId);
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
@@ -89,14 +80,14 @@ export class RootoshController {
   async update(
     @Request() req: any,
     @Param("id") id: string,
-    @Body() updateRootoshDto: UpdateRootoshDto,
+    @Body() updateRootoshDto: UpdateRootoshDto
   ): Promise<RootoshEntity> {
     const userId = req.user.sub; // Hardcoded user ID for now
 
     if (!userId) {
       throw new BadRequestException("User not authenticated");
     }
-    return this.RootoshService.updateRootosh(id, updateRootoshDto,userId);
+    return this.RootoshService.updateRootosh(id, updateRootoshDto, userId);
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
