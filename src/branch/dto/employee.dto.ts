@@ -20,7 +20,7 @@ export class EmployeeDto {
   arabicName: string;
 
   @IsString()
-  workingHours: string;
+  workingHours: number;
 
   @IsString()
   phoneNumber: string;
