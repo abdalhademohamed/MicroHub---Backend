@@ -49,10 +49,9 @@ export class BranchController {
     private readonly CloudinaryService: CloudinaryService,
   ) {}
 
-
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER)
-  @Get('count')
+  @Get("count")
   async getBranchCount(): Promise<{ count: number }> {
     const count = await this.branchService.countBranches();
     return { count };
@@ -79,17 +78,38 @@ export class BranchController {
     }
     return this.branchService.createBranch(createBranchDto, userId);
   }
-  
-  
-  
-  
-  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
-  @Roles(Role.ADMIN,Role.SUPERADMIN,Role.COORDINATOR,Role.BRANCHMANAGER,Role.RECEPTIONIST )
-  @Get('sorted')
 
-  @ApiQuery({ name: 'page', type: Number, required: false, description: 'Page number for pagination', example: 1 })
-  @ApiQuery({ name: 'limit', type: Number, required: false, description: 'Number of items per page', example: 10 })
-  @ApiQuery({ name: 'order', type: String, required: false, description: 'Order of sorting by name', example: 'ASC', enum: ['ASC', 'DESC'] })
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(
+    Role.ADMIN,
+    Role.SUPERADMIN,
+    Role.COORDINATOR,
+    Role.BRANCHMANAGER,
+    Role.RECEPTIONIST,
+  )
+  @Get("sorted")
+  @ApiQuery({
+    name: "page",
+    type: Number,
+    required: false,
+    description: "Page number for pagination",
+    example: 1,
+  })
+  @ApiQuery({
+    name: "limit",
+    type: Number,
+    required: false,
+    description: "Number of items per page",
+    example: 10,
+  })
+  @ApiQuery({
+    name: "order",
+    type: String,
+    required: false,
+    description: "Order of sorting by name",
+    example: "ASC",
+    enum: ["ASC", "DESC"],
+  })
   @ApiOkResponse({
     description: "List of branches with pagination and sorting",
     schema: {
@@ -111,18 +131,17 @@ export class BranchController {
   @Get()
   async getBranches(
     @Request() req: any, // Request object to access the user
-    @Query() filterDto: FilterBranchesDto) {
-      const userId = req.user.sub; // Extract user ID from the token
-      const userRole = req.user.role; // Extract user role from the token
-      console.log(userId,userRole)
-      if (!userId) {
-        throw new BadRequestException('User not authenticated');
-      }
-      return this.branchService.getAllBranches(filterDto, userRole,userId);
+    @Query() filterDto: FilterBranchesDto,
+  ) {
+    const userId = req.user.sub; // Extract user ID from the token
+    const userRole = req.user.role; // Extract user role from the token
+    console.log(userId, userRole);
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
     }
-  
-  
-  
+    return this.branchService.getAllBranches(filterDto, userRole, userId);
+  }
+
   // @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
   // @Roles(Role.SUPERADMIN,Role.BRANCHMANAGER)
   @Get(":branchId")

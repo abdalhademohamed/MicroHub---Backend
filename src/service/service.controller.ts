@@ -32,11 +32,9 @@ import { Roles } from "../auth/Roles.decorator";
 export class ServiceController {
   constructor(private readonly serviceService: ServiceService) {}
 
-
-
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
-  @Get('/count')
+  @Get("/count")
   async getServiceCount(): Promise<{ count: number }> {
     const count = await this.serviceService.countServices();
     return { count };
@@ -47,7 +45,7 @@ export class ServiceController {
   @HttpCode(HttpStatus.CREATED)
   @UseInterceptors(FileInterceptor("image")) // Use the FileInterceptor to handle file uploads
   async createService(
-    @Request() req: any, 
+    @Request() req: any,
     @Body() createServiceDto: CreateServiceDto,
     @UploadedFile() image: Express.Multer.File,
   ): Promise<ServiceEntity> {
@@ -56,12 +54,16 @@ export class ServiceController {
     if (!userId) {
       throw new BadRequestException("User not authenticated");
     }
-    return await this.serviceService.createService(createServiceDto, image,userId);
+    return await this.serviceService.createService(
+      createServiceDto,
+      image,
+      userId,
+    );
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST)
   @Get("sort")
   async getAllServices(
     @Query("page") page: number = 1,
@@ -79,7 +81,7 @@ export class ServiceController {
   @Put(":id")
   @UseInterceptors(FileInterceptor("image")) // Use interceptor for file uploads
   async updateService(
-    @Request() req: any, 
+    @Request() req: any,
 
     @Param("id") id: string,
     @Body() updateServiceDto: CreateServiceDto,
@@ -90,7 +92,12 @@ export class ServiceController {
     if (!userId) {
       throw new BadRequestException("User not authenticated");
     }
-    return this.serviceService.updateService(id, updateServiceDto,userId,image);
+    return this.serviceService.updateService(
+      id,
+      updateServiceDto,
+      userId,
+      image,
+    );
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

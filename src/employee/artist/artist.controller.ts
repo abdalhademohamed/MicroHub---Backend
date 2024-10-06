@@ -27,14 +27,13 @@ import { FileInterceptor, FilesInterceptor } from "@nestjs/platform-express";
 export class ArtistController {
   constructor(private readonly ArtistService: ArtistService) {}
 
-  
   @Post("comment/:orderId")
   @UseGuards(AccessTokenGuard, RolesGuard)
   @Roles(Role.ARTIST)
   @ApiOperation({ summary: "Add a comment to an order" })
   @ApiResponse({ status: 201, description: "Comment added successfully." })
   @ApiResponse({ status: 404, description: "Order not found." })
-  @UseInterceptors(FilesInterceptor('image', 2)) // Use FilesInterceptor for multiple files
+  @UseInterceptors(FilesInterceptor("image", 2)) // Use FilesInterceptor for multiple files
   async addComment(
     @Request() req: any,
     @Param("orderId") orderId: string,
@@ -52,10 +51,12 @@ export class ArtistController {
     }
 
     const imageBefore = files[0]; // First image
-    const imageAfter = files[1];  // Second image
+    const imageAfter = files[1]; // Second image
 
     if (!imageBefore || !imageAfter) {
-      throw new BadRequestException("Both imageBefore and imageAfter are required");
+      throw new BadRequestException(
+        "Both imageBefore and imageAfter are required",
+      );
     }
 
     return this.ArtistService.addComment(
@@ -67,4 +68,3 @@ export class ArtistController {
     );
   }
 }
-

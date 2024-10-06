@@ -37,11 +37,13 @@ import { UserProfileDto } from "./dto/get.profile.dto";
 @Controller("employee")
 export class EmployeeController {
   constructor(private readonly employeeService: EmployeeService) {}
-  
+
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST)
-  @Get('/count')
-  async getEmployeeCount(@Query('branchId') branchId?: string): Promise<{ count: number }> {
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST)
+  @Get("/count")
+  async getEmployeeCount(
+    @Query("branchId") branchId?: string,
+  ): Promise<{ count: number }> {
     const count = await this.employeeService.countEmployees(branchId);
     return { count };
   }
@@ -71,7 +73,7 @@ export class EmployeeController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST)
   @Get()
   async getAllEmployees(
     @Query("page") page: number = 1,
@@ -154,7 +156,7 @@ export class EmployeeController {
       userId,
     );
   }
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   // @Roles(Role.SUPERADMIN)
   @Get("show/profile")
@@ -171,6 +173,4 @@ export class EmployeeController {
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
 }

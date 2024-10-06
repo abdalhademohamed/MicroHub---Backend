@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from "@nestjs/swagger";
 
 export class ArtistDto {
   @ApiProperty()
@@ -20,7 +20,7 @@ export class ArtistDto {
   arabicName: string;
 
   @ApiProperty()
-  workingHours: string;
+  workingHours: number;
 
   @ApiProperty()
   phoneNumber: string;

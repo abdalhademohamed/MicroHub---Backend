@@ -45,7 +45,7 @@ export class OfferController {
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST)
   @Get()
   async findAll(
     @Query("page") page: string = "1",
@@ -58,7 +58,7 @@ export class OfferController {
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST)
   @Get(":id")
   async findOne(@Param("id") id: string): Promise<OfferEntity> {
     return await this.offerService.findOne(id);

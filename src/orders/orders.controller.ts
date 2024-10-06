@@ -44,19 +44,19 @@ export class OrdersController {
 
   @Get("count")
   async getOrderCount(
-    @Query("branchId") branchId?: string
+    @Query("branchId") branchId?: string,
   ): Promise<{ count: string }> {
     const count = await this.ordersService.getOrderCount(branchId);
     return { count: count.toString() }; // Return the count as a string
   }
 
-  @Get('/sorted')
+  @Get("/sorted")
   @UseGuards(AccessTokenGuard, RolesGuard)
   @Roles(
     Role.SUPERADMIN,
     Role.RECEPTIONIST,
     Role.COORDINATOR,
-    Role.ARTISTMANAGER
+    Role.ARTISTMANAGER,
   )
   async findAllOrders(
     @Query() findOrdersDto: FindOrdersDto,
@@ -69,29 +69,33 @@ export class OrdersController {
     return this.ordersService.findAllOrders(findOrdersDto, userId);
   }
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-@UseGuards(AccessTokenGuard, RolesGuard)
-@Roles(
-  Role.SUPERADMIN,
-  Role.COORDINATOR,
-  Role.BRANCHMANAGER,
-  Role.RECEPTIONIST,
-  Role.ARTISTMANAGER,
-  Role.ARTIST
-)
-@Get('artist/status/count')
-async getOrderStatusCountForArtist(
-  @Request() req: any, // Request object to access the user
-  @Query('branchId') branchId?: string,
-  @Query('artistId') artistId?: string // Optional artistId for ADMIN role
-): Promise<{ [key in OrderStatus]: number }> {
-  const userId = req.user.sub; // Get the authenticated user from the request
-  if (!userId) {
-    throw new BadRequestException("User not authenticated");
-  }
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(
+    Role.SUPERADMIN,
+    Role.COORDINATOR,
+    Role.BRANCHMANAGER,
+    Role.RECEPTIONIST,
+    Role.ARTISTMANAGER,
+    Role.ARTIST,
+  )
+  @Get("artist/status/count")
+  async getOrderStatusCountForArtist(
+    @Request() req: any, // Request object to access the user
+    @Query("branchId") branchId?: string,
+    @Query("artistId") artistId?: string, // Optional artistId for ADMIN role
+  ): Promise<{ [key in OrderStatus]: number }> {
+    const userId = req.user.sub; // Get the authenticated user from the request
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
 
-  // Pass userId, branchId, and artistId to the service
-  return this.ordersService.getOrderStatusCountForArtist(userId, branchId, artistId);
-}
+    // Pass userId, branchId, and artistId to the service
+    return this.ordersService.getOrderStatusCountForArtist(
+      userId,
+      branchId,
+      artistId,
+    );
+  }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Patch("payment/status/:orderId")
   @UseGuards(AccessTokenGuard, RolesGuard)
@@ -99,7 +103,7 @@ async getOrderStatusCountForArtist(
     Role.SUPERADMIN,
     Role.COORDINATOR,
     Role.BRANCHMANAGER,
-    Role.RECEPTIONIST
+    Role.RECEPTIONIST,
   )
   @UseInterceptors(FileInterceptor("image")) // Use multer for image upload
   @ApiOperation({ summary: "Update the payment status of an order" })
@@ -120,7 +124,7 @@ async getOrderStatusCountForArtist(
     @Request() req: any, // Request object to access the user
     @Param("orderId") orderId: string,
     @Body("paymentStatus") paymentStatus: "paid" | "partially paid",
-    @UploadedFile() image: Express.Multer.File // File uploads cannot be passed as query parameters
+    @UploadedFile() image: Express.Multer.File, // File uploads cannot be passed as query parameters
   ) {
     const userId = req.user.sub; // Extract user ID from request
 
@@ -131,7 +135,7 @@ async getOrderStatusCountForArtist(
       orderId,
       paymentStatus,
       image,
-      userId
+      userId,
     );
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -143,7 +147,7 @@ async getOrderStatusCountForArtist(
     @Request() req: any, // Request object to access the user
     @Param("orderId") orderId: string,
     @Body("OrderStatus") status: OrderStatus,
-    @UploadedFile() image: Express.Multer.File // File uploads cannot be passed as query parameters
+    @UploadedFile() image: Express.Multer.File, // File uploads cannot be passed as query parameters
   ) {
     if (!Object.values(OrderStatus).includes(status)) {
       throw new BadRequestException("Invalid status");
@@ -159,7 +163,7 @@ async getOrderStatusCountForArtist(
         orderId,
         status,
         image,
-        userId
+        userId,
       );
     } catch (error) {
       return {
@@ -175,7 +179,7 @@ async getOrderStatusCountForArtist(
   async assignOrderToArtist(
     @Request() req: any, // Request object to access the user
     @Query("orderId") orderId: string,
-    @Query("artistId") artistId: string
+    @Query("artistId") artistId: string,
   ): Promise<OrderEntity> {
     console.log("Received orderId:", orderId);
     console.log("Received artistId:", artistId);
@@ -193,13 +197,11 @@ async getOrderStatusCountForArtist(
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  
-
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   @Get("status/count")
   async getOrderStatusCount(
-    @Query("branchId") branchId?: string
+    @Query("branchId") branchId?: string,
   ): Promise<{ [key in OrderStatus]: number }> {
     return this.ordersService.getOrderStatusCount(branchId);
   }
@@ -211,7 +213,7 @@ async getOrderStatusCountForArtist(
   @Roles(Role.ARTIST)
   async getOrdersForEmployee(
     @Request() req: any, // Request object to access the user
-    @Query() findOrdersByDayDto: FindOrdersByDayDto
+    @Query() findOrdersByDayDto: FindOrdersByDayDto,
   ) {
     const userId = req.user.sub; // Extract user ID from request
 
@@ -220,7 +222,7 @@ async getOrderStatusCountForArtist(
     }
     return this.ordersService.findOrdersByEmployeeAndDay(
       userId,
-      findOrdersByDayDto
+      findOrdersByDayDto,
     );
   }
 
@@ -238,7 +240,7 @@ async getOrderStatusCountForArtist(
     } catch (error) {
       throw new InternalServerErrorException(
         "Failed to retrieve the order",
-        error.stack
+        error.stack,
       );
     }
   }
@@ -274,7 +276,7 @@ async getOrderStatusCountForArtist(
   })
   async updatePayment(
     @Param("orderId") orderId: string,
-    @Query("paymentId") paymentId: string
+    @Query("paymentId") paymentId: string,
   ) {
     if (!orderId || !paymentId) {
       throw new BadRequestException("Order ID and Payment ID must be provided");

@@ -19,6 +19,9 @@ export class RootoshEntity {
   @Column()
   description: string;
 
+  @Column({nullable:true})
+  expireduration: number;
+
   @ManyToOne(() => ServiceEntity, (ServiceEntity) => ServiceEntity.rootosh)
   service: ServiceEntity; // Link to the main service
 

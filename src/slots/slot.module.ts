@@ -10,6 +10,7 @@ import { ReservationModule } from "../reservation/reservation.module";
 import { SlotsEntity } from "./entities/slots.entity";
 import { WorkingEntity } from "./entities/working.entity";
 import { EmployeeEntity } from "../employee/entities/employee.entity";
+import { ScheduleModule } from "@nestjs/schedule";
 
 @Module({
   imports: [
@@ -19,9 +20,10 @@ import { EmployeeEntity } from "../employee/entities/employee.entity";
       WorkingBranchEntity,
       BranchEntity,
       UserEntity,
-      EmployeeEntity
+      EmployeeEntity,
     ]), // Register the necessary entities with TypeORM
     ReservationModule,
+    ScheduleModule.forRoot(),
   ],
   controllers: [SlotController], // Register the controller
   providers: [SlotService], // Register the service

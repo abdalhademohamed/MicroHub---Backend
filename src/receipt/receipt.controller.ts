@@ -59,10 +59,9 @@ export class ReceiptController {
     }
   }
 
-
-  @Get(':orderId')
+  @Get(":orderId")
   async getReceiptByOrderId(
-    @Param('orderId') orderId: string,
+    @Param("orderId") orderId: string,
   ): Promise<ReceiptEntity> {
     return this.receiptService.getReceiptByOrderId(orderId);
   }

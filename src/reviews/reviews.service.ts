@@ -43,18 +43,18 @@ export class ReviewsService {
         .select("review.orderFirstTime", "orderFirstTime") // Group by orderFirstTime (true/false)
         // .addSelect("COUNT(review.id)", "count") // Count reviews for each group
         .addSelect("AVG(review.rating)", "averageRating") // Calculate average rating for each group
-        .where("review.artistId = :artistId", { artistId :id }) // Filter by artistId
+        .where("review.artistId = :artistId", { artistId: id }) // Filter by artistId
         .groupBy("review.orderFirstTime") // Group by the orderFirstTime field
         .getRawMany(); // Get raw results
-        let oldestRating = 0;
-        let newestRating = 0;
-        aggregationResult.forEach(result => {
-          if (result.orderFirstTime === false) {
-            oldestRating = result.averageRating;
-          } else if (result.orderFirstTime === true) {
-            newestRating = result.averageRating;
-          }
-        });
+      let oldestRating = 0;
+      let newestRating = 0;
+      aggregationResult.forEach((result) => {
+        if (result.orderFirstTime === false) {
+          oldestRating = result.averageRating;
+        } else if (result.orderFirstTime === true) {
+          newestRating = result.averageRating;
+        }
+      });
       await this.employeeRepository.update(
         { id },
         {
@@ -64,7 +64,7 @@ export class ReviewsService {
       );
     }
   }
-  async createReview(body: CreateReviewDto,userId:string) {
+  async createReview(body: CreateReviewDto, userId: string) {
     const { order } = body;
 
     const newestOrder = await this.orderRepository.findOne({
@@ -75,8 +75,8 @@ export class ReviewsService {
     if (!newestOrder) {
       throw new NotFoundException(`Order with ID ${order} not found`);
     }
-    if(!newestOrder.artist?.id){
-      throw new HttpException(`Order with ID not associated with artist `, 400)
+    if (!newestOrder.artist?.id) {
+      throw new HttpException(`Order with ID not associated with artist `, 400);
     }
     // console.log(newestOrder.artist?.id)
 
@@ -102,17 +102,17 @@ export class ReviewsService {
       orderFirstTime: count == 0 ? true : false,
       rating: body.newestRating ?? 0,
       employee,
-      imageOrder: 'after'
+      imageOrder: "after",
     });
     // Save the review and audit log
-  await this.saveReviewAndAuditLog(review, userId);
+    await this.saveReviewAndAuditLog(review, userId);
     // console.log(review);
     await this.reviewRepository.save(review);
     reviews.push(review);
     //  await this.saveReviewAndAuditLog(secondReview, userId);
 
     ids.push(newestOrder.artist.id);
-    console.log(ids)
+    console.log(ids);
     if (count == 0) {
       this.eventEmitter.emit("review:changed", { ids });
       return { items: reviews };
@@ -123,10 +123,10 @@ export class ReviewsService {
       orderFirstTime: false,
       rating: body.oldestRating ?? 0,
       employee,
-      imageOrder: 'before'
+      imageOrder: "before",
     });
-     // Save the second review and audit log
-  await this.saveReviewAndAuditLog(review, userId);
+    // Save the second review and audit log
+    await this.saveReviewAndAuditLog(review, userId);
     ids.push(orders[0].artist.id);
     reviews.push(review);
     this.eventEmitter.emit("review:changed", { ids });
@@ -134,21 +134,22 @@ export class ReviewsService {
     return { items: reviews };
   }
 
- 
- // Save the second review and audit log
+  // Save the second review and audit log
   private async saveReviewAndAuditLog(review: ReviewEntity, userId: string) {
     // Save the review
     await this.reviewRepository.save(review);
 
     // Create and save the audit log
     const auditLog = new AuditLogEntity();
-    auditLog.tableName = 'Review';
-    auditLog.action = 'INSERT';
+    auditLog.tableName = "Review";
+    auditLog.action = "INSERT";
     auditLog.entityId = review.id;
     auditLog.performedBy = userId;
 
     // Fetch user details for audit log
-    const userDetails = await this.UserRepository.findOne({ where: { id: userId } });
+    const userDetails = await this.UserRepository.findOne({
+      where: { id: userId },
+    });
     if (userDetails) {
       auditLog.userDetails = userDetails;
     }
@@ -213,9 +214,11 @@ export class ReviewsService {
     }
   }
 
-   async getReviewsByOrderId(orderId: string): Promise<ReviewEntity[]> {
+  async getReviewsByOrderId(orderId: string): Promise<ReviewEntity[]> {
     // Check if the order exists
-    const order = await this.orderRepository.findOne({ where: { id: orderId } });
+    const order = await this.orderRepository.findOne({
+      where: { id: orderId },
+    });
     if (!order) {
       throw new NotFoundException(`Order with ID ${orderId} not found`);
     }
@@ -223,7 +226,7 @@ export class ReviewsService {
     // Retrieve reviews associated with the order
     const reviews = await this.reviewRepository.find({
       where: { order: { id: orderId } },
-      relations: ['employee'], // Include related entities if needed
+      relations: ["employee"], // Include related entities if needed
     });
 
     return reviews;

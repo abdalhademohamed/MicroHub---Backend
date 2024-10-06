@@ -12,7 +12,13 @@ import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ReviewEntity, EmployeeEntity, OrderEntity,UserEntity,AuditLogEntity]), // Add OrderEntity here
+    TypeOrmModule.forFeature([
+      ReviewEntity,
+      EmployeeEntity,
+      OrderEntity,
+      UserEntity,
+      AuditLogEntity,
+    ]), // Add OrderEntity here
   ],
   controllers: [ReviewsController],
   providers: [ReviewsService],

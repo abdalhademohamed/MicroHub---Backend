@@ -15,7 +15,7 @@ import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
       OrderEntity,
       UserEntity,
       ServiceEntity,
-      AuditLogEntity
+      AuditLogEntity,
     ]),
   ],
   controllers: [ReceiptController],

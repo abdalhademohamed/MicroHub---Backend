@@ -6,6 +6,7 @@ import {
   IsEmail,
   Length,
   IsBoolean,
+  IsNumber,
 } from "class-validator";
 import { CreateEmployeeDto } from "./create.employee.dto";
 
@@ -34,9 +35,9 @@ export class UpdateEmployeeDto extends PartialType(CreateEmployeeDto) {
     example: "9AM - 5PM",
     required: false,
   })
-  @IsString()
+  @IsNumber()
   @IsOptional()
-  workingHours?: string;
+  workingHours?: number;
 
   @ApiProperty({
     description: "The email address of the employee",

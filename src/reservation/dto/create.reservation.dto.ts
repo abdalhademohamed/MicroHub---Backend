@@ -72,7 +72,5 @@ export class CreateReservationDto {
   deposit_Content: string; // Correct property name
 
   @IsString()
-
-  paymentId:string
-
+  paymentId: string;
 }

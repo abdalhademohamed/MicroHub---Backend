@@ -14,5 +14,4 @@ export class UpdateReservationDto {
   services: string[];
   @IsDateString()
   startTime: string;
-  
 }

@@ -30,14 +30,16 @@ export class RootoshController {
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
   @Post()
-  async create(    @Request() req: any, 
-  @Body() createRootoshDto: CreateRootoshDto): Promise<any> {
+  async create(
+    @Request() req: any,
+    @Body() createRootoshDto: CreateRootoshDto,
+  ): Promise<any> {
     const userId = req.user.sub; // Hardcoded user ID for now
 
     if (!userId) {
       throw new BadRequestException("User not authenticated");
     }
-    return this.RootoshService.createRootosh(createRootoshDto,userId);
+    return this.RootoshService.createRootosh(createRootoshDto, userId);
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
@@ -96,7 +98,7 @@ export class RootoshController {
     if (!userId) {
       throw new BadRequestException("User not authenticated");
     }
-    return this.RootoshService.updateRootosh(id, updateRootoshDto,userId);
+    return this.RootoshService.updateRootosh(id, updateRootoshDto, userId);
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
