@@ -15,7 +15,7 @@ export class PositionEntity {
 
   @Column()
   positionInEnglish: string;
-
+  
   @Column()
   positionInArabic: string;
 
