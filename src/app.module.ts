@@ -57,6 +57,10 @@ import { SlotModule } from "./slots/slot.module";
 import { AnalysisModule } from "./analysis/analysis.module";
 import { AnalysisEntity } from "./analysis/entities/analysis.entity";
 import { EventEmitterModule } from "@nestjs/event-emitter";
+import { SharableOfferModule } from './sharable-offer/sharable-offer.module';
+import { GiftCouponModule } from './gift-coupon/gift-coupon.module';
+import { GiftCouponEntity } from "./gift-coupon/entities/gift-coupon.entity";
+import { SharableOfferEntity } from "./sharable-offer/entities/sharable-offer.entity";
 
 @Module({
   imports: [
@@ -72,7 +76,7 @@ import { EventEmitterModule } from "@nestjs/event-emitter";
       username: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      // entities: ["dist/**/*.entity.js"],
+      // entities: ["dist//*.entity.js"],
       entities: [
         UserEntity,
         BranchEntity,
@@ -96,6 +100,8 @@ import { EventEmitterModule } from "@nestjs/event-emitter";
         SlotsEntity,
         WorkingEntity,
         AnalysisEntity,
+        SharableOfferEntity,
+        GiftCouponEntity,
       ],
       synchronize: true, // Set to false in production
       ssl: true, // Neon typically requires SSL connections
@@ -143,6 +149,8 @@ import { EventEmitterModule } from "@nestjs/event-emitter";
     SlotModule,
     AnalysisModule,
     EventEmitterModule.forRoot({ global: true }),
+    SharableOfferModule,
+    GiftCouponModule,
   ],
   controllers: [AppController],
   providers: [AppService, CloudinaryProvider],

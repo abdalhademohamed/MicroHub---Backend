@@ -32,7 +32,7 @@ import { EmployeeTypeEntity } from "../employetype/entities/employetype.entity";
 import { PositionEntity } from "../postion/entities/postion.entity";
 import { Postion } from "../postion/utils/postion.enum";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
-import { SlotService } from "src/slots/slots.service";
+import { SlotService } from "../slots/slots.service";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 
 @Injectable()

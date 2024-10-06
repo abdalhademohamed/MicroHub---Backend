@@ -97,6 +97,9 @@ export class ReceiptService {
         }
       }
      
+      /* -------------------------------------------------------------------------- */
+      /*                                   payment                                  */
+      /* -------------------------------------------------------------------------- */
       // Calculate total payment
       const totalPayment = reservation.totalPrice;
       let discountPayment = totalPayment; // Default to totalPayment

@@ -18,7 +18,7 @@ import { AuthService } from "../auth/auth.service";
 import { UserEntity } from "../user/entities/user.entity";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { UserProfileDto } from "./dto/get.profile.dto";
-import { SlotService } from "src/slots/slots.service";
+import { SlotService } from "../slots/slots.service";
 
 @Injectable()
 export class EmployeeService {

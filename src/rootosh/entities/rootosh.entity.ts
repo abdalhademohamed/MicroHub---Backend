@@ -20,7 +20,8 @@ export class RootoshEntity {
   @Column({nullable:true})
   expireduration: number; // Duration in days, weeks, etc.
 
- 
+  // @Column("int")
+  // duration_Mins: number;
   
   @Column()
   description: string;
