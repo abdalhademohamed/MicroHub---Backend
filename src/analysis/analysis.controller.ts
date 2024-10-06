@@ -6,6 +6,11 @@ import { AnalysisDto } from "./dto/deposit.dto";
 export class AnalysisController {
   constructor(private readonly analysisService: AnalysisService) {}
 
+
+  @Get('count')
+  async getCounts() {
+    return this.analysisService.getCount();
+  }
   @Get("all-deposits")
   async getAllDeposits(@Query() query: AnalysisDto) {
     return this.analysisService.getAllDeposits(query);

@@ -78,6 +78,13 @@ export class BranchController {
     }
     return this.branchService.createBranch(createBranchDto, userId);
   }
+  
+  // Endpoint to check if a branch has an artist
+  @Get('has/artist/:branchId')
+  async checkIfBranchHasArtist(@Param('branchId') branchId: string): Promise<{ hasArtist: boolean }> {
+    const hasArtist = await this.branchService.hasArtist(branchId);
+    return { hasArtist };
+  }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(

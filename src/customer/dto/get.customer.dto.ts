@@ -77,4 +77,7 @@ export class GetCustomerDto {
 
   @ApiProperty({ description: "Count of orders for the customer" })
   orderCount?: number; // Count of orders
+
+
+  rootoshesexpirationDate?:Date
 }

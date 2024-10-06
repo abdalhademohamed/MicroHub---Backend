@@ -33,6 +33,7 @@ export class CreateEmployeeDto {
       "The working hours of the employee, in a specific format or enum",
     example: "9AM - 5PM",
   })
+
   @IsNumber()
   @IsNotEmpty()
   workingHours: number; // Ensure this matches your expected format or enum

@@ -96,6 +96,7 @@ export class CustomerService {
           date: order.date, // ISO 8601 string format
         })),
         orderCount, // Count of orders
+        rootoshesexpirationDate:customer.rootoshesexpirationDate
       };
 
       return dto;

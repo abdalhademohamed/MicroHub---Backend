@@ -14,7 +14,7 @@ import { BranchEntity } from "../branch/entities/branch.entity";
 import { EmployeeTypeEntity } from "../employetype/entities/employetype.entity";
 import { PositionEntity } from "../postion/entities/postion.entity";
 import { EmployeeEntity } from "../employee/entities/employee.entity";
-import { SlotModule } from "src/slots/slot.module";
+import { SlotModule } from "../slots/slot.module";
 
 @Module({
   imports: [

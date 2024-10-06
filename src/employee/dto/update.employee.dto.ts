@@ -35,6 +35,7 @@ export class UpdateEmployeeDto extends PartialType(CreateEmployeeDto) {
     example: "9AM - 5PM",
     required: false,
   })
+
   @IsNumber()
   @IsOptional()
   workingHours?: number;

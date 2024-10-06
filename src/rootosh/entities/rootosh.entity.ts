@@ -1,7 +1,7 @@
 import { CustomerEntity } from "../../customer/entities/customer.entity";
 import { ServiceEntity } from "../../service/entities/service.entity";
 import {
-  Entity,
+  Entity, 
   Column,
   PrimaryGeneratedColumn,
   ManyToOne,
@@ -14,7 +14,7 @@ export class RootoshEntity {
   id: string;
 
   @Column()
-  name: string;
+  name: string; 
 
   // New field to store the duration until expiration (in days, for example)
   @Column({nullable:true})
