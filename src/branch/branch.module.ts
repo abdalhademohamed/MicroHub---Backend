@@ -10,6 +10,7 @@ import { WorkingBranchEntity } from "../working-branch/entities/working.branch.e
 import { UserService } from "../user/user.service";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { UserEntity } from "../user/entities/user.entity";
+import { EmployeeEntity } from "../employee/entities/employee.entity";
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { UserEntity } from "../user/entities/user.entity";
       ReservationEntity,
       AuditLogEntity,
       UserEntity,
+      EmployeeEntity
     ]),
   ],
   controllers: [BranchController],
