@@ -29,7 +29,7 @@ export class ReceiptService {
 
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
-   
+
     @InjectRepository(AuditLogEntity)
     private readonly AuditLogRepository: Repository<AuditLogEntity>,
 
@@ -43,7 +43,6 @@ export class ReceiptService {
     userId: string,
   ): Promise<ReceiptEntity> {
     const { orderId, message } = createReceiptDto;
-  
     try {
       // Fetch the user who created the receipt
       const createdBy = await this.userRepository.findOne({
@@ -53,7 +52,7 @@ export class ReceiptService {
       if (!createdBy) {
         throw new NotFoundException(`User with ID ${userId} not found`);
       }
-  
+
       // Fetch the order and related reservation and services
       const order = await this.orderRepository.findOne({
         where: { id: orderId },
@@ -62,19 +61,18 @@ export class ReceiptService {
       if (!order) {
         throw new NotFoundException(`Order with ID ${orderId} not found`);
       }
-  
+
       const reservation = order.reservation;
       if (!reservation) {
         throw new NotFoundException(
           `Reservation not found for Order ID ${orderId}`,
         );
       }
-  
+
       const services = reservation.services;
       if (!services || services.length === 0) {
         throw new NotFoundException("No services found for the reservation");
       }
-  
       // Declare the offer variable outside the if block
       let offer = null;
   
@@ -107,14 +105,14 @@ export class ReceiptService {
       const discountPercentage = offer ? offer.discountPercentage : 0; // Set discount to 0 if no offer
       discountPayment -= totalPayment * (discountPercentage / 100);
       const remaining = discountPayment - reservation.deposit;
-  
+
       // Format the services for receipt
       const formattedPaymentForServices = services.map((service) => ({
         name: service.english_Name,
         duration: service.duration_Mins,
         price: service.price.toString(), // Ensure price is a string
       }));
-  
+
       // Format the reservation time slot as "startTime-endTime"
       const startTime = new Date(reservation.start_Time).toLocaleTimeString(
         "en-GB",
@@ -125,7 +123,7 @@ export class ReceiptService {
         { hour: "2-digit", minute: "2-digit" },
       );
       const reservationTimeSlot = `${startTime}-${endTime}`;
-  
+
       // Create and save the receipt
       const receipt = this.receiptRepository.create({
         order,
@@ -137,12 +135,12 @@ export class ReceiptService {
         remaining,
         createdBy,
       });
-  
+
       const savedReceipt = await this.receiptRepository.save(receipt);
-  
+
       // Log the creation action in the audit log
       await this.saveAuditLogForCreate(savedReceipt, userId);
-  
+
       return savedReceipt;
     } catch (error) {
       console.error("Error creating receipt:", error); // Log the error
@@ -152,26 +150,25 @@ export class ReceiptService {
       );
     }
   }
-  
-  
   // Save the audit log for the create action
   private async saveAuditLogForCreate(receipt: ReceiptEntity, userId: string) {
     const auditLog = new AuditLogEntity();
-    auditLog.tableName = 'Receipt';  // Specify the table name
-    auditLog.action = 'CREATE';  // Specify the action type
-    auditLog.entityId = receipt.id;  // ID of the created receipt
-    auditLog.performedBy = userId;  // ID of the user who performed the action
-  
+    auditLog.tableName = "Receipt"; // Specify the table name
+    auditLog.action = "CREATE"; // Specify the action type
+    auditLog.entityId = receipt.id; // ID of the created receipt
+    auditLog.performedBy = userId; // ID of the user who performed the action
+
     // Fetch user details for audit log (optional)
-    const userDetails = await this.userRepository.findOne({ where: { id: userId } });
+    const userDetails = await this.userRepository.findOne({
+      where: { id: userId },
+    });
     if (userDetails) {
-      auditLog.userDetails = userDetails;  // Optional: Add user details for further tracking
+      auditLog.userDetails = userDetails; // Optional: Add user details for further tracking
     }
-  
+
     // Save the audit log to the audit log repository
     await this.AuditLogRepository.save(auditLog);
   }
-  
 
   // async generatePdfReceipt(receiptId: string, response: Response) {
   //   try {
@@ -347,7 +344,6 @@ export class ReceiptService {
   //   // Send the PDF to the client
   //   response.send(pdfBytes);
   // }
-
 
   async getReceiptByOrderId(orderId: string): Promise<ReceiptEntity> {
     const receipt = await this.receiptRepository.findOne({

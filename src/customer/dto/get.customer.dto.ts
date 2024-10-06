@@ -20,7 +20,10 @@ export class GetCustomerDto {
   })
   dateOfBirth?: string; // ISO 8601 string format or null
 
-  @ApiProperty({ description: "Time remaining until the next birthday", nullable: true })
+  @ApiProperty({
+    description: "Time remaining until the next birthday",
+    nullable: true,
+  })
   timeUntilBirthday?: string; // Time until next birthday or null
 
   @ApiProperty({

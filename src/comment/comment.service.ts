@@ -15,7 +15,7 @@ export class CommentService {
     // private readonly orderRepository: Repository<OrderEntity>,
 
     @InjectRepository(CommentEntity)
-    private readonly commentRepository: Repository<CommentEntity>
+    private readonly commentRepository: Repository<CommentEntity>,
 
     // private readonly CloudinaryService: CloudinaryService,
 
@@ -31,12 +31,12 @@ export class CommentService {
         },
         relations: ["order", "employee"], // Include relations
       });
-  
+
       // Return null if no comment exists for this order
       if (!comment) {
         return null;
       }
-  
+
       // Manually map the employee fields to include only what you need
       const employee = comment.employee
         ? {
@@ -56,7 +56,7 @@ export class CommentService {
             newestAvgRating: comment.employee.newestAvgRating,
           }
         : null;
-  
+
       // Return the comment with the mapped employee
       return {
         ...comment,
@@ -69,5 +69,4 @@ export class CommentService {
       );
     }
   }
-  
 }

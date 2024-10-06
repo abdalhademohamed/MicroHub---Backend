@@ -37,9 +37,9 @@ export class PostionController {
     const userId = req.user.sub; // Extract user ID from request
 
     if (!userId) {
-      throw new BadRequestException('User not authenticated');
+      throw new BadRequestException("User not authenticated");
     }
-    return this.postionService.createPosition(createPositionDto,userId);
+    return this.postionService.createPosition(createPositionDto, userId);
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
@@ -62,8 +62,9 @@ export class PostionController {
     const userId = req.user.sub; // Extract user ID from request
 
     if (!userId) {
-      throw new BadRequestException('User not authenticated');
-    }    return this.postionService.updatePosition(id, updatePositionDto,userId);
+      throw new BadRequestException("User not authenticated");
+    }
+    return this.postionService.updatePosition(id, updatePositionDto, userId);
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first

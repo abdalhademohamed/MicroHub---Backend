@@ -18,6 +18,7 @@ import { AuthService } from "../auth/auth.service";
 import { UserEntity } from "../user/entities/user.entity";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { UserProfileDto } from "./dto/get.profile.dto";
+import { SlotService } from "src/slots/slots.service";
 
 @Injectable()
 export class EmployeeService {
@@ -42,6 +43,7 @@ export class EmployeeService {
     private readonly CloudinaryService: CloudinaryService,
     private readonly AuthService: AuthService,
     private readonly entityManager: EntityManager, // Inject EntityManager for transactions
+    private readonly slotService: SlotService,
   ) {}
 
   async createEmployee(
@@ -419,13 +421,12 @@ export class EmployeeService {
     return profileData;
   }
 
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async countEmployees(branchId?: string): Promise<number> {
-    const query = this.employeeRepository.createQueryBuilder('employee');
+    const query = this.employeeRepository.createQueryBuilder("employee");
 
     if (branchId) {
-      query.where('employee.branchId = :branchId', { branchId });
+      query.where("employee.branchId = :branchId", { branchId });
     }
 
     return await query.getCount();

@@ -1,4 +1,10 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from "typeorm";
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+} from "typeorm";
 import { OrderEntity } from "../../orders/entities/order.entity";
 import { EmployeeEntity } from "../../employee/entities/employee.entity";
 
@@ -6,12 +12,10 @@ import { EmployeeEntity } from "../../employee/entities/employee.entity";
 export class ReviewEntity {
   @PrimaryGeneratedColumn("uuid")
   id: string;
-  
-  
-  @Column()
-  imageOrder: string; // before after 
 
-  
+  @Column()
+  imageOrder: string; // before after
+
   @Column({ type: "int", default: 1 })
   rating: number;
 

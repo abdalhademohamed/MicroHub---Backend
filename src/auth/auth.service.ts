@@ -32,6 +32,8 @@ import { EmployeeTypeEntity } from "../employetype/entities/employetype.entity";
 import { PositionEntity } from "../postion/entities/postion.entity";
 import { Postion } from "../postion/utils/postion.enum";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
+import { SlotService } from "src/slots/slots.service";
+import { EventEmitter2 } from "@nestjs/event-emitter";
 
 @Injectable()
 export class AuthService {
@@ -54,6 +56,8 @@ export class AuthService {
     private configService: ConfigService,
     private readonly i18nService: I18nService,
     private readonly entityManager: EntityManager,
+    private readonly slotService: SlotService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async signUp(createUserDto: CreateUserDto): Promise<any> {
@@ -110,85 +114,95 @@ export class AuthService {
       );
     }
   }
-  
-  async signIn(LoginAuthDto: LoginAuthDto): Promise<{ accessToken: string; refreshToken: string }> {
+
+  async signIn(
+    LoginAuthDto: LoginAuthDto,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     const { email, password } = LoginAuthDto;
     const startTime = Date.now();
-  
+
     try {
       // Validate user
       const user = await this.validateUser(email, password);
       console.log(`validateUser: ${Date.now() - startTime}ms`);
-  
+
       try {
         // Invalidate the previous refresh token
         await this.invalidateOldRefreshToken(user.id);
         console.log(`invalidateOldRefreshToken: ${Date.now() - startTime}ms`);
-   
+
         try {
           // Generate tokens
-          const tokens = await this.generateTokens(user.id, user.username, user.email, user.role);
+          const tokens = await this.generateTokens(
+            user.id,
+            user.username,
+            user.email,
+            user.role,
+          );
           console.log(`generateTokens: ${Date.now() - startTime}ms`);
-  
+
           try {
             // Update the user's record with the new refresh token
             await this.updateRefreshToken(user.id, tokens.refreshToken);
             console.log(`updateRefreshToken: ${Date.now() - startTime}ms`);
-  
+
             // Return the generated tokens
             return {
               accessToken: tokens.accessToken,
               refreshToken: tokens.refreshToken,
             };
           } catch (updateError) {
-            console.error('Error updating refresh token:', updateError.message);
+            console.error("Error updating refresh token:", updateError.message);
             throw new InternalServerErrorException(
-              'Failed to update the refresh token. Please try again later.',
-              updateError.stack
+              "Failed to update the refresh token. Please try again later.",
+              updateError.stack,
             );
           }
         } catch (generateTokensError) {
-          console.error('Error generating tokens:', generateTokensError.message);
+          console.error(
+            "Error generating tokens:",
+            generateTokensError.message,
+          );
           throw new InternalServerErrorException(
-            'Failed to generate tokens. Please try again later.',
-            generateTokensError.stack
+            "Failed to generate tokens. Please try again later.",
+            generateTokensError.stack,
           );
         }
       } catch (invalidateTokenError) {
-        console.error('Error invalidating old refresh token:', invalidateTokenError.message);
+        console.error(
+          "Error invalidating old refresh token:",
+          invalidateTokenError.message,
+        );
         throw new InternalServerErrorException(
-          'Failed to invalidate the old refresh token. Please try again later.',
-          invalidateTokenError.stack
+          "Failed to invalidate the old refresh token. Please try again later.",
+          invalidateTokenError.stack,
         );
       }
     } catch (validateUserError) {
-      console.error('Error validating user:', validateUserError.message);
+      console.error("Error validating user:", validateUserError.message);
       throw new UnauthorizedException(
-        'Invalid email or password. Please check your credentials and try again.',
-        validateUserError.stack
+        "Invalid email or password. Please check your credentials and try again.",
+        validateUserError.stack,
       );
     }
   }
-  
-  
 
   async invalidateOldRefreshToken(userId: string): Promise<void> {
     const startTime = Date.now();
-  
+
     try {
       // Directly update the refreshToken field to null or an invalid state
       await this.UserRepository.update(userId, { refreshToken: null });
-  
+
       console.log(`invalidateOldRefreshToken: ${Date.now() - startTime}ms`);
     } catch (error) {
-      console.error('Error invalidating old refresh token:', error.message);
+      console.error("Error invalidating old refresh token:", error.message);
       throw new InternalServerErrorException(
-        'Failed to invalidate old refresh token. Please try again later.',
-        error.stack
+        "Failed to invalidate old refresh token. Please try again later.",
+        error.stack,
       );
     }
   }
- 
 
   async validateUser(email: string, password: string): Promise<UserEntity> {
     const user = await this.UserRepository.findOne({ where: { email } });
@@ -431,7 +445,12 @@ export class AuthService {
     }
 
     // Generate new tokens
-    const tokens = await this.generateTokens(user.id, user.username,user.email, user.role);
+    const tokens = await this.generateTokens(
+      user.id,
+      user.username,
+      user.email,
+      user.role,
+    );
 
     // Update refresh token in the database
     await this.updateRefreshToken(user.id, tokens.refreshToken);
@@ -443,37 +462,52 @@ export class AuthService {
     userId: string,
     username: string,
     email: string,
-    role: string
+    role: string,
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const startTime = Date.now();
-  
+
     try {
       // Define token payload and options
       const payload = { sub: userId, username, email, role };
-      const accessOptions = { secret: process.env.JWT_ACCESS_SECRET, expiresIn: "10h" };
-      const refreshOptions = { secret: process.env.JWT_REFRESH_SECRET, expiresIn: "7d" };
-  
+      const accessOptions = {
+        secret: process.env.JWT_ACCESS_SECRET,
+        expiresIn: "10h",
+      };
+      const refreshOptions = {
+        secret: process.env.JWT_REFRESH_SECRET,
+        expiresIn: "7d",
+      };
+
       // Generate access and refresh tokens
-      const accessToken = await this.JwtService.signAsync(payload, accessOptions);
-      const refreshToken = await this.JwtService.signAsync(payload, refreshOptions);
-  
+      const accessToken = await this.JwtService.signAsync(
+        payload,
+        accessOptions,
+      );
+      const refreshToken = await this.JwtService.signAsync(
+        payload,
+        refreshOptions,
+      );
+
       console.log(`generateTokens: ${Date.now() - startTime}ms`);
-  
+
       return { accessToken, refreshToken };
     } catch (error) {
-      console.error('Error generating tokens:', error.message);
+      console.error("Error generating tokens:", error.message);
       throw new InternalServerErrorException(
-        'Failed to generate tokens. Please try again later.',
-        error.stack
+        "Failed to generate tokens. Please try again later.",
+        error.stack,
       );
     }
   }
-  async updateRefreshToken(userId: string, refreshToken: string): Promise<void> {
+  async updateRefreshToken(
+    userId: string,
+    refreshToken: string,
+  ): Promise<void> {
     const startTime = Date.now();
-  
+
     // Update the user's refresh token
     await this.UserRepository.update(userId, { refreshToken });
-  
+
     console.log(`updateRefreshToken: ${Date.now() - startTime}ms`);
   }
 
@@ -572,7 +606,10 @@ export class AuthService {
           }
 
           await transactionalEntityManager.save(AuditLogEntity, log);
-
+          if (newEmployee.role == Role.ARTIST) {
+            // await this.slotService.createSlotsForArtist(newEmployee);
+            this.eventEmitter.emit('artist:created', newEmployee);
+          }
           return newEmployee;
         } catch (error) {
           console.error("Failed to create employee:", error);

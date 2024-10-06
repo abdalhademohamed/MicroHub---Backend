@@ -8,7 +8,14 @@ import { UserEntity } from "../user/entities/user.entity";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PositionEntity, EmployeeEntity,UserEntity,AuditLogEntity])],
+  imports: [
+    TypeOrmModule.forFeature([
+      PositionEntity,
+      EmployeeEntity,
+      UserEntity,
+      AuditLogEntity,
+    ]),
+  ],
   controllers: [PostionController],
   providers: [PostionService],
 })

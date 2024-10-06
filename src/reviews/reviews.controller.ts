@@ -14,6 +14,7 @@ import {
   InternalServerErrorException,
   Request,
   BadRequestException,
+  Req,
 } from "@nestjs/common";
 import { ReviewsService } from "./reviews.service";
 import { CreateReviewDto } from "./dto/create.review.dto";
@@ -39,7 +40,7 @@ export class ReviewsController {
 
   @Post()
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ARTISTMANAGER)
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER, Role.ARTISTMANAGER)
   @HttpCode(HttpStatus.CREATED)
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -48,19 +49,21 @@ export class ReviewsController {
   })
   @ApiBadRequestResponse({ description: "Invalid input" })
   @ApiInternalServerErrorResponse({ description: "Failed to create review" })
-  async createReview(    @Request() req: any, // Request object to access the user
-  @Body() createReviewDto: CreateReviewDto) {
+  async createReview(
+    @Req() req: any, // Request object to access the user
+    @Body() createReviewDto: CreateReviewDto,
+  ) {
     const userId = req.user.sub; // Hardcoded user ID for now
 
     if (!userId) {
       throw new BadRequestException("User not authenticated");
     }
-    return this.reviewsService.createReview(createReviewDto,userId);
+    return this.reviewsService.createReview(createReviewDto, userId);
   }
 
   @Get("sorted")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ARTISTMANAGER)
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER, Role.ARTISTMANAGER)
   @ApiResponse({
     status: 200,
     description: "Get all reviews",
@@ -72,7 +75,7 @@ export class ReviewsController {
 
   @Get("artist/:employeeId")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ARTISTMANAGER,Role.ARTIST)
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER, Role.ARTISTMANAGER, Role.ARTIST)
   @ApiParam({
     name: "employeeId",
     type: String,
@@ -100,12 +103,14 @@ export class ReviewsController {
       throw new InternalServerErrorException(
         "Failed to get reviews for artist",
         error.stack,
-      ); 
+      );
     }
   }
 
-  @Get('order/:orderId')
-  async getReviewsByOrderId(@Param('orderId') orderId: string): Promise<ReviewEntity[]> {
+  @Get("order/:orderId")
+  async getReviewsByOrderId(
+    @Param("orderId") orderId: string,
+  ): Promise<ReviewEntity[]> {
     return this.reviewsService.getReviewsByOrderId(orderId);
   }
 }

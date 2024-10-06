@@ -259,5 +259,4 @@ export class ServiceService {
   async countServices(): Promise<number> {
     return await this.ServiceRepository.count();
   }
-  
-}
+} 
