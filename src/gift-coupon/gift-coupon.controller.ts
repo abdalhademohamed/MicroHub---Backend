@@ -14,10 +14,10 @@ import { CreateGiftCouponDto } from "./dto/create-gift-coupon.dto";
 
 import { GiftCouponEntity } from "./entities/gift-coupon.entity";
 import { ApiTags } from "@nestjs/swagger";
-import { RolesGuard } from "src/auth/guards/role.guards";
-import { AccessTokenGuard } from "src/auth/guards/accessToken.guard";
-import { Roles } from "src/auth/Roles.decorator";
-import { Role } from "src/user/utils/user.enum";
+import { RolesGuard } from "../auth/guards/role.guards";
+import { AccessTokenGuard } from "../auth/guards/accessToken.guard";
+import { Roles } from "../auth/Roles.decorator";
+import { Role } from "../user/utils/user.enum";
 
 @ApiTags('gift-coupon')
 @Controller("gift/coupon")
