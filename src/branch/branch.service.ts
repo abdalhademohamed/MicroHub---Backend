@@ -24,6 +24,8 @@ import { FilterBranchesDto } from "./dto/filter.branch.dto";
 import { FilterBranchCalendarDto } from "./dto/filter.branch.calendar.dto";
 import { BranchDto } from "./dto/branch.employee.dto";
 import { Role } from "../user/utils/user.enum";
+import { Postion } from "../postion/utils/postion.enum";
+import { EmployeeEntity } from "../employee/entities/employee.entity";
 
 @Injectable()
 export class BranchService {
@@ -39,6 +41,8 @@ export class BranchService {
     @InjectRepository(AuditLogEntity)
     private readonly AuditLogRepository: Repository<AuditLogEntity>,
 
+    @InjectRepository(EmployeeEntity)
+    private readonly EmployeeRepository: Repository<EmployeeEntity>,
     private readonly UserService: UserService
   ) {}
 
@@ -568,5 +572,23 @@ export class BranchService {
 
   async countBranches(): Promise<number> {
     return await this.BranchRepository.count();
+  }
+
+
+
+   // Function to check if the branch has an employee with position 'ARTIST'
+   async hasArtist(branchId: string): Promise<boolean> {
+    // Find employees with the 'ARTIST' position in the specified branch
+    const artistCount = await this.EmployeeRepository.count({
+      where: {
+        branch: { id: branchId },
+        position: { postion: Postion.ARTIST }, // Filtering by position ARTIST
+      },
+      relations: ['branch', 'position'], // Ensures the relation is loaded
+    });
+    console.log(artistCount);
+
+    // Return true if there is at least one artist, otherwise false
+    return artistCount > 0;
   }
 }

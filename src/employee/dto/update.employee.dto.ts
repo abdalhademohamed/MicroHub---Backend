@@ -34,9 +34,8 @@ export class UpdateEmployeeDto extends PartialType(CreateEmployeeDto) {
     example: "9AM - 5PM",
     required: false,
   })
-  @IsString()
   @IsOptional()
-  workingHours?: string;
+  workingHours?: number;
 
   @ApiProperty({
     description: "The email address of the employee",

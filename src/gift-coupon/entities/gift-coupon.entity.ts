@@ -46,20 +46,27 @@ export class GiftCouponEntity {
   giftedServices: number; // Number of services given away as gift coupons
 
   // List of services from the sharable offer
-   // List of services from the sharable offer
-   @Column("jsonb", { nullable: true })
-   services: {
-     id: string;
-     name: string;
-     description: string;
-     price: number;
-     imageUrl: string; // Add additional fields from your JSON as necessary
-     arabic_Name: string;
-     english_Name: string;
-     duration_Mins: number;
-     rootosh_Number: number;
-     months_To_Expire: number;
-   }[]; // List of services associated with this coupon
+  // List of services from the sharable offer
+  @Column("jsonb", { nullable: true })
+  services: {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    imageUrl: string; // Add additional fields from your JSON as necessary
+    arabic_Name: string;
+    english_Name: string;
+    duration_Mins: number;
+    rootosh_Number: number;
+    months_To_Expire: number;
+  }[]; // List of services associated with this coupon
   @Column({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
   createdAt: Date; // When the coupon was created
+
+  // New fields for the validity period of the coupon
+  @Column({ type: "timestamp", nullable: true })
+  startDateTime: Date; // Start date and time for the coupon validity
+
+  @Column({ type: "timestamp", nullable: true })
+  endDateTime: Date; // End date and time for the coupon validity
 }

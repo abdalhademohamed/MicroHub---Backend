@@ -5,6 +5,10 @@ import { ReservationEntity } from "../reservation/entities/reservation.entity";
 import { PaymentEntity } from "../payment/entities/payment.entity";
 import { AnalysisDto } from "./dto/deposit.dto";
 import { OrderStatus } from "../orders/utils/order.status.enum";
+import { BranchEntity } from "../branch/entities/branch.entity";
+import { EmployeeEntity } from "../employee/entities/employee.entity";
+import { CustomerEntity } from "../customer/entities/customer.entity";
+import { ServiceEntity } from "../service/entities/service.entity";
 
 @Injectable()
 export class AnalysisService {
@@ -12,8 +16,20 @@ export class AnalysisService {
     @InjectRepository(ReservationEntity)
     private readonly ReservationRepository: Repository<ReservationEntity>,
     @InjectRepository(PaymentEntity)
-
     private readonly PaymentRepository: Repository<PaymentEntity>,
+
+    @InjectRepository(BranchEntity)
+    private readonly BranchRepository: Repository<BranchEntity>,
+
+    @InjectRepository(EmployeeEntity)
+    private readonly EmployeeRepository: Repository<EmployeeEntity>,
+
+    @InjectRepository(CustomerEntity)
+    private readonly CustomerRepository: Repository<CustomerEntity>,
+
+    @InjectRepository(ServiceEntity)
+    private readonly ServiceRepository: Repository<ServiceEntity>,
+
   ) {}
 
   async getAllDeposits({ fromDate, toDate }: AnalysisDto) {
@@ -149,5 +165,26 @@ export class AnalysisService {
     );
 
     return totalReturnedMoney;
+  }
+
+
+
+  async getCount(): Promise<{
+    branchCount: number;
+    employeeCount: number;
+    customerCount: number;
+    serviceCount: number;
+  }> {
+    const branchCount = await this.BranchRepository.count();
+    const employeeCount = await this.EmployeeRepository.count();
+    const customerCount = await this.CustomerRepository.count();
+    const serviceCount = await this.ServiceRepository.count();
+
+    return {
+      branchCount,
+      employeeCount,
+      customerCount,
+      serviceCount,
+    };
   }
 }

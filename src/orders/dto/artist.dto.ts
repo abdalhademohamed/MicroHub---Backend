@@ -20,7 +20,7 @@ export class ArtistDto {
   arabicName: string;
 
   @ApiProperty()
-  workingHours: string;
+  workingHours: number;
 
   @ApiProperty()
   phoneNumber: string;

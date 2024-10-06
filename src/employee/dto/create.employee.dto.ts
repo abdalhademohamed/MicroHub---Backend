@@ -32,9 +32,8 @@ export class CreateEmployeeDto {
       "The working hours of the employee, in a specific format or enum",
     example: "9AM - 5PM",
   })
-  @IsString()
   @IsNotEmpty()
-  workingHours: string; // Ensure this matches your expected format or enum
+  workingHours: number; // Ensure this matches your expected format or enum
 
   @ApiProperty({
     description: "The email address of the employee",
