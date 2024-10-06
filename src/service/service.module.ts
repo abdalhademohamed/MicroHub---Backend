@@ -8,7 +8,9 @@ import { UserEntity } from "../user/entities/user.entity";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ServiceEntity,UserEntity,AuditLogEntity])],
+  imports: [
+    TypeOrmModule.forFeature([ServiceEntity, UserEntity, AuditLogEntity]),
+  ],
   controllers: [ServiceController],
   providers: [ServiceService, CloudinaryService],
 })

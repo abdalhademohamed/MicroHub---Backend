@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from "@nestjs/common";
 import { UpdatePostionDto } from "./dto/update.postion.dto";
 import { PositionEntity } from "./entities/postion.entity";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -30,14 +34,14 @@ export class PostionService {
   ): Promise<PositionEntity> {
     // Create a new position entity
     const position = this.PositionRepository.create(createPositionDto);
-    
+
     try {
       // Save the position entity to the database
       const savedPosition = await this.PositionRepository.save(position);
-  
+
       // Log the creation action in the audit log
       await this.saveAuditLogForCreate(savedPosition, userId);
-  
+
       return savedPosition;
     } catch (error) {
       console.error("Error creating position:", error);
@@ -46,25 +50,30 @@ export class PostionService {
       );
     }
   }
-  
+
   // Save the audit log for the create action
-  private async saveAuditLogForCreate(position: PositionEntity, userId: string) {
+  private async saveAuditLogForCreate(
+    position: PositionEntity,
+    userId: string,
+  ) {
     const auditLog = new AuditLogEntity();
-    auditLog.tableName = 'Position'; // Specify the table name
-    auditLog.action = 'CREATE'; // Specify the action type
+    auditLog.tableName = "Position"; // Specify the table name
+    auditLog.action = "CREATE"; // Specify the action type
     auditLog.entityId = position.id; // ID of the created position
     auditLog.performedBy = userId; // ID of the user who performed the action
-  
+
     // Fetch user details for audit log (optional)
-    const userDetails = await this.UserRepository.findOne({ where: { id: userId } });
+    const userDetails = await this.UserRepository.findOne({
+      where: { id: userId },
+    });
     if (userDetails) {
       auditLog.userDetails = userDetails; // Optional: Add user details for tracking
     }
-  
+
     // Save the audit log to the audit log repository
     await this.AuditLogRepository.save(auditLog);
   }
-  
+
   // Get all positions
   async getAllPositions(): Promise<PositionEntity[]> {
     return await this.PositionRepository.find();
@@ -80,43 +89,47 @@ export class PostionService {
     const existingPosition = await this.PositionRepository.findOne({
       where: { id },
     });
-  
+
     if (!existingPosition) {
       throw new NotFoundException("Position not found");
     }
-  
+
     // Update the position
     await this.PositionRepository.update(id, updatePositionDto);
-  
+
     // Retrieve the updated position
     const updatedPosition = await this.PositionRepository.findOne({
       where: { id },
     });
-  
+
     // Log the update action in the audit log
     await this.saveAuditLogForUpdate(updatedPosition, userId);
-  
+
     return updatedPosition;
   }
-  
+
   // Save the audit log for the update action
-  private async saveAuditLogForUpdate(position: PositionEntity, userId: string) {
+  private async saveAuditLogForUpdate(
+    position: PositionEntity,
+    userId: string,
+  ) {
     const auditLog = new AuditLogEntity();
-    auditLog.tableName = 'Position'; // Specify the table name
-    auditLog.action = 'UPDATE'; // Specify the action type
+    auditLog.tableName = "Position"; // Specify the table name
+    auditLog.action = "UPDATE"; // Specify the action type
     auditLog.entityId = position.id; // ID of the updated position
     auditLog.performedBy = userId; // ID of the user who performed the action
-  
+
     // Fetch user details for audit log (optional)
-    const userDetails = await this.UserRepository.findOne({ where: { id: userId } });
+    const userDetails = await this.UserRepository.findOne({
+      where: { id: userId },
+    });
     if (userDetails) {
       auditLog.userDetails = userDetails; // Optional: Add user details for tracking
     }
-  
+
     // Save the audit log to the audit log repository
     await this.AuditLogRepository.save(auditLog);
   }
-  
 
   // Delete a position
   async removePosition(id: string): Promise<void> {

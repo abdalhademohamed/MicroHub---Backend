@@ -29,6 +29,7 @@ export class EmployeeEntity extends UserEntity {
 
   @Column({ nullable: true ,default:8})
   workingHours: number; // Number of working hours
+  
   @Column({ length: 10 })
   countryCode: string; // Country code for the phone number
 

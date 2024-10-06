@@ -5,11 +5,8 @@ import { CommentService } from "./comment.service";
 export class CommentController {
   constructor(private readonly commentService: CommentService) {}
 
-  @Get(':orderId')
-  async getComments(
-    @Param("orderId") orderId: string,
- 
-  ) {
+  @Get(":orderId")
+  async getComments(@Param("orderId") orderId: string) {
     return this.commentService.getCommentByOrderId(orderId);
   }
 }

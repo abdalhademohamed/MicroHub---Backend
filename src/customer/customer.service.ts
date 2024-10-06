@@ -30,26 +30,32 @@ export class CustomerService {
           "orders",
         ],
       });
-  
+
       // Handle case where customer is not found
       if (!customer) {
         throw new NotFoundException(
           `Customer with phone number ${phoneNumber} not found.`,
         );
       }
-  
+
       // Convert dateOfBirth to a Date object if it's not already
-      const dateOfBirth = customer.dateOfBirth ? new Date(customer.dateOfBirth) : null;
-  
+      const dateOfBirth = customer.dateOfBirth
+        ? new Date(customer.dateOfBirth)
+        : null;
+
       // Helper function to format reservation date
-      const formatReservationDate = (day: number, month: number, year: number): string => {
+      const formatReservationDate = (
+        day: number,
+        month: number,
+        year: number,
+      ): string => {
         const date = new Date(year, month - 1, day); // month is zero-based
         return date.toISOString();
       };
-  
+
       // Calculate order count
       const orderCount = customer.orders?.length ?? 0;
-  
+
       // Construct DTO
       const dto: GetCustomerDto = {
         id: customer.id,
@@ -57,40 +63,42 @@ export class CustomerService {
         phoneNumber: customer.phoneNumber,
         fullName: customer.fullName,
         dateOfBirth: dateOfBirth ? dateOfBirth.toISOString() : null, // Ensure correct date format
-        timeUntilBirthday: dateOfBirth ? this.calculateTimeUntilBirthday(dateOfBirth) : null,
-        lastServices: customer.lastServices?.map(service => ({
+        timeUntilBirthday: dateOfBirth
+          ? this.calculateTimeUntilBirthday(dateOfBirth)
+          : null,
+        lastServices: customer.lastServices?.map((service) => ({
           id: service.id,
           name: service.english_Name,
           duration: service.duration_Mins,
           price: service.price,
         })),
-        lastRootoshes: customer.lastRootoshes?.map(rootosh => ({
+        lastRootoshes: customer.lastRootoshes?.map((rootosh) => ({
           id: rootosh.id,
           name: rootosh.name,
           description: rootosh.description,
         })),
-        reservations: customer.reservations?.map(reservation => ({
+        reservations: customer.reservations?.map((reservation) => ({
           id: reservation.id,
           reservationDate: formatReservationDate(
             reservation.reservationDay,
             reservation.reservationMonth,
-            reservation.reservationYear
+            reservation.reservationYear,
           ),
-          services: reservation.services?.map(service => ({
+          services: reservation.services?.map((service) => ({
             id: service.id,
             name: service.english_Name,
             duration: service.duration_Mins,
             price: service.price,
           })),
         })),
-        orders: customer.orders?.map(order => ({
+        orders: customer.orders?.map((order) => ({
           id: order.id,
           date: order.date, // ISO 8601 string format
         })),
         orderCount, // Count of orders
         rootoshesexpirationDate:customer.rootoshesexpirationDate
       };
-  
+
       return dto;
     } catch (error) {
       // Log the detailed error information
@@ -99,21 +107,18 @@ export class CustomerService {
         stack: error.stack,
         phoneNumber,
       });
-  
+
       // Handle specific errors
       if (error instanceof NotFoundException) {
         throw error;
       }
-  
+
       // Handle unexpected errors
       throw new InternalServerErrorException(
         "An unexpected error occurred while retrieving customer details.",
       );
     }
   }
-  
-  
-  
 
   private calculateTimeUntilBirthday(dateOfBirth: Date): string | null {
     try {
@@ -144,5 +149,4 @@ export class CustomerService {
   async countCustomers(): Promise<number> {
     return await this.customerRepository.count();
   }
-
 }

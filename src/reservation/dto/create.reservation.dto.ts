@@ -3,13 +3,10 @@ import {
   IsString,
   IsNumber,
   IsArray,
-  IsUUID,
   IsOptional,
   IsNotEmpty,
   IsDateString,
 } from "class-validator";
-import { BranchEntity } from "../../branch/entities/branch.entity";
-import { ServiceEntity } from "../../service/entities/service.entity";
 import { Transform } from "class-transformer";
 
 export class CreateReservationDto {
@@ -73,17 +70,15 @@ export class CreateReservationDto {
   deposit_Content: string; // Correct property name
 
   @IsString()
+  paymentId:string;
 
-  paymentId:string
   @IsOptional()
   @IsString()
   offerId?: string; // New property for offer ID
 
-
   @IsOptional()
   @IsString()
   sharableOfferId?: string; // New property for offer ID
-
 
   @IsOptional()
   @IsString()

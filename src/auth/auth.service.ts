@@ -24,7 +24,7 @@ import { v4 as uuidv4 } from "uuid"; // For generating unique tokens
 import { ConfigService } from "@nestjs/config";
 import { I18nContext, I18nService } from "nestjs-i18n";
 import { UserService } from "../user/user.service";
-import { Role } from "../user/utils/user.enum"; 
+import { Role } from "../user/utils/user.enum";
 import { CreateEmployeeDto } from "../employee/dto/create.employee.dto";
 import { EmployeeEntity } from "../employee/entities/employee.entity";
 import { BranchEntity } from "../branch/entities/branch.entity";
@@ -32,7 +32,7 @@ import { EmployeeTypeEntity } from "../employetype/entities/employetype.entity";
 import { PositionEntity } from "../postion/entities/postion.entity";
 import { Postion } from "../postion/utils/postion.enum";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
-import { SlotService } from "../slots/slots.service";
+import { SlotService } from "src/slots/slots.service";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 
 @Injectable()

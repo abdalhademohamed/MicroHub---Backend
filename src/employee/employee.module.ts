@@ -12,9 +12,11 @@ import { AuthService } from "../auth/auth.service";
 import { AuthModule } from "../auth/auth.module";
 import { UserEntity } from "../user/entities/user.entity";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
+import { SlotModule } from "src/slots/slot.module";
 
 @Module({
   imports: [
+    SlotModule,
     TypeOrmModule.forFeature([
       EmployeeEntity,
       BranchEntity,

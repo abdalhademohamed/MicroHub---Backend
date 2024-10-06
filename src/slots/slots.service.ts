@@ -13,6 +13,7 @@ import { WorkingEntity } from "./entities/working.entity";
 import { AvailableQueryDto } from "./dto/query.available.dto";
 import { EmployeeEntity } from "../employee/entities/employee.entity";
 import { OnEvent } from "@nestjs/event-emitter";
+import { Cron, CronExpression } from "@nestjs/schedule";
 
 @Injectable()
 export class SlotService {

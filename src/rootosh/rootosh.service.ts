@@ -111,19 +111,21 @@ export class RootoshService {
     return rootosh;
   }
 
-  // Function to get Rootoshes by serviceId
-  async getRootoshesByServiceId(serviceId: string): Promise<RootoshEntity[]> {
-    // Check if the service exists first
-    const service = await this.serviceRepository.findOne({ where: { id: serviceId } });
-    
-    if (!service) {
-      throw new NotFoundException(`Service with ID ${serviceId} not found`);
+  async findOneRootoshByServiceId(serviceId: string): Promise<RootoshEntity> {
+    const rootosh = await this.rootoshRepository.findOne({
+      where: {
+        service: { id: serviceId },
+      },
+      relations: ["service"], // Ensure that the related 'service' is included
+    });
+
+    if (!rootosh) {
+      throw new NotFoundException(
+        `Rootosh associated with service ID ${serviceId} not found.`,
+      );
     }
 
-    // Find and return all rootoshes associated with the given service
-    return this.rootoshRepository.find({
-      where: { service: { id: serviceId } },
-          });
+    return rootosh;
   }
   async updateRootosh(
     id: string,

@@ -48,7 +48,7 @@ export class OrdersService {
     @InjectRepository(PositionEntity)
     private readonly PositionRepository: Repository<PositionEntity>,
 
-    @InjectEntityManager() private readonly entityManager: EntityManager
+    @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {}
   // Method to generate a unique incremental invoice number
   private async generateUniqueInvoiceNumber(): Promise<number> {
@@ -64,6 +64,115 @@ export class OrdersService {
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // async createOrder(
+  //   reservationId: string,
+  //   userId: string,
+  //   paymentId: string,
+  //   offerId?: string,
+  //   sharableOfferId?: string
+  // ): Promise<OrderEntity> {
+  //   // Fetch reservation with related services
+  //   const reservation = await this.reservationRepository.findOne({
+  //     where: { id: reservationId },
+  //     relations: ["services", "customer", "branch"],
+  //   });
+
+  //   if (!reservation) {
+  //     throw new NotFoundException("Reservation not found");
+  //   }
+
+  //   // Fetch the user who is creating the order, limiting the fields returned
+  //   const createdBy = await this.userRepository.findOne({
+  //     where: { id: userId },
+  //     select: ["id", "username", "email", "role"], // Only return these fields
+  //   });
+  //   if (!createdBy) {
+  //     throw new NotFoundException(`User with ID ${userId} not found`);
+  //   }
+
+  //   // Find the payment method with 'Visa'
+  //   const visaPayment = await this.PaymentRepository.findOne({
+  //     where: { id: paymentId },
+  //   });
+
+  //   if (!visaPayment) {
+  //     throw new NotFoundException(
+  //       "Visa payment method not found, please add payment method called Visa in English & arabic",
+  //     );
+  //   }
+
+  //   const invoiceNumber = await this.generateUniqueInvoiceNumber();
+
+  //   const newOrder = this.orderRepository.create({
+  //     customer: reservation.customer,
+  //     date: `${reservation.reservationYear}-${reservation.reservationMonth}-${reservation.reservationDay}`,
+  //     serviceEnglish: reservation.services
+  //       .map((service) => service.english_Name)
+  //       .join(", "),
+  //     serviceArabic: reservation.services
+  //       .map((service) => service.arabic_Name)
+  //       .join(", "),
+  //     status: OrderStatus.Completed,
+  //     paymentStatus: "partially paid",
+  //     invoiceNumber: invoiceNumber,
+  //     comments: [],
+  //     reservation: reservation,
+  //     branch: {
+  //       id: reservation.branch.id, // Include branch ID
+  //       name: reservation.branch.name, // Include branch name
+  //     }, // Return an object with id and name of the branch
+  //     artist: null,
+  //     createdBy, // Set createdBy field with limited user data
+  //     payment: visaPayment, // Assign the Visa payment method to the order
+  //     offerId,
+  //     sharableOfferId,
+  //   });
+
+  //   try {
+  //     return await this.entityManager.transaction(
+  //       async (transactionalEntityManager) => {
+  //         // Save the new order
+  //         const savedOrder = await transactionalEntityManager.save(
+  //           OrderEntity,
+  //           newOrder,
+  //         );
+
+  //         // Create an audit log entry
+  //         const auditLog = new AuditLogEntity();
+  //         auditLog.tableName = "order";
+  //         auditLog.action = "INSERT";
+  //         auditLog.entityId = savedOrder.id; // ID of the created order
+  //         auditLog.performedBy = userId; // User who created the order
+
+  //         // Fetch user details if needed
+  //         if (userId) {
+  //           const user = await transactionalEntityManager.findOne(UserEntity, {
+  //             where: { id: userId },
+  //           });
+  //           if (user) {
+  //             auditLog.userDetails = {
+  //               id: user.id,
+  //               username: user.username,
+  //               email: user.email,
+  //               role: user.role,
+  //             };
+  //           }
+  //         }
+
+  //         await transactionalEntityManager.save(AuditLogEntity, auditLog);
+
+  //         return savedOrder;
+  //       },
+  //     );
+  //   } catch (error) {
+  //     throw new InternalServerErrorException(
+  //       "Failed to create order",
+  //       error.stack,
+  //     );
+  //   }
+  // }
+
+
   // async createOrder(
   //   reservationId: string,
   //   userId: string,
@@ -327,7 +436,7 @@ export class OrdersService {
 
   async updateOrderServicesFromReservation(
     reservationId: string,
-    userId: string
+    userId: string,
   ): Promise<OrderEntity> {
     const UpdateBy = await this.userRepository.findOne({
       where: { id: userId },
@@ -366,7 +475,7 @@ export class OrdersService {
           // Save the updated order
           const updatedOrder = await transactionalEntityManager.save(
             OrderEntity,
-            order
+            order,
           );
 
           // Create an audit log entry for the order update
@@ -392,19 +501,19 @@ export class OrdersService {
           await transactionalEntityManager.save(AuditLogEntity, auditLog);
 
           return updatedOrder;
-        }
+        },
       );
     } catch (error) {
       throw new InternalServerErrorException(
         "Failed to update order",
-        error.stack
+        error.stack,
       );
     }
   }
 
   async updateOrderTimeFromReservation(
     reservationId: string,
-    userId: string
+    userId: string,
   ): Promise<OrderEntity> {
     const UpdateBy = await this.userRepository.findOne({
       where: { id: userId },
@@ -437,7 +546,7 @@ export class OrdersService {
           // Save the updated order
           const updatedOrder = await transactionalEntityManager.save(
             OrderEntity,
-            order
+            order,
           );
 
           // Create an audit log entry for the order update
@@ -463,12 +572,12 @@ export class OrdersService {
           await transactionalEntityManager.save(AuditLogEntity, auditLog);
 
           return updatedOrder;
-        }
+        },
       );
     } catch (error) {
       throw new InternalServerErrorException(
         "Failed to update order",
-        error.stack
+        error.stack,
       );
     }
   }
@@ -477,7 +586,7 @@ export class OrdersService {
     orderId: string,
     newPaymentStatus: "paid" | "partially paid",
     image: Express.Multer.File,
-    userId: string // Optional parameter for the user ID
+    userId: string, // Optional parameter for the user ID
   ): Promise<OrderEntity> {
     let updatedOrder: OrderEntity;
 
@@ -500,7 +609,7 @@ export class OrdersService {
         const folderName = "orders-payment-status"; // or any other dynamic name based on context
         const resultImage = await this.CloudinaryService.uploadImage(
           image,
-          folderName
+          folderName,
         );
         if (resultImage) {
           console.log(`Updating image URL for order ID ${orderId}`);
@@ -527,7 +636,7 @@ export class OrdersService {
           // Save the updated order
           const savedOrder = await transactionalEntityManager.save(
             OrderEntity,
-            order
+            order,
           );
 
           // Create an audit log entry
@@ -543,7 +652,7 @@ export class OrdersService {
           // Collect old values from the database
           const oldOrder = await transactionalEntityManager.findOne(
             OrderEntity,
-            { where: { id: savedOrder.id } }
+            { where: { id: savedOrder.id } },
           );
 
           if (oldOrder) {
@@ -580,7 +689,7 @@ export class OrdersService {
           await transactionalEntityManager.save(AuditLogEntity, auditLog);
 
           return savedOrder;
-        }
+        },
       );
     } catch (error) {
       if (error instanceof NotFoundException) {
@@ -588,7 +697,7 @@ export class OrdersService {
       } else {
         throw new InternalServerErrorException(
           "Error updating payment status",
-          error.stack
+          error.stack,
         );
       }
     }
@@ -601,7 +710,7 @@ export class OrdersService {
     orderId: string,
     newStatus: OrderStatus,
     image: Express.Multer.File,
-    userId: string // Optional parameter for the user ID
+    userId: string, // Optional parameter for the user ID
   ): Promise<OrderEntity | { paymentAmount: number }> {
     let order: OrderEntity;
 
@@ -622,7 +731,7 @@ export class OrdersService {
       } else {
         throw new InternalServerErrorException(
           "Error fetching the order",
-          error.stack
+          error.stack,
         );
       }
     }
@@ -631,7 +740,7 @@ export class OrdersService {
       try {
         if (!order.reservation) {
           throw new NotFoundException(
-            `No reservation found for order with ID ${orderId}`
+            `No reservation found for order with ID ${orderId}`,
           );
         }
 
@@ -641,7 +750,7 @@ export class OrdersService {
         if (order.paymentStatus === "paid") {
           if (order.receipts.length === 0) {
             throw new NotFoundException(
-              `No receipt found for order with ID ${orderId}`
+              `No receipt found for order with ID ${orderId}`,
             );
           }
 
@@ -651,7 +760,7 @@ export class OrdersService {
           paymentAmount = deposit;
         } else {
           throw new InternalServerErrorException(
-            `Invalid payment status: ${order.paymentStatus}`
+            `Invalid payment status: ${order.paymentStatus}`,
           );
         }
 
@@ -663,7 +772,7 @@ export class OrdersService {
         } else {
           throw new InternalServerErrorException(
             "Error processing payment details",
-            error.stack
+            error.stack,
           );
         }
       }
@@ -677,7 +786,7 @@ export class OrdersService {
       const folderName = "orders-status";
       const resultImage = await this.CloudinaryService.uploadImage(
         image,
-        folderName
+        folderName,
       );
       if (resultImage) {
         order.image_order_status_Url = resultImage.url;
@@ -701,7 +810,7 @@ export class OrdersService {
       } else {
         throw new InternalServerErrorException(
           "Error fetching user details",
-          error.stack
+          error.stack,
         );
       }
     }
@@ -715,7 +824,7 @@ export class OrdersService {
         async (transactionalEntityManager) => {
           const oldOrder = await transactionalEntityManager.findOne(
             OrderEntity,
-            { where: { id: updatedOrder.id } }
+            { where: { id: updatedOrder.id } },
           );
 
           const log = new AuditLogEntity();
@@ -757,7 +866,7 @@ export class OrdersService {
           }
 
           await transactionalEntityManager.save(AuditLogEntity, log);
-        }
+        },
       );
 
       return updatedOrder;
@@ -765,7 +874,7 @@ export class OrdersService {
       console.error("Failed to update order status:", error);
       throw new InternalServerErrorException(
         "Failed to update order status",
-        error.stack
+        error.stack,
       );
     }
   }
@@ -904,6 +1013,7 @@ export class OrdersService {
     }
   }
   
+  
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async findAllOrders(
@@ -964,6 +1074,7 @@ export class OrdersService {
           employeeName: `%${employeeName}%`,
         });
       }
+
 
       // Filter by branch ID if available
       if (branchId) {
@@ -1145,7 +1256,7 @@ export class OrdersService {
 
   async findOrdersByEmployeeAndDay(
     userId: string,
-    findOrdersByDayDto: FindOrdersByDayDto
+    findOrdersByDayDto: FindOrdersByDayDto,
   ): Promise<{ items: any[]; total: number }> {
     const { page, limit, sort, dayDate } = findOrdersByDayDto;
 
@@ -1188,7 +1299,7 @@ export class OrdersService {
       // Paginate the orders
       const paginatedOrders = sortedOrders.slice(
         (page - 1) * limit,
-        page * limit
+        page * limit,
       );
 
       // Map orders to include artist, payment, customer, and branch details
@@ -1254,7 +1365,7 @@ export class OrdersService {
       console.error("Failed to retrieve orders for employee:", error);
       throw new InternalServerErrorException(
         "Failed to retrieve orders for employee",
-        error.stack
+        error.stack,
       );
     }
   }
@@ -1270,7 +1381,7 @@ export class OrdersService {
     } catch (error) {
       throw new InternalServerErrorException(
         "Failed to retrieve the order",
-        error.stack
+        error.stack,
       );
     }
   }
@@ -1278,7 +1389,7 @@ export class OrdersService {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async updatePaymentForOrder(
     orderId: string,
-    paymentId: string
+    paymentId: string,
   ): Promise<OrderEntity> {
     try {
       // Find the order by ID
@@ -1308,7 +1419,7 @@ export class OrdersService {
     } catch (error) {
       throw new InternalServerErrorException(
         "Failed to update payment for order",
-        error.stack
+        error.stack,
       );
     }
   }
@@ -1384,7 +1495,7 @@ export class OrdersService {
   async getOrderStatusCountForArtist(
     userId: string,
     branchId?: string,
-    artistId?: string // Optional artistId parameter for ADMIN role
+    artistId?: string, // Optional artistId parameter for ADMIN role
   ): Promise<{ [key in OrderStatus]: number }> {
     // Initialize the result object with all order statuses set to zero
     const orderStatusCounts: { [key in OrderStatus]: number } = {
