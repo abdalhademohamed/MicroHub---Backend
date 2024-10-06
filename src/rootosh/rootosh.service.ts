@@ -123,8 +123,7 @@ export class RootoshService {
     // Find and return all rootoshes associated with the given service
     return this.rootoshRepository.find({
       where: { service: { id: serviceId } },
-      relations: ['service'], // Make sure the service relationship is loaded
-    });
+          });
   }
   async updateRootosh(
     id: string,
