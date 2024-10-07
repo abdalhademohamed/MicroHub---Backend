@@ -3,7 +3,7 @@ import { WeekDays } from "../branch/utils/days.enum";
 import { CreateSlotDto } from "./dto/create.slot.dto";
 import { InjectRepository } from "@nestjs/typeorm";
 import { WorkingBranchEntity } from "../working-branch/entities/working.branch.entity";
-import { MoreThan, MoreThanOrEqual, Repository } from "typeorm";
+import { Brackets, MoreThan, MoreThanOrEqual, Repository } from "typeorm";
 import { BranchEntity } from "../branch/entities/branch.entity";
 import { Role } from "../user/utils/user.enum";
 import { UserEntity } from "../user/entities/user.entity";
@@ -12,8 +12,9 @@ import { SlotsEntity } from "./entities/slots.entity";
 import { WorkingEntity } from "./entities/working.entity";
 import { AvailableQueryDto } from "./dto/query.available.dto";
 import { EmployeeEntity } from "../employee/entities/employee.entity";
-import { OnEvent } from "@nestjs/event-emitter";
+// import { OnEvent } from "@nestjs/event-emitter";
 // import { Cron, CronExpression } from "@nestjs/schedule";
+import { OnEvent } from "@nestjs/event-emitter";
 
 @Injectable()
 export class SlotService {
@@ -386,7 +387,7 @@ export class SlotService {
     const result = [];
 
     intervals.map(({ from, to }) => {
-      let currentStartTime = new Date(from); // Start at the provided startTime
+      let currentStartTime = new Date(from) > new Date() ? new Date(from) : new Date(); // Start at the provided startTime
       const currentEndTime = new Date(to); // End at the provided endTime
 
       // Loop through the interval and create slots of the given duration
@@ -422,20 +423,19 @@ export class SlotService {
     branchId: string,
     { day, month, year, duration }: AvailableQueryDto,
   ) {
-    const slots = await this.WorkingRepository.find({
-      where: {
-        slot: {
-          branch: { id: branchId },
-          day: day,
-          year: year,
-          month: month,
-        },
-      },
-      relations: { slot: { branch: true } },
-      order: {
-        from: "ASC",
-      },
-    });
+    const slots = await this.WorkingRepository.createQueryBuilder('working')
+      .leftJoinAndSelect('working.slot', 'slot')
+      .leftJoinAndSelect('slot.branch', 'branch')
+      .where('slot.branch.id = :branchId', { branchId })
+      .andWhere('slot.day = :day', { day })
+      .andWhere('slot.year = :year', { year })
+      .andWhere('slot.month = :month', { month })
+      .andWhere(new Brackets(qb => {
+        qb.where('working.from >= :currentDate', { currentDate: new Date() })
+        .orWhere('working.to >= :currentDate', { currentDate: new Date() });
+      }))
+      .orderBy('working.from', 'ASC')
+      .getMany();
     if (slots.length === 0) {
       return [];
     }
@@ -444,24 +444,20 @@ export class SlotService {
   async getFirstSlotAvailable(branchId: string, ids: string[]) {
     const { duration } =
       await this.reservationService.calculateTotalDuration(ids);
-    const workingHour = await this.WorkingRepository.findOne({
-      where: {
-        slot: {
-          branch: { id: branchId },
-        },
-        from: MoreThanOrEqual(new Date()),
-        duration: MoreThanOrEqual(duration),
-      },
-      relations: { slot: { branch: true } },
-      order: {
-        slot: {
-          year: "ASC",
-          month: "ASC",
-          day: "ASC",
-        },
-        from: "ASC",
-      },
-    });
+      const workingHour = await this.WorkingRepository.createQueryBuilder('working')
+      .leftJoinAndSelect('working.slot', 'slot')
+      .leftJoinAndSelect('slot.branch', 'branch')
+      .where('slot.branch.id = :branchId', { branchId })
+      .andWhere('working.duration >= :duration', { duration })
+      .andWhere(new Brackets(qb => {
+        qb.where('working.from >= :currentDate', { currentDate: new Date() })
+          .orWhere('working.to >= :currentDate', { currentDate: new Date() });
+      }))
+      .orderBy('slot.year', 'ASC')
+      .addOrderBy('slot.month', 'ASC')
+      .addOrderBy('slot.day', 'ASC')
+      .addOrderBy('working.from', 'ASC')
+      .getOne();
     if (!workingHour) {
       throw new HttpException("No available slots found.", 400);
     }
