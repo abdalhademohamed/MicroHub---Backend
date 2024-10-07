@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -20,6 +21,7 @@ import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { UserProfileDto } from "./dto/get.profile.dto";
 import { SlotService } from "../slots/slots.service";
 import { Role } from "../user/utils/user.enum";
+import { response } from "express";
 
 @Injectable()
 export class EmployeeService {
@@ -51,9 +53,47 @@ export class EmployeeService {
     createEmployeeDto: CreateEmployeeDto,
     userId: string
   ): Promise<any> {
-    return await this.AuthService.createEmployee(createEmployeeDto, userId);
+    try {
+      return await this.AuthService.createEmployee(createEmployeeDto, userId);
+    } catch (error) {
+      // Log the error
+      console.error('Error occurred while creating employee:', error);
+  
+      // Categorize the error based on the instance
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException({
+          message: 'Failed to create employee',
+          error: 'The specified resource was not found.',
+          statusCode: 404,
+        });
+      } else if (error instanceof BadRequestException) {
+        throw new BadRequestException({
+          message: 'Failed to create employee',
+          error: 'Invalid data provided. Please check your input.',
+          statusCode: 400,
+        });
+      } else if (error instanceof ConflictException) {
+        // Directly specify the conflict error message
+        throw new ConflictException({
+          message: 'Failed to create employee',
+          error: 'A user with this email already exists.',
+          statusCode: 409,
+        });
+      } else {
+        // Handle unexpected errors
+        throw new InternalServerErrorException({
+          message: 'Failed to create employee',
+          error: error.response.error,
+          statusCode: 500,
+        });
+      }
+    }
   }
-
+  
+  
+  
+  
+   
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   async getAllEmployees(
