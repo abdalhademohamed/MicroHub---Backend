@@ -15,6 +15,7 @@ import { WorkingBranchEntity } from "./entities/working.branch.entity";
 import { WeekDays } from "../branch/utils/days.enum";
 import { SlotService } from "../slots/slots.service";
 import { EventEmitter2 } from "@nestjs/event-emitter";
+import { Postion } from "../postion/utils/postion.enum";
 
 @Injectable()
 export class WorkingBranchService {
@@ -30,79 +31,89 @@ export class WorkingBranchService {
   ) {}
 
  
-    async createWorkingBranch(
-      branchId: string,
-      createWorkingBranchDto: CreateWorkingBranchDto
-    ): Promise<WorkingBranchEntity> {
-      const { dayOfWeek, workingHours } = createWorkingBranchDto;
+  async createWorkingBranch(
+    branchId: string,
+    createWorkingBranchDto: CreateWorkingBranchDto
+  ): Promise<WorkingBranchEntity> {
+    const { dayOfWeek, workingHours } = createWorkingBranchDto;
   
-      // Log the request body
-      console.log("Creating working branch with data:", createWorkingBranchDto);
+    // Log the request body
+    console.log("Creating working branch with data:", createWorkingBranchDto);
   
-      // Convert dayOfWeek from string to WeekDays enum
-      const weekDayEnum = WeekDays[dayOfWeek as keyof typeof WeekDays];
-      if (!weekDayEnum) {
-        throw new BadRequestException(`Invalid dayOfWeek: ${dayOfWeek}`);
+    // Convert dayOfWeek from string to WeekDays enum
+    const weekDayEnum = WeekDays[dayOfWeek as keyof typeof WeekDays];
+    if (!weekDayEnum) {
+      throw new BadRequestException(`Invalid dayOfWeek: ${dayOfWeek}`);
+    }
+  
+    let branch: BranchEntity;
+    try {
+      // Fetch the branch with the related working branches and employees
+      branch = await this.branchRepository.findOne({
+        where: { id: branchId },
+        relations: ["workingbranch", "employees"], // Include related employees
+      });
+  
+      if (!branch) {
+        throw new NotFoundException(`Branch with ID ${branchId} not found`);
       }
   
-      let branch: BranchEntity; // Assuming you have a BranchEntity
-      try {
-        // Fetch the branch with the related working branches
-        branch = await this.branchRepository.findOne({
-          where: { id: branchId },
-          relations: ["workingbranch"],
-        });
-  
-        if (!branch) {
-          throw new NotFoundException(`Branch with ID ${branchId} not found`);
-        }
-      } catch (error) {
-        console.error('Error fetching branch:', error);
-        throw new InternalServerErrorException('Could not fetch branch. Please try again later.');
-      }
-  
-      let workingBranchEntity: WorkingBranchEntity | undefined;
-  
-      // Check if the working branch for the specified day exists
-      workingBranchEntity = branch.workingbranch.find(
-        (wb) => wb.dayOfWeek === weekDayEnum
+      // Check if there is at least one employee with the position of "Artist"
+      const hasArtist = branch.employees.some(
+        (employee) => employee.position && employee.position.postion === Postion.ARTIST
       );
   
-      try {
-        if (workingBranchEntity) {
-          // Update existing WorkingBranchEntity
-          workingBranchEntity.workingHours = workingHours;
-        } else {
-          // Create new WorkingBranchEntity
-          workingBranchEntity = this.WorkingBranchsRepository.create({
-            dayOfWeek: weekDayEnum,
-            workingHours,
-            branch,
-          });
-          branch.workingbranch.push(workingBranchEntity);
-        }
-  
-        // Save the WorkingBranchEntity and include the branch details
-        const savedWorkingBranch = await this.WorkingBranchsRepository.save(workingBranchEntity);
-  
-        await this.slotService.getNextFourWeeksDatesForDay(
-          createWorkingBranchDto.dayOfWeek,
-          branchId,
-          createWorkingBranchDto.workingHours
-        );
-  
-        // Log the successful creation
-        console.log('Successfully created working branch:', savedWorkingBranch);
-  
-        // Return the saved WorkingBranchEntity
-        return savedWorkingBranch;
-  
-      } catch (error) {
-        console.error('Error saving working branch:', error);
-        // Handle unexpected errors
-        throw new InternalServerErrorException('Could not create working branch. Please try again later.');
+      if (!hasArtist) {
+        throw new BadRequestException("At least one employee with the position of 'Artist' is required to create working hours.");
       }
+    } catch (error) {
+      console.error('Error fetching branch:', error);
+      throw new InternalServerErrorException('Could not fetch branch. Please try again later.');
     }
+  
+    let workingBranchEntity: WorkingBranchEntity | undefined;
+  
+    // Check if the working branch for the specified day exists
+    workingBranchEntity = branch.workingbranch.find(
+      (wb) => wb.dayOfWeek === weekDayEnum
+    );
+  
+    try {
+      if (workingBranchEntity) {
+        // Update existing WorkingBranchEntity
+        workingBranchEntity.workingHours = workingHours;
+      } else {
+        // Create new WorkingBranchEntity
+        workingBranchEntity = this.WorkingBranchsRepository.create({
+          dayOfWeek: weekDayEnum,
+          workingHours,
+          branch,
+        });
+        branch.workingbranch.push(workingBranchEntity);
+      }
+  
+      // Save the WorkingBranchEntity and include the branch details
+      const savedWorkingBranch = await this.WorkingBranchsRepository.save(workingBranchEntity);
+  
+      await this.slotService.getNextFourWeeksDatesForDay(
+        createWorkingBranchDto.dayOfWeek,
+        branchId,
+        createWorkingBranchDto.workingHours
+      );
+  
+      // Log the successful creation
+      console.log('Successfully created working branch:', savedWorkingBranch);
+  
+      // Return the saved WorkingBranchEntity
+      return savedWorkingBranch;
+  
+    } catch (error) {
+      console.error('Error saving working branch:', error);
+      // Handle unexpected errors
+      throw new InternalServerErrorException('Could not create working branch. Please try again later.');
+    }
+  }
+  
   
   
 
