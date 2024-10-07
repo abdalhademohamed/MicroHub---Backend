@@ -33,152 +33,190 @@ export class WorkingBranchService {
  
   async createWorkingBranch(
     branchId: string,
-    createWorkingBranchDto: CreateWorkingBranchDto
-  ): Promise<WorkingBranchEntity> {
+    createWorkingBranchDto: CreateWorkingBranchDto,
+  ): Promise<{ id: string; dayOfWeek: string; workingHours: string[] }> {
     const { dayOfWeek, workingHours } = createWorkingBranchDto;
   
-    console.log("Creating working branch with data:", createWorkingBranchDto);
-  
+    // Convert dayOfWeek from string to WeekDays enum
     const weekDayEnum = WeekDays[dayOfWeek as keyof typeof WeekDays];
     if (!weekDayEnum) {
       throw new BadRequestException({
         error: 'InvalidDayOfWeek',
-        message: `Invalid dayOfWeek: ${dayOfWeek}`
+        message: `Invalid dayOfWeek: ${dayOfWeek}`,
       });
     }
   
-    let branch: BranchEntity;
+    // Fetch the branch with the related working branches and employees
+    let branch;
     try {
       branch = await this.branchRepository.findOne({
         where: { id: branchId },
-        relations: ["workingbranch", "employees", "employees.position"],
+        relations: ['workingbranch', 'employees', 'employees.position'],
       });
-  
-      if (!branch) {
-        throw new NotFoundException({
-          error: 'BranchNotFound',
-          message: `Branch with ID ${branchId} not found`
-        });
-      }
-  
-      console.log("Employees found in branch:", branch.employees);
-  
-      const hasArtist = branch.employees.some(
-        (employee) => employee.position && employee.position.postion === Postion.ARTIST
-      );
-  
-      if (!hasArtist) {
-        throw new BadRequestException({
-          error:  "At least one employee with the position of 'Artist' is required to create working hours.",
-          message: "At least one employee with the position of 'Artist' is required to create working hours."
-        });
-      }
-  
-      console.log("Artist found in branch.");
     } catch (error) {
       console.error('Error fetching branch:', error);
-      throw new InternalServerErrorException({
-        error: error.response.error,
-        message: 'Could not fetch branch. Please try again later.'
+      throw new HttpException({
+        error: 'BranchFetchError',
+        message: 'An error occurred while fetching the branch. Please try again later.',
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  
+    if (!branch) {
+      throw new NotFoundException({
+        error: 'BranchNotFound',
+        message: `Branch with ID ${branchId} not found`,
       });
     }
   
-    let workingBranchEntity: WorkingBranchEntity | undefined;
-  
-    workingBranchEntity = branch.workingbranch.find(
-      (wb) => wb.dayOfWeek === weekDayEnum
+    // Check if there is at least one employee with the position of "Artist"
+    const hasArtist = branch.employees.some(
+      (employee) => employee.position?.postion === Postion.ARTIST,
     );
   
+    if (!hasArtist) {
+      throw new BadRequestException({
+        error: 'ArtistNotFound',
+        message: 'At least one employee with the position of Artist is required to create working hours.',
+      });
+    }
+  
+    // Find existing WorkingBranchEntity for the specified dayOfWeek
+    let workingBranchEntity;
     try {
-      if (workingBranchEntity) {
-        workingBranchEntity.workingHours = workingHours;
-      } else {
+      workingBranchEntity = branch.workingbranch.find(
+        (wb) => wb.dayOfWeek === weekDayEnum,
+      );
+    } catch (error) {
+      console.error('Error finding working branch:', error);
+      throw new HttpException({
+        error: error.Process.error,
+        message: 'An error occurred while fetching the working branch. Please try again later.',
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  
+    if (workingBranchEntity) {
+      // Update existing WorkingBranchEntity
+      workingBranchEntity.workingHours = workingHours;
+    } else {
+      // Create new WorkingBranchEntity
+      try {
         workingBranchEntity = this.WorkingBranchsRepository.create({
           dayOfWeek: weekDayEnum,
           workingHours,
+          branch,
         });
         branch.workingbranch.push(workingBranchEntity);
+      } catch (error) {
+        console.error('Error creating new working branch entity:', error);
+        throw new HttpException({
+          error: 'WorkingBranchCreateError',
+          message: 'An error occurred while creating the new working branch entity. Please try again.',
+        }, HttpStatus.INTERNAL_SERVER_ERROR);
       }
+    }
   
-      const savedWorkingBranch = await this.WorkingBranchsRepository.save(workingBranchEntity);
+    // Save the WorkingBranchEntity
+    let savedWorkingBranch;
+    try {
+      savedWorkingBranch = await this.WorkingBranchsRepository.save(workingBranchEntity);
+    } catch (error) {
+      console.error('Error saving working branch:', error);
+      throw new HttpException({
+        error: 'WorkingBranchSaveError',
+        message: 'An error occurred while saving the working branch. Please check your data and try again.',
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   
+    // Call the slot service to manage time slots for the branch
+    try {
       await this.slotService.getNextFourWeeksDatesForDay(
         createWorkingBranchDto.dayOfWeek,
         branchId,
-        createWorkingBranchDto.workingHours
+        createWorkingBranchDto.workingHours,
       );
-  
-      console.log('Successfully created working branch:', savedWorkingBranch);
-  
-      return savedWorkingBranch;
     } catch (error) {
-      console.error('Error saving working branch:', error);
-      throw new InternalServerErrorException({
-        error: 'WorkingBranchCreationError',
-        message: 'Could not create working branch. Please try again later.'
-      });
+      console.error('Error managing time slots:', error);
+      throw new HttpException({
+        error: 'SlotManagementError',
+        message: 'An error occurred while managing time slots. Please try again later.',
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  
+    // Return only the required fields (id, dayOfWeek, and workingHours)
+    return {
+      id: savedWorkingBranch.id,
+      dayOfWeek: savedWorkingBranch.dayOfWeek,
+      workingHours: savedWorkingBranch.workingHours,
+    };
   }
   
   
   
   
+  
+  
 
-    async findAll(branchId?: string): Promise<WorkingBranchEntity[]> {
-      // Validate branchId format if necessary
-      if (branchId && typeof branchId !== 'string') {
-        throw new BadRequestException('Invalid branch ID format');
+
+  async findAll(branchId?: string): Promise<Omit<WorkingBranchEntity, 'branch'>[]> {
+    // Validate branchId format if necessary
+    if (branchId && typeof branchId !== "string") {
+      throw new BadRequestException("Invalid branch ID format");
+    }
+  
+    // Define the base query options
+    const queryOptions: FindOptionsWhere<WorkingBranchEntity> = {};
+  
+    // Apply branchId filter if provided
+    if (branchId) {
+      queryOptions.branch = { id: branchId };
+    }
+  
+    try {
+      // Retrieve working branches with optional filtering and select only necessary fields
+      const workingBranches = await this.WorkingBranchsRepository.find({
+        where: queryOptions,
+        relations: [], // Do not include related branch data
+        select: {
+          id: true,
+          dayOfWeek: true,
+          workingHours: true,
+        },
+      });
+  
+      // Optionally handle case where no results are found
+      if (workingBranches.length === 0) {
+        throw new NotFoundException("No working branches found");
       }
   
-      // Log the received branchId
-      console.log('Received branchId for findAll:', branchId);
+      return workingBranches; // Return the modified result without the branch object
+    } catch (error) {
+      // Log detailed error information for internal tracking
+      // console.error('Error retrieving working branches:', error);
   
-      // Define the base query options
-      const queryOptions: FindOptionsWhere<WorkingBranchEntity> = {};
-  
-      // Apply branchId filter if provided
-      if (branchId) {
-        queryOptions.branch = { id: branchId };
-      }
-  
-      try {
-        // Retrieve working branches with optional filtering and relations
-        const workingBranches = await this.WorkingBranchsRepository.find({
-          where: queryOptions,
-          relations: ['branch'], // Include related branch data
-        });
-  
-        // Handle case where no results are found
-        if (workingBranches.length === 0) {
-          console.warn('No working branches found for branchId:', branchId);
-          throw new NotFoundException('No working branches found');
-        }
-  
-        // Log the retrieved working branches
-        console.log('Retrieved working branches:', workingBranches);
-  
-        // Log the response before returning
-        console.log('Response to be returned:', workingBranches);
-  
-        return workingBranches;
-      } catch (error) {
-        // Log detailed error information for internal tracking
-        console.error('Error retrieving working branches:', error);
-  
-        // Categorize errors
-        if (error instanceof NotFoundException) {
-          throw error; // Preserve specific messages and status codes for known exceptions
-        } else if (error instanceof QueryFailedError) {
-          // Handle database-specific errors
-          throw new BadRequestException(
-            'Database query failed. Please check your request and try again.',
-          );
-        } else {
-          // Handle unexpected errors
-          throw new InternalServerErrorException('An unexpected error occurred while retrieving working branches. Please try again later.');
-        }
+      // Provide more detailed and specific error responses
+      if (error instanceof NotFoundException) {
+        throw error; // Re-throw known exceptions to preserve specific messages and status codes
+      } else if (error instanceof QueryFailedError) {
+        // Handle database-specific errors
+        throw new BadRequestException(
+          "Database query failed. Please check your request and try again.",
+        );
+      } else {
+        // Handle other unexpected errors
+        throw new HttpException(
+          {
+            status: HttpStatus.BAD_REQUEST,
+            error:
+              "An unexpected error occurred while retrieving working branches. Please try again later.",
+          },
+          HttpStatus.BAD_REQUEST,
+        );
       }
     }
+  }
+  
+  
+  
 
   // Get a specific working branch by ID
   async findOne(id: string): Promise<WorkingBranchEntity> {

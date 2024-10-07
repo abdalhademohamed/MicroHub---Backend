@@ -78,7 +78,7 @@ export class EmployeeService {
           message: 'Failed to create employee',
           error: 'A user with this email already exists.',
           statusCode: 409,
-        });
+        }); 
       } else {
         // Handle unexpected errors
         throw new InternalServerErrorException({
