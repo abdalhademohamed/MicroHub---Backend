@@ -25,15 +25,18 @@ export class WorkingBranchService {
     @InjectRepository(WorkingBranchEntity)
     private readonly WorkingBranchsRepository: Repository<WorkingBranchEntity>,
 
-    private slotService: SlotService,
+    private slotService: SlotService
     // private eventEmitter: EventEmitter2,
   ) {}
 
   async createWorkingBranch(
     branchId: string,
-    createWorkingBranchDto: CreateWorkingBranchDto,
+    createWorkingBranchDto: CreateWorkingBranchDto
   ): Promise<WorkingBranchEntity> {
     const { dayOfWeek, workingHours } = createWorkingBranchDto;
+
+    // Log the request body
+    console.log("Creating working branch with data:", createWorkingBranchDto);
 
     // Convert dayOfWeek from string to WeekDays enum
     const weekDayEnum = WeekDays[dayOfWeek as keyof typeof WeekDays];
@@ -53,7 +56,7 @@ export class WorkingBranchService {
 
     // Find existing WorkingBranchEntity for the specified dayOfWeek
     let workingBranchEntity = branch.workingbranch.find(
-      (wb) => wb.dayOfWeek === weekDayEnum,
+      (wb) => wb.dayOfWeek === weekDayEnum
     );
 
     if (workingBranchEntity) {
@@ -76,19 +79,21 @@ export class WorkingBranchService {
     await this.slotService.getNextFourWeeksDatesForDay(
       createWorkingBranchDto.dayOfWeek,
       branchId,
-      createWorkingBranchDto.workingHours,
+      createWorkingBranchDto.workingHours
     );
 
     // Return the saved WorkingBranchEntity, which includes the branch details
     return savedWorkingBranch;
   }
 
-  // Get all working branches
   async findAll(branchId?: string): Promise<WorkingBranchEntity[]> {
     // Validate branchId format if necessary
     if (branchId && typeof branchId !== "string") {
       throw new BadRequestException("Invalid branch ID format");
     }
+
+    // Log the received branchId
+    console.log("Received branchId for findAll:", branchId);
 
     // Define the base query options
     const queryOptions: FindOptionsWhere<WorkingBranchEntity> = {};
@@ -107,13 +112,20 @@ export class WorkingBranchService {
 
       // Optionally handle case where no results are found
       if (workingBranches.length === 0) {
+        console.warn("No working branches found for branchId:", branchId);
         throw new NotFoundException("No working branches found");
       }
+
+      // Log the retrieved working branches
+      console.log("Retrieved working branches:", workingBranches);
+
+      // Log the response before returning
+      console.log("Response to be returned:", workingBranches);
 
       return workingBranches;
     } catch (error) {
       // Log detailed error information for internal tracking
-      // console.error('Error retrieving working branches:', error);
+      console.error("Error retrieving working branches:", error);
 
       // Provide more detailed and specific error responses
       if (error instanceof NotFoundException) {
@@ -121,7 +133,7 @@ export class WorkingBranchService {
       } else if (error instanceof QueryFailedError) {
         // Handle database-specific errors
         throw new BadRequestException(
-          "Database query failed. Please check your request and try again.",
+          "Database query failed. Please check your request and try again."
         );
       } else {
         // Handle other unexpected errors
@@ -131,7 +143,7 @@ export class WorkingBranchService {
             error:
               "An unexpected error occurred while retrieving working branches. Please try again later.",
           },
-          HttpStatus.BAD_REQUEST,
+          HttpStatus.BAD_REQUEST
         );
       }
     }
@@ -152,7 +164,7 @@ export class WorkingBranchService {
   // Update a working branch by ID
   async updateWorkingBranches(
     branchId: string,
-    updateWorkingBranchesDto: UpdateWorkingBranchDto[],
+    updateWorkingBranchesDto: UpdateWorkingBranchDto[]
   ): Promise<BranchEntity> {
     const branch = await this.branchRepository.findOne({
       where: { id: branchId },
@@ -177,7 +189,7 @@ export class WorkingBranchService {
 
     // Save new working branches
     branch.workingbranch = await this.WorkingBranchsRepository.save(
-      updatedWorkingBranches,
+      updatedWorkingBranches
     );
 
     // Save the branch with updated working branches
