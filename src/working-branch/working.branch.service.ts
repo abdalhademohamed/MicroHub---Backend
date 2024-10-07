@@ -156,7 +156,7 @@ export class WorkingBranchService {
     const { dayOfWeek, workingHours } = createWorkingBranchDto;
 
     // Convert dayOfWeek from string to WeekDays enum
-    const weekDayEnum = WeekDays[dayOfWeek as keyof typeof WeekDays];
+    const weekDayEnum = WeekDays[dayOfWeek as keyof typeof WeekDays]; 
     if (!weekDayEnum) {
       throw new BadRequestException({
         error: "InvalidDayOfWeek",
@@ -190,14 +190,14 @@ export class WorkingBranchService {
       });
     }
 
-    // Validate working hours format
-    const isValidHours = this.validateWorkingHours(workingHours);
-    if (!isValidHours) {
-      throw new BadRequestException({
-        error: "InvalidWorkingHours",
-        message: "Working hours must be in valid format without duplicates.",
-      });
-    }
+    // // Validate working hours format
+    // const isValidHours = this.validateWorkingHours(workingHours);
+    // if (!isValidHours) {
+    //   throw new BadRequestException({
+    //     error: "InvalidWorkingHours",
+    //     message: "Working hours must be in valid format without duplicates.",
+    //   });
+    // }
 
     // Calculate total working hours from the input
     const totalWorkingHours = this.calculateTotalWorkingHours(workingHours);
