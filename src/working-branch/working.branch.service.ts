@@ -20,7 +20,7 @@ import { Postion } from "../postion/utils/postion.enum";
 @Injectable()
 export class WorkingBranchService {
   constructor(
-    @InjectRepository(BranchEntity)
+    @InjectRepository(BranchEntity) 
     private readonly branchRepository: Repository<BranchEntity>,
 
     @InjectRepository(WorkingBranchEntity)
@@ -37,62 +37,69 @@ export class WorkingBranchService {
   ): Promise<WorkingBranchEntity> {
     const { dayOfWeek, workingHours } = createWorkingBranchDto;
   
-    // Log the request body
     console.log("Creating working branch with data:", createWorkingBranchDto);
   
-    // Convert dayOfWeek from string to WeekDays enum
     const weekDayEnum = WeekDays[dayOfWeek as keyof typeof WeekDays];
     if (!weekDayEnum) {
-      throw new BadRequestException(`Invalid dayOfWeek: ${dayOfWeek}`);
+      throw new BadRequestException({
+        error: 'InvalidDayOfWeek',
+        message: `Invalid dayOfWeek: ${dayOfWeek}`
+      });
     }
   
     let branch: BranchEntity;
     try {
-      // Fetch the branch with the related working branches and employees
       branch = await this.branchRepository.findOne({
         where: { id: branchId },
-        relations: ["workingbranch", "employees"], // Include related employees
+        relations: ["workingbranch", "employees", "employees.position"],
       });
   
       if (!branch) {
-        throw new NotFoundException(`Branch with ID ${branchId} not found`);
+        throw new NotFoundException({
+          error: 'BranchNotFound',
+          message: `Branch with ID ${branchId} not found`
+        });
       }
   
-      // Check if there is at least one employee with the position of "Artist"
+      console.log("Employees found in branch:", branch.employees);
+  
       const hasArtist = branch.employees.some(
         (employee) => employee.position && employee.position.postion === Postion.ARTIST
       );
   
       if (!hasArtist) {
-        throw new BadRequestException("At least one employee with the position of 'Artist' is required to create working hours.");
+        throw new BadRequestException({
+          error:  "At least one employee with the position of 'Artist' is required to create working hours.",
+          message: "At least one employee with the position of 'Artist' is required to create working hours."
+        });
       }
+  
+      console.log("Artist found in branch.");
     } catch (error) {
       console.error('Error fetching branch:', error);
-      throw new InternalServerErrorException('Could not fetch branch. Please try again later.');
+      throw new InternalServerErrorException({
+        error: error.response.error,
+        message: 'Could not fetch branch. Please try again later.'
+      });
     }
   
     let workingBranchEntity: WorkingBranchEntity | undefined;
   
-    // Check if the working branch for the specified day exists
     workingBranchEntity = branch.workingbranch.find(
       (wb) => wb.dayOfWeek === weekDayEnum
     );
   
     try {
       if (workingBranchEntity) {
-        // Update existing WorkingBranchEntity
         workingBranchEntity.workingHours = workingHours;
       } else {
-        // Create new WorkingBranchEntity
         workingBranchEntity = this.WorkingBranchsRepository.create({
           dayOfWeek: weekDayEnum,
           workingHours,
-          branch,
         });
         branch.workingbranch.push(workingBranchEntity);
       }
   
-      // Save the WorkingBranchEntity and include the branch details
       const savedWorkingBranch = await this.WorkingBranchsRepository.save(workingBranchEntity);
   
       await this.slotService.getNextFourWeeksDatesForDay(
@@ -101,18 +108,18 @@ export class WorkingBranchService {
         createWorkingBranchDto.workingHours
       );
   
-      // Log the successful creation
       console.log('Successfully created working branch:', savedWorkingBranch);
   
-      // Return the saved WorkingBranchEntity
       return savedWorkingBranch;
-  
     } catch (error) {
       console.error('Error saving working branch:', error);
-      // Handle unexpected errors
-      throw new InternalServerErrorException('Could not create working branch. Please try again later.');
+      throw new InternalServerErrorException({
+        error: 'WorkingBranchCreationError',
+        message: 'Could not create working branch. Please try again later.'
+      });
     }
   }
+  
   
   
   
