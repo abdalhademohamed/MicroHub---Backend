@@ -14,7 +14,7 @@ import { FindOptionsWhere, QueryFailedError, Repository } from "typeorm";
 import { WorkingBranchEntity } from "./entities/working.branch.entity";
 import { WeekDays } from "../branch/utils/days.enum";
 import { SlotService } from "../slots/slots.service";
-import { Postion } from "../postion/utils/postion.enum";
+import { EventEmitter2 } from "@nestjs/event-emitter";
 
 @Injectable()
 export class WorkingBranchService {
@@ -26,6 +26,7 @@ export class WorkingBranchService {
     private readonly WorkingBranchsRepository: Repository<WorkingBranchEntity>,
 
     private slotService: SlotService,
+    // private eventEmitter: EventEmitter2,
   ) {}
 
   async createWorkingBranch(
@@ -33,39 +34,28 @@ export class WorkingBranchService {
     createWorkingBranchDto: CreateWorkingBranchDto,
   ): Promise<WorkingBranchEntity> {
     const { dayOfWeek, workingHours } = createWorkingBranchDto;
-  
+
     // Convert dayOfWeek from string to WeekDays enum
     const weekDayEnum = WeekDays[dayOfWeek as keyof typeof WeekDays];
     if (!weekDayEnum) {
       throw new Error(`Invalid dayOfWeek: ${dayOfWeek}`);
     }
-  
-    // Fetch the branch with the related working branches and employees
+
+    // Fetch the branch with the related working branches
     const branch = await this.branchRepository.findOne({
       where: { id: branchId },
-      relations: ["workingbranch", "employees", "employees.position"],
+      relations: ["workingbranch"],
     });
-  
+
     if (!branch) {
       throw new NotFoundException(`Branch with ID ${branchId} not found`);
     }
-  
-    // Check if there is at least one employee with the position of "Artist"
-    const hasArtist = branch.employees.some(
-      (employee) => employee.position.postion === Postion.ARTIST,
-    );
-  
-    if (!hasArtist) {
-      throw new BadRequestException(
-        'Please add at least one artist to your branch before creating working hours.',
-      );
-    }
-  
+
     // Find existing WorkingBranchEntity for the specified dayOfWeek
     let workingBranchEntity = branch.workingbranch.find(
       (wb) => wb.dayOfWeek === weekDayEnum,
     );
-  
+
     if (workingBranchEntity) {
       // Update existing WorkingBranchEntity
       workingBranchEntity.workingHours = workingHours;
@@ -78,21 +68,20 @@ export class WorkingBranchService {
       });
       branch.workingbranch.push(workingBranchEntity);
     }
-  
+
     // Save the WorkingBranchEntity and include the branch details
     const savedWorkingBranch =
       await this.WorkingBranchsRepository.save(workingBranchEntity);
-  
-    // Generate slots for the next four weeks
+
     await this.slotService.getNextFourWeeksDatesForDay(
       createWorkingBranchDto.dayOfWeek,
       branchId,
       createWorkingBranchDto.workingHours,
     );
-  
+
+    // Return the saved WorkingBranchEntity, which includes the branch details
     return savedWorkingBranch;
   }
-  
 
   // Get all working branches
   async findAll(branchId?: string): Promise<WorkingBranchEntity[]> {
