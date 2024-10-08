@@ -195,21 +195,21 @@ export class EmployeeService {
     updateEmployeeDto: UpdateEmployeeDto,
     userId: string,
     image: Express.Multer.File
-  ): Promise<EmployeeEntity> {
+  ): Promise<EmployeeEntity | { message: string; error: string; statusCode: number }> {
     try {
       // Step 1: Find the employee by ID
       const employee = await this.employeeRepository.findOne({
         where: { id },
         relations: ["branch", "position", "employeeType"],
       });
-
+  
       if (!employee) {
         throw new NotFoundException(`Employee with ID ${id} not found.`);
       }
-
+  
       // Step 2: Track original values for auditing purposes
       const originalEmployee = { ...employee };
-
+  
       // Step 3: Destructure and update employee details from DTO
       const {
         english_Name,
@@ -224,18 +224,16 @@ export class EmployeeService {
         branch, // Update branch
         position, // Update position
       } = updateEmployeeDto;
-
+  
       // Check if updating to artist position
       if (position) {
         const newPosition = await this.positionRepository.findOne({
           where: { id: position },
         });
         if (!newPosition) {
-          throw new NotFoundException(
-            `Position with ID ${position} not found.`
-          );
+          throw new NotFoundException(`Position with ID ${position} not found.`);
         }
-        
+  
         // If the new position is not "artist" and the employee is the only artist in the branch
         if (
           newPosition.postion !== Postion.ARTIST &&
@@ -247,29 +245,27 @@ export class EmployeeService {
               branch: { id: employee.branch.id },
             },
           });
-
+  
           if (artistCount === 1) {
-            throw new BadRequestException(
-              {
-                error:"BadRequestException",
-                message:"Cannot change position to artist as this employee is the only artist in the branch."
-
-              }
-            );
+            return {
+              message: "BadRequestException",
+              error: "Cannot change position to artist as this employee is the only artist in the branch.",
+              statusCode: 400,
+            };
           }
         }
-
+  
         employee.position = newPosition; // Update the employee's position
-        employee.role=this.determineRoleFromPosition(newPosition);
-
+        employee.role = this.determineRoleFromPosition(newPosition);
       }
+  
       employee.english_Name = english_Name ?? employee.english_Name;
       employee.arabic_Name = arabic_Name ?? employee.arabic_Name;
       employee.workingHours = workingHours ?? employee.workingHours;
       employee.countryCode = countryCode ?? employee.countryCode;
       employee.phoneNumber = phoneNumber ?? employee.phoneNumber;
       employee.available = available ?? employee.available;
-
+  
       // Update the branch if branchId is provided
       if (branch) {
         const newBranch = await this.branchRepository.findOne({
@@ -278,12 +274,23 @@ export class EmployeeService {
         if (!newBranch) {
           throw new NotFoundException(`Branch with ID ${branch} not found.`);
         }
+        const artistCount = await this.employeeRepository.count({
+          where: {
+            position: { postion: Postion.ARTIST },
+            branch: { id: employee.branch.id },
+          },
+        });
+
+        if (artistCount === 1) {
+          return {
+            message: "BadRequestException",
+            error: "Cannot change branch of artist as this employee is the only artist in the branch.",
+            statusCode: 400,
+          };
+        }
         employee.branch = newBranch; // Update the employee's branch
       }
-
-      // Log the updated employee object for debugging
-      console.log("Updated employee before save:", employee);
-
+  
       // Step 4: Handle image upload
       if (image) {
         const folderName = "employee";
@@ -294,19 +301,27 @@ export class EmployeeService {
           );
           employee.image = uploadedImage.url;
         } catch (error) {
-          throw new InternalServerErrorException("Failed to upload image");
+          return {
+            message: "Failed to upload image",
+            error: "InternalServerErrorException",
+            statusCode: 500,
+          };
         }
       }
-
+  
       // Step 5: Find and update user details
       const user = await this.UserRepository.findOne({ where: { id } });
       if (!user) {
-        throw new NotFoundException("User not found");
+        return {
+          message: "User not found",
+          error: "NotFoundException",
+          statusCode: 404,
+        };
       }
-
+  
       // Step 6: Update user email and username if necessary
       let isUserUpdated = false;
-
+  
       if (
         email &&
         email.trim().toLowerCase() !== user.email.trim().toLowerCase()
@@ -315,29 +330,29 @@ export class EmployeeService {
         employee.email = email.trim();
         isUserUpdated = true;
       }
-
+  
       if (english_Name && english_Name !== user.username) {
         user.username = english_Name;
         isUserUpdated = true;
       }
-
+  
       if (password) {
         user.password = await bcrypt.hash(password, 10);
         isUserUpdated = true;
       }
-
+  
       // Save the user entity if any updates were made
       if (isUserUpdated) {
         await this.UserRepository.save(user);
       }
-
+  
       // Step 7: Save updated employee details
       const updatedEmployee = await this.employeeRepository.save(employee);
-
+  
       // Step 8: Audit log - Track changes
       const changedColumns = [];
       const changesDetails = {};
-
+  
       this.logChangedField(
         "english_Name",
         originalEmployee,
@@ -401,7 +416,7 @@ export class EmployeeService {
         changedColumns,
         changesDetails
       ); // Track position changes
-
+  
       // Step 9: Create an audit log entry
       const auditLog = new AuditLogEntity();
       auditLog.tableName = "employee";
@@ -410,7 +425,7 @@ export class EmployeeService {
       auditLog.performedBy = userId;
       auditLog.changedColumns = changedColumns;
       auditLog.changesDetails = changesDetails;
-
+  
       if (userId) {
         auditLog.userDetails = {
           id: user.id,
@@ -420,21 +435,23 @@ export class EmployeeService {
         };
       }
       await this.AuditLogRepository.save(auditLog);
-
+  
       // Log the updated employee after saving
       console.log("Employee updated successfully:", updatedEmployee);
-
+  
       return updatedEmployee;
     } catch (error) {
       console.error("Update Employee Error:", error);
-      throw new InternalServerErrorException(
-        {
-          error:error.response.error,
-          message:error.response.message
-        }
-      );
+  
+      // Directly return a formatted error response
+      return {
+        message: "Failed to update employee",
+        error: error.message || "InternalServerErrorException",
+        statusCode: error.getStatus ? error.getStatus() : 500,
+      };
     }
   }
+  
 
   private determineRoleFromPosition(position: PositionEntity): Role {
     // Example mapping logic based on the Postion enum

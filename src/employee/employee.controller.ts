@@ -113,7 +113,7 @@ export class EmployeeController {
     @Param("id") id: string,
     @Body() updateEmployeeDto: UpdateEmployeeDto,
     @UploadedFile() image: Express.Multer.File, // If uploading a file
-  ): Promise<EmployeeEntity> {
+  ): Promise<EmployeeEntity | { message: string; error: string; statusCode: number }> {
     try {
       // If there's a file, add it to the DTO or handle it separately
       if (image) {
