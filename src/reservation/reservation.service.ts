@@ -641,15 +641,15 @@ export class ReservationService {
         services,
         rootoshes,
       });
-
       await this.ReservationRepository.save(reservation);
 
-      if (body.rootosh) {
+      if (body.rootosh && body.rootosh.length > 0) {
         await this.OrdersService.createOrderForRootosh(
           reservation.id,
           userId,
           body.paymentId
         );
+
       } else {
         // Create an order for the reservation
         await this.OrdersService.createOrder(
