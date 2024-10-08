@@ -19,7 +19,7 @@ import { PaymentEntity } from "../payment/entities/payment.entity";
 import { OfferEntity } from "../offer/entities/offer.entity";
 import { SharableOfferEntity } from "../sharable-offer/entities/sharable-offer.entity";
 import { GiftCouponEntity } from "../gift-coupon/entities/gift-coupon.entity";
-import { RootoshEntity } from "src/rootosh/entities/rootosh.entity";
+import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
 
 @Module({
   imports: [
