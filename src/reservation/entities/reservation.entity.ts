@@ -14,6 +14,7 @@ import {
 import { CustomerEntity } from "../../customer/entities/customer.entity";
 import { OrderEntity } from "../../orders/entities/order.entity";
 import { EmployeeEntity } from "../../employee/entities/employee.entity";
+import { RootoshEntity } from "../../rootosh/entities/rootosh.entity";
 
 @Entity() // Specify table name if necessary
 export class ReservationEntity {
@@ -48,19 +49,26 @@ export class ReservationEntity {
   @ManyToOne(() => BranchEntity, (branch) => branch.reservations)
   branch: BranchEntity;
 
-  @ManyToMany(() => ServiceEntity, (service) => service.reservations)
-  services: ServiceEntity[];
+  @ManyToMany(() => ServiceEntity, (service) => service.reservations, { nullable: true })
+  services?: ServiceEntity[]; // Make it optional
 
   @ManyToMany(() => EmployeeEntity, (employee) => employee.reservations)
   employees: EmployeeEntity[];
 
+
   @ManyToOne(() => CustomerEntity, (customer) => customer.reservations)
   customer: CustomerEntity; // Relationship to CustomerEntity
-
+  @ManyToMany(() => RootoshEntity, (rootosh) => rootosh.reservations, {
+    nullable: true,
+  })
+  @JoinTable() // Required for Many-to-Many relationship
+  rootoshes?: RootoshEntity[];
   @OneToOne(() => OrderEntity, (order) => order.reservation, { cascade: true })
   @JoinColumn() // Indicates the owning side of the OneToOne relationship
   order: OrderEntity;
 
   @Column({ default: false })
   isDeleted: boolean;
+
+
 }
