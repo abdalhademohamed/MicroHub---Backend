@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsOptional, IsInt, IsEnum, IsDateString, IsString } from "class-validator";
+import { IsOptional, IsInt, IsEnum, IsDateString } from "class-validator";
 
 export class FindOrdersByDayDto {
   @ApiProperty({ default: 1, description: "Page number" })
@@ -12,14 +12,12 @@ export class FindOrdersByDayDto {
   @IsInt()
   limit: number = 10;
 
-
-  @IsOptional()
-  @IsString()
-  fromDate?: string; // Format: 'yyyy-MM-dd'
-  
-  @IsOptional()
-  @IsString()
-  toDate?: string; // Format: 'yyyy-MM-dd'
+  @ApiProperty({
+    description: "Date of the orders (YYYY-MM-DD)",
+    required: true,
+  })
+  @IsDateString()
+  dayDate: string; // The specific day for filtering orders
 
   @ApiProperty({
     enum: ["ASC", "DESC"],

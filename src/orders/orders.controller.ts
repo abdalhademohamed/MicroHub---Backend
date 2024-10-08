@@ -205,12 +205,12 @@ export class OrdersController {
 
   @Get("filterd")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  // @Roles(Role.ARTIST)
+  @Roles(Role.ARTIST)
   async getOrdersForEmployee(
     @Request() req: any, // Request object to access the user
     @Query() findOrdersByDayDto: FindOrdersByDayDto,
   ) {
-    const userId = "e7635a3b-3327-42d2-a8aa-fa9568d9f040"; // Extract user ID from request
+    const userId = req.user.sub; // Extract user ID from request
 
     if (!userId) {
       throw new BadRequestException("User not authenticated");

@@ -1411,12 +1411,13 @@ async createOrderForRootosh(
     return orderStatusCounts;
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
   async findOrdersByEmployeeAndDay(
     userId: string,
     findOrdersByDayDto: FindOrdersByDayDto,
   ): Promise<{ items: any[]; total: number }> {
-    const { page = 1, limit = 10, sort = "ASC", fromDate, toDate } = findOrdersByDayDto;
-  
+    const { page, limit, sort, dayDate } = findOrdersByDayDto;
+
     try {
       // Fetch the employee by userId, including relations
       const employee = await this.employeeRepository.findOne({
@@ -1429,43 +1430,36 @@ async createOrderForRootosh(
           "branch", // Ensure 'branch' relation is loaded
         ],
       });
-  
+
       if (!employee) {
         throw new NotFoundException(`Employee with userId ${userId} not found`);
       }
-  
-      // Handle date filtering (fromDate and toDate)
-      const fromDateObj = fromDate ? new Date(fromDate) : null;
-      const toDateObj = toDate ? new Date(toDate) : null;
-  
-      if (fromDateObj) {
-        fromDateObj.setHours(0, 0, 0, 0); // Set fromDate to the start of the day (00:00:00)
-      }
-      if (toDateObj) {
-        toDateObj.setHours(23, 59, 59, 999); // Set toDate to the end of the day (23:59:59)
-      }
-  
+
+      // Filter orders by dayDate using range for better accuracy
+      const dayStart = new Date(dayDate);
+      const dayEnd = new Date(dayDate);
+      dayEnd.setDate(dayEnd.getDate() + 1); // Next day
+
       const filteredOrders = employee.orders.filter((order) => {
         const orderDate = new Date(order.date);
-        if (fromDateObj && orderDate < fromDateObj) {
-          return false;
-        }
-        if (toDateObj && orderDate > toDateObj) {
-          return false;
-        }
-        return true;
+        return orderDate >= dayStart && orderDate < dayEnd;
       });
-  
+
       // Apply sorting
       const sortedOrders = filteredOrders.sort((a, b) => {
         const dateA = new Date(a.date);
         const dateB = new Date(b.date);
-        return sort === "ASC" ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime();
+        if (sort === "ASC") return dateA.getTime() - dateB.getTime();
+        if (sort === "DESC") return dateB.getTime() - dateA.getTime();
+        return 0; // Default if sort is invalid
       });
-  
-      // Apply pagination
-      const paginatedOrders = sortedOrders.slice((page - 1) * limit, page * limit);
-  
+
+      // Paginate the orders
+      const paginatedOrders = sortedOrders.slice(
+        (page - 1) * limit,
+        page * limit,
+      );
+
       // Map orders to include artist, payment, customer, and branch details
       const mappedOrders = paginatedOrders.map((order) => ({
         id: order.id,
@@ -1522,7 +1516,7 @@ async createOrderForRootosh(
             }
           : null,
       }));
-  
+
       // Return paginated result
       return { items: mappedOrders, total: filteredOrders.length };
     } catch (error) {
@@ -1533,9 +1527,128 @@ async createOrderForRootosh(
       );
     }
   }
+  // async findOrdersByEmployeeAndDay(
+  //   userId: string,
+  //   findOrdersByDayDto: FindOrdersByDayDto,
+  // ): Promise<{ items: any[]; total: number }> {
+  //   const { page = 1, limit = 10, sort = "ASC", fromDate, toDate } = findOrdersByDayDto;
   
+  //   try {
+  //     // Fetch the employee by userId, including relations
+  //     const employee = await this.employeeRepository.findOne({
+  //       where: { id: userId },
+  //       relations: [
+  //         "orders",
+  //         "orders.customer", // Ensure 'customer' relation is loaded
+  //         "orders.payment", // Ensure 'payment' relation is loaded
+  //         "orders.artist", // Ensure 'artist' relation is loaded
+  //         "branch", // Ensure 'branch' relation is loaded
+  //       ],
+  //     });
   
-
+  //     if (!employee) {
+  //       throw new NotFoundException(`Employee with userId ${userId} not found`);
+  //     }
+  
+  //     // Handle date filtering (fromDate and toDate)
+  //     const fromDateObj = fromDate ? new Date(fromDate) : null;
+  //     const toDateObj = toDate ? new Date(toDate) : null;
+  
+  //     if (fromDateObj) {
+  //       fromDateObj.setHours(0, 0, 0, 0); // Set fromDate to the start of the day (00:00:00)
+  //     }
+  //     if (toDateObj) {
+  //       toDateObj.setHours(23, 59, 59, 999); // Set toDate to the end of the day (23:59:59)
+  //     }
+  
+  //     const filteredOrders = employee.orders.filter((order) => {
+  //       const orderDate = new Date(order.date);
+  //       if (fromDateObj && orderDate < fromDateObj) {
+  //         return false;
+  //       }
+  //       if (toDateObj && orderDate > toDateObj) {
+  //         return false;
+  //       }
+  //       return true;
+  //     });
+  
+  //     // Apply sorting
+  //     const sortedOrders = filteredOrders.sort((a, b) => {
+  //       const dateA = new Date(a.date);
+  //       const dateB = new Date(b.date);
+  //       return sort === "ASC" ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime();
+  //     });
+  
+  //     // Apply pagination
+  //     const paginatedOrders = sortedOrders.slice((page - 1) * limit, page * limit);
+  
+  //     // Map orders to include artist, payment, customer, and branch details
+  //     const mappedOrders = paginatedOrders.map((order) => ({
+  //       id: order.id,
+  //       date: order.date.toString(), // Ensure correct date format
+  //       serviceEnglish: order.serviceEnglish,
+  //       serviceArabic: order.serviceArabic,
+  //       invoiceNumber: order.invoiceNumber,
+  //       status: order.status,
+  //       paymentStatus: order.paymentStatus,
+  //       image_order_status_Url: order.image_order_status_Url,
+  //       image_order_payment_status_Url: order.image_order_payment_status_Url,
+  //       artist: order.artist
+  //         ? {
+  //             id: order.artist.id,
+  //             username: order.artist.username,
+  //             email: order.artist.email,
+  //             role: order.artist.role,
+  //             english_Name: order.artist.english_Name,
+  //             arabic_Name: order.artist.arabic_Name,
+  //             workingHours: order.artist.workingHours,
+  //             countryCode: order.artist.countryCode,
+  //             phoneNumber: order.artist.phoneNumber,
+  //             image: order.artist.image,
+  //             available: order.artist.available,
+  //             totalReviews: order.artist.totalReviews,
+  //             status: order.artist.status,
+  //             oldestAvgRating: order.artist.oldestAvgRating,
+  //             newestAvgRating: order.artist.newestAvgRating,
+  //           }
+  //         : null,
+  //       payment: order.payment
+  //         ? {
+  //             id: order.payment.id,
+  //             methodEnglish: order.payment.methodEnglish,
+  //             methodArabic: order.payment.methodArabic,
+  //             image: order.payment.image,
+  //             createdAt: order.payment.createdAt.toISOString(),
+  //           }
+  //         : null,
+  //       customer: order.customer
+  //         ? {
+  //             id: order.customer.id,
+  //             country_Code: order.customer.country_Code,
+  //             phoneNumber: order.customer.phoneNumber,
+  //             fullName: order.customer.fullName,
+  //             dateOfBirth: order.customer.dateOfBirth,
+  //           }
+  //         : null,
+  //       branch: employee.branch
+  //         ? {
+  //             id: employee.branch.id,
+  //             name: employee.branch.name,
+  //             // Add more branch fields as needed
+  //           }
+  //         : null,
+  //     }));
+  
+  //     // Return paginated result
+  //     return { items: mappedOrders, total: filteredOrders.length };
+  //   } catch (error) {
+  //     console.error("Failed to retrieve orders for employee:", error);
+  //     throw new InternalServerErrorException(
+  //       "Failed to retrieve orders for employee",
+  //       error.stack,
+  //     );
+  //   }
+  // }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   async findOrderById(orderId: string): Promise<OrderEntity | null> {
