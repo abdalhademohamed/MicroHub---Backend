@@ -22,7 +22,7 @@ import { UserProfileDto } from "./dto/get.profile.dto";
 import { SlotService } from "../slots/slots.service";
 import { Role } from "../user/utils/user.enum";
 import { response } from "express";
-import { Postion } from "src/postion/utils/postion.enum";
+import { Postion } from "../postion/utils/postion.enum";
 
 @Injectable()
 export class EmployeeService {
