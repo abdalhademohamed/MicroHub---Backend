@@ -22,6 +22,7 @@ import { UserProfileDto } from "./dto/get.profile.dto";
 import { SlotService } from "../slots/slots.service";
 import { Role } from "../user/utils/user.enum";
 import { response } from "express";
+import { Postion } from "src/postion/utils/postion.enum";
 
 @Injectable()
 export class EmployeeService {
@@ -57,43 +58,39 @@ export class EmployeeService {
       return await this.AuthService.createEmployee(createEmployeeDto, userId);
     } catch (error) {
       // Log the error
-      console.error('Error occurred while creating employee:', error);
-  
+      console.error("Error occurred while creating employee:", error);
+
       // Categorize the error based on the instance
       if (error instanceof NotFoundException) {
         throw new NotFoundException({
-          message: 'Failed to create employee',
-          error: 'The specified resource was not found.',
+          message: "Failed to create employee",
+          error: "The specified resource was not found.",
           statusCode: 404,
         });
       } else if (error instanceof BadRequestException) {
         throw new BadRequestException({
-          message: 'Failed to create employee',
-          error: 'Invalid data provided. Please check your input.',
+          message: "Failed to create employee",
+          error: "Invalid data provided. Please check your input.",
           statusCode: 400,
         });
       } else if (error instanceof ConflictException) {
         // Directly specify the conflict error message
         throw new ConflictException({
-          message: 'Failed to create employee',
-          error: 'A user with this email already exists.',
+          message: "Failed to create employee",
+          error: "A user with this email already exists.",
           statusCode: 409,
-        }); 
+        });
       } else {
         // Handle unexpected errors
         throw new InternalServerErrorException({
-          message: 'Failed to create employee',
+          message: "Failed to create employee",
           error: error.response.error,
           statusCode: 500,
         });
       }
     }
   }
-  
-  
-  
-  
-   
+
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   async getAllEmployees(
@@ -111,9 +108,9 @@ export class EmployeeService {
     // Ensure page and limit are valid
     page = Math.max(page, 1);
     limit = Math.max(limit, 1);
-  
+
     const filter: any = { deletedAt: null }; // Ensure soft-deleted employees are excluded
-  
+
     // Handle employeeTypeName filter
     if (employeeTypeName) {
       const employeeTypes = await this.EmployeeTypeRepository.find({
@@ -121,7 +118,7 @@ export class EmployeeService {
           typeEnglish: Like(`%${employeeTypeName}%`),
         },
       });
-  
+
       const employeeTypeIds = employeeTypes.map((type) => type.id);
       if (employeeTypeIds.length > 0) {
         filter.employeeType = In(employeeTypeIds);
@@ -135,7 +132,7 @@ export class EmployeeService {
         };
       }
     }
-  
+
     // Branch existence check
     if (branchId) {
       const branch = await this.branchRepository.findOne({
@@ -147,7 +144,7 @@ export class EmployeeService {
       }
       filter.branch = { id: branchId };
     }
-  
+
     // Add role filter if provided and valid
     if (role) {
       if (!(role in Role)) {
@@ -155,7 +152,7 @@ export class EmployeeService {
       }
       filter.role = role; // Filter employees by role
     }
-  
+
     try {
       const [items, total] = await this.employeeRepository.findAndCount({
         where: filter,
@@ -163,7 +160,7 @@ export class EmployeeService {
         skip: (page - 1) * limit,
         take: limit,
       });
-  
+
       return {
         items,
         total,
@@ -172,10 +169,11 @@ export class EmployeeService {
       };
     } catch (error) {
       // Handle other errors
-      throw new BadRequestException(`Error fetching employees: ${error.message}`);
+      throw new BadRequestException(
+        `Error fetching employees: ${error.message}`
+      );
     }
   }
-  
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async getEmployeeById(id: string): Promise<EmployeeEntity> {
@@ -227,6 +225,44 @@ export class EmployeeService {
         position, // Update position
       } = updateEmployeeDto;
 
+      // Check if updating to artist position
+      if (position) {
+        const newPosition = await this.positionRepository.findOne({
+          where: { id: position },
+        });
+        if (!newPosition) {
+          throw new NotFoundException(
+            `Position with ID ${position} not found.`
+          );
+        }
+        
+        // If the new position is not "artist" and the employee is the only artist in the branch
+        if (
+          newPosition.postion !== Postion.ARTIST &&
+          employee.position.postion === Postion.ARTIST
+        ) {
+          const artistCount = await this.employeeRepository.count({
+            where: {
+              position: { postion: Postion.ARTIST },
+              branch: { id: employee.branch.id },
+            },
+          });
+
+          if (artistCount === 1) {
+            throw new BadRequestException(
+              {
+                error:"BadRequestException",
+                message:"Cannot change position to artist as this employee is the only artist in the branch."
+
+              }
+            );
+          }
+        }
+
+        employee.position = newPosition; // Update the employee's position
+        employee.role=this.determineRoleFromPosition(newPosition);
+
+      }
       employee.english_Name = english_Name ?? employee.english_Name;
       employee.arabic_Name = arabic_Name ?? employee.arabic_Name;
       employee.workingHours = workingHours ?? employee.workingHours;
@@ -243,19 +279,6 @@ export class EmployeeService {
           throw new NotFoundException(`Branch with ID ${branch} not found.`);
         }
         employee.branch = newBranch; // Update the employee's branch
-      }
-
-      // Update the position if positionId is provided
-      if (position) {
-        const newPosition = await this.positionRepository.findOne({
-          where: { id: position },
-        });
-        if (!newPosition) {
-          throw new NotFoundException(
-            `Position with ID ${position} not found.`
-          );
-        }
-        employee.position = newPosition; // Update the employee's position
       }
 
       // Log the updated employee object for debugging
@@ -405,11 +428,37 @@ export class EmployeeService {
     } catch (error) {
       console.error("Update Employee Error:", error);
       throw new InternalServerErrorException(
-        "An unexpected error occurred while updating the employee."
+        {
+          error:error.response.error,
+          message:error.response.message
+        }
       );
     }
   }
 
+  private determineRoleFromPosition(position: PositionEntity): Role {
+    // Example mapping logic based on the Postion enum
+    switch (position.postion) {
+      case Postion.ADMIN:
+        return Role.ADMIN;
+      case Postion.SUPERADMIN:
+        return Role.SUPERADMIN;
+      case Postion.BRANCHMANAGER:
+        return Role.BRANCHMANAGER;
+      case Postion.COORDINATOR:
+        return Role.COORDINATOR;
+      case Postion.RECEPTIONIST:
+        return Role.RECEPTIONIST;
+      case Postion.ACCOUNTANT:
+        return Role.ACCOUNTANT;
+      case Postion.ARTIST:
+        return Role.ARTIST;
+      case Postion.ARTISTMANAGER:
+        return Role.ARTISTMANAGER;
+      case Postion.TABLEMANAGER:
+        return Role.TABLEMANAGER;
+    }
+  }
   // Helper method to track field changes
   private logChangedField(
     field: string,
