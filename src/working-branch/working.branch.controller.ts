@@ -28,12 +28,12 @@ export class WorkingBranchController {
   async createWorkingBranch(
     @Param("branchId") branchId: string,
     @Body() createWorkingBranchDto: CreateWorkingBranchDto,
-  ): Promise<WorkingBranchEntity> {
+  ): Promise<any> {
     return this.workingBranchService.createWorkingBranch(
       branchId,
       createWorkingBranchDto,
     );
-  }
+  } 
 
   @Get()
   @ApiOperation({
@@ -53,7 +53,7 @@ export class WorkingBranchController {
   })
   async findAll(
     @Query("branchId") branchId?: string,
-  ): Promise<WorkingBranchEntity[]> {
+  ):Promise<Omit<WorkingBranchEntity, 'branch'>[]> {
     return this.workingBranchService.findAll(branchId);
   }
 

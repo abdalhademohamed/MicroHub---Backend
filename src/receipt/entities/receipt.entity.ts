@@ -33,9 +33,9 @@ export class ReceiptEntity {
 
   // Total payment for the order
   @Column({ type: "decimal", precision: 10, scale: 2 })
-  totalPayment: number;
+  totalPayment: number; 
 
-  @Column("text") // Change from 'varchar(100)' to 'text'
+  @Column("json") 
   paymentForServices: {
     name: string;
     duration: number;

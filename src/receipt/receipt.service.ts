@@ -17,6 +17,7 @@ import { UserEntity } from "../user/entities/user.entity";
 import { ServiceEntity } from "../service/entities/service.entity";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { OfferEntity } from "../offer/entities/offer.entity";
+import { CreateReceiptFromReservationIdDto } from "./dto/create.receipt.from.reservationId.dto";
 
 @Injectable()
 export class ReceiptService {
@@ -96,10 +97,7 @@ export class ReceiptService {
           offer = null;
         }
       }
-     
-      /* -------------------------------------------------------------------------- */
-      /*                                   payment                                  */
-      /* -------------------------------------------------------------------------- */
+    
       // Calculate total payment
       const totalPayment = reservation.totalPrice;
       let discountPayment = totalPayment; // Default to totalPayment
@@ -172,6 +170,156 @@ export class ReceiptService {
     // Save the audit log to the audit log repository
     await this.AuditLogRepository.save(auditLog);
   }
+
+ /* -------------------------------------------------------------------------- */
+ /*                      createReceiptFromReserverationId                      */
+ /* -------------------------------------------------------------------------- */
+
+ async createReceiptFromReservationId(
+  CreateReceiptFromReservationIdDto: CreateReceiptFromReservationIdDto,
+  userId: string,
+): Promise<ReceiptEntity> {
+  const { reservationId, message } = CreateReceiptFromReservationIdDto;
+  try {
+    // Fetch the user who created the receipt
+    const createdBy = await this.userRepository.findOne({
+      where: { id: userId },
+      select: ["id", "username", "email", "role"], // Select only required fields
+    });
+    if (!createdBy) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+
+
+    // Fetch the order and related reservation and services
+    const order = await this.orderRepository.findOne({
+      where: { reservation: { id: reservationId } }, // Assuming reservation has an order reference
+      relations: ["reservation", "reservation.services"],
+    });
+    if (!order) {
+      throw new NotFoundException(`Order with ID ${order.id} not found`);
+    }
+
+    const reservation = order.reservation;
+    if (!reservation) {
+      throw new NotFoundException(
+        `Reservation not found for Order ID ${order.id}`,
+      );
+    }
+
+    const services = reservation.services;
+    if (!services || services.length === 0) {
+      throw new NotFoundException("No services found for the reservation");
+    }
+    // Declare the offer variable outside the if block
+    let offer = null;
+
+    // Fetch the offer if offerId exists
+    if (order.offerId) {
+      offer = await this.OfferRepository.findOne({
+        where: { id: order.offerId },
+      });
+      if (!offer) {
+        // If the offer is not found, set it to null
+        offer = null;
+      }
+    }
+
+    if (order.sharableOfferId) {
+      offer = await this.OfferRepository.findOne({
+        where: { id: order.sharableOfferId },
+      });
+      if (!offer) {
+        // If the offer is not found, set it to null
+        offer = null;
+      }
+    }
+  
+    // Calculate total payment
+    const totalPayment = reservation.totalPrice;
+    let discountPayment = totalPayment; // Default to totalPayment
+
+    // Apply discount if offer exists
+    const discountPercentage = offer ? offer.discountPercentage : 0; // Set discount to 0 if no offer
+    discountPayment -= totalPayment * (discountPercentage / 100);
+    const remaining = discountPayment - reservation.deposit;
+
+    // Format the services for receipt
+    const formattedPaymentForServices = services.map((service) => ({
+      name: service.english_Name,
+      duration: service.duration_Mins,
+      price: service.price.toString(), // Ensure price is a string
+    }));
+
+    // Format the reservation time slot as "startTime-endTime"
+    const startTime = new Date(reservation.start_Time).toLocaleTimeString(
+      "en-GB",
+      { hour: "2-digit", minute: "2-digit" },
+    );
+    const endTime = new Date(reservation.end_Time).toLocaleTimeString(
+      "en-GB",
+      { hour: "2-digit", minute: "2-digit" },
+    );
+    const reservationTimeSlot = `${startTime}-${endTime}`;
+
+    // Create and save the receipt
+    const receipt = this.receiptRepository.create({
+      order,
+      reservationTimeSlot,
+      message,
+      totalPayment: discountPayment,
+      paymentForServices: formattedPaymentForServices,
+      discount: discountPercentage, // Set discount value
+      remaining,
+      createdBy,
+    });
+
+    const savedReceipt = await this.receiptRepository.save(receipt);
+
+    // Log the creation action in the audit log
+    await this.saveAuditLogForCreateReceiptFromReservationId(savedReceipt, userId);
+
+    return savedReceipt;
+  } catch (error) {
+    console.error("Error creating receipt:", error); // Log the error
+    throw new InternalServerErrorException(
+      "Failed to create receipt",
+      error.stack,
+    );
+  }
+}
+// Save the audit log for the create action
+private async saveAuditLogForCreateReceiptFromReservationId(receipt: ReceiptEntity, userId: string) {
+  const auditLog = new AuditLogEntity();
+  auditLog.tableName = "Receipt"; // Specify the table name
+  auditLog.action = "CREATE"; // Specify the action type
+  auditLog.entityId = receipt.id; // ID of the created receipt
+  auditLog.performedBy = userId; // ID of the user who performed the action
+
+  // Fetch user details for audit log (optional)
+  const userDetails = await this.userRepository.findOne({
+    where: { id: userId },
+  });
+  if (userDetails) {
+    auditLog.userDetails = userDetails; // Optional: Add user details for further tracking
+  }
+
+  // Save the audit log to the audit log repository
+  await this.AuditLogRepository.save(auditLog);
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
   // async generatePdfReceipt(receiptId: string, response: Response) {
   //   try {
@@ -359,4 +507,29 @@ export class ReceiptService {
 
     return receipt;
   }
+
+  async getReceiptByReservationId(reservationId: string): Promise<ReceiptEntity> {
+    const order = await this.orderRepository.findOne({
+      where: { reservation: { id: reservationId } }, 
+      relations: ["reservation", "reservation.services"],
+    });
+  
+    if (!order) {
+      throw new NotFoundException(`Order not found for Reservation ID: ${reservationId}`);
+    }
+  
+    const receipt = await this.receiptRepository.findOne({
+      where: { order: { id: order.id } },
+    });
+  
+    if (!receipt) {
+      throw new NotFoundException(`Receipt not found for Order ID: ${order.id}`);
+    }
+  
+    return receipt; // paymentForServices will now be correctly returned as an array
+  }
+  
+  
+
+
 }

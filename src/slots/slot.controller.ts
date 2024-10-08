@@ -26,6 +26,8 @@ export class SlotController {
   @Get("/nearest")
   async getFirstSlotAvailable(@Query() query: GetNearestSlot) {
     const ids = query.services?.split(",") || [];
-    return this.slotService.getFirstSlotAvailable(query.branch, ids);
+    const rootoshIds = query.rootosh?.split(",") || [];
+
+    return this.slotService.getFirstSlotAvailable(query.branch, ids,rootoshIds);
   }
 }

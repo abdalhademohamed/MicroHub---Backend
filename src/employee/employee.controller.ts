@@ -72,6 +72,7 @@ export class EmployeeController {
     return await this.employeeService.createEmployee(createEmployeeDto, userId);
   }
 
+  
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST)
   @Get()
@@ -80,6 +81,7 @@ export class EmployeeController {
     @Query("limit") limit: number = 10,
     @Query("employeeType") employeeType?: string, // Optional query parameter for filtering
     @Query("branchId") branchId?: string, // Optional query parameter for filtering
+    @Query("role") role?: Role // Optional query parameter for filtering by role
   ): Promise<{
     items: EmployeeEntity[];
     total: number;
@@ -91,6 +93,7 @@ export class EmployeeController {
       limit,
       employeeType,
       branchId,
+      role // Pass the role to the service
     );
   }
 
@@ -110,7 +113,7 @@ export class EmployeeController {
     @Param("id") id: string,
     @Body() updateEmployeeDto: UpdateEmployeeDto,
     @UploadedFile() image: Express.Multer.File, // If uploading a file
-  ): Promise<EmployeeEntity> {
+  ): Promise<EmployeeEntity | { message: string; error: string; statusCode: number }> {
     try {
       // If there's a file, add it to the DTO or handle it separately
       if (image) {

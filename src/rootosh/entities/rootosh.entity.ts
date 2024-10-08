@@ -1,3 +1,4 @@
+import { ReservationEntity } from "../../reservation/entities/reservation.entity";
 import { CustomerEntity } from "../../customer/entities/customer.entity";
 import { ServiceEntity } from "../../service/entities/service.entity";
 import {
@@ -14,14 +15,17 @@ export class RootoshEntity {
   id: string;
 
   @Column()
-  name: string; 
+  arabic_Name: string;
+
+  @Column()
+  english_Name: string;
 
   // New field to store the duration until expiration (in days, for example)
   @Column({nullable:true})
   expireduration: number; // Duration in days, weeks, etc.
 
-  // @Column("int")
-  // duration_Mins: number;
+  @Column("int")
+  duration_Mins: number;
   
   @Column()
   description: string;
@@ -31,4 +35,7 @@ export class RootoshEntity {
  
   @ManyToMany(() => CustomerEntity, (customer) => customer.lastRootoshes)
   customers: CustomerEntity[];
+
+  @ManyToMany(() => ReservationEntity, (reservation) => reservation.rootoshes)
+  reservations?: ReservationEntity[]; // Optional relationship to ReservationEntity
 }

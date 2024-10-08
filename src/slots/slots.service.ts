@@ -12,9 +12,8 @@ import { SlotsEntity } from "./entities/slots.entity";
 import { WorkingEntity } from "./entities/working.entity";
 import { AvailableQueryDto } from "./dto/query.available.dto";
 import { EmployeeEntity } from "../employee/entities/employee.entity";
-// import { OnEvent } from "@nestjs/event-emitter";
-// import { Cron, CronExpression } from "@nestjs/schedule";
 import { OnEvent } from "@nestjs/event-emitter";
+// import { Cron, CronExpression } from "@nestjs/schedule";
 
 @Injectable()
 export class SlotService {
@@ -249,12 +248,7 @@ export class SlotService {
   }
   createDate(year: number, month: number, day: number, time: string) {
     const [hour, minute] = time.split(":");
-    return new Date(
-      year,
-      month - 1,
-      day,
-      parseInt(hour, 10),
-      parseInt(minute, 10),
+    return new Date( Date.UTC( year, month - 1, day, parseInt(hour, 10), parseInt(minute, 10), )
     );
   }
   getDayFromDate(year: number, month: number, day: number) {
@@ -395,6 +389,7 @@ export class SlotService {
         const nextSlotEnd = new Date(
           currentStartTime.getTime() + duration * 1000 * 60,
         );
+        console.log(nextSlotEnd , currentEndTime, currentStartTime, duration);
 
         // Ensure that we don't exceed the endTime
         if (nextSlotEnd > currentEndTime) {
@@ -411,14 +406,39 @@ export class SlotService {
         if (idx == -1) {
           result.push(obj);
         }
-        console.log(result);
+        // console.log(result);
 
         // Move the currentStartTime to the next slot's start time
         currentStartTime = nextSlotEnd;
       }
     });
+    console.log(result);
     return result;
   }
+  // async getAllAvailableSlots(
+  //   branchId: string,
+  //   { day, month, year, duration }: AvailableQueryDto,
+  // ) {
+  //   const slots = await this.WorkingRepository.createQueryBuilder('working')
+  //     .leftJoinAndSelect('working.slot', 'slot')
+  //     .leftJoinAndSelect('slot.branch', 'branch')
+  //     .where('slot.branch.id = :branchId', { branchId })
+  //     .andWhere('slot.day = :day', { day })
+  //     .andWhere('slot.year = :year', { year })
+  //     .andWhere('slot.month = :month', { month })
+  //     .andWhere(new Brackets(qb => {
+  //       qb.where('working.from >= :currentDate', { currentDate: new Date() })
+  //       .orWhere('working.to >= :currentDate', { currentDate: new Date() });
+  //     }))
+  //     .orderBy('working.from', 'ASC')
+  //     .getMany();
+  //   if (slots.length === 0) {
+  //     return [];
+  //   }
+  //   console.log(slots)
+  //   return this.createTimeSlots(slots, duration);
+  // }
+
   async getAllAvailableSlots(
     branchId: string,
     { day, month, year, duration }: AvailableQueryDto,
@@ -439,28 +459,111 @@ export class SlotService {
     if (slots.length === 0) {
       return [];
     }
+    console.log(slots)
     return this.createTimeSlots(slots, duration);
   }
-  async getFirstSlotAvailable(branchId: string, ids: string[]) {
-    const { duration } =
-      await this.reservationService.calculateTotalDuration(ids);
-      const workingHour = await this.WorkingRepository.createQueryBuilder('working')
-      .leftJoinAndSelect('working.slot', 'slot')
-      .leftJoinAndSelect('slot.branch', 'branch')
-      .where('slot.branch.id = :branchId', { branchId })
-      .andWhere('working.duration >= :duration', { duration })
-      .andWhere(new Brackets(qb => {
-        qb.where('working.from >= :currentDate', { currentDate: new Date() })
-          .orWhere('working.to >= :currentDate', { currentDate: new Date() });
-      }))
-      .orderBy('slot.year', 'ASC')
-      .addOrderBy('slot.month', 'ASC')
-      .addOrderBy('slot.day', 'ASC')
-      .addOrderBy('working.from', 'ASC')
-      .getOne();
-    if (!workingHour) {
-      throw new HttpException("No available slots found.", 400);
+  // async getFirstSlotAvailable(branchId: string, ids: string[]) {
+  //   const { duration } =
+  //     await this.reservationService.calculateTotalDuration(ids);
+  //     const workingHour = await this.WorkingRepository.createQueryBuilder('working')
+  //     .leftJoinAndSelect('working.slot', 'slot')
+  //     .leftJoinAndSelect('slot.branch', 'branch')
+  //     .where('slot.branch.id = :branchId', { branchId })
+  //     .andWhere('working.duration >= :duration', { duration })
+  //     .andWhere(new Brackets(qb => {
+  //       qb.where('working.from >= :currentDate', { currentDate: new Date() })
+  //         .orWhere('working.to >= :currentDate', { currentDate: new Date() });
+  //     }))
+  //     .orderBy('slot.year', 'ASC')
+  //     .addOrderBy('slot.month', 'ASC')
+  //     .addOrderBy('slot.day', 'ASC')
+  //     .addOrderBy('working.from', 'ASC')
+  //     .getOne();
+  //   if (!workingHour) {
+  //     throw new HttpException("No available slots found.", 400);
+  //   }
+  //   return this.createTimeSlots([workingHour], duration)[0] || null;
+  // }
+
+
+
+
+  async getFirstSlotAvailable(
+    branchId: string,
+    serviceIds?: string[],
+    rootoshIds?: string[]
+  ) {
+    // Check if both are provided
+    if (serviceIds.length > 0 && rootoshIds.length > 0) {
+      throw new HttpException("Please provide either services or rootosh IDs, not both.", 400);
     }
-    return this.createTimeSlots([workingHour], duration)[0] || null;
+  
+    // Check if neither is provided
+    if (serviceIds.length === 0 && rootoshIds.length === 0) {
+      throw new HttpException("At least one of services or rootosh IDs must be provided.", 400);
+    }
+  
+    if (serviceIds.length > 0) {
+      // Calculate duration based on services
+      const { duration } = await this.reservationService.calculateTotalDuration(serviceIds);
+  
+      const workingHour = await this.WorkingRepository.createQueryBuilder('working')
+        .leftJoinAndSelect('working.slot', 'slot')
+        .leftJoinAndSelect('slot.branch', 'branch')
+        .where('slot.branch.id = :branchId', { branchId })
+        .andWhere('working.duration >= :duration', { duration })
+        .andWhere(new Brackets(qb => {
+          qb.where('working.from >= :currentDate', { currentDate: new Date() })
+            .orWhere('working.to >= :currentDate', { currentDate: new Date() });
+        }))
+        .orderBy('slot.year', 'ASC')
+        .addOrderBy('slot.month', 'ASC')
+        .addOrderBy('slot.day', 'ASC')
+        .addOrderBy('working.from', 'ASC')
+        .getOne();
+  
+      if (!workingHour) {
+        throw new HttpException("No available slots found for the given services.", 400);
+      }
+  
+      return this.createTimeSlots([workingHour], duration)[0] || null;
+    }
+  
+    if (rootoshIds.length > 0) {
+      // Calculate duration based on rootosh
+      const { duration } = await this.reservationService.calculateRootoshTotalDuration(rootoshIds);
+  
+      const workingHour = await this.WorkingRepository.createQueryBuilder("working")
+        .leftJoinAndSelect("working.slot", "slot")
+        .leftJoinAndSelect("slot.branch", "branch")
+        .where("slot.branch.id = :branchId", { branchId })
+        .andWhere("working.duration >= :duration", { duration })
+        .andWhere(
+          new Brackets((qb) => {
+            qb.where("working.from >= :currentDate", {
+              currentDate: new Date(),
+            }).orWhere("working.to >= :currentDate", {
+              currentDate: new Date(),
+            });
+          })
+        )
+        .orderBy("slot.year", "ASC")
+        .addOrderBy("slot.month", "ASC")
+        .addOrderBy("slot.day", "ASC")
+        .addOrderBy("working.from", "ASC")
+        .getOne();
+  
+      if (!workingHour) {
+        throw new HttpException("No available slots found for the given rootosh IDs.", 400);
+      }
+  
+      return this.createTimeSlots([workingHour], duration)[0] || null;
+    }
+  
+    throw new HttpException("Either services or rootosh IDs must be provided.", 400);
   }
+  
+  
 }
+ 
+

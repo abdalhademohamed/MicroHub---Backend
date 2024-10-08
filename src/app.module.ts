@@ -149,10 +149,10 @@ import { SharableOfferEntity } from "./sharable-offer/entities/sharable-offer.en
     SlotModule,
     AnalysisModule,
     EventEmitterModule.forRoot({ global: true }),
-    SharableOfferModule,
-    GiftCouponModule,
+    SharableOfferModule, 
+    GiftCouponModule, 
   ],
   controllers: [AppController],
-  providers: [AppService, CloudinaryProvider],
+  providers: [AppService, CloudinaryProvider], 
 })
 export class AppModule {}

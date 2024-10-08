@@ -280,160 +280,314 @@ export class OrdersService {
   //     );
   //   }
   // }
+/* -------------------------------------------------------------------------- */
+/*                                 createOrder                                */
+/* -------------------------------------------------------------------------- */
+async createOrder(
+  reservationId: string,
+  userId: string,
+  paymentId: string,
+  offerId?: string,
+  sharableOfferId?: string,
 
-  async createOrder(
-    reservationId: string,
-    userId: string,
-    paymentId: string,
-    offerId?: string,
-    sharableOfferId?: string
-  ): Promise<OrderEntity> {
-    // Fetch reservation with related services
-    const reservation = await this.reservationRepository.findOne({
-      where: { id: reservationId },
-      relations: ["services", "customer", "branch"],
-    });
+): Promise<OrderEntity> {
+  // Fetch reservation with related services
+  const reservation = await this.reservationRepository.findOne({
+    where: { id: reservationId },
+    relations: ["services", "customer", "branch"],
+  });
 
-    if (!reservation) {
-      throw new NotFoundException("Reservation not found");
-    }
-
-    // Fetch the user who is creating the order, limiting the fields returned
-    const createdBy = await this.userRepository.findOne({
-      where: { id: userId },
-      select: ["id", "username", "email", "role"], // Only return these fields
-    });
-    if (!createdBy) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
-    }
-
-    // Find the payment method with 'Visa'
-    const visaPayment = await this.PaymentRepository.findOne({
-      where: { id: paymentId },
-    });
-
-    if (!visaPayment) {
-      throw new NotFoundException(
-        "Visa payment method not found, please add payment method called Visa in English & Arabic"
-      );
-    }
-
-    const invoiceNumber = await this.generateUniqueInvoiceNumber();
-
-    // Create new order
-    const newOrder = this.orderRepository.create({
-      customer: reservation.customer,
-      date: `${reservation.reservationYear}-${reservation.reservationMonth}-${reservation.reservationDay}`,
-      serviceEnglish: reservation.services
-        .map((service) => service.english_Name)
-        .join(", "),
-      serviceArabic: reservation.services
-        .map((service) => service.arabic_Name)
-        .join(", "),
-      status: OrderStatus.InProgress,
-      paymentStatus: "partially paid",
-      invoiceNumber: invoiceNumber,
-      comments: [],
-      reservation: reservation,
-      branch: {
-        id: reservation.branch.id, // Include branch ID
-        name: reservation.branch.name, // Include branch name
-      },
-      artist: null,
-      createdBy, // Set createdBy field with limited user data
-      payment: visaPayment, // Assign the Visa payment method to the order
-      offerId,
-      sharableOfferId,
-    });
-
-    try {
-      return await this.entityManager.transaction(
-        async (transactionalEntityManager) => {
-          // Save the new order
-          const savedOrder = await transactionalEntityManager.save(
-            OrderEntity,
-            newOrder
-          );
-
-          // Update customer's last services list and rootosh list
-          const customer = await transactionalEntityManager.findOne(
-            CustomerEntity,
-            {
-              where: { id: reservation.customer.id },
-              relations: ["lastServices", "lastRootosh"], // Assuming these are the names of the fields in your Customer entity
-            }
-          );
-
-          if (customer) {
-            // Get services from the reservation
-            const services = reservation.services;
-
-            // Update last services list
-            if (customer.lastServices) {
-              customer.lastServices.push(...services);
-            } else {
-              customer.lastServices = [...services];
-            }
-
-            // Update last rootosh list from services
-            const rootoshList = services.flatMap((service) => service.rootosh); // Assuming `rootosh` is a property of the service
-            // Add rootosh expiration date logic
-            for (const rootosh of rootoshList) {
-              if (rootosh.expireduration) {
-                const expirationDate = new Date();
-                expirationDate.setDate(
-                  expirationDate.getDate() + rootosh.expireduration
-                );
-
-                // Assign calculated expiration date
-                customer.rootoshesexpirationDate = expirationDate;
-              }
-            }
-            if (customer.lastRootoshes) {
-              customer.lastRootoshes.push(...rootoshList);
-            } else {
-              customer.lastRootoshes = [...rootoshList];
-            }
-
-            // Save the updated customer
-            await transactionalEntityManager.save(CustomerEntity, customer);
-          }
-
-          // Create an audit log entry
-          const auditLog = new AuditLogEntity();
-          auditLog.tableName = "order";
-          auditLog.action = "INSERT";
-          auditLog.entityId = savedOrder.id; // ID of the created order
-          auditLog.performedBy = userId; // User who created the order
-
-          // Fetch user details if needed
-          if (userId) {
-            const user = await transactionalEntityManager.findOne(UserEntity, {
-              where: { id: userId },
-            });
-            if (user) {
-              auditLog.userDetails = {
-                id: user.id,
-                username: user.username,
-                email: user.email,
-                role: user.role,
-              };
-            }
-          }
-
-          await transactionalEntityManager.save(AuditLogEntity, auditLog);
-
-          return savedOrder;
-        }
-      );
-    } catch (error) {
-      throw new InternalServerErrorException(
-        "Failed to create order",
-        error.stack
-      );
-    }
+  if (!reservation) {
+    throw new NotFoundException("Reservation not found");
   }
 
+  // Fetch the user who is creating the order, limiting the fields returned
+  const createdBy = await this.userRepository.findOne({
+    where: { id: userId },
+    select: ["id", "username", "email", "role"], // Only return these fields
+  });
+  if (!createdBy) {
+    throw new NotFoundException(`User with ID ${userId} not found`);
+  }
+
+  // Find the payment method with 'Visa'
+  const visaPayment = await this.PaymentRepository.findOne({
+    where: { id: paymentId },
+  });
+
+  if (!visaPayment) {
+    throw new NotFoundException(
+      "Visa payment method not found, please add payment method called Visa in English & Arabic"
+    );
+  }
+
+  const invoiceNumber = await this.generateUniqueInvoiceNumber();
+
+  // Create new order
+  const newOrder = this.orderRepository.create({
+    customer: reservation.customer,
+    date: `${reservation.reservationYear}-${reservation.reservationMonth}-${reservation.reservationDay}`,
+    serviceEnglish: reservation.services
+      .map((service) => service.english_Name)
+      .join(", "),
+    serviceArabic: reservation.services
+      .map((service) => service.arabic_Name)
+      .join(", "),
+    status: OrderStatus.InProgress,
+    paymentStatus: "partially paid",
+    invoiceNumber: invoiceNumber,
+    comments: [],
+    reservation: reservation,
+    branch: {
+      id: reservation.branch.id, // Include branch ID
+      name: reservation.branch.name, // Include branch name
+    },
+    artist: null,
+    createdBy, // Set createdBy field with limited user data
+    payment: visaPayment, // Assign the Visa payment method to the order
+    offerId,
+    sharableOfferId,
+  });
+
+  try {
+    return await this.entityManager.transaction(
+      async (transactionalEntityManager) => {
+        // Save the new order
+        const savedOrder = await transactionalEntityManager.save(
+          OrderEntity,
+          newOrder
+        );
+
+        // Update customer's last services list and last rootoshes
+        const customer = await transactionalEntityManager.findOne(
+          CustomerEntity,
+          {
+            where: { id: reservation.customer.id },
+            relations: ["lastServices", "lastRootoshes"], // Load last services and rootoshes
+          }
+        );
+
+        if (customer) {
+          // Fetch reservation again to get services with their rootoshes
+          const reservationWithServices = await this.reservationRepository.findOne({
+            where: { id: reservationId },
+            relations: ["services", "services.rootosh"], // Load services and their rootosh entities
+          });
+
+          const services = reservationWithServices.services;
+          
+          // Update last services list
+          if (customer.lastServices) {
+            customer.lastServices.push(...services);
+          } else {
+            customer.lastServices = [...services];
+          }
+          
+          // Gather rootosh list from services
+          const rootoshList = services.flatMap((service) => service.rootosh);
+
+          // Update last rootoshes and handle expiration dates
+          for (const rootosh of rootoshList) {
+            // Update the last rootoshes
+            if (customer.lastRootoshes) {
+              customer.lastRootoshes.push(rootosh); // Add new rootosh
+            } else {
+              customer.lastRootoshes = [rootosh]; // Initialize with the first rootosh
+
+            }
+            
+            // Update expiration date logic
+            if (rootosh.expireduration) {
+              const expirationDate = new Date();
+              expirationDate.setDate(expirationDate.getDate() + rootosh.expireduration); // Calculate expiration date
+              // Assuming `rootosh` has a property to store its expiration date
+              customer.rootoshesexpirationDate = expirationDate;
+            }else{
+              throw new NotFoundException('no rootosh expiration date')
+            }
+          }
+          // Save the updated customer
+          await transactionalEntityManager.save(CustomerEntity, customer);
+        }
+
+        // Create an audit log entry
+        const auditLog = new AuditLogEntity();
+        auditLog.tableName = "order";
+        auditLog.action = "INSERT";
+        auditLog.entityId = savedOrder.id; // ID of the created order
+        auditLog.performedBy = userId; // User who created the order
+
+        // Fetch user details if needed
+        if (userId) {
+          const user = await transactionalEntityManager.findOne(UserEntity, {
+            where: { id: userId },
+          });
+          if (user) {
+            auditLog.userDetails = {
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              role: user.role,
+            };
+          }
+        }
+
+        await transactionalEntityManager.save(AuditLogEntity, auditLog);
+
+        return savedOrder;
+      }
+    );
+  } catch (error) {
+    console.log(error.stack);
+    throw new InternalServerErrorException(
+      "Failed to create order",
+      error.stack
+    );
+  }
+}
+async createOrderForRootosh(
+  reservationId: string,
+  userId: string,
+  paymentId: string,
+): Promise<OrderEntity> {
+  // Fetch reservation with related services
+  const reservation = await this.reservationRepository.findOne({
+    where: { id: reservationId },
+    relations: ["rootoshes", "customer", "branch"],
+  });
+
+  if (!reservation) {
+    throw new NotFoundException("Reservation not found");
+  }
+
+  // Fetch the user who is creating the order, limiting the fields returned
+  const createdBy = await this.userRepository.findOne({
+    where: { id: userId },
+    select: ["id", "username", "email", "role"], // Only return these fields
+  });
+  if (!createdBy) {
+    throw new NotFoundException(`User with ID ${userId} not found`);
+  }
+
+  // Find the payment method with 'Visa'
+  const visaPayment = await this.PaymentRepository.findOne({
+    where: { id: paymentId },
+  });
+
+  if (!visaPayment) {
+    throw new NotFoundException(
+      "Visa payment method not found, please add payment method called Visa in English & Arabic"
+    );
+  }
+
+  const invoiceNumber = await this.generateUniqueInvoiceNumber();
+
+  // Create new order
+  const newOrder = this.orderRepository.create({
+    customer: reservation.customer,
+    date: `${reservation.reservationYear}-${reservation.reservationMonth}-${reservation.reservationDay}`,
+    serviceEnglish: reservation.rootoshes
+      .map((rootoshes) => rootoshes.english_Name)
+      .join(", "),
+    serviceArabic: reservation.rootoshes
+      .map((rootoshes) => rootoshes.arabic_Name)
+      .join(", "),
+    status: OrderStatus.InProgress,
+    paymentStatus: "paid",
+    invoiceNumber: invoiceNumber,
+    comments: [],
+    reservation: reservation,
+    branch: {
+      id: reservation.branch.id, // Include branch ID
+      name: reservation.branch.name, // Include branch name
+    },
+    artist: null,
+    createdBy, // Set createdBy field with limited user data
+    
+    payment: visaPayment, // Assign the Visa payment method to the order
+  
+  }); 
+
+  try {
+    return await this.entityManager.transaction(
+      async (transactionalEntityManager) => {
+        // Save the new order
+        const savedOrder = await transactionalEntityManager.save(
+          OrderEntity,
+          newOrder
+        );
+
+        // Update customer's last services list and last rootoshes
+        const customer = await transactionalEntityManager.findOne(
+          CustomerEntity,
+          {
+            where: { id: reservation.customer.id },
+            relations: ["lastRootoshes"], // Load last services and rootoshes
+          }
+        );
+
+        if (customer) {
+          // Fetch reservation again to get services with their rootoshes
+          // const reservationWithServices = await this.reservationRepository.findOne({
+          //   where: { id: reservationId },
+          //   relations: ["services", "services.rootosh"], // Load services and their rootosh entities
+          // });
+
+          const rootoshList = reservation.rootoshes;
+          
+         
+          
+          // Remove rootoshes from the customer's last rootoshes
+          customer.lastRootoshes = customer.lastRootoshes.filter(
+            (lastRootosh) => !rootoshList.some((rootosh) => rootosh.id === lastRootosh.id)
+          );
+          // Save the updated customer
+          await transactionalEntityManager.save(CustomerEntity, customer);
+        }
+
+        // Create an audit log entry
+        const auditLog = new AuditLogEntity();
+        auditLog.tableName = "order";
+        auditLog.action = "INSERT";
+        auditLog.entityId = savedOrder.id; // ID of the created order
+        auditLog.performedBy = userId; // User who created the order
+
+        // Fetch user details if needed
+        if (userId) {
+          const user = await transactionalEntityManager.findOne(UserEntity, {
+            where: { id: userId },
+          });
+          if (user) {
+            auditLog.userDetails = {
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              role: user.role,
+            };
+          }
+        }
+
+        await transactionalEntityManager.save(AuditLogEntity, auditLog);
+
+        return savedOrder;
+      }
+    );
+  } catch (error) {
+    console.log(error);
+    throw new InternalServerErrorException(
+      "Failed to create order",
+      error.stack
+    );
+  }
+}
+/* -------------------------------------------------------------------------- */
+/*                    GetOrderByReservationId&CreateRceipt                    */
+/* -------------------------------------------------------------------------- */
+
+  
+/* -------------------------------------------------------------------------- */
+/*                     UpdateOrderServicesFromReservation                     */
+/* -------------------------------------------------------------------------- */
   async updateOrderServicesFromReservation(
     reservationId: string,
     userId: string,
@@ -1018,13 +1172,13 @@ export class OrdersService {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async findAllOrders(
     findOrdersDto: FindOrdersDto,
-    userId: string // User ID extracted from the token
+    userId: string // User ID extracted from the token 
   ): Promise<{ items: OrderEntity[]; total: number }> {
     const {
       page,
-      limit,
+      limit, 
       sort,
-      employeeName,
+      employeeName, 
       fromDate, // Changed from dayDate to fromDate
       toDate, // Changed from endDate to toDate
       paymentStatus,

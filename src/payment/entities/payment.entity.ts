@@ -7,6 +7,7 @@ import {
   ManyToOne,
   OneToOne,
   JoinColumn,
+  OneToMany,
 } from "typeorm";
 
 @Entity()
@@ -29,7 +30,6 @@ export class PaymentEntity {
   @ManyToOne(() => ReservationEntity)
   reservation: ReservationEntity; // One payment can belong to one reservation
 
-  @OneToOne(() => OrderEntity, (order) => order.payment) // Update to OneToOne
-  @JoinColumn() // This decorator specifies that this entity owns the relationship
-  order: OrderEntity; // Single order associated with the payment
+  @OneToMany(() => OrderEntity, (order) => order.payment) // One payment can be associated with multiple orders
+  order: OrderEntity[]; // List of orders associated with the payment
 }
