@@ -1,18 +1,10 @@
 import { ApiProperty } from "@nestjs/swagger";
-import {
-  IsDecimal,
-  IsNumber,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Max,
-  Min,
-} from "class-validator";
+import { IsOptional, IsString, IsUUID } from "class-validator";
 
-export class CreateReceiptDto {
-  @ApiProperty({ description: "Order ID", example: "order-id" })
+export class CreateReceiptFromReservationIdDto {
+  @ApiProperty({ description: "Reservation ID", example: "reservation-id" })
   @IsUUID()
-  orderId: string;
+  reservationId: string;
 
   @ApiProperty({
     description: "Message written on the receipt",
@@ -21,6 +13,4 @@ export class CreateReceiptDto {
   @IsOptional()
   @IsString()
   message?: string;
-
- 
 }
