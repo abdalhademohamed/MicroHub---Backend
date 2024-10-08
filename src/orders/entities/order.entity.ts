@@ -83,7 +83,7 @@ export class OrderEntity {
   @UpdateDateColumn()
   updatedAt: Date; // Automatically updated when the entity is updated
 
-  @OneToOne(() => PaymentEntity, (payment) => payment.order) // Update to OneToOne
+  @ManyToOne(() => PaymentEntity, (payment) => payment.order) // Many orders can have one payment
   payment: PaymentEntity; // Single payment associated with the order
 
   @Column({ nullable: true }) // Optional column for the offer ID

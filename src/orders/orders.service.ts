@@ -453,7 +453,7 @@ async createOrderForRootosh(
   // Fetch reservation with related services
   const reservation = await this.reservationRepository.findOne({
     where: { id: reservationId },
-    relations: ["rootosh", "customer", "branch"],
+    relations: ["rootoshes", "customer", "branch"],
   });
 
   if (!reservation) {
@@ -503,9 +503,10 @@ async createOrderForRootosh(
     },
     artist: null,
     createdBy, // Set createdBy field with limited user data
+    
     payment: visaPayment, // Assign the Visa payment method to the order
   
-  });
+  }); 
 
   try {
     return await this.entityManager.transaction(
