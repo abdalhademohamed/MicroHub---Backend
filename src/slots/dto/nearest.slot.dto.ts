@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNumber, IsString } from "class-validator";
+import { IsNumber, IsOptional, IsString } from "class-validator";
 
 export class GetNearestSlot {
   @ApiProperty()
@@ -10,5 +10,10 @@ export class GetNearestSlot {
     example: "service 1 id,service 2 id, service 3 id,service 4 id",
   })
   @IsString()
+  @IsOptional()
   services: string;
+
+  @IsString()
+  @IsOptional()
+  rootosh: string;
 }
