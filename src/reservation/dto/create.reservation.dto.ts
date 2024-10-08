@@ -39,6 +39,19 @@ export class CreateReservationDto {
   })
   services?: string[]; // Optional field
 
+
+  @IsOptional() // Make services optional
+  @IsArray()
+  @Transform(({ value }) => {
+    if (typeof value === "string") {
+      // Convert comma-separated string to array 
+      return value.split(",").map((id) => id.trim());
+    }
+    // Return the value as-is if it's already an array or undefined
+    return Array.isArray(value) ? value : [];
+  })
+  rootosh?: string[]; // Optional field
+  
   @ApiProperty({ description: "Deposit amount" })
   @IsNumber({}, { message: "deposit must be a valid number" })
   @Transform(({ value }) => Number(value)) // Transform to number
