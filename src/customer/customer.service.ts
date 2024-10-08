@@ -74,7 +74,8 @@ export class CustomerService {
         })),
         lastRootoshes: customer.lastRootoshes?.map((rootosh) => ({
           id: rootosh.id,
-          name: rootosh.name,
+          name: rootosh.english_Name,
+
           description: rootosh.description,
         })),
         reservations: customer.reservations?.map((reservation) => ({
