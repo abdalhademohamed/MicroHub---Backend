@@ -381,7 +381,8 @@ export class SlotService {
     const result = [];
 
     intervals.map(({ from, to }) => {
-      let currentStartTime = new Date(from) > new Date() ? new Date(from) : new Date(); // Start at the provided startTime
+      let currentStartTime = new Date(from) > new Date() ? new Date(from) : new Date( Date.now() + (5* 60 * 1000) ); // Start at the provided startTime
+      console.log(currentStartTime, new Date());
       const currentEndTime = new Date(to); // End at the provided endTime
 
       // Loop through the interval and create slots of the given duration
@@ -389,7 +390,7 @@ export class SlotService {
         const nextSlotEnd = new Date(
           currentStartTime.getTime() + duration * 1000 * 60,
         );
-        console.log(nextSlotEnd , currentEndTime, currentStartTime, duration);
+        // console.log(nextSlotEnd , currentEndTime, currentStartTime, duration);
 
         // Ensure that we don't exceed the endTime
         if (nextSlotEnd > currentEndTime) {
@@ -459,7 +460,7 @@ export class SlotService {
     if (slots.length === 0) {
       return [];
     }
-    console.log(slots)
+    // console.log(slots)
     return this.createTimeSlots(slots, duration);
   }
   // async getFirstSlotAvailable(branchId: string, ids: string[]) {
@@ -556,13 +557,10 @@ export class SlotService {
       if (!workingHour) {
         throw new HttpException("No available slots found for the given rootosh IDs.", 400);
       }
-  
-      return this.createTimeSlots([workingHour], duration)[0] || null;
+      return this.createTimeSlots([workingHour], duration)[0] ?? null;
     }
   
     throw new HttpException("Either services or rootosh IDs must be provided.", 400);
   }
-  
-  
 }
  
