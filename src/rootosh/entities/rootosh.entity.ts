@@ -16,9 +16,9 @@ export class RootoshEntity {
 
   @Column()
   arabic_Name: string;
-
+ 
   @Column()
-  english_Name: string;
+  english_Name: string; 
 
   // New field to store the duration until expiration (in days, for example)
   @Column({nullable:true})

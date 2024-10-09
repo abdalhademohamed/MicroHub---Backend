@@ -381,7 +381,7 @@ export class SlotService {
     const result = [];
 
     intervals.map(({ from, to }) => {
-      let currentStartTime = new Date(from) > new Date() ? new Date(from) : new Date(); // Start at the provided startTime
+      let currentStartTime = new Date(from) > new Date() ? new Date(from) : new Date( Date.now() + 6 * 60 * 1000 ); // Start at the provided startTime
       const currentEndTime = new Date(to); // End at the provided endTime
 
       // Loop through the interval and create slots of the given duration
@@ -566,4 +566,3 @@ export class SlotService {
   
 }
  
-

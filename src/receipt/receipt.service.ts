@@ -34,20 +34,22 @@ export class ReceiptService {
     @InjectRepository(AuditLogEntity)
     private readonly AuditLogRepository: Repository<AuditLogEntity>,
 
-
     @InjectRepository(OfferEntity)
-    private readonly OfferRepository: Repository<OfferEntity>,
+    private readonly OfferRepository: Repository<OfferEntity>
   ) {}
 
   async createReceipt(
     createReceiptDto: CreateReceiptDto,
-    userId: string,
+    userId: string
   ): Promise<ReceiptEntity> {
     const { orderId, message } = createReceiptDto;
+  
     try {
+      let offer = null;
+      let discountPercentage=0
       // Fetch the user who created the receipt
       const createdBy = await this.userRepository.findOne({
-        where: { id: userId },
+        where: { id: userId }, 
         select: ["id", "username", "email", "role"], // Select only required fields
       });
       if (!createdBy) {
@@ -57,27 +59,70 @@ export class ReceiptService {
       // Fetch the order and related reservation and services
       const order = await this.orderRepository.findOne({
         where: { id: orderId },
-        relations: ["reservation", "reservation.services"],
+        relations: ["reservation", "reservation.services","reservation.rootoshes"],
       });
+
       if (!order) {
-        throw new NotFoundException(`Order with ID ${orderId} not found`);
+        throw new NotFoundException(`Order with ID ${order.id} not found`);
       }
 
       const reservation = order.reservation;
       if (!reservation) {
         throw new NotFoundException(
-          `Reservation not found for Order ID ${orderId}`,
+          `Reservation not found for Order ID ${order.id}`
         );
       }
 
       const services = reservation.services;
-      if (!services || services.length === 0) {
-        throw new NotFoundException("No services found for the reservation");
-      }
+      const rootoshes = reservation.rootoshes;
+      // if (!services || services.length === 0) {
+      //   throw new NotFoundException("No services found for the reservation");
+      // }
+      // if (services || services.length > 0) {
+      //   throw new NotFoundException("No services found for the reservation");
+      // }
+      // if (rootoshes) {
+      //   // Format the services for receipt
+      //   const formattedPaymentForRootoshes = rootoshes.map((service) => ({
+      //     name: service.english_Name,
+      //     duration: service.duration_Mins,
+      //     price: 0, // Ensure price is a string
+      //   }));
+      // }  // Determine the formatted services/rootoshes for the receipt
+      let formattedPaymentForServices = [];
+      let formattedPaymentForRootoshes = [];
       // Declare the offer variable outside the if block
-      let offer = null;
-  
-      // Fetch the offer if offerId exists
+      if (services && services.length > 0) {
+        formattedPaymentForServices = services.map((service) => ({
+          name: service.english_Name,
+          duration: service.duration_Mins,
+          price: service.price.toString(), // Ensure price is a string
+        }));
+      } else if (rootoshes && rootoshes.length > 0) {
+        formattedPaymentForRootoshes = rootoshes.map((rootosh) => ({
+          name: rootosh.english_Name,
+          duration: rootosh.duration_Mins,
+          price: 0, // Assuming the price for rootoshes is 0, as per your original logic
+        }));
+      } else {
+        throw new NotFoundException("No services or rootoshes found for the reservation");
+      }
+
+
+        // If rootoshes exist, set total payment and remaining to zero
+    let totalPayment = 0;
+    let remaining = 0;
+
+    if (rootoshes && rootoshes.length > 0) {
+      // Total payment is zero if there are rootoshes
+      totalPayment = 0; 
+      remaining = 0; 
+    } else {
+      // Calculate total payment from services if no rootoshes
+      const totalServicePrice = services.reduce((acc, service) => acc + service.price, 0);
+      totalPayment = totalServicePrice; 
+      
+       // Fetch the offer if offerId exists
       if (order.offerId) {
         offer = await this.OfferRepository.findOne({
           where: { id: order.offerId },
@@ -87,8 +132,8 @@ export class ReceiptService {
           offer = null;
         }
       }
-  
-      if (order.sharableOfferId) {
+
+     if (order.sharableOfferId) {
         offer = await this.OfferRepository.findOne({
           where: { id: order.sharableOfferId },
         });
@@ -97,49 +142,54 @@ export class ReceiptService {
           offer = null;
         }
       }
-    
-      // Calculate total payment
-      const totalPayment = reservation.totalPrice;
-      let discountPayment = totalPayment; // Default to totalPayment
-  
-      // Apply discount if offer exists
-      const discountPercentage = offer ? offer.discountPercentage : 0; // Set discount to 0 if no offer
-      discountPayment -= totalPayment * (discountPercentage / 100);
-      const remaining = discountPayment - reservation.deposit;
 
-      // Format the services for receipt
-      const formattedPaymentForServices = services.map((service) => ({
-        name: service.english_Name,
-        duration: service.duration_Mins,
-        price: service.price.toString(), // Ensure price is a string
-      }));
+      // // Apply discount if offer exists
+      // const discountPercentage = offer ? offer.discountPercentage : 0; // Set discount to 0 if no offer
+      // totalPayment -= totalPayment * (discountPercentage / 100);
+      // remaining = totalPayment - reservation.deposit;
+    // Calculate total payment
+      totalPayment = reservation.totalPrice;
+      let discountPayment = totalPayment; // Default to totalPayment
+
+      // Apply discount if offer exists
+      discountPercentage = offer ? offer.discountPercentage : 0; // Set discount to 0 if no offer
+      discountPayment -= totalPayment * (discountPercentage / 100);
+      remaining = discountPayment - reservation.deposit;
+    }
+   
 
       // Format the reservation time slot as "startTime-endTime"
       const startTime = new Date(reservation.start_Time).toLocaleTimeString(
         "en-GB",
-        { hour: "2-digit", minute: "2-digit" },
+        { hour: "2-digit", minute: "2-digit" }
       );
       const endTime = new Date(reservation.end_Time).toLocaleTimeString(
         "en-GB",
-        { hour: "2-digit", minute: "2-digit" },
+        { hour: "2-digit", minute: "2-digit" }
       );
       const reservationTimeSlot = `${startTime}-${endTime}`;
 
+       // Combine payment information for the receipt
+    const paymentForServicesAndRootoshes = [
+      ...formattedPaymentForServices,
+      ...formattedPaymentForRootoshes,
+    ];
       // Create and save the receipt
       const receipt = this.receiptRepository.create({
         order,
         reservationTimeSlot,
         message,
-        totalPayment: discountPayment,
-        paymentForServices: formattedPaymentForServices,
-        discount: discountPercentage, // Set discount value
+        totalPayment,
+        paymentForServices: paymentForServicesAndRootoshes,
+        discount:discountPercentage, // Set discount value
         remaining,
         createdBy,
       });
 
       const savedReceipt = await this.receiptRepository.save(receipt);
 
-      // Log the creation action in the audit log
+      
+      
       await this.saveAuditLogForCreate(savedReceipt, userId);
 
       return savedReceipt;
@@ -147,7 +197,7 @@ export class ReceiptService {
       console.error("Error creating receipt:", error); // Log the error
       throw new InternalServerErrorException(
         "Failed to create receipt",
-        error.stack,
+        error.stack
       );
     }
   }
@@ -171,155 +221,349 @@ export class ReceiptService {
     await this.AuditLogRepository.save(auditLog);
   }
 
- /* -------------------------------------------------------------------------- */
- /*                      createReceiptFromReserverationId                      */
- /* -------------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------- */
+  /*                      createReceiptFromReserverationId                      */
+  /* -------------------------------------------------------------------------- */
 
- async createReceiptFromReservationId(
-  CreateReceiptFromReservationIdDto: CreateReceiptFromReservationIdDto,
-  userId: string,
-): Promise<ReceiptEntity> {
-  const { reservationId, message } = CreateReceiptFromReservationIdDto;
-  try {
-    // Fetch the user who created the receipt
-    const createdBy = await this.userRepository.findOne({
-      where: { id: userId },
-      select: ["id", "username", "email", "role"], // Select only required fields
-    });
-    if (!createdBy) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
+  //  async createReceiptFromReservationId(
+  //   CreateReceiptFromReservationIdDto: CreateReceiptFromReservationIdDto,
+  //   userId: string,
+  // ): Promise<ReceiptEntity> {
+  //   const { reservationId, message } = CreateReceiptFromReservationIdDto;
+  //   try {
+  //     // Fetch the user who created the receipt
+  //     const createdBy = await this.userRepository.findOne({
+  //       where: { id: userId },
+  //       select: ["id", "username", "email", "role"], // Select only required fields
+  //     });
+  //     if (!createdBy) {
+  //       throw new NotFoundException(`User with ID ${userId} not found`);
+  //     }
+
+  //     // Fetch the order and related reservation and services
+  //     const order = await this.orderRepository.findOne({
+  //       where: { reservation: { id: reservationId } }, // Assuming reservation has an order reference
+  //       relations: ["reservation", "reservation.services","reservation.rootoshes"],
+  //     });
+
+  //     if (!order) {
+  //       throw new NotFoundException(`Order with ID ${order.id} not found`);
+  //     }
+
+  //     const reservation = order.reservation;
+  //     if (!reservation) {
+  //       throw new NotFoundException(
+  //         `Reservation not found for Order ID ${order.id}`,
+  //       );
+  //     }
+
+  //     const services = reservation.services;
+  //     if (!services || services.length === 0) {
+  //       throw new NotFoundException("No services found for the reservation");
+  //     }
+  //     // Declare the offer variable outside the if block
+  //     let offer = null;
+
+  //     // Fetch the offer if offerId exists
+  //     if (order.offerId) {
+  //       offer = await this.OfferRepository.findOne({
+  //         where: { id: order.offerId },
+  //       });
+  //       if (!offer) {
+  //         // If the offer is not found, set it to null
+  //         offer = null;
+  //       }
+  //     }
+
+  //     if (order.sharableOfferId) {
+  //       offer = await this.OfferRepository.findOne({
+  //         where: { id: order.sharableOfferId },
+  //       });
+  //       if (!offer) {
+  //         // If the offer is not found, set it to null
+  //         offer = null;
+  //       }
+  //     }
+
+  //     // Calculate total payment
+  //     const totalPayment = reservation.totalPrice;
+  //     let discountPayment = totalPayment; // Default to totalPayment
+
+  //     // Apply discount if offer exists
+  //     const discountPercentage = offer ? offer.discountPercentage : 0; // Set discount to 0 if no offer
+  //     discountPayment -= totalPayment * (discountPercentage / 100);
+  //     const remaining = discountPayment - reservation.deposit;
+
+  //     // Format the services for receipt
+  //     const formattedPaymentForServices = services.map((service) => ({
+  //       name: service.english_Name,
+  //       duration: service.duration_Mins,
+  //       price: service.price.toString(), // Ensure price is a string
+  //     }));
+
+  //     // Format the reservation time slot as "startTime-endTime"
+  //     const startTime = new Date(reservation.start_Time).toLocaleTimeString(
+  //       "en-GB",
+  //       { hour: "2-digit", minute: "2-digit" },
+  //     );
+  //     const endTime = new Date(reservation.end_Time).toLocaleTimeString(
+  //       "en-GB",
+  //       { hour: "2-digit", minute: "2-digit" },
+  //     );
+  //     const reservationTimeSlot = `${startTime}-${endTime}`;
+
+  //     // Create and save the receipt
+  //     const receipt = this.receiptRepository.create({
+  //       order,
+  //       reservationTimeSlot,
+  //       message,
+  //       totalPayment: discountPayment,
+  //       paymentForServices: formattedPaymentForServices,
+  //       discount: discountPercentage, // Set discount value
+  //       remaining,
+  //       createdBy,
+  //     });
+
+  //     const savedReceipt = await this.receiptRepository.save(receipt);
+
+  //     // Log the creation action in the audit log
+  //     await this.saveAuditLogForCreateReceiptFromReservationId(savedReceipt, userId);
+
+  //     return savedReceipt;
+  //   } catch (error) {
+  //     console.error("Error creating receipt:", error); // Log the error
+  //     throw new InternalServerErrorException(
+  //       "Failed to create receipt",
+  //       error.stack,
+  //     );
+  //   }
+  // }
+
+  async createReceiptFromReservationId(
+    CreateReceiptFromReservationIdDto: CreateReceiptFromReservationIdDto,
+    userId: string
+  ): Promise<ReceiptEntity> {
+    const { reservationId, message } = CreateReceiptFromReservationIdDto;
+    try {
+      let offer = null;
+      let discountPercentage=0
+      // Fetch the user who created the receipt
+      const createdBy = await this.userRepository.findOne({
+        where: { id: userId }, 
+        select: ["id", "username", "email", "role"], // Select only required fields
+      });
+      if (!createdBy) {
+        throw new NotFoundException(`User with ID ${userId} not found`);
+      }
+
+      // Fetch the order and related reservation and services
+      const order = await this.orderRepository.findOne({
+        where: { reservation: { id: reservationId } }, // Assuming reservation has an order reference
+        relations: [
+          "reservation",
+          "reservation.services",
+          "reservation.rootoshes",
+        ],
+      });
+
+      if (!order) {
+        throw new NotFoundException(`Order with ID ${order.id} not found`);
+      }
+
+      const reservation = order.reservation;
+      if (!reservation) {
+        throw new NotFoundException(
+          `Reservation not found for Order ID ${order.id}`
+        );
+      }
+
+      const services = reservation.services;
+      const rootoshes = reservation.rootoshes;
+      // if (!services || services.length === 0) {
+      //   throw new NotFoundException("No services found for the reservation");
+      // }
+      // if (services || services.length > 0) {
+      //   throw new NotFoundException("No services found for the reservation");
+      // }
+      // if (rootoshes) {
+      //   // Format the services for receipt
+      //   const formattedPaymentForRootoshes = rootoshes.map((service) => ({
+      //     name: service.english_Name,
+      //     duration: service.duration_Mins,
+      //     price: 0, // Ensure price is a string
+      //   }));
+      // }  // Determine the formatted services/rootoshes for the receipt
+      let formattedPaymentForServices = [];
+      let formattedPaymentForRootoshes = [];
+      // Declare the offer variable outside the if block
+      if (services && services.length > 0) {
+        formattedPaymentForServices = services.map((service) => ({
+          name: service.english_Name,
+          duration: service.duration_Mins,
+          price: service.price.toString(), // Ensure price is a string
+        }));
+      } else if (rootoshes && rootoshes.length > 0) {
+        formattedPaymentForRootoshes = rootoshes.map((rootosh) => ({
+          name: rootosh.english_Name,
+          duration: rootosh.duration_Mins,
+          price: 0, // Assuming the price for rootoshes is 0, as per your original logic
+        }));
+      } else {
+        throw new NotFoundException("No services or rootoshes found for the reservation");
+      }
+
+
+        // If rootoshes exist, set total payment and remaining to zero
+    let totalPayment = 0;
+    let remaining = 0;
+
+    if (rootoshes && rootoshes.length > 0) {
+      // Total payment is zero if there are rootoshes
+      totalPayment = 0; 
+      remaining = 0; 
+    } else {
+      // Calculate total payment from services if no rootoshes
+      const totalServicePrice = services.reduce((acc, service) => acc + service.price, 0);
+      totalPayment = totalServicePrice; 
+      
+       // Fetch the offer if offerId exists
+      if (order.offerId) {
+        offer = await this.OfferRepository.findOne({
+          where: { id: order.offerId },
+        });
+        if (!offer) {
+          // If the offer is not found, set it to null
+          offer = null;
+        }
+      }
+
+     if (order.sharableOfferId) {
+        offer = await this.OfferRepository.findOne({
+          where: { id: order.sharableOfferId },
+        });
+        if (!offer) {
+          // If the offer is not found, set it to null
+          offer = null;
+        }
+      }
+
+      // // Apply discount if offer exists
+      // const discountPercentage = offer ? offer.discountPercentage : 0; // Set discount to 0 if no offer
+      // totalPayment -= totalPayment * (discountPercentage / 100);
+      // remaining = totalPayment - reservation.deposit;
+    // Calculate total payment
+      totalPayment = reservation.totalPrice;
+      let discountPayment = totalPayment; // Default to totalPayment
+
+      // Apply discount if offer exists
+      discountPercentage = offer ? offer.discountPercentage : 0; // Set discount to 0 if no offer
+      discountPayment -= totalPayment * (discountPercentage / 100);
+      remaining = discountPayment - reservation.deposit;
     }
+      // // Fetch the offer if offerId exists
+      // if (order.offerId) {
+      //   offer = await this.OfferRepository.findOne({
+      //     where: { id: order.offerId },
+      //   });
+      //   if (!offer) {
+      //     // If the offer is not found, set it to null
+      //     offer = null;
+      //   }
+      // }
 
+      // if (order.sharableOfferId) {
+      //   offer = await this.OfferRepository.findOne({
+      //     where: { id: order.sharableOfferId },
+      //   });
+      //   if (!offer) {
+      //     // If the offer is not found, set it to null
+      //     offer = null;
+      //   }
+      // }
 
+      // // Calculate total payment
+      // const totalPayment = reservation.totalPrice;
+      // let discountPayment = totalPayment; // Default to totalPayment
 
-    // Fetch the order and related reservation and services
-    const order = await this.orderRepository.findOne({
-      where: { reservation: { id: reservationId } }, // Assuming reservation has an order reference
-      relations: ["reservation", "reservation.services"],
-    });
-    if (!order) {
-      throw new NotFoundException(`Order with ID ${order.id} not found`);
-    }
+      // // Apply discount if offer exists
+      // const discountPercentage = offer ? offer.discountPercentage : 0; // Set discount to 0 if no offer
+      // discountPayment -= totalPayment * (discountPercentage / 100);
+      // const remaining = discountPayment - reservation.deposit;
 
-    const reservation = order.reservation;
-    if (!reservation) {
-      throw new NotFoundException(
-        `Reservation not found for Order ID ${order.id}`,
+      // // Format the services for receipt
+      // const formattedPaymentForServices = services.map((service) => ({
+      //   name: service.english_Name,
+      //   duration: service.duration_Mins,
+      //   price: service.price.toString(), // Ensure price is a string
+      // }));
+
+      // Format the reservation time slot as "startTime-endTime"
+      const startTime = new Date(reservation.start_Time).toLocaleTimeString(
+        "en-GB",
+        { hour: "2-digit", minute: "2-digit" }
+      );
+      const endTime = new Date(reservation.end_Time).toLocaleTimeString(
+        "en-GB",
+        { hour: "2-digit", minute: "2-digit" }
+      );
+      const reservationTimeSlot = `${startTime}-${endTime}`;
+
+       // Combine payment information for the receipt
+    const paymentForServicesAndRootoshes = [
+      ...formattedPaymentForServices,
+      ...formattedPaymentForRootoshes,
+    ];
+      // Create and save the receipt
+      const receipt = this.receiptRepository.create({
+        order,
+        reservationTimeSlot,
+        message,
+        totalPayment,
+        paymentForServices: paymentForServicesAndRootoshes,
+        discount:discountPercentage, // Set discount value
+        remaining,
+        createdBy,
+      });
+
+      const savedReceipt = await this.receiptRepository.save(receipt);
+
+      // Log the creation action in the audit log
+      await this.saveAuditLogForCreateReceiptFromReservationId(
+        savedReceipt,
+        userId
+      );
+
+      return savedReceipt;
+    } catch (error) {
+      console.error("Error creating receipt:", error); // Log the error
+      throw new InternalServerErrorException(
+        "Failed to create receipt",
+        error.stack
       );
     }
+  }
+  // Save the audit log for the create action
+  private async saveAuditLogForCreateReceiptFromReservationId(
+    receipt: ReceiptEntity,
+    userId: string
+  ) {
+    const auditLog = new AuditLogEntity();
+    auditLog.tableName = "Receipt"; // Specify the table name
+    auditLog.action = "CREATE"; // Specify the action type
+    auditLog.entityId = receipt.id; // ID of the created receipt
+    auditLog.performedBy = userId; // ID of the user who performed the action
 
-    const services = reservation.services;
-    if (!services || services.length === 0) {
-      throw new NotFoundException("No services found for the reservation");
-    }
-    // Declare the offer variable outside the if block
-    let offer = null;
-
-    // Fetch the offer if offerId exists
-    if (order.offerId) {
-      offer = await this.OfferRepository.findOne({
-        where: { id: order.offerId },
-      });
-      if (!offer) {
-        // If the offer is not found, set it to null
-        offer = null;
-      }
-    }
-
-    if (order.sharableOfferId) {
-      offer = await this.OfferRepository.findOne({
-        where: { id: order.sharableOfferId },
-      });
-      if (!offer) {
-        // If the offer is not found, set it to null
-        offer = null;
-      }
-    }
-  
-    // Calculate total payment
-    const totalPayment = reservation.totalPrice;
-    let discountPayment = totalPayment; // Default to totalPayment
-
-    // Apply discount if offer exists
-    const discountPercentage = offer ? offer.discountPercentage : 0; // Set discount to 0 if no offer
-    discountPayment -= totalPayment * (discountPercentage / 100);
-    const remaining = discountPayment - reservation.deposit;
-
-    // Format the services for receipt
-    const formattedPaymentForServices = services.map((service) => ({
-      name: service.english_Name,
-      duration: service.duration_Mins,
-      price: service.price.toString(), // Ensure price is a string
-    }));
-
-    // Format the reservation time slot as "startTime-endTime"
-    const startTime = new Date(reservation.start_Time).toLocaleTimeString(
-      "en-GB",
-      { hour: "2-digit", minute: "2-digit" },
-    );
-    const endTime = new Date(reservation.end_Time).toLocaleTimeString(
-      "en-GB",
-      { hour: "2-digit", minute: "2-digit" },
-    );
-    const reservationTimeSlot = `${startTime}-${endTime}`;
-
-    // Create and save the receipt
-    const receipt = this.receiptRepository.create({
-      order,
-      reservationTimeSlot,
-      message,
-      totalPayment: discountPayment,
-      paymentForServices: formattedPaymentForServices,
-      discount: discountPercentage, // Set discount value
-      remaining,
-      createdBy,
+    // Fetch user details for audit log (optional)
+    const userDetails = await this.userRepository.findOne({
+      where: { id: userId },
     });
+    if (userDetails) {
+      auditLog.userDetails = userDetails; // Optional: Add user details for further tracking
+    }
 
-    const savedReceipt = await this.receiptRepository.save(receipt);
-
-    // Log the creation action in the audit log
-    await this.saveAuditLogForCreateReceiptFromReservationId(savedReceipt, userId);
-
-    return savedReceipt;
-  } catch (error) {
-    console.error("Error creating receipt:", error); // Log the error
-    throw new InternalServerErrorException(
-      "Failed to create receipt",
-      error.stack,
-    );
+    // Save the audit log to the audit log repository
+    await this.AuditLogRepository.save(auditLog);
   }
-}
-// Save the audit log for the create action
-private async saveAuditLogForCreateReceiptFromReservationId(receipt: ReceiptEntity, userId: string) {
-  const auditLog = new AuditLogEntity();
-  auditLog.tableName = "Receipt"; // Specify the table name
-  auditLog.action = "CREATE"; // Specify the action type
-  auditLog.entityId = receipt.id; // ID of the created receipt
-  auditLog.performedBy = userId; // ID of the user who performed the action
-
-  // Fetch user details for audit log (optional)
-  const userDetails = await this.userRepository.findOne({
-    where: { id: userId },
-  });
-  if (userDetails) {
-    auditLog.userDetails = userDetails; // Optional: Add user details for further tracking
-  }
-
-  // Save the audit log to the audit log repository
-  await this.AuditLogRepository.save(auditLog);
-}
-
-
-
-
-
-
-
-
-
-
-
-
 
   // async generatePdfReceipt(receiptId: string, response: Response) {
   //   try {
@@ -508,28 +752,30 @@ private async saveAuditLogForCreateReceiptFromReservationId(receipt: ReceiptEnti
     return receipt;
   }
 
-  async getReceiptByReservationId(reservationId: string): Promise<ReceiptEntity> {
+  async getReceiptByReservationId(
+    reservationId: string
+  ): Promise<ReceiptEntity> {
     const order = await this.orderRepository.findOne({
-      where: { reservation: { id: reservationId } }, 
-      relations: ["reservation", "reservation.services"],
+      where: { reservation: { id: reservationId } },
+      relations: ["reservation", "reservation.services","reservation.rootoshes"],
     });
-  
+
     if (!order) {
-      throw new NotFoundException(`Order not found for Reservation ID: ${reservationId}`);
+      throw new NotFoundException(
+        `Order not found for Reservation ID: ${reservationId}`
+      );
     }
-  
+
     const receipt = await this.receiptRepository.findOne({
       where: { order: { id: order.id } },
     });
-  
+
     if (!receipt) {
-      throw new NotFoundException(`Receipt not found for Order ID: ${order.id}`);
+      throw new NotFoundException(
+        `Receipt not found for Order ID: ${order.id}`
+      );
     }
-  
+
     return receipt; // paymentForServices will now be correctly returned as an array
   }
-  
-  
-
-
 }
