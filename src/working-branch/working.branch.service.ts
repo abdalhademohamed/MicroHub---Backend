@@ -231,7 +231,7 @@ export class WorkingBranchService {
       });
       branch.workingbranch.push(workingBranchEntity);
     }
-
+    console.log(workingBranchEntity)
     // Save the WorkingBranchEntity (either updated or newly created)
     const savedWorkingBranch =
       await this.WorkingBranchsRepository.save(workingBranchEntity);
