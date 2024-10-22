@@ -34,6 +34,8 @@ export class ReceiptController {
 
 
    // Endpoint to create a receipt
+   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+   @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ARTISTMANAGER)
    @Post('reservation')
    @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
    @Roles(Role.SUPERADMIN)
@@ -61,10 +63,11 @@ export class ReceiptController {
        };
      }
    }
+
+   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+   @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ARTISTMANAGER)
   // Endpoint to create a receipt
   @Post()
-  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
   async createReceipt(
     @Request() Req: any, // Request object to access the user
 
@@ -89,14 +92,16 @@ export class ReceiptController {
       };
     }
   }
-
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ARTISTMANAGER)
   @Get(":orderId")
   async getReceiptByOrderId(
     @Param("orderId") orderId: string,
   ): Promise<ReceiptEntity> {
     return this.receiptService.getReceiptByOrderId(orderId);
   }
-
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ARTISTMANAGER)
   @Get("reservation/:reservationId")
   async getReceiptByReservationId(
     @Param("reservationId") reservationId: string,
