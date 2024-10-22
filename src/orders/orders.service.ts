@@ -361,13 +361,13 @@ export class OrdersService {
       sharableOffer.usageCount += 1;
       await this.SharableOfferRepository.save(sharableOffer); // Save the updated offer
 
-      // Create a new gift coupon after saving the sharable offer
-      const createGiftCouponDto: CreateGiftCouponDto = {
-        sharableOfferId: sharableOffer.id, // Use the saved offer ID
-        customerId: reservation.customer.id, // Assuming customerId is available in offerData
-      };
-      // After saving the sharable offer, create a gift coupon for its services
-      await this.GiftCouponService.createGiftCoupon(createGiftCouponDto);
+      // // Create a new gift coupon after saving the sharable offer
+      // const createGiftCouponDto: CreateGiftCouponDto = {
+      //   sharableOfferId: sharableOffer.id, // Use the saved offer ID
+      //   customerId: reservation.customer.id, // Assuming customerId is available in offerData
+      // };
+      // // After saving the sharable offer, create a gift coupon for its services
+      // await this.GiftCouponService.createGiftCoupon(createGiftCouponDto);
     }
     const invoiceNumber = await this.generateUniqueInvoiceNumber();
 
@@ -1997,6 +1997,9 @@ export class OrdersService {
         paymentStatus: order.paymentStatus,
         image_order_status_Url: order.image_order_status_Url,
         image_order_payment_status_Url: order.image_order_payment_status_Url,
+        offerId:order.offerId,
+        sharableOfferId:order.sharableOfferId,
+        couponId:order.couponId,
         artist: order.artist
           ? {
               id: order.artist.id,
