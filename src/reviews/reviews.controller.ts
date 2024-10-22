@@ -60,7 +60,11 @@ export class ReviewsController {
     }
     return this.reviewsService.createReview(createReviewDto, userId);
   }
-
+  @Get('IsFirstOrder/:orderId')
+  async isFirstTimeOrder(@Param('orderId') orderId: string): Promise<{ isFirstTime: boolean }> {
+    const isFirstTime = await this.reviewsService.isFirstTimeOrder(orderId);
+    return { isFirstTime };
+  }
   @Get("sorted")
   @UseGuards(AccessTokenGuard, RolesGuard)
   @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER, Role.ARTISTMANAGER)

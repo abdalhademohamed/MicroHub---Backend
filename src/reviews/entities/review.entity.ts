@@ -31,4 +31,13 @@ export class ReviewEntity {
 
   @Column({ type: "boolean", default: false })
   orderFirstTime: boolean;
+
+
+  
+  @Column({nullable:true})
+  comment_Before: string; // before after
+
+    
+  @Column({nullable:true})
+  comment_After: string; // before after
 }

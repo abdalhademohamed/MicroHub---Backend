@@ -26,4 +26,13 @@ export class CreateReviewDto {
   })
   @IsString()
   order: string;
+
+  @IsOptional()
+  @IsString()
+  comment_Before: string;
+  @IsOptional()
+  @IsString()
+  comment_After: string;
+
+
 }
