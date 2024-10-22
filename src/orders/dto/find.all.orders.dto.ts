@@ -41,15 +41,23 @@ export class FindOrdersDto {
   @IsEnum(PaymentStatus) // Reference the updated PaymentStatus enum
   paymentStatus?: PaymentStatus;
 
+  // Update to allow multiple statuses, split by commas
   @IsOptional()
-  @IsEnum(OrderStatus)
-  orderStatus?: OrderStatus;
+  @Transform(({ value }) =>
+    value.split(",").map((status: string) => status.trim())
+  )
+  @IsEnum(OrderStatus, { each: true }) // Ensure each value is a valid OrderStatus
+  orderStatus?: OrderStatus[];
 
   @IsOptional()
   @IsString()
   toDate?: string; // Format: 'yyyy-MM-dd'
-  
+
   @IsOptional()
   @IsString()
   serviceId?: string; // New property to filter by specific service
+
+  @IsOptional()
+  @IsString()
+  customerId?: string; // New property to filter by specific service
 }

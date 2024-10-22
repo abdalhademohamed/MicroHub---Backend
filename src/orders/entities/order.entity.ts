@@ -7,6 +7,7 @@ import {
   OneToOne,
   CreateDateColumn,
   UpdateDateColumn,
+  JoinColumn,
 } from "typeorm";
 import { ReservationEntity } from "../../reservation/entities/reservation.entity";
 import { CommentEntity } from "../../comment/entities/comment.entity";
@@ -93,6 +94,9 @@ export class OrderEntity {
   @Column({ nullable: true }) // Optional column for the offer ID
   sharableOfferId?: string; // Add offer ID as an optional field
   
-
+  @Column({ type: "boolean", default: false })
+  isReviewed: boolean; // New boolean column
   
+
+
 }
