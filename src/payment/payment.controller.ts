@@ -37,7 +37,7 @@ export class PaymentController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.ARTISTMANAGER,Role.RECEPTIONIST)
   @Get()
   async getAllPayments(): Promise<PaymentEntity[]> {
     return this.paymentService.getAllPayments();
