@@ -30,11 +30,11 @@ export class OfferService {
     @InjectRepository(UserEntity)
     private UserRepository: Repository<UserEntity>,
 
-    @InjectEntityManager() private readonly entityManager: EntityManager,
+    @InjectEntityManager() private readonly entityManager: EntityManager
   ) {}
   async create(
     createOfferDto: CreateOfferDto,
-    userId: string,
+    userId: string
   ): Promise<OfferEntity> {
     const { serviceIds, branchIds, ...offerData } = createOfferDto;
 
@@ -50,9 +50,15 @@ export class OfferService {
     if (!branches || branches.length === 0) {
       throw new NotFoundException(`Branch with ID(s) "${branchIds}" not found`);
     }
+    const currentday = new Date();
+    currentday.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
+    const offerStartDay = new Date(offerData.startDateTime);
+    const offerEndDay = new Date(offerData.endDateTime);
 
-    // Validate date range
-    if (new Date(offerData.startDateTime) >= new Date(offerData.endDateTime)) {
+    if (offerStartDay < currentday) {
+      throw new BadRequestException("Start date cannot be before today");
+    }
+    if (offerStartDay >= offerEndDay) {
       throw new BadRequestException("End date must be after the start date");
     }
 
@@ -111,13 +117,13 @@ export class OfferService {
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async findAll(
     page: number = 1,
-    limit: number = 10,
+    limit: number = 10
   ): Promise<{ items: OfferEntity[]; total: number }> {
     try {
       // Validate pagination parameters
       if (page < 1 || limit < 1) {
         throw new BadRequestException(
-          "Pagination parameters must be positive integers",
+          "Pagination parameters must be positive integers"
         );
       }
 
@@ -138,24 +144,42 @@ export class OfferService {
         throw error;
       } else {
         throw new InternalServerErrorException(
-          "An error occurred while retrieving offers",
+          "An error occurred while retrieving offers"
         );
       }
     }
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  async findActiveOffers(): Promise<OfferEntity[]> {
+  async findActiveOffers(branchId?:string): Promise<OfferEntity[]> {
     const now = new Date();
-    return await this.OfferRepository.find({
-      where: {
-        endDateTime: MoreThan(now),
-        isActive: true, // Ensure the offer is active
-      },
-      relations: ["services", "branches"],
-    });
-  }
+    if(branchId &&branchId.length>1)
+    {
+      return await this.OfferRepository.find({
+        where: {
+          endDateTime: MoreThan(now),
+          isActive: true, // Ensure the offer is active
+          branches: {
+            id: branchId, // Ensure the offer is for the specific branch
+          },
+        },
+        relations: ["services", "branches"],
+      });
+    }else{
   
-  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      return await this.OfferRepository.find({
+        where: {
+          endDateTime: MoreThan(now),
+          isActive: true, // Ensure the offer is active
+        },
+        relations: ["services", "branches"],
+      });
+    }
+   
+  }
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async findOne(id: string): Promise<OfferEntity> {
     const offer = await this.OfferRepository.findOne({
       where: { id },
@@ -172,7 +196,7 @@ export class OfferService {
   async update(
     offerId: string,
     updateOfferDto: UpdateOfferDto,
-    userId: string,
+    userId: string
   ): Promise<OfferEntity> {
     const offer = await this.OfferRepository.findOne({
       where: { id: offerId },
@@ -202,7 +226,7 @@ export class OfferService {
         // Save the updated offer
         updatedOffer = await transactionalEntityManager.save(
           OfferEntity,
-          offer,
+          offer
         );
 
         // Create an audit log entry for the update
@@ -255,7 +279,7 @@ export class OfferService {
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async updateIsActive(
     id: string,
-    UpdateIsActiveDto: UpdateIsActiveDto,
+    UpdateIsActiveDto: UpdateIsActiveDto
   ): Promise<OfferEntity> {
     // Fetch the offer by ID
     const offer = await this.OfferRepository.findOneBy({ id });
@@ -319,10 +343,20 @@ export class OfferService {
       } catch (error) {
         console.error(
           "Error performing soft delete and creating audit log:",
-          error,
+          error
         );
         throw new InternalServerErrorException("Failed to soft delete offer");
       }
     });
   }
+
+  async countOffers(): Promise<{ total: number; active: number }> {
+    const [total, active] = await Promise.all([
+      this.OfferRepository.count(), // Count all offers
+      this.OfferRepository.count({ where: { isActive: true } }), // Count active offers
+    ]);
+
+    return { total, active };
+  }
+
 }

@@ -11,11 +11,12 @@ import {
   UseGuards,
   Request,
   BadRequestException,
+  NotFoundException,
 } from "@nestjs/common";
 import { OfferService } from "./offer.service";
 import { CreateOfferDto } from "./dto/create.offer.dto";
 import { UpdateOfferDto } from "./dto/update.offer.dto";
-import { ApiTags } from "@nestjs/swagger";
+import { ApiResponse, ApiTags } from "@nestjs/swagger";
 import { OfferEntity } from "./entities/offer.entity";
 import { UpdateIsActiveDto } from "./dto/update.active.dto";
 import { AccessTokenGuard } from "../auth/guards/accessToken.guard";
@@ -45,16 +46,25 @@ export class OfferController {
 
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
-  // @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-//   @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST)
-  @Get('active') // Route to get active sharable offers
-  async findActiveSharableOffer(): Promise<OfferEntity[]> {
-    return await this.offerService.findActiveOffers();
+
+  @Get('count') // GET request to /sharable-offers/count
+  @ApiResponse({ status: 200, description: 'Get the count of sharable offers.' })
+  async getSharableOffersCount(): Promise<{ total: number; active: number }> {
+    return await this.offerService.countOffers();
   }
+  // @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  // @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ARTISTMANAGER)
+@Get('active') // Route to get active sharable offers
+async findActiveSharableOffer(
+  @Query('branchId') branchId?: string, // Accept branchId as an optional query parameter
+): Promise<OfferEntity[]> {
+  return this.offerService.findActiveOffers(branchId);
+} 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ARTISTMANAGER)
   @Get()
   async findAll(
     @Query("page") page: string = "1",
