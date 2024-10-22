@@ -70,10 +70,10 @@ export class AuthController {
   @ApiResponse({ status: 500, description: "Internal server error." })
   async signIn(
     @Body() LoginAuthDto: LoginAuthDto,
-  ): Promise<{ accessToken: string; refreshToken: string }> {
-    const { accessToken, refreshToken } =
+  ): Promise<{ accessToken: string; refreshToken: string,userName:string}> {
+    const { accessToken, refreshToken,userName } =
       await this.authService.signIn(LoginAuthDto);
-    return { accessToken, refreshToken };
+    return { accessToken, refreshToken ,userName};
   }
 
   @UseGuards(AccessTokenGuard)

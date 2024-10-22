@@ -117,7 +117,7 @@ export class AuthService {
 
   async signIn(
     LoginAuthDto: LoginAuthDto,
-  ): Promise<{ accessToken: string; refreshToken: string }> {
+  ): Promise<{ accessToken: string; refreshToken: string ;userName: string}> {
     const { email, password } = LoginAuthDto;
     const startTime = Date.now();
 
@@ -150,7 +150,8 @@ export class AuthService {
             return {
               accessToken: tokens.accessToken,
               refreshToken: tokens.refreshToken,
-            };
+              userName:user.username
+            }; 
           } catch (updateError) {
             console.error("Error updating refresh token:", updateError.message);
             throw new InternalServerErrorException(
@@ -527,6 +528,7 @@ export class AuthService {
       phoneNumber,
       password,
       image,
+      speciality
     } = createEmployeeDto;
 
     return await this.entityManager.transaction(
@@ -551,6 +553,7 @@ export class AuthService {
             transactionalEntityManager,
             employeeTypeId,
           );
+
 
           // Determine role based on position
           const role = this.determineRoleFromPosition(position);
@@ -579,6 +582,7 @@ export class AuthService {
             email,
             password: hashedPassword,
             role,
+            speciality
           });
 
           await transactionalEntityManager.save(EmployeeEntity, newEmployee);
