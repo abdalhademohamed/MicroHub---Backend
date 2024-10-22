@@ -21,7 +21,7 @@ import { GetTotalDepositsDto } from "./dto/get.total.depost.branch.dto";
 import { GetTotalRefundsDto } from "./dto/get.total.branch.refund.dto";
 import { Postion } from "../postion/utils/postion.enum";
 import { Role } from "../user/utils/user.enum";
-import { PaymentStatus } from "src/orders/utils/payment.status.enum";
+import { PaymentStatus } from "../orders/utils/payment.status.enum";
 
 @Injectable()
 export class AnalysisService {
