@@ -679,13 +679,15 @@ export class ReservationService {
       if (body.rootosh && body.rootosh.length > 0) {
         await this.OrdersService.createOrderForRootosh(reservation.id, userId);
       } else {
+
         // Create an order for the reservation
         await this.OrdersService.createOrder(
           reservation.id,
           userId,
           body.paymentId,
           body.offerId,
-          body.sharableOfferId
+          body.sharableOfferId,
+          body.couponCode
         );
       }
 
