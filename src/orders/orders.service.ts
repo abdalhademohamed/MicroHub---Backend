@@ -1936,6 +1936,7 @@ export class OrdersService {
       sort = "ASC",
       fromDate,
       toDate,
+      orderStatus, // Destructure the orderStatus filter
     } = findOrdersByDayDto;
   
     try {
@@ -1970,12 +1971,20 @@ export class OrdersService {
   
       const filteredOrders = employee.orders.filter((order) => {
         const orderDate = new Date(order.date);
+  
+        // Apply date filters
         if (fromDateObj && orderDate < fromDateObj) {
           return false;
         }
         if (toDateObj && orderDate > toDateObj) {
           return false;
         }
+  
+        // Apply orderStatus filter if provided
+        if (orderStatus && !orderStatus.includes(order.status)) {
+          return false;
+        }
+  
         return true;
       });
   
@@ -2005,75 +2014,59 @@ export class OrdersService {
         paymentStatus: order.paymentStatus,
         image_order_status_Url: order.image_order_status_Url,
         image_order_payment_status_Url: order.image_order_payment_status_Url,
-        offerId:order.offerId,
-        sharableOfferId:order.sharableOfferId,
-        couponId:order.couponId,
-        artist: order.artist
-          ? {
-              id: order.artist.id,
-              username: order.artist.username,
-              email: order.artist.email,
-              role: order.artist.role,
-              english_Name: order.artist.english_Name,
-              arabic_Name: order.artist.arabic_Name,
-            
-              image: order.artist.image,
-              available: order.artist.available,
-              totalReviews: order.artist.totalReviews,
-              status: order.artist.status,
-              oldestAvgRating: order.artist.oldestAvgRating,
-              newestAvgRating: order.artist.newestAvgRating,
-            }
-          : null,
-        payment: order.payment
-          ? {
-              id: order.payment.id,
-              methodEnglish: order.payment.methodEnglish,
-              methodArabic: order.payment.methodArabic,
-              image: order.payment.image,
-              createdAt: order.payment.createdAt.toISOString(),
-            }
-          : null,
-        customer: order.customer
-          ? {
-              id: order.customer.id,
-              country_Code: order.customer.country_Code,
-              phoneNumber: order.customer.phoneNumber,
-              fullName: order.customer.fullName,
-              dateOfBirth: order.customer.dateOfBirth,
-            }
-          : null,
-        branch: employee.branch
-          ? {
-              id: employee.branch.id,
-              name: employee.branch.name,
-              // Add more branch fields as needed
-            }
-          : null,
-        reservation: order.reservation
-          ? {
-              id: order.reservation.id,
-              reservationDay: order.reservation.reservationDay,
-              reservationMonth: order.reservation.reservationMonth,
-              reservationYear: order.reservation.reservationYear,
-              start_Time: order.reservation.start_Time,
-              end_Time: order.reservation.end_Time,
-              totalPrice: order.reservation.totalPrice,
-              deposit: order.reservation.deposit,
-              services: order.reservation.services
-                ? order.reservation.services.map(service => ({
-                    id: service.id,
-                    arabic_Name: service.arabic_Name, // Add more fields as needed
-                    english_Name: service.english_Name,
-                    // Add more fields as needed
-                    duration_Mins: service.duration_Mins,
-                    rootosh_Number: service.rootosh_Number,
-                    months_To_Expire: service.months_To_Expire,
-
-                  }))
-                : [],
-            }
-          : null,
+        offerId: order.offerId,
+        sharableOfferId: order.sharableOfferId,
+        couponId: order.couponId,
+        artist: order.artist ? {
+          id: order.artist.id,
+          username: order.artist.username,
+          email: order.artist.email,
+          role: order.artist.role,
+          english_Name: order.artist.english_Name,
+          arabic_Name: order.artist.arabic_Name,
+          image: order.artist.image,
+          available: order.artist.available,
+          totalReviews: order.artist.totalReviews,
+          status: order.artist.status,
+          oldestAvgRating: order.artist.oldestAvgRating,
+          newestAvgRating: order.artist.newestAvgRating,
+        } : null,
+        payment: order.payment ? {
+          id: order.payment.id,
+          methodEnglish: order.payment.methodEnglish,
+          methodArabic: order.payment.methodArabic,
+          image: order.payment.image,
+          createdAt: order.payment.createdAt.toISOString(),
+        } : null,
+        customer: order.customer ? {
+          id: order.customer.id,
+          country_Code: order.customer.country_Code,
+          phoneNumber: order.customer.phoneNumber,
+          fullName: order.customer.fullName,
+          dateOfBirth: order.customer.dateOfBirth,
+        } : null,
+        branch: employee.branch ? {
+          id: employee.branch.id,
+          name: employee.branch.name,
+        } : null,
+        reservation: order.reservation ? {
+          id: order.reservation.id,
+          reservationDay: order.reservation.reservationDay,
+          reservationMonth: order.reservation.reservationMonth,
+          reservationYear: order.reservation.reservationYear,
+          start_Time: order.reservation.start_Time,
+          end_Time: order.reservation.end_Time,
+          totalPrice: order.reservation.totalPrice,
+          deposit: order.reservation.deposit,
+          services: order.reservation.services.map(service => ({
+            id: service.id,
+            arabic_Name: service.arabic_Name,
+            english_Name: service.english_Name,
+            duration_Mins: service.duration_Mins,
+            rootosh_Number: service.rootosh_Number,
+            months_To_Expire: service.months_To_Expire,
+          })),
+        } : null,
       }));
   
       // Return paginated result
@@ -2086,6 +2079,7 @@ export class OrdersService {
       );
     }
   }
+  
   
   
 
