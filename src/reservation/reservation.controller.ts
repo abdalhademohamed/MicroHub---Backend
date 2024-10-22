@@ -53,7 +53,7 @@ export class ReservationController {
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ARTISTMANAGER)
   @Post()
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   @UseInterceptors(FileInterceptor("deposit_Content")) // Intercept the file upload
@@ -93,8 +93,8 @@ export class ReservationController {
     );
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  // @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  // @Roles(Role.SUPERADMIN)
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ARTISTMANAGER)
   @Get()
   async getAllReservations(
     @Request() req: any, // Request object to access the user

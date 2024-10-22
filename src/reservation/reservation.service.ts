@@ -7,7 +7,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { InjectEntityManager, InjectRepository } from "@nestjs/typeorm";
-import { EntityManager, In, Repository } from "typeorm";
+import { Between, EntityManager, In, Repository } from "typeorm";
 import { ReservationEntity } from "./entities/reservation.entity";
 import { BranchEntity } from "../branch/entities/branch.entity";
 import { ServiceEntity } from "../service/entities/service.entity";
@@ -15,7 +15,6 @@ import { GetReservationsDto } from "./dto/get.reservation.dto";
 import { CloudinaryService } from "../cloudinary/cloudinary.service";
 import { CustomerEntity } from "../customer/entities/customer.entity";
 import { CreateCustomerDto } from "../customer/dto/create.customer.dto";
-import { format } from "date-fns";
 import { CreateReservationDto } from "./dto/create.reservation.dto";
 
 import { UpdateReservationDto } from "./dto/update.reservation.dto";
@@ -32,6 +31,8 @@ import { GetReservationsTimesDto } from "./dto/get.reservations.timings.dto";
 import { SharableOfferEntity } from "../sharable-offer/entities/sharable-offer.entity";
 import { GiftCouponEntity } from "../gift-coupon/entities/gift-coupon.entity";
 import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
+import { NotificationService } from "../notification/notification.service";
+import { EmployeeEntity } from "../employee/entities/employee.entity";
 
 @Injectable()
 export class ReservationService {
@@ -63,7 +64,11 @@ export class ReservationService {
     @InjectRepository(GiftCouponEntity)
     private GiftCouponRepository: Repository<GiftCouponEntity>,
     @InjectRepository(RootoshEntity)
-    private RootoshRepository: Repository<RootoshEntity>
+    private RootoshRepository: Repository<RootoshEntity>,
+    @InjectRepository(EmployeeEntity)
+    private EmployeeRepository: Repository<EmployeeEntity>,
+    private readonly notificationService: NotificationService
+
     // private readonly ReceiptService: ReceiptService, // Inject the new service
   ) {}
   splitIntervals(
@@ -477,6 +482,7 @@ export class ReservationService {
       // Initialize duration and price variables
       let duration = 0;
       let price = 0;
+      let result;
       // Check if at least one of services, offerId, sharableOfferId, or couponCode is provided
       if (!body.services || body.services.length === 0) {
         if (
@@ -574,12 +580,23 @@ export class ReservationService {
 
         duration += rootoshTotals.duration;
         price += rootoshTotals.price;
+        body.deposit = 0;
+        body.deposit_Content = null;
       } else {
         const serviceTotals = await this.calculateTotalDuration(serviceIds);
         duration += serviceTotals.duration;
         price += serviceTotals.price;
+
+        // Ensure image is provided
+        if (!image) {
+          throw new BadRequestException("Photo is required");
+        }
+
+        // Upload image to Cloudinary
+        const folderName = "reservation";
+        result = await this.CloudinaryService.uploadImage(image, folderName);
+        body.deposit_Content = result.url;
       }
-      // Calculate total duration and price of services
 
       // Handle custom time
       const startTime = new Date(body.customStartTime);
@@ -601,18 +618,6 @@ export class ReservationService {
         );
       }
 
-      // Ensure image is provided
-      if (!image) {
-        throw new BadRequestException("Photo is required");
-      }
-
-      // Upload image to Cloudinary
-      const folderName = "reservation";
-      const result = await this.CloudinaryService.uploadImage(
-        image,
-        folderName
-      );
-
       // Validate customer existence
       const customer = await this.CustomerRepository.findOneBy({
         phoneNumber: body.phone_Number,
@@ -625,31 +630,54 @@ export class ReservationService {
           "The deposit can't be more than the total price"
         );
       }
-
+      // Validate employee existence
+      const employee = await this.UserRepository.findOne({where:{id:userId}});
+      if (!employee) {
+        throw new NotFoundException("Employee not found");
+      }
       // Create and save reservation
       const reservation = this.ReservationRepository.create({
         customer,
         totalPrice: Math.ceil(price),
         deposit: body.deposit,
         start_Time: startTime,
-        end_Time: endTime,
+        end_Time: endTime, 
         reservationDay: startTime.getDate(),
         reservationMonth: startTime.getMonth() + 1,
         reservationYear: startTime.getFullYear(),
         branch,
-        deposit_Content: result.url,
+        deposit_Content: body.deposit_Content,
         services,
         rootoshes,
+        createdBy:userId
       });
       await this.ReservationRepository.save(reservation);
+      // New code to check for existing reservations for the week
+      // const startOfWeek = new Date(startTime);
+      // startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay()); // Get the first day of the week (Sunday)
+
+      // const endOfWeek = new Date(startOfWeek);
+      // endOfWeek.setDate(endOfWeek.getDate() + 6); // Get the last day of the week (Saturday)
+
+      // // Fetch reservations for the branch in the upcoming week
+      // const existingReservations = await this.ReservationRepository.find({
+      //   where: {
+      //     branch: { id: branch.id },
+      //     start_Time: Between(startOfWeek, endOfWeek),
+      //   },
+      // });
+
+      // if (existingReservations.length >= 7) {
+      //   // Create a notification if there are reservations for every day of the week
+      //   this.notificationService.createNotification(
+      //     userId,
+      //     "full week branch reservation",
+      //     `Reservations exist for the entire week at branch ${branch.name}.`
+      //   );
+      // }
 
       if (body.rootosh && body.rootosh.length > 0) {
-        await this.OrdersService.createOrderForRootosh(
-          reservation.id,
-          userId,
-          body.paymentId
-        );
-
+        await this.OrdersService.createOrderForRootosh(reservation.id, userId);
       } else {
         // Create an order for the reservation
         await this.OrdersService.createOrder(
