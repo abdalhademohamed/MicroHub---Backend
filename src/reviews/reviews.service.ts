@@ -16,7 +16,7 @@ import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { UserEntity } from "../user/entities/user.entity";
 import { UserService } from "../user/user.service";
 import { NotificationService } from "../notification/notification.service";
-import { OrderStatus } from "src/orders/utils/order.status.enum";
+import { OrderStatus } from "../orders/utils/order.status.enum";
 
 @Injectable()
 export class ReviewsService {
