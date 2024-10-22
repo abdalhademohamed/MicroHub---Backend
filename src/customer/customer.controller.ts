@@ -8,18 +8,23 @@ import {
   Delete,
   NotFoundException,
   InternalServerErrorException,
+  Query,
 } from "@nestjs/common";
 import { CustomerService } from "./customer.service";
 import { CreateCustomerDto } from "./dto/create.customer.dto";
 import { UpdateCustomerDto } from "./dto/update.customer.dto";
 import { GetCustomerDto } from "./dto/get.customer.dto";
 import { ApiTags } from "@nestjs/swagger";
+import { GetCustomerPaginatedsDto } from "./dto/get.customers.paginated.dto";
 
 @ApiTags("customer")
 @Controller("customer")
 export class CustomerController {
   constructor(private readonly customerService: CustomerService) {}
-
+  @Get('sorted')
+  async getCustomers(@Query() filters: GetCustomerPaginatedsDto) {
+    return this.customerService.getAllCustomers(filters);
+  }
   @Get("count")
   async getCustomerCount(): Promise<{ count: number }> {
     const count = await this.customerService.countCustomers();

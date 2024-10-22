@@ -11,6 +11,7 @@ import {
   OneToMany,
 } from "typeorm";
 import { GiftCouponEntity } from "../../gift-coupon/entities/gift-coupon.entity";
+import { IsPhoneNumber } from "class-validator";
 
 @Entity()
 export class CustomerEntity {

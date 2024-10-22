@@ -10,6 +10,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { differenceInMilliseconds, formatDistanceToNow } from "date-fns";
 import { GetCustomerDto } from "./dto/get.customer.dto";
+import { GetCustomerPaginatedsDto } from "./dto/get.customers.paginated.dto";
 
 @Injectable()
 export class CustomerService {
@@ -74,11 +75,18 @@ export class CustomerService {
         })),
         lastRootoshes: customer.lastRootoshes?.map((rootosh) => ({
           id: rootosh.id,
-          name: rootosh.english_Name,
-
+          english_Name: rootosh.english_Name,
+          arabic_Name: rootosh.arabic_Name,
+          expirationDuration:rootosh.expireduration,
+          expirationDate:customer.rootoshesexpirationDate,
+          duration:rootosh.duration_Mins,
           description: rootosh.description,
+       
+
         })),
-        reservations: customer.reservations?.map((reservation) => ({
+        reservations: customer.reservations
+        ?.slice(-10) // Get the last 10 reservations
+        .map((reservation) => ({
           id: reservation.id,
           reservationDate: formatReservationDate(
             reservation.reservationDay,
@@ -92,10 +100,7 @@ export class CustomerService {
             price: service.price,
           })),
         })),
-        orders: customer.orders?.map((order) => ({
-          id: order.id,
-          date: order.date, // ISO 8601 string format
-        })),
+       
         orderCount, // Count of orders
         rootoshesexpirationDate:customer.rootoshesexpirationDate
       };
@@ -150,4 +155,36 @@ export class CustomerService {
   async countCustomers(): Promise<number> {
     return await this.customerRepository.count();
   }
+
+  async getAllCustomers(filters: GetCustomerPaginatedsDto): Promise<{ customers: CustomerEntity[]; total: number }> {
+    const { branchId, fromDate, toDate, page = 1, limit = 10 } = filters;
+
+    const query = this.customerRepository.createQueryBuilder('customer')
+      .leftJoinAndSelect('customer.reservations', 'reservation');
+
+    // Apply filters
+    if (branchId) {
+      query.andWhere('reservation.branchId = :branchId', { branchId });
+    }
+
+    if (fromDate) {
+      query.andWhere('reservation.start_Time >= :fromDate', { fromDate: new Date(fromDate + 'T00:00:00') });
+    }
+
+    if (toDate) {
+      query.andWhere('reservation.start_Time <= :toDate', { toDate: new Date(toDate + 'T23:59:59') });
+    }
+
+    // Pagination
+    query.skip((page - 1) * limit)
+         .take(limit);
+
+    const [customers, total] = await query.getManyAndCount();
+
+    return {
+      customers,
+      total,
+    };
+  }
 }
+

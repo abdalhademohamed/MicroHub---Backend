@@ -7,17 +7,18 @@ import {
   Length,
   IsOptional,
   IsISO8601,
+  IsPhoneNumber,
 } from "class-validator";
 import { Type } from "class-transformer";
 
 export class CreateCustomerDto {
   @IsString()
   @IsNotEmpty()
+  @Length(2, 3, { message: "Country code must be 2 or 3 characters long" })
   country_Code: string;
 
-  @IsString()
+  // @IsPhoneNumber(null, { message: "Invalid phone number" })
   @IsNotEmpty()
-  @Length(5, 15)
   phoneNumber: string;
 
   @IsString()

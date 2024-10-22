@@ -45,8 +45,14 @@ export class GetCustomerDto {
   })
   lastRootoshes?: Array<{
     id: string;
-    name: string;
+    english_Name: string;
+    arabic_Name:string
+    expirationDuration:number
+    expirationDate:Date
+    duration:number
     description: string;
+    // serviceEnglishName:string
+    // serviceArabicName:string
   }>; // Array of rootosh details
 
   @ApiProperty({
