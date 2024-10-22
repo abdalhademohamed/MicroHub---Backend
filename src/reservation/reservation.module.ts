@@ -20,6 +20,8 @@ import { OfferEntity } from "../offer/entities/offer.entity";
 import { SharableOfferEntity } from "../sharable-offer/entities/sharable-offer.entity";
 import { GiftCouponEntity } from "../gift-coupon/entities/gift-coupon.entity";
 import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
+import { NotificationModule } from "../notification/notification.module";
+import { GiftCouponModule } from "../gift-coupon/gift-coupon.module";
 
 @Module({
   imports: [
@@ -39,8 +41,12 @@ import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
       OfferEntity,
       SharableOfferEntity,
       GiftCouponEntity,
-      RootoshEntity
+      RootoshEntity,
+      GiftCouponEntity,
+
     ]),
+    NotificationModule,
+    GiftCouponModule
   ],
   controllers: [ReservationController],
   providers: [

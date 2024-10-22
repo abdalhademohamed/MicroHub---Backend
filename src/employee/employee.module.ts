@@ -13,6 +13,9 @@ import { AuthModule } from "../auth/auth.module";
 import { UserEntity } from "../user/entities/user.entity";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { SlotModule } from "../slots/slot.module";
+import { WorkingEntity } from "../slots/entities/working.entity";
+import { SlotsEntity } from "../slots/entities/slots.entity";
+import { ReservationEntity } from "../reservation/entities/reservation.entity";
 
 @Module({
   imports: [
@@ -24,6 +27,9 @@ import { SlotModule } from "../slots/slot.module";
       EmployeeTypeEntity,
       UserEntity,
       AuditLogEntity,
+      WorkingEntity,
+      SlotsEntity,
+      ReservationEntity,
     ]),
     ArtistModule,
     AuthModule, // Import AuthModule to make AuthService available

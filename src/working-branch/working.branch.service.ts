@@ -254,20 +254,24 @@ export class WorkingBranchService {
   private calculateTotalWorkingHours(workingHours: string[]): number {
     // Initialize total hours
     let totalHours = 0;
-
+  
+    // Check for special case of 24-hour operation
+    if (workingHours.length === 2 && workingHours[0] === "00:00" && workingHours[1] === "00:00") {
+      return 24; // 24 hours operation
+    }
+  
     // Convert workingHours into hour ranges
-    const timeRanges = [];
     for (let i = 0; i < workingHours.length; i += 2) {
       const start = workingHours[i];
       const end = workingHours[i + 1] || start; // Use start if no end is provided
       const startDate = this.convertToDate(start);
       const endDate = this.convertToDate(end);
-      totalHours +=
-        (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60);
+      totalHours += (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60);
     }
-
+  
     return totalHours;
   }
+  
 
   // Helper method to convert time string to Date
   private convertToDate(time: string): Date {
@@ -278,23 +282,23 @@ export class WorkingBranchService {
   }
 
   // Method to validate working hours
-  private validateWorkingHours(workingHours: string[]): boolean {
-    // Check for valid time format and duplicates
-    const timePattern = /^([01]\d|2[0-3]):([0-5]\d)$/; // HH:MM format
-    const seenHours = new Set<string>();
+  // private validateWorkingHours(workingHours: string[]): boolean {
+  //   // Check for valid time format and duplicates
+  //   const timePattern = /^([01]\d|2[0-3]):([0-5]\d)$/; // HH:MM format
+  //   const seenHours = new Set<string>();
 
-    for (const hour of workingHours) {
-      if (!timePattern.test(hour)) {
-        return false; // Invalid time format
-      }
-      if (seenHours.has(hour)) {
-        return false; // Duplicate time
-      }
-      seenHours.add(hour);
-    }
+  //   for (const hour of workingHours) {
+  //     if (!timePattern.test(hour)) {
+  //       return false; // Invalid time format
+  //     }
+  //     if (seenHours.has(hour)) {
+  //       return false; // Duplicate time
+  //     }
+  //     seenHours.add(hour);
+  //   }
 
-    return true; // All checks passed
-  }
+  //   return true; // All checks passed
+  // }
 
   async findAll(
     branchId?: string

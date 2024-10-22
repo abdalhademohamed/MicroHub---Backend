@@ -5,13 +5,16 @@ import { SharableOfferEntity } from '../sharable-offer/entities/sharable-offer.e
 import { CustomerEntity } from '../customer/entities/customer.entity';
 import { GiftCouponEntity } from './entities/gift-coupon.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { OrderEntity } from '../orders/entities/order.entity';
 
 @Module({
 
 
-  imports: [TypeOrmModule.forFeature([SharableOfferEntity,CustomerEntity,GiftCouponEntity])],
+  imports: [TypeOrmModule.forFeature([SharableOfferEntity,CustomerEntity,GiftCouponEntity,OrderEntity])],
 
   controllers: [GiftCouponController],
   providers: [GiftCouponService],
+  exports: [GiftCouponService],  // Make sure to export GiftCouponService so it can be used in other modules
+
 })
 export class GiftCouponModule {}

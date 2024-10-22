@@ -43,7 +43,8 @@ export class ReservationEntity {
   @Column({ default: new Date() })
   createdAt: Date;
 
-  @Column()
+  @Column({    nullable: true,
+  })
   deposit_Content: string; // Correct property name
 
   @ManyToOne(() => BranchEntity, (branch) => branch.reservations)
@@ -52,8 +53,9 @@ export class ReservationEntity {
   @ManyToMany(() => ServiceEntity, (service) => service.reservations, { nullable: true })
   services?: ServiceEntity[]; // Make it optional
 
-  @ManyToMany(() => EmployeeEntity, (employee) => employee.reservations)
-  employees: EmployeeEntity[];
+  @ManyToOne(() => EmployeeEntity, (employee) => employee.reservations, { nullable: true })
+  @JoinColumn() // Indicates the owning side of the ManyToOne relationship
+  employee: EmployeeEntity; // Optional, based on whether the employee can be null
 
 
   @ManyToOne(() => CustomerEntity, (customer) => customer.reservations)
@@ -70,5 +72,7 @@ export class ReservationEntity {
   @Column({ default: false })
   isDeleted: boolean;
 
+  @Column({ name: "created_by", nullable: true })
+  createdBy: string;
 
 }

@@ -7,6 +7,7 @@ import {
   PrimaryGeneratedColumn,
   OneToMany,
   ManyToMany,
+  JoinTable,
 } from "typeorm";
 import { WorkingBranchEntity } from "../../working-branch/entities/working.branch.entity";
 import { SlotsEntity } from "../../slots/entities/slots.entity";
@@ -50,7 +51,7 @@ export class BranchEntity {
   @OneToMany(() => SlotsEntity, (entity) => entity.branch)
   slots: SlotsEntity[];
 
-  @OneToMany(() => SharableOfferEntity, (SharableOfferEntity) => SharableOfferEntity.branch)
+  @ManyToMany(() => SharableOfferEntity, (SharableOfferEntity) => SharableOfferEntity.branches)
   sharableOffers: SharableOfferEntity[];
   @Column({ name: "created_by", nullable: true })
   createdBy: string;

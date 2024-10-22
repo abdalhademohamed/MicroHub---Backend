@@ -99,8 +99,9 @@ export class OrdersController {
     @Body("paymentStatus") paymentStatus: "paid" | "partially paid",
     @UploadedFile() image: Express.Multer.File, // File uploads cannot be passed as query parameters
   ) {
-    const userId = req.user.sub; // Extract user ID from request
 
+    const userId = req.user.sub; // Extract user ID from request
+    console.log(userId)
     if (!userId) {
       throw new BadRequestException("User not authenticated");
     }
@@ -126,7 +127,7 @@ export class OrdersController {
       throw new BadRequestException("Invalid status");
     }
 
-    try {
+   
       const userId = req.user.sub; // Extract user ID from request
 
       if (!userId) {
@@ -138,17 +139,12 @@ export class OrdersController {
         image,
         userId,
       );
-    } catch (error) {
-      return {
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: "Failed to update order status",
-      };
-    }
+    
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Patch("assign")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST,Role.ARTISTMANAGER)
   async assignOrderToArtist(
     @Request() req: any, // Request object to access the user
     @Query("orderId") orderId: string,

@@ -43,7 +43,7 @@ export class RootoshController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN,Role.RECEPTIONIST)
   @Get()
   async findAllRootosh(
     @Query("page") page: number = 1, // Default page is 1
@@ -58,7 +58,7 @@ export class RootoshController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN,Role.RECEPTIONIST)
   @Get(":id")
   async findOne(@Param("id") id: string): Promise<RootoshEntity> {
     return this.RootoshService.findOneRootosh(id);
@@ -66,7 +66,7 @@ export class RootoshController {
 
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN,Role.RECEPTIONIST)
   @Get("service/:serviceId")
   async getRootoshesByServiceId(
     @Param("serviceId") serviceId: string

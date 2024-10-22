@@ -51,29 +51,32 @@ export class BranchService {
     userId: string
   ): Promise<BranchEntity> {
     const { name, location, image, workingBranch } = createBranchDto;
-  
+
     try {
       // Check if the branch already exists
       const existingBranch = await this.BranchRepository.findOne({
         where: [{ name }, { location }],
       });
-  
+
       if (existingBranch) {
         throw new ConflictException(
           "A branch with the given name or location already exists."
         );
       }
-  
+      // Validate URL
+      if (!this.isValidUrl(location)) {
+        throw new BadRequestException("Invalid URL format for location");
+      }
       // Create and save the new branch
       const branch = this.BranchRepository.create({
-        name,  
+        name,
         location,
         image,
         createdBy: userId,
-        workingbranch:[]
+        workingbranch: [],
       });
       const savedBranch = await this.BranchRepository.save(branch);
-  
+
       // // If workingBranches are provided, create WorkingBranchEntity records
       // if (workingBranch && workingBranch.length > 0) {
       //   const workingBranchEntities = workingBranches.map(wbDto => {
@@ -87,40 +90,47 @@ export class BranchService {
       //       branch: savedBranch,
       //     });
       //   });
-  
+
       //   // Save all working branch entities
       //   await this.WorkingBranchRepository.save(workingBranchEntities);
       // }
-  
+
       // Create an audit log entry
       const log = new AuditLogEntity();
       log.tableName = "branch"; // Use the table name
       log.action = "INSERT";
       log.entityId = savedBranch.id;
       log.performedBy = userId;
-  
+
       // Fetch user details if needed
       if (userId) {
         const user = await this.UserService.getUserDetails(userId);
         log.userDetails = user;
       }
-  
+
       await this.AuditLogRepository.save(log);
-  
+
       return savedBranch;
     } catch (error) {
       // Handle specific errors
       if (error instanceof ConflictException) {
         throw error;
       }
-  
+
       // Handle unexpected errors
       throw new InternalServerErrorException(
         "An unexpected error occurred while creating the branch."
       );
     }
   }
-
+  private isValidUrl(url: string): boolean {
+    try {
+      new URL(url);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
   // async getAllBranches(
   //   filterDto: FilterBranchesDto
   // ): Promise<{
@@ -130,17 +140,17 @@ export class BranchService {
   //   totalPages: number;
   // }> {
   //   const { page = 1, limit = 10, order = 'ASC' } = filterDto;
-  
+
   //   // Validate pagination values
   //   if (page < 1 || limit < 1) {
   //     throw new BadRequestException('Page and limit must be greater than 0');
   //   }
-  
+
   //   // Validate order value
   //   if (!['ASC', 'DESC'].includes(order)) {
   //     throw new BadRequestException('Invalid order value. Must be "ASC" or "DESC"');
   //   }
-  
+
   //   try {
   //     // Build the query
   //     const query = this.BranchRepository.createQueryBuilder('branch')
@@ -167,13 +177,13 @@ export class BranchService {
   //       .skip((page - 1) * limit)
   //       .take(limit)
   //       .orderBy('branch.name', order.toUpperCase() as 'ASC' | 'DESC');
-  
+
   //     // Execute the query
   //     const [branches, total] = await query.getManyAndCount();
-  
+
   //     // Calculate total pages
   //     const totalPages = Math.ceil(total / limit);
-  
+
   //     // Map the results to DTO
   //     const items = branches.map(branch => {
   //       return {
@@ -192,7 +202,7 @@ export class BranchService {
   //         })),
   //       };
   //     });
-  
+
   //     return {
   //       items,
   //       total,
@@ -203,7 +213,7 @@ export class BranchService {
   //     throw new InternalServerErrorException('Failed to get branches', error.stack);
   //   }
   // }
-  
+
   async getAllBranches(
     filterDto: FilterBranchesDto,
     userRole: Role,
@@ -214,58 +224,60 @@ export class BranchService {
     currentPage: number;
     totalPages: number;
   }> {
-    const { page = 1, limit = 10, order = 'ASC' } = filterDto;
-  
+    const { page = 1, limit = 10, order = "ASC" } = filterDto;
+
     // Validate pagination values
     if (page < 1 || limit < 1) {
-      throw new BadRequestException('Page and limit must be greater than 0');
+      throw new BadRequestException("Page and limit must be greater than 0");
     }
-  
+
     // Validate order value
-    if (!['ASC', 'DESC'].includes(order)) {
-      throw new BadRequestException('Invalid order value. Must be "ASC" or "DESC"');
+    if (!["ASC", "DESC"].includes(order)) {
+      throw new BadRequestException(
+        'Invalid order value. Must be "ASC" or "DESC"'
+      );
     }
-  
+
     try {
       // Build the query
-      let query = this.BranchRepository.createQueryBuilder('branch')
-        .leftJoinAndSelect('branch.employees', 'employeeAlias') // Use an alias
+      let query = this.BranchRepository.createQueryBuilder("branch")
+        .leftJoinAndSelect("branch.employees", "employeeAlias") // Use an alias
         .select([
-          'branch.id',
-          'branch.name',
-          'branch.location',
-          'branch.image',
-          'branch.createdBy',
-          'branch.updatedBy',
-          'branch.deletedBy',
-          'employeeAlias.id', // Use the alias here
-          'employeeAlias.username',
-          'employeeAlias.email',
-          'employeeAlias.role',
-          'employeeAlias.english_Name',
-          'employeeAlias.arabic_Name',
-          'employeeAlias.workingHours',
-          'employeeAlias.phoneNumber',
-          'employeeAlias.image',
-          'employeeAlias.totalReviews', // Ensure this field exists in EmployeeEntity
+          "branch.id",
+          "branch.name",
+          "branch.location",
+          "branch.image",
+          "branch.createdBy",
+          "branch.updatedBy",
+          "branch.deletedBy",
+          "employeeAlias.id", // Use the alias here
+          "employeeAlias.username",
+          "employeeAlias.email",
+          "employeeAlias.role",
+          "employeeAlias.english_Name",
+          "employeeAlias.arabic_Name",
+          "employeeAlias.workingHours",
+          "employeeAlias.phoneNumber",
+          "employeeAlias.image",
+          "employeeAlias.totalReviews", // Ensure this field exists in EmployeeEntity
         ])
         .skip((page - 1) * limit)
         .take(limit)
-        .orderBy('branch.name', order.toUpperCase() as 'ASC' | 'DESC');
-  
-      // If the user is not an admin, restrict to the branch they're associated with
-      if (![Role.ADMIN, Role.SUPERADMIN, Role.COORDINATOR].includes(userRole)) {
+        .orderBy("branch.name", order.toUpperCase() as "ASC" | "DESC");
+
+      // If the user is not an admin,restrict to the branch they're associated with
+      if (![Role.ADMIN, Role.SUPERADMIN, Role.COORDINATOR,Role.ARTISTMANAGER].includes(userRole)) {
         query = query
-          .leftJoin('branch.employees', 'userEmployee') // Alias for user's employee
-          .where('userEmployee.id = :userId', { userId });
+          .leftJoin("branch.employees", "userEmployee") // Alias for user's employee
+          .where("userEmployee.id = :userId", { userId });
       }
-  
+
       // Execute the query
       const [branches, total] = await query.getManyAndCount();
-  
+
       // Calculate total pages
       const totalPages = Math.ceil(total / limit);
-  
+
       // Map the results to DTO
       const items = branches.map((branch) => {
         return {
@@ -284,7 +296,7 @@ export class BranchService {
           })),
         };
       });
-  
+
       return {
         items,
         total,
@@ -292,7 +304,10 @@ export class BranchService {
         totalPages,
       };
     } catch (error) {
-      throw new InternalServerErrorException('Failed to get branches', error.stack);
+      throw new InternalServerErrorException(
+        "Failed to get branches",
+        error.stack
+      );
     }
   }
 
@@ -306,7 +321,7 @@ export class BranchService {
     });
 
     if (!branch) {
-      throw new NotFoundException('Branch not found');
+      throw new NotFoundException("Branch not found");
     }
 
     // Fetch working hours for the specified branch
@@ -314,7 +329,7 @@ export class BranchService {
       where: { branch: { id: branchId } },
     });
 
-    const workingHours = workingHoursEntities.map(entity => ({
+    const workingHours = workingHoursEntities.map((entity) => ({
       dayOfWeek: entity.dayOfWeek,
       hours: entity.workingHours,
     }));
@@ -325,10 +340,7 @@ export class BranchService {
     };
   }
 
-
-  async getBranchCalendar(
-    filterDto: FilterBranchCalendarDto
-  ): Promise<{
+  async getBranchCalendar(filterDto: FilterBranchCalendarDto): Promise<{
     branch: {
       id: string;
       name: string;
@@ -341,28 +353,35 @@ export class BranchService {
     currentPage: number;
     totalPages: number;
   }> {
-    const { branchId, dayOfWeek, date, page = 1, limit = 10, order = 'ASC' } = filterDto;
-  
+    const {
+      branchId,
+      dayOfWeek,
+      date,
+      page = 1,
+      limit = 10,
+      order = "ASC",
+    } = filterDto;
+
     // Fetch the branch entity to ensure it exists
     const branch = await this.BranchRepository.findOne({
       where: { id: branchId },
     });
-  
+
     if (!branch) {
-      throw new NotFoundException('Branch not found');
+      throw new NotFoundException("Branch not found");
     }
-  
+
     // Prepare working hours response
     let workingHours: { dayOfWeek: string; hours: string[] }[] = [];
-  
+
     if (dayOfWeek) {
       // Convert dayOfWeek string to WeekDays enum
       const weekDayEnum = WeekDays[dayOfWeek as keyof typeof WeekDays];
-  
+
       if (!weekDayEnum) {
-        throw new BadRequestException('Invalid day of the week');
+        throw new BadRequestException("Invalid day of the week");
       }
-  
+
       // Find the working branch entity for the given day
       const workingBranch = await this.WorkingBranchRepository.findOne({
         where: {
@@ -370,7 +389,7 @@ export class BranchService {
           dayOfWeek: weekDayEnum,
         },
       });
-  
+
       if (workingBranch) {
         workingHours.push({
           dayOfWeek: weekDayEnum,
@@ -381,33 +400,37 @@ export class BranchService {
       // Fetch working hours for all days if dayOfWeek is not provided
       workingHours = await this.WorkingBranchRepository.find({
         where: { branch: { id: branchId } },
-      }).then(results => results.map(wb => ({
-        dayOfWeek: wb.dayOfWeek,
-        hours: wb.workingHours,
-      })));
+      }).then((results) =>
+        results.map((wb) => ({
+          dayOfWeek: wb.dayOfWeek,
+          hours: wb.workingHours,
+        }))
+      );
     }
-  
+
     // Handle date for reservations
     const reservationsDate = date ? new Date(date) : new Date();
     const reservationDay = reservationsDate.getDate();
     const reservationMonth = reservationsDate.getMonth() + 1; // Months are 0-indexed
     const reservationYear = reservationsDate.getFullYear();
-  
+
     // Calculate pagination
-    const [reservations, total] = await this.ReservationRepository.findAndCount({
-      where: {
-        branch: { id: branchId },
-        reservationDay,
-        reservationMonth,
-        reservationYear,
-      },
-      order: {
-        start_Time: order, // Order reservations by start time
-      },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
-  
+    const [reservations, total] = await this.ReservationRepository.findAndCount(
+      {
+        where: {
+          branch: { id: branchId },
+          reservationDay,
+          reservationMonth,
+          reservationYear,
+        },
+        order: {
+          start_Time: order, // Order reservations by start time
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+      }
+    );
+
     // Return branch details, working hours, and reservations
     return {
       branch: {
@@ -434,45 +457,47 @@ export class BranchService {
   async updateBranch(
     branchId: string,
     updateBranchDto: UpdateBranchDto,
-    userId: string,   
-    image: Express.Multer.File,
-
+    userId: string,
+    image: Express.Multer.File
   ): Promise<BranchEntity> {
     try {
       // Find the branch by ID
       const branch = await this.BranchRepository.findOne({
         where: { id: branchId },
       });
-  
+
       if (!branch) {
         throw new NotFoundException(`Branch with ID ${branchId} not found.`);
       }
-  
+
       // Track original values
       const originalBranch = { ...branch };
-  
+
       // Update branch properties
       const { name, location } = updateBranchDto;
       branch.name = name ?? branch.name;
       branch.location = location ?? branch.location;
 
       // Handle image upload and update
-      const folderName='branch'
+      const folderName = "branch";
       if (image) {
         // Upload the new image
-        const uploadedImage = await this.CloudinaryService.uploadImage(image,folderName); // Adjust according to your Cloudinary service method
+        const uploadedImage = await this.CloudinaryService.uploadImage(
+          image,
+          folderName
+        ); // Adjust according to your Cloudinary service method
         branch.image = uploadedImage.url; // Assume the Cloudinary service returns a URL
       }
-      
+
       branch.updatedBy = userId;
-  
+
       // Save the updated branch
       const updatedBranch = await this.BranchRepository.save(branch);
-  
+
       // Determine which columns have changed and log detailed information
       const changedColumns = [];
       const changesDetails = {};
-      
+
       if (originalBranch.name !== updatedBranch.name) {
         changedColumns.push("name");
         changesDetails["name"] = {
@@ -494,13 +519,13 @@ export class BranchService {
           newValue: updatedBranch.image,
         };
       }
-  
+
       // Debug statements
       console.log("Original Branch:", originalBranch);
       console.log("Updated Branch:", updatedBranch);
       console.log("Changed Columns:", changedColumns);
       console.log("Changes Details:", changesDetails);
-  
+
       // Create an audit log entry
       const auditLog = new AuditLogEntity();
       auditLog.tableName = "branch";
@@ -509,25 +534,24 @@ export class BranchService {
       auditLog.performedBy = userId;
       auditLog.changedColumns = changedColumns; // Log changed columns
       auditLog.changesDetails = changesDetails; // Log detailed changes
-  
+
       // Optionally, get user details for more detailed logging
       if (userId) {
         const user = await this.UserService.getUserDetails(userId);
         auditLog.userDetails = user; // Adjust according to your AuditLogEntity structure
       }
-  
+
       await this.AuditLogRepository.save(auditLog);
-  
+
       return updatedBranch;
     } catch (error) {
-      console.error('Update Branch Error:', error); // Debug statement
+      console.error("Update Branch Error:", error); // Debug statement
       throw new InternalServerErrorException(
         "An unexpected error occurred while updating the branch."
       );
     }
   }
-  
-  
+
   async deleteBranch(branchId: string, userId: string): Promise<void> {
     try {
       // Find the branch by ID
@@ -569,22 +593,19 @@ export class BranchService {
     }
   }
 
-
   async countBranches(): Promise<number> {
     return await this.BranchRepository.count();
   }
 
-
-
-   // Function to check if the branch has an employee with position 'ARTIST'
-   async hasArtist(branchId: string): Promise<boolean> {
+  // Function to check if the branch has an employee with position 'ARTIST'
+  async hasArtist(branchId: string): Promise<boolean> {
     // Find employees with the 'ARTIST' position in the specified branch
     const artistCount = await this.EmployeeRepository.count({
       where: {
         branch: { id: branchId },
         position: { postion: Postion.ARTIST }, // Filtering by position ARTIST
       },
-      relations: ['branch', 'position'], // Ensures the relation is loaded
+      relations: ["branch", "position"], // Ensures the relation is loaded
     });
     console.log(artistCount);
 

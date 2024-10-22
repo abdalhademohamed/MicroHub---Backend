@@ -4,7 +4,7 @@ export class CreateGiftCouponDto {
   @IsNotEmpty()
   @IsString()
   @IsUUID()
-  sharableOfferId: string; // ID of the sharable offer
+  orderId: string; // ID of the sharable offer
 
   @IsNotEmpty()
   @IsString()

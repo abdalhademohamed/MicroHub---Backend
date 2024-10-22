@@ -12,7 +12,7 @@ import { CreateEmployeeDto } from "./create.employee.dto";
 
 export class UpdateEmployeeDto extends PartialType(CreateEmployeeDto) {
   @ApiProperty({
-    description: "The name of the employee in English",
+    description: "The name of the employee in English", 
     example: "John Doe",
     required: false,
   })
@@ -94,7 +94,7 @@ export class UpdateEmployeeDto extends PartialType(CreateEmployeeDto) {
   })
   @IsUUID()
   @IsOptional()
-  branch?: string;
+  branchId?: string;
 
   @ApiProperty({
     description: "The UUID of the position of the employee",

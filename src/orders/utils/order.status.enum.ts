@@ -1,8 +1,9 @@
 export enum OrderStatus {
-  InProgress = "InProgress",
+  Pending = "Pending",
+
   InQueue = "InQueue",
   Working = "Working",
-  Done = "Done",
+  Reviewed = "Reviewed",
   Completed = "Completed",
   Canceled = "Canceled",
 }

@@ -15,6 +15,8 @@ import { EventEmitter2, OnEvent } from "@nestjs/event-emitter";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { UserEntity } from "../user/entities/user.entity";
 import { UserService } from "../user/user.service";
+import { NotificationService } from "../notification/notification.service";
+import { OrderStatus } from "../orders/utils/order.status.enum";
 
 @Injectable()
 export class ReviewsService {
@@ -33,6 +35,8 @@ export class ReviewsService {
     @InjectRepository(AuditLogEntity)
     private readonly AuditLogRepository: Repository<AuditLogEntity>,
     private eventEmitter: EventEmitter2,
+    private readonly notificationService: NotificationService // Inject NotificationService
+
   ) {}
   @OnEvent("review:changed")
   async onHandleReviewChanged({ ids }: { ids: string[] }) {
@@ -65,74 +69,147 @@ export class ReviewsService {
     }
   }
   async createReview(body: CreateReviewDto, userId: string) {
-    const { order } = body;
-
-    const newestOrder = await this.orderRepository.findOne({
-      where: { id: order },
-      relations: ["reservation.customer", "artist"],
-    });
-
-    if (!newestOrder) {
-      throw new NotFoundException(`Order with ID ${order} not found`);
-    }
-    if (!newestOrder.artist?.id) {
-      throw new HttpException(`Order with ID not associated with artist `, 400);
-    }
-    // console.log(newestOrder.artist?.id)
-
-    const employee = await this.employeeRepository.findOneBy({
-      id: body.employee,
-    });
-    // console.log(employee);
-    const [orders, count] = await this.orderRepository.findAndCount({
-      where: {
-        createdAt: LessThan(newestOrder.createdAt),
-        reservation: {
-          customer: { id: newestOrder.reservation.customer.id },
+    try {
+      const { order } = body;
+    
+      // Find the order with relations
+      const newestOrder = await this.orderRepository.findOne({
+        where: { id: order },
+        relations: ["reservation.customer", "artist"],
+      });
+    
+      // Check if the order exists
+      if (!newestOrder) {
+        throw new NotFoundException({
+          message: `Order not found`,
+          error: `Order with ID ${order} not found`,
+        });
+      }
+    
+      // Check if the order is already reviewed
+      if (newestOrder.isReviewed) {
+        throw new HttpException(
+          {
+            message: `Order already reviewed`,
+            error: `Order with ID ${order} has already been reviewed`,
+          },
+          400,
+        );
+      }
+    
+      // Check if the order is associated with an artist
+      if (!newestOrder.artist?.id) {
+        throw new HttpException(
+          {
+            message: `Order not associated with an artist`,
+            error: `Order with ID ${order} is not associated with any artist`,
+          },
+          400,
+        );
+      }
+    
+      const employee = await this.employeeRepository.findOneBy({
+        id: body.employee,
+      });
+    
+      if (!employee) {
+        throw new NotFoundException({
+          message: `Employee not found`,
+          error: `Employee with ID ${body.employee} not found`,
+        });
+      }
+    
+      const [orders, count] = await this.orderRepository.findAndCount({
+        where: {
+          createdAt: LessThan(newestOrder.createdAt),
+          reservation: {
+            customer: { id: newestOrder.reservation.customer.id },
+          },
         },
-      },
-      order: { createdAt: "DESC" },
-      relations: ["reservation.customer", "artist"],
-    });
-    let reviews = [];
-    const ids = [];
-    let review = this.reviewRepository.create({
-      artist: newestOrder.artist,
-      order: newestOrder,
-      orderFirstTime: count == 0 ? true : false,
-      rating: body.newestRating ?? 0,
-      employee,
-      imageOrder: "after",
-    });
-    // Save the review and audit log
-    await this.saveReviewAndAuditLog(review, userId);
-    // console.log(review);
-    await this.reviewRepository.save(review);
-    reviews.push(review);
-    //  await this.saveReviewAndAuditLog(secondReview, userId);
-
-    ids.push(newestOrder.artist.id);
-    console.log(ids);
-    if (count == 0) {
+        order: { createdAt: "DESC" },
+        relations: ["reservation.customer", "artist"],
+      });
+    
+      let reviews = [];
+      const ids = [];
+    
+      // Create the first review (for the newest order)
+      let review = this.reviewRepository.create({
+        artist: newestOrder.artist,
+        order: newestOrder,
+        orderFirstTime: count === 0,
+        rating: body.newestRating ?? 0,
+        employee,
+        comment_Before: body.comment_Before,
+        imageOrder: "after",
+      });
+    
+      // Save the review and audit log
+      await this.saveReviewAndAuditLog(review, userId);
+      await this.reviewRepository.save(review);
+    
+      // Update the order status and mark it as reviewed
+      newestOrder.status = OrderStatus.Reviewed;
+      newestOrder.isReviewed = true;
+      await this.orderRepository.save(newestOrder);
+    
+      reviews.push(review);
+      ids.push(newestOrder.artist.id);
+    
+      // Emit the event for the first review
       this.eventEmitter.emit("review:changed", { ids });
+    
+      // If it's the first order, return the reviews immediately
+      if (count === 0) {
+        return { items: reviews };
+      }
+    
+      // Create the second review (for the previous order)
+      review = this.reviewRepository.create({
+        artist: orders[0].artist,
+        order: newestOrder,
+        orderFirstTime: false,
+        rating: body.oldestRating ?? 0,
+        comment_Before: body.comment_Before,
+        comment_After: body.comment_After,
+        employee,
+        imageOrder: "before",
+      });
+    
+      // Save the second review and audit log
+      await this.saveReviewAndAuditLog(review, userId);
+      ids.push(orders[0].artist.id);
+      reviews.push(review);
+    
+      // Send notification to the artist for the second review
+      await this.notificationService.createNotification(
+        orders[0].artist.id,
+        'Order reviewed',
+        `Your order with ID ${newestOrder.id} has been reviewed.`
+      );
+    
+      // Emit the event for the second review
+      this.eventEmitter.emit("review:changed", { ids });
+    
       return { items: reviews };
+    } catch (error) {
+      // Catching unexpected errors and rethrowing them with additional details
+      throw new HttpException(
+        {
+          message: `Failed to create review`,
+          error: error.message || error,
+          details: {
+            body,
+            userId,
+            stack: error.stack, // Include stack trace for debugging (optional)
+          },
+        },
+        error.status || 500, // Preserve the original error status if it exists
+      );
     }
-    review = this.reviewRepository.create({
-      artist: orders[0].artist,
-      order: newestOrder,
-      orderFirstTime: false,
-      rating: body.oldestRating ?? 0,
-      employee,
-      imageOrder: "before",
-    });
-    // Save the second review and audit log
-    await this.saveReviewAndAuditLog(review, userId);
-    ids.push(orders[0].artist.id);
-    reviews.push(review);
-    this.eventEmitter.emit("review:changed", { ids });
-    reviews.push(review);
-    return { items: reviews };
   }
+  
+  
 
   // Save the second review and audit log
   private async saveReviewAndAuditLog(review: ReviewEntity, userId: string) {
@@ -230,5 +307,27 @@ export class ReviewsService {
     });
 
     return reviews;
+  }
+
+
+
+  async isFirstTimeOrder(orderId: string): Promise<boolean> {
+    // Find the order by its ID
+    const order = await this.orderRepository.findOne({
+      where: { id: orderId },
+      relations: ['customer'], // Include customer relationship
+    });
+
+    if (!order || !order.customer) {
+      throw new Error('Order or customer not found');
+    }
+
+    // Count all orders by the same customer
+    const customerOrdersCount = await this.orderRepository.count({
+      where: { customer: order.customer },
+    });
+
+    // If this is the only order, it's the first time
+    return customerOrdersCount === 1;
   }
 }

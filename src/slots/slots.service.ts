@@ -3,7 +3,7 @@ import { WeekDays } from "../branch/utils/days.enum";
 import { CreateSlotDto } from "./dto/create.slot.dto";
 import { InjectRepository } from "@nestjs/typeorm";
 import { WorkingBranchEntity } from "../working-branch/entities/working.branch.entity";
-import { Brackets, MoreThan, MoreThanOrEqual, Repository } from "typeorm";
+import { Brackets, In, MoreThan, MoreThanOrEqual, Repository } from "typeorm";
 import { BranchEntity } from "../branch/entities/branch.entity";
 import { Role } from "../user/utils/user.enum";
 import { UserEntity } from "../user/entities/user.entity";
@@ -265,8 +265,8 @@ export class SlotService {
     const dayIndex = date.getDay();
     return daysOfWeek[dayIndex];
   }
-  @OnEvent('artist:created')
-  async createSlotsForArtist(artist: EmployeeEntity) {
+  @OnEvent('artist:hours')
+  async removeWorkingHours({ duration, branchId }) {
     const today = new Date();
     let loopOn = true;
     while (loopOn) {
@@ -276,16 +276,11 @@ export class SlotService {
           month: today.getMonth() + 1,
           year: today.getFullYear(),
           branch: {
-            id: artist.branch.id,
+            id: branchId,
           },
         },
+        relations: [ 'branch', 'workingEntity' ]
       });
-      // console.log(slot);
-      const day = this.getDayFromDate(
-        today.getFullYear(),
-        today.getMonth() + 1,
-        today.getDate(),
-      );
       if (!slot) {
         const count = await this.SlotRepository.count({
           where:{
@@ -293,7 +288,7 @@ export class SlotService {
             month: MoreThanOrEqual(today.getMonth() + 1),
             year: MoreThanOrEqual(today.getFullYear()),
             branch: {
-              id: artist.branch.id,
+              id: branchId,
             },
           },
         });
@@ -303,18 +298,32 @@ export class SlotService {
         }
         continue;
       }
-      const workingHours = (
-        await this.branchWorkingHours(artist.branch.id, day)
-      ).workingHours;
-      const workingEntities = this.createWorkingHoursSlotsForArtist(
-        workingHours,
-        today,
-        slot,
-        artist,
-      );
-      // console.log(workingEntities);
-      await this.WorkingRepository.save(workingEntities);
-      // console.log(workingEntities);
+      let sum = 0
+      const ids = [];
+      for (const wE of slot.workingEntity){
+        if(wE.duration == duration){
+          await this.WorkingRepository.remove(wE);
+          break;
+        }
+        if(wE.duration >= duration){
+          wE.from = new Date( duration * 1000 * 60 + wE.from.getTime()  )
+          await this.WorkingRepository.save(wE);
+          break;
+        }
+        sum += wE.duration;
+        ids.push(wE.id);
+        if(sum == duration){
+          await this.WorkingRepository.delete({ id: In(ids) });
+          break;
+        }
+        if(sum > duration){
+          wE.from = new Date( ( sum - duration ) * 1000 * 60 + wE.from.getTime()  )
+          await this.WorkingRepository.save(wE);
+          ids.pop();
+          await this.WorkingRepository.delete({ id: In(ids) });
+          break;
+        }
+      }
       today.setDate(today.getDate() + 1);
     }
   }
@@ -381,7 +390,8 @@ export class SlotService {
     const result = [];
 
     intervals.map(({ from, to }) => {
-      let currentStartTime = new Date(from) > new Date() ? new Date(from) : new Date( Date.now() + 6 * 60 * 1000 ); // Start at the provided startTime
+      let currentStartTime = new Date(from) > new Date() ? new Date(from) : new Date( Date.now() + (5* 60 * 1000) ); // Start at the provided startTime
+      console.log(currentStartTime, new Date());
       const currentEndTime = new Date(to); // End at the provided endTime
 
       // Loop through the interval and create slots of the given duration
@@ -389,7 +399,7 @@ export class SlotService {
         const nextSlotEnd = new Date(
           currentStartTime.getTime() + duration * 1000 * 60,
         );
-        console.log(nextSlotEnd , currentEndTime, currentStartTime, duration);
+        // console.log(nextSlotEnd , currentEndTime, currentStartTime, duration);
 
         // Ensure that we don't exceed the endTime
         if (nextSlotEnd > currentEndTime) {
@@ -459,7 +469,7 @@ export class SlotService {
     if (slots.length === 0) {
       return [];
     }
-    console.log(slots)
+    // console.log(slots)
     return this.createTimeSlots(slots, duration);
   }
   // async getFirstSlotAvailable(branchId: string, ids: string[]) {
@@ -556,13 +566,10 @@ export class SlotService {
       if (!workingHour) {
         throw new HttpException("No available slots found for the given rootosh IDs.", 400);
       }
-  
-      return this.createTimeSlots([workingHour], duration)[0] || null;
+      return this.createTimeSlots([workingHour], duration)[0] ?? null;
     }
   
     throw new HttpException("Either services or rootosh IDs must be provided.", 400);
   }
-  
-  
 }
  

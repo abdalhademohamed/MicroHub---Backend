@@ -55,6 +55,7 @@ export class CreateReservationDto {
   @ApiProperty({ description: "Deposit amount" })
   @IsNumber({}, { message: "deposit must be a valid number" })
   @Transform(({ value }) => Number(value)) // Transform to number
+  
   deposit: number;
 
   @ApiProperty()
@@ -83,6 +84,7 @@ export class CreateReservationDto {
   deposit_Content: string; // Correct property name
 
   @IsString()
+  @IsOptional()
   paymentId:string;
 
   @IsOptional()

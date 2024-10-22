@@ -12,6 +12,11 @@ import { UserEntity } from "../user/entities/user.entity";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { PaymentEntity } from "../payment/entities/payment.entity";
 import { PositionEntity } from "../postion/entities/postion.entity";
+import { OfferEntity } from "../offer/entities/offer.entity";
+import { NotificationModule } from "../notification/notification.module";
+import { NotificationEntity } from "../notification/entities/notification.entity";
+import { SharableOfferEntity } from "../sharable-offer/entities/sharable-offer.entity";
+import { GiftCouponModule } from "../gift-coupon/gift-coupon.module";
 
 @Module({
   imports: [
@@ -24,7 +29,12 @@ import { PositionEntity } from "../postion/entities/postion.entity";
       UserEntity,
       PaymentEntity,
       PositionEntity,
+      OfferEntity,
+      NotificationEntity,
+      SharableOfferEntity
     ]),
+    NotificationModule, // Add NotificationModule to imports
+    GiftCouponModule
   ],
   controllers: [OrdersController],
   providers: [OrdersService, CloudinaryService],

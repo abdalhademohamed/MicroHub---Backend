@@ -9,6 +9,7 @@ import { UserEntity } from "../user/entities/user.entity";
 import { UserService } from "../user/user.service";
 import { UserModule } from "../user/user.module";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
+import { NotificationModule } from "../notification/notification.module";
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
       UserEntity,
       AuditLogEntity,
     ]), // Add OrderEntity here
+    NotificationModule
   ],
   controllers: [ReviewsController],
   providers: [ReviewsService],

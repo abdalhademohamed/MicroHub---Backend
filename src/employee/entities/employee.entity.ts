@@ -6,6 +6,7 @@ import {
   ManyToMany,
   OneToMany,
   DeleteDateColumn,
+  JoinTable,
 } from "typeorm";
 import { BranchEntity } from "../../branch/entities/branch.entity";
 import { PositionEntity } from "../../postion/entities/postion.entity";
@@ -39,6 +40,8 @@ export class EmployeeEntity extends UserEntity {
   @Column()
   image: string; // Store the URL of the image uploaded to Cloudinary
 
+  @Column({nullable:true})
+  speciality: string; // Store the URL of the image uploaded to Cloudinary
   @Column({ default: true })
   available: boolean; // Indicates if the employee is available or not
 
@@ -61,10 +64,12 @@ export class EmployeeEntity extends UserEntity {
   @ManyToOne(() => PositionEntity, (PositionEntity) => PositionEntity.employees)
   position: PositionEntity;
 
-  @ManyToMany(
+  @OneToMany(
     () => ReservationEntity,
-    (ReservationEntity) => ReservationEntity.employees,
+    (ReservationEntity) => ReservationEntity.employee,
   )
+  @JoinTable() // Add this decorator to create the join table
+
   reservations: ReservationEntity[];
   // @OneToMany(() => ReservationEntity, ReservationEntity => ReservationEntity.artist)
   // reservations: ReservationEntity[];
