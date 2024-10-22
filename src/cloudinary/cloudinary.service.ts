@@ -18,7 +18,7 @@ export class CloudinaryService {
   //       });
 
   //       // Convert the file buffer into a readable stream and pipe it to Cloudinary
-  //       toStream(file.buffer).pipe(upload);
+  //       toStream(file.buffer).pipe(upload); 
   //     } catch (error) {
   //       // Handle any synchronous errors that might occur
   //       // console.error('Error during file upload:', error);
