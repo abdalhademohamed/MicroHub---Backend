@@ -21,6 +21,7 @@ import { GetTotalDepositsDto } from "./dto/get.total.depost.branch.dto";
 import { GetTotalRefundsDto } from "./dto/get.total.branch.refund.dto";
 import { Postion } from "../postion/utils/postion.enum";
 import { Role } from "../user/utils/user.enum";
+import { PaymentStatus } from "src/orders/utils/payment.status.enum";
 
 @Injectable()
 export class AnalysisService {
@@ -620,9 +621,9 @@ async generateOrderReport(dto: GenerateOrderReportDto): Promise<any> {
     // Check if the order is canceled
     if (order.status === OrderStatus.Canceled) {
       // Determine refund amount based on payment status
-      if (order.paymentStatus === 'paid') {
+      if (order.paymentStatus === PaymentStatus.Paid) {
         refundAmount = revenue; // Full refund if fully paid
-      } else if (order.paymentStatus === 'partially paid') {
+      } else if (order.paymentStatus === PaymentStatus.PartiallyPaid) {
         refundAmount = parseFloat(order.reservation?.deposit?.toString() || '0'); // Refund deposit if partially paid
       }
       revenue = 0; // Set revenue to 0 for canceled orders
@@ -856,9 +857,9 @@ async generateOrderReport(dto: GenerateOrderReportDto): Promise<any> {
         // Check if the order is canceled
         if (order.status === OrderStatus.Canceled) {
             // Determine refund amount based on payment status
-            if (order.paymentStatus === 'paid') {
+            if (order.paymentStatus === PaymentStatus.Paid) {
                 refundAmount = revenue; // Full refund if fully paid
-            } else if (order.paymentStatus === 'partially paid') {
+            } else if (order.paymentStatus === PaymentStatus.PartiallyPaid) {
                 refundAmount = parseFloat(order.reservation.deposit?.toString() || '0'); // Refund deposit if partially paid
             }
         }
