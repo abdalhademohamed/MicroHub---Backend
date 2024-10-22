@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsString, IsArray, IsOptional, IsBoolean, IsDateString, isString, IsISO8601 } from 'class-validator';
 
 export class CreateSharableOfferDto {
@@ -19,8 +20,12 @@ export class CreateSharableOfferDto {
   @IsArray()
   serviceIds: string[]; // IDs of the services in the package
 
-  @IsString()
-  branchId: string; // IDs of the branches associated with the offer
+  @ApiProperty({ 
+    description: "IDs of the branches where the offer is available",
+  })
+  @IsArray()
+  @IsNotEmpty()
+  branchIds: string[];
 
   @IsBoolean()
   @IsOptional()

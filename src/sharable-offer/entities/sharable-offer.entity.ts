@@ -36,8 +36,9 @@ export class SharableOfferEntity {
   @JoinTable()
   services: ServiceEntity[];
 
-  @ManyToOne(() => BranchEntity, (BranchEntity) => BranchEntity.sharableOffers) // Set up a Many-to-One relation
-  branch: BranchEntity;
+  @ManyToMany(() => BranchEntity, (branch) => branch.sharableOffers) // Set as Many-to-Many relation
+  @JoinTable()
+  branches: BranchEntity[];
 
  
   // Relation to the gift coupons associated with this sharable offer
@@ -49,5 +50,9 @@ export class SharableOfferEntity {
 
   @DeleteDateColumn({ name: "deleted_at", nullable: true })
   deletedAt?: Date;
+
+   // Add a new column to track how many times the offer has been used
+   @Column({ type: "int", default: 0 }) // Default to 0 initially
+   usageCount: number;
 }
 
