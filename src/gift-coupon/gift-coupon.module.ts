@@ -13,5 +13,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
   controllers: [GiftCouponController],
   providers: [GiftCouponService],
+  exports: [GiftCouponService],  // Make sure to export GiftCouponService so it can be used in other modules
+
 })
 export class GiftCouponModule {}
