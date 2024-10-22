@@ -30,6 +30,7 @@ import { Console } from "console";
 import { SharableOfferEntity } from "../sharable-offer/entities/sharable-offer.entity";
 import { GiftCouponService } from "../gift-coupon/gift-coupon.service";
 import { CreateGiftCouponDto } from "../gift-coupon/dto/create-gift-coupon.dto";
+import { PaymentStatus } from "./utils/payment.status.enum";
 
 @Injectable()
 export class OrdersService {
@@ -301,14 +302,15 @@ export class OrdersService {
     userId: string,
     paymentId: string,
     offerId?: string,
-    sharableOfferId?: string
+    sharableOfferId?: string,
+    couponCode?: string
+
   ): Promise<OrderEntity> {
     // Fetch reservation with related services
     const reservation = await this.reservationRepository.findOne({
       where: { id: reservationId },
       relations: ["services", "customer", "branch"],
     });
-
     if (!reservation) {
       throw new NotFoundException("Reservation not found");
     }
@@ -369,6 +371,12 @@ export class OrdersService {
       // // After saving the sharable offer, create a gift coupon for its services
       // await this.GiftCouponService.createGiftCoupon(createGiftCouponDto);
     }
+
+     // Set payment status based on coupon code
+  let payStatus = PaymentStatus.PartiallyPaid;
+  if (couponCode) {
+    payStatus = PaymentStatus.Paid;
+  }
     const invoiceNumber = await this.generateUniqueInvoiceNumber();
 
     // Create new order
@@ -382,7 +390,7 @@ export class OrdersService {
         .map((service) => service.arabic_Name)
         .join(", "),
       status: OrderStatus.Pending,
-      paymentStatus: "partially paid",
+      paymentStatus:payStatus , // Set payment status dynamically
       invoiceNumber: invoiceNumber,
       comments: [],
       reservation: reservation,
@@ -554,7 +562,7 @@ export class OrdersService {
         .map((rootoshes) => rootoshes.arabic_Name)
         .join(", "),
       status: OrderStatus.Pending,
-      paymentStatus: "paid",
+      paymentStatus: PaymentStatus.Paid,
       invoiceNumber: invoiceNumber,
       comments: [],
       reservation: reservation,
@@ -843,8 +851,8 @@ export class OrdersService {
 
       // Check if the current payment status allows updating to "paid"
       if (
-        newPaymentStatus === "paid" &&
-        order.paymentStatus !== "partially paid"
+        newPaymentStatus === PaymentStatus.Paid &&
+        order.paymentStatus !== PaymentStatus.PartiallyPaid
       ) {
         throw new BadRequestException(
           "Payment status can only be updated to 'paid' if the current status is 'partially paid'."
@@ -857,7 +865,7 @@ export class OrdersService {
         );
       }
       // Update the paymentStatus
-      order.paymentStatus = newPaymentStatus;
+      order.paymentStatus = newPaymentStatus === "paid" ? PaymentStatus.Paid : PaymentStatus.PartiallyPaid;
 
       // Update image URL if provided
       if (image) {
