@@ -4,7 +4,7 @@ import { OrderStatus } from "../utils/order.status.enum";
 
 export enum PaymentStatus {
   PAID = "paid",
-  PARTIALLY_PAID = "partially paid", // Update here
+  PARTIALLYPAID = "partially paid", // Update here
 }
 
 export class FindOrdersDto {

@@ -823,7 +823,7 @@ export class OrdersService {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async updatePaymentStatus(
     orderId: string,
-    newPaymentStatus: "paid" | "partially paid",
+    newPaymentStatus:PaymentStatus.Paid | PaymentStatus.PartiallyPaid,
     image: Express.Multer.File,
     userId: string // Optional parameter for the user ID
   ): Promise<OrderEntity> {
@@ -841,8 +841,8 @@ export class OrdersService {
       }
       // Prevent changing the status back to "partially paid" if it is currently "paid"
       if (
-        newPaymentStatus === "partially paid" &&
-        order.paymentStatus === "paid"
+        newPaymentStatus === PaymentStatus.PartiallyPaid &&
+        order.paymentStatus === PaymentStatus.Paid
       ) {
         throw new BadRequestException(
           "Payment status cannot be changed back to 'partially paid' after it has been set to 'paid'."
@@ -859,7 +859,7 @@ export class OrdersService {
         );
       }
       // Check if the new status is 'paid' and ensure the image is provided
-      if (newPaymentStatus === "paid" && !image) {
+      if (newPaymentStatus === PaymentStatus.Paid && !image) {
         throw new BadRequestException(
           "An image is required when updating the payment status to 'paid'."
         );
@@ -1016,7 +1016,7 @@ export class OrdersService {
         let paymentAmount: number;
         order.status = OrderStatus.Canceled;
 
-        if (order.paymentStatus === "paid") {
+        if (order.paymentStatus === PaymentStatus.Paid) {
           if (order.receipts.length === 0) {
             throw new NotFoundException(
               `No receipt found for order with ID ${orderId}`
@@ -1024,7 +1024,7 @@ export class OrdersService {
           }
           const receipt = order.receipts[0]; // Assuming you need the first receipt
           paymentAmount = receipt.totalPayment;
-        } else if (order.paymentStatus === "partially paid") {
+        } else if (order.paymentStatus === PaymentStatus.PartiallyPaid) {
           paymentAmount = deposit;
         } else {
           throw new InternalServerErrorException(
@@ -1091,7 +1091,7 @@ export class OrdersService {
       }
 
       // Ensure that payment status is 'paid'
-      if (order.paymentStatus !== "paid") {
+      if (order.paymentStatus !== PaymentStatus.Paid) {
         throw new BadRequestException(
           "Cannot update order status to 'InQueue' unless the payment status is 'paid'."
         );
@@ -1611,7 +1611,7 @@ export class OrdersService {
         position: artist.position.postion,
       };
       // Ensure that payment status is 'paid'
-      if (order.paymentStatus !== "paid") {
+      if (order.paymentStatus !== PaymentStatus.Paid) {
         throw new BadRequestException(
           "Cannot update order status to 'InQueue' OR assign Artist unless the payment status is 'paid'."
         );
