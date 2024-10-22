@@ -11,6 +11,7 @@ import { SharableOfferEntity } from "../sharable-offer/entities/sharable-offer.e
 import { Repository } from "typeorm";
 import { CustomerEntity } from "../customer/entities/customer.entity";
 import { v4 as uuidv4 } from "uuid";
+import { OrderEntity } from "../orders/entities/order.entity";
 
 @Injectable()
 export class GiftCouponService {
@@ -22,19 +23,24 @@ export class GiftCouponService {
     private readonly sharableOfferRepository: Repository<SharableOfferEntity>,
 
     @InjectRepository(CustomerEntity)
-    private readonly customerRepository: Repository<CustomerEntity>
+    private readonly customerRepository: Repository<CustomerEntity>,
+    @InjectRepository(OrderEntity)
+    private readonly OrderRepository: Repository<OrderEntity>
   ) {}
 
   async createGiftCoupon(
     createGiftCouponDto: CreateGiftCouponDto
   ): Promise<GiftCouponEntity> {
-    const { sharableOfferId, customerId } = createGiftCouponDto;
+    const { orderId, customerId } = createGiftCouponDto;
 
     // Find the sharable offer and customer
-
+    // Find the sharable offer with its services
+    const Order = await this.OrderRepository.findOne({
+      where: { id: orderId },
+    });
     // Find the sharable offer with its services
     const sharableOffer = await this.sharableOfferRepository.findOne({
-      where: { id: sharableOfferId },
+      where: { id: Order.sharableOfferId },
       relations: ["services"], // Load the related services
     });
     const customer = await this.customerRepository.findOne({
@@ -60,13 +66,18 @@ export class GiftCouponService {
       endDateTime: sharableOffer.endDateTime,
     });
 
-    return await this.giftCouponRepository.save(giftCoupon);
+    const createdGiftCoupon= await this.giftCouponRepository.save(giftCoupon);
+    Order.couponId=giftCoupon.id
+    await this.OrderRepository.save(Order);
+    return createdGiftCoupon
+
+
   }
 
-  async getGiftCoupon(couponCode: string): Promise<GiftCouponEntity> {
+  async getGiftCoupon(couponId: string): Promise<GiftCouponEntity> {
     // Find the gift coupon by coupon code
     const giftCoupon = await this.giftCouponRepository.findOne({
-      where: { couponCode },
+      where: { id:couponId },
     });
 
     // If the coupon is not found, throw a NotFoundException
@@ -87,10 +98,12 @@ export class GiftCouponService {
         `This coupon is not valid until ${giftCoupon.startDateTime.toISOString()}`
       );
     }
-  
+
     // Check if the coupon is expired (after the end date)
     if (giftCoupon.endDateTime && giftCoupon.endDateTime < now) {
-      throw new ConflictException("This coupon has expired and cannot be used.");
+      throw new ConflictException(
+        "This coupon has expired and cannot be used."
+      );
     }
 
     // Return the coupon and its redeemed status
@@ -99,12 +112,12 @@ export class GiftCouponService {
   // Method to update the gift coupon by removing specified services
   // Method to update the gift coupon by removing specified services
   async updateGiftCouponServices(
-    couponCode: string,
+    couponId: string,
     serviceIdsToRemove: string[]
   ): Promise<GiftCouponEntity> {
     // Find the gift coupon by coupon code
     const giftCoupon = await this.giftCouponRepository.findOne({
-      where: { couponCode },
+      where: { id:couponId },
     });
 
     // If the coupon is not found, throw a NotFoundException
@@ -119,17 +132,19 @@ export class GiftCouponService {
         "This coupon has already been redeemed and cannot be updated."
       );
     }
-  // Check if the coupon is not valid yet (before the start date)
-  if (giftCoupon.startDateTime && giftCoupon.startDateTime > now) {
-    throw new ConflictException(
-      `This coupon is not valid until ${giftCoupon.startDateTime.toISOString()}`
-    );
-  }
+    // Check if the coupon is not valid yet (before the start date)
+    if (giftCoupon.startDateTime && giftCoupon.startDateTime > now) {
+      throw new ConflictException(
+        `This coupon is not valid until ${giftCoupon.startDateTime.toISOString()}`
+      );
+    }
 
-  // Check if the coupon is expired (after the end date)
-  if (giftCoupon.endDateTime && giftCoupon.endDateTime < now) {
-    throw new ConflictException("This coupon has expired and cannot be used.");
-  }
+    // Check if the coupon is expired (after the end date)
+    if (giftCoupon.endDateTime && giftCoupon.endDateTime < now) {
+      throw new ConflictException(
+        "This coupon has expired and cannot be used."
+      );
+    }
     // Filter the services, keeping only those not in the serviceIdsToRemove array
     giftCoupon.services = giftCoupon.services.filter(
       (service) => !serviceIdsToRemove.includes(service.id)

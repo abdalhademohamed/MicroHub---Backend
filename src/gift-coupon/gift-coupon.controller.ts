@@ -43,18 +43,18 @@ export class GiftCouponController {
 
 // @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   // @Roles(Role.SUPERADMIN)
-  @Get(':couponCode')
-  async getGiftCoupon(@Param('couponCode') couponCode: string) {
-    return await this.giftCouponService.getGiftCoupon(couponCode);
+  @Get(':couponId')
+  async getGiftCoupon(@Param('couponId') couponId: string) {
+    return await this.giftCouponService.getGiftCoupon(couponId);
   }
 
 @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.ARTIST)
   @Patch('update/services/:couponCode')
   async updateGiftCouponServices(
-    @Param('couponCode') couponCode: string,
+    @Param('couponId') couponId: string,
     @Body('serviceIds') serviceIdsToRemove: string[],
   ) {
-    return this.giftCouponService.updateGiftCouponServices(couponCode, serviceIdsToRemove);
+    return this.giftCouponService.updateGiftCouponServices(couponId, serviceIdsToRemove);
   }
 }
