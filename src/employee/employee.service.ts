@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  HttpException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -11,7 +12,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { EmployeeEntity } from "./entities/employee.entity";
 import { BranchEntity } from "../branch/entities/branch.entity";
 import { PositionEntity } from "../postion/entities/postion.entity";
-import { EntityManager, In, Like, Repository } from "typeorm";
+import { EntityManager, In, Like, MoreThan, MoreThanOrEqual, Repository } from "typeorm";
 import { EmployeeTypeEntity } from "../employetype/entities/employetype.entity";
 import { CloudinaryService } from "../cloudinary/cloudinary.service";
 import * as bcrypt from "bcrypt";
@@ -23,6 +24,11 @@ import { SlotService } from "../slots/slots.service";
 import { Role } from "../user/utils/user.enum";
 import { response } from "express";
 import { Postion } from "../postion/utils/postion.enum";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { ReservationEntity } from "../reservation/entities/reservation.entity";
+import { SlotsEntity } from "../slots/entities/slots.entity";
+import { WorkingEntity } from "../slots/entities/working.entity";
+import { OrderStatus } from "../orders/utils/order.status.enum";
 
 @Injectable()
 export class EmployeeService {
@@ -42,12 +48,21 @@ export class EmployeeService {
     @InjectRepository(AuditLogEntity)
     private readonly AuditLogRepository: Repository<AuditLogEntity>,
 
+    @InjectRepository(ReservationEntity)
+    private readonly reservationRepository: Repository<ReservationEntity>,
+
     @InjectRepository(UserEntity)
     private readonly UserRepository: Repository<UserEntity>,
     private readonly CloudinaryService: CloudinaryService,
     private readonly AuthService: AuthService,
     private readonly entityManager: EntityManager, // Inject EntityManager for transactions
-    private readonly slotService: SlotService
+    private readonly slotService: SlotService,
+    private readonly eventEmitter: EventEmitter2,
+    @InjectRepository(SlotsEntity)
+    private readonly SlotRepository: Repository<SlotsEntity>,
+    @InjectRepository(WorkingEntity)
+    private readonly WorkingRepository: Repository<WorkingEntity>,
+    
   ) {}
 
   async createEmployee(
@@ -221,7 +236,7 @@ export class EmployeeService {
         email,
         password,
         employeeType, // Update employee type
-        branch, // Update branch
+        branchId, // Update branch
         position, // Update position
       } = updateEmployeeDto;
   
@@ -267,12 +282,12 @@ export class EmployeeService {
       employee.available = available ?? employee.available;
   
       // Update the branch if branchId is provided
-      if (branch) {
+      if (branchId) {
         const newBranch = await this.branchRepository.findOne({
-          where: { id: branch },
+          where: { id: branchId },
         });
         if (!newBranch) {
-          throw new NotFoundException(`Branch with ID ${branch} not found.`);
+          throw new NotFoundException(`Branch with ID ${branchId} not found.`);
         }
         const artistCount = await this.employeeRepository.count({
           where: {
@@ -451,6 +466,49 @@ export class EmployeeService {
       };
     }
   }
+  async updateArtistWorkingHours(artistId: string, workingHours: number){
+    const employee = await this.employeeRepository.findOne({
+      where: { id: artistId, role: Role.ARTIST },
+      relations: ["branch" ],
+    });
+    const currentWorkingHours = employee.workingHours;
+    if(!employee){
+      throw new NotFoundException(`Artist with ID ${artistId} not found.`);
+    }
+    if( currentWorkingHours == workingHours ){
+      throw new HttpException('invalid working hours ', 400);
+    }
+    // const sum = await this.employeeRepository.sum('workingHours', { branch: { id: employee.branch.id }, role: Role.ARTIST });
+    if(currentWorkingHours < workingHours){
+      employee.workingHours = workingHours - currentWorkingHours;
+      this.eventEmitter.emit('artist:created', employee);
+      employee.workingHours = workingHours;
+      await this.employeeRepository.save(employee);
+    }else if( currentWorkingHours > workingHours ){
+      const wH = (currentWorkingHours - workingHours) * 60;
+      const today = new Date();
+      const slots = await this.SlotRepository
+        .find({ 
+          where: { 
+            branch: { id: employee.branch.id }, 
+            day: MoreThan(today.getDate()),
+            month: MoreThanOrEqual(today.getMonth() + 1),
+            year: MoreThanOrEqual(today.getFullYear()), 
+          },
+          relations: ['branch', 'workingEntity']
+        })
+      for( var i = 0; i < slots.length; i++ ){
+        const sum = slots[i].workingEntity.reduce((acc, slot)=>{
+          return acc + slot.duration;
+        }, 0);
+        if(wH > sum){
+          throw new HttpException('invalid working entity ', 400);
+        }
+      }
+      this.eventEmitter.emit('artist:hours', { duration: wH, branchId: employee.branch.id });
+    }
+    return { status: 'working hours updated' }
+  }
   
 
   private determineRoleFromPosition(position: PositionEntity): Role {
@@ -619,4 +677,30 @@ export class EmployeeService {
 
     return await query.getCount();
   }
+
+
+  async getTopArtistsWithCompletedOrders(): Promise<EmployeeEntity[]> {
+  
+    const topArtists = await this.employeeRepository
+      .createQueryBuilder('employee')
+      .leftJoinAndSelect('employee.orders', 'order') // Join orders related to the employee
+      .leftJoinAndSelect('employee.position', 'position') // Join position related to the employee
+      .where('position.postion = :position', { position: Postion.ARTIST }) // Filter by position
+      .andWhere('order.status = :status', { status: OrderStatus.Completed }) // Filter by order status
+      .select(['employee', 'COUNT(order.id) AS completedOrdersCount']) // Select employee and count of completed orders
+      .groupBy('employee.id') // Group by employee ID
+      .addGroupBy('position.id') // Group by position ID
+      .orderBy('completedOrdersCount', 'DESC') // Order by the count of completed orders
+      .limit(5) // Limit to the top 5 employees
+      .getRawMany(); // Use getRawMany to get raw results
+  
+    // Map raw results to EmployeeEntity instances if needed
+    return topArtists.map(raw => {
+      const employee = new EmployeeEntity();
+      // Map fields from raw result to EmployeeEntity
+      Object.assign(employee, raw); // Assuming EmployeeEntity has the same structure
+      return employee;
+    });
+  }
+   
 }

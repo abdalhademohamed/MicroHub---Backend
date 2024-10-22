@@ -32,12 +32,27 @@ import { Role } from "../user/utils/user.enum";
 import { AccessTokenGuard } from "../auth/guards/accessToken.guard";
 import { RolesGuard } from "../auth/guards/role.guards";
 import { UserProfileDto } from "./dto/get.profile.dto";
+import { EmployeeWorkingHoursDto } from "./dto/update.employee_workinghors.dto";
 
 @ApiTags("employee")
 @Controller("employee")
 export class EmployeeController {
   constructor(private readonly employeeService: EmployeeService) {}
 
+  @Get('top/artists')
+  async getTopArtists(): Promise<EmployeeEntity[]> {
+    return this.employeeService.getTopArtistsWithCompletedOrders();
+  }
+  @Put("working/:id")  
+  async updateWorkingHoursEmployee( 
+    @Param("id") id: string, 
+    @Body() body: EmployeeWorkingHoursDto,
+  ) { 
+      return await this.employeeService.updateArtistWorkingHours(
+        id,
+        body.workingHours,
+      );
+  }
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST)
   @Get("/count")
@@ -74,7 +89,7 @@ export class EmployeeController {
 
   
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST,Role.ARTISTMANAGER)
   @Get()
   async getAllEmployees(
     @Query("page") page: number = 1,
@@ -98,7 +113,7 @@ export class EmployeeController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN,Role.ARTISTMANAGER)
   @Get(":id")
   async getEmployeeById(@Param("id") id: string): Promise<EmployeeEntity> {
     return await this.employeeService.getEmployeeById(id);

@@ -46,6 +46,10 @@ export class CreateEmployeeDto {
   @IsNotEmpty()
   email: string;
 
+
+  @IsEmail()
+  @IsOptional()
+  speciality: string;
   @ApiProperty({
     description: "The country code of the employee",
     example: "+1",
