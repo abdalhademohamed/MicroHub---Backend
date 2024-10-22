@@ -109,6 +109,43 @@ export class GiftCouponService {
     // Return the coupon and its redeemed status
     return giftCoupon;
   }
+
+
+  async getGiftCouponByCouponCode(couponCode: string): Promise<GiftCouponEntity> {
+    // Find the gift coupon by coupon code
+    const giftCoupon = await this.giftCouponRepository.findOne({
+      where: {couponCode },
+    });
+
+    // If the coupon is not found, throw a NotFoundException
+    if (!giftCoupon) {
+      throw new NotFoundException("Gift coupon not found");
+    }
+    const now = new Date();
+
+    // Check if the coupon is redeemed
+    if (giftCoupon.isRedeemed) {
+      throw new ConflictException(
+        "This coupon has already been redeemed and cannot be used."
+      );
+    }
+    // Check if the coupon is not valid yet (before the start date)
+    if (giftCoupon.startDateTime && giftCoupon.startDateTime > now) {
+      throw new ConflictException(
+        `This coupon is not valid until ${giftCoupon.startDateTime.toISOString()}`
+      );
+    }
+
+    // Check if the coupon is expired (after the end date)
+    if (giftCoupon.endDateTime && giftCoupon.endDateTime < now) {
+      throw new ConflictException(
+        "This coupon has expired and cannot be used."
+      );
+    }
+
+    // Return the coupon and its redeemed status
+    return giftCoupon;
+  }
   // Method to update the gift coupon by removing specified services
   // Method to update the gift coupon by removing specified services
   async updateGiftCouponServices(

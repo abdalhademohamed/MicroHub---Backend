@@ -40,6 +40,10 @@ export class GiftCouponController {
     return this.giftCouponService.createGiftCoupon(createGiftCouponDto);
   }
 
+  @Get('couponCode/:couponCode')
+  async getGiftCouponByCouponCode(@Param('couponCode') couponId: string) {
+    return await this.giftCouponService.getGiftCouponByCouponCode(couponId);
+  }
 
 // @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   // @Roles(Role.SUPERADMIN)
