@@ -92,12 +92,12 @@ export class GiftCouponService {
         "This coupon has already been redeemed and cannot be used."
       );
     }
-    // Check if the coupon is not valid yet (before the start date)
-    if (giftCoupon.startDateTime && giftCoupon.startDateTime > now) {
-      throw new ConflictException(
-        `This coupon is not valid until ${giftCoupon.startDateTime.toISOString()}`
-      );
-    }
+    // // Check if the coupon is not valid yet (before the start date)
+    // if (giftCoupon.startDateTime && giftCoupon.startDateTime > now) {
+    //   throw new ConflictException(
+    //     `This coupon is not valid until ${giftCoupon.startDateTime.toISOString()}`
+    //   );
+    // }
 
     // Check if the coupon is expired (after the end date)
     if (giftCoupon.endDateTime && giftCoupon.endDateTime < now) {
