@@ -93,6 +93,7 @@ export class BranchController {
     Role.COORDINATOR,
     Role.BRANCHMANAGER,
     Role.RECEPTIONIST,
+    Role.ARTISTMANAGER
   )
   @Get("sorted")
   @ApiQuery({

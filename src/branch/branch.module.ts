@@ -11,6 +11,7 @@ import { UserService } from "../user/user.service";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { UserEntity } from "../user/entities/user.entity";
 import { EmployeeEntity } from "../employee/entities/employee.entity";
+import { CustomI18nService } from "../common/custom.18n.service";
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { EmployeeEntity } from "../employee/entities/employee.entity";
     ]),
   ],
   controllers: [BranchController],
-  providers: [BranchService, CloudinaryService, UserService],
+  providers: [BranchService, CloudinaryService, UserService,    CustomI18nService,
+  ],
 })
 export class BranchModule {}
