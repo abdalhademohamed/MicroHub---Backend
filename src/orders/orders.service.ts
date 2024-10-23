@@ -1,6 +1,8 @@
 import {
   BadRequestException,
   ForbiddenException,
+  forwardRef,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -31,6 +33,7 @@ import { SharableOfferEntity } from "../sharable-offer/entities/sharable-offer.e
 import { GiftCouponService } from "../gift-coupon/gift-coupon.service";
 import { CreateGiftCouponDto } from "../gift-coupon/dto/create-gift-coupon.dto";
 import { PaymentStatus } from "./utils/payment.status.enum";
+import { ReservationService } from "../reservation/reservation.service";
 
 @Injectable()
 export class OrdersService {
@@ -63,7 +66,9 @@ export class OrdersService {
 
     @InjectRepository(SharableOfferEntity)
     private readonly SharableOfferRepository: Repository<SharableOfferEntity>,
-    private readonly GiftCouponService: GiftCouponService
+    private readonly GiftCouponService: GiftCouponService,
+    @Inject(forwardRef(() => ReservationService))  // Inject ReservationService
+    private readonly reservationService: ReservationService,
   ) {}
   // Method to generate a unique incremental invoice number
   private async generateUniqueInvoiceNumber(): Promise<number> {
@@ -1240,6 +1245,8 @@ export class OrdersService {
 
           await transactionalEntityManager.save(AuditLogEntity, log);
           if (order.status === OrderStatus.Canceled) {
+
+            await this.reservationService.cancelReservationAndAddSlot(order.reservation.start_Time,order.reservation.end_Time,order.branch.id)
             const usersToNotify = await transactionalEntityManager.find(
               UserEntity,
               {
@@ -1259,6 +1266,9 @@ export class OrdersService {
                 `A order has been canceled: ${updatedOrder.id} by : ${userId}`
               );
             }
+
+
+
           }
           if (order.status === OrderStatus.Completed) {
             const usersToNotify = await transactionalEntityManager.find(
@@ -1936,7 +1946,7 @@ export class OrdersService {
       sort = "ASC",
       fromDate,
       toDate,
-      orderStatus, // Destructure the orderStatus filter
+      orderStatus,
     } = findOrdersByDayDto;
   
     try {
@@ -1945,12 +1955,12 @@ export class OrdersService {
         where: { id: userId },
         relations: [
           "orders",
-          "orders.customer", // Ensure 'customer' relation is loaded
-          "orders.payment", // Ensure 'payment' relation is loaded
-          "orders.artist", // Ensure 'artist' relation is loaded
-          "orders.reservation", // Include reservations
-          "orders.reservation.services", // Include services for the reservations
-          "branch", // Ensure 'branch' relation is loaded
+          "orders.customer",
+          "orders.payment",
+          "orders.artist",
+          "orders.reservation",
+          "orders.reservation.services",
+          "branch",
         ],
       });
   
@@ -1963,10 +1973,10 @@ export class OrdersService {
       const toDateObj = toDate ? new Date(toDate) : null;
   
       if (fromDateObj) {
-        fromDateObj.setHours(0, 0, 0, 0); // Set fromDate to the start of the day (00:00:00)
+        fromDateObj.setHours(0, 0, 0, 0);
       }
       if (toDateObj) {
-        toDateObj.setHours(23, 59, 59, 999); // Set toDate to the end of the day (23:59:59)
+        toDateObj.setHours(23, 59, 59, 999);
       }
   
       const filteredOrders = employee.orders.filter((order) => {
@@ -1988,13 +1998,14 @@ export class OrdersService {
         return true;
       });
   
-      // Apply sorting
+      // Apply sorting based on sort direction
       const sortedOrders = filteredOrders.sort((a, b) => {
         const dateA = new Date(a.date);
         const dateB = new Date(b.date);
+        
         return sort === "ASC"
-          ? dateA.getTime() - dateB.getTime()
-          : dateB.getTime() - dateA.getTime();
+          ? dateA.getTime() - dateB.getTime() // Oldest first
+          : dateB.getTime() - dateA.getTime(); // Most recent first
       });
   
       // Apply pagination
@@ -2003,10 +2014,10 @@ export class OrdersService {
         page * limit
       );
   
-      // Map orders to include artist, payment, customer, branch, and reservations with services
+      // Map orders to include all necessary details
       const mappedOrders = paginatedOrders.map((order) => ({
         id: order.id,
-        date: order.date.toString(), // Ensure correct date format
+        date: order.date.toString(),
         serviceEnglish: order.serviceEnglish,
         serviceArabic: order.serviceArabic,
         invoiceNumber: order.invoiceNumber,
