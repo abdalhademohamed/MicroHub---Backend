@@ -36,6 +36,7 @@ import { OrderEntity } from "./entities/order.entity";
 import { FindOrdersDto } from "./dto/find.all.orders.dto";
 import { OrderStatus } from "./utils/order.status.enum";
 import { FindOrdersByDayDto } from "./dto/find.orders.dto.for.artist";
+import { PaymentStatus } from "./utils/payment.status.enum";
 
 @ApiTags("orders")
 @Controller("order")
@@ -96,7 +97,7 @@ export class OrdersController {
   async updateOrderPaymentStatus(
     @Request() req: any, // Request object to access the user
     @Param("orderId") orderId: string,
-    @Body("paymentStatus") paymentStatus: "paid" | "partially paid",
+    @Body('paymentStatus') paymentStatus: PaymentStatus.Paid | PaymentStatus.PartiallyPaid, // Enum-like string values for payment status
     @UploadedFile() image: Express.Multer.File, // File uploads cannot be passed as query parameters
   ) {
 

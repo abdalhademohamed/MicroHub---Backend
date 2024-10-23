@@ -18,6 +18,7 @@ import { OrderStatus } from "../utils/order.status.enum";
 import { UserEntity } from "../../user/entities/user.entity";
 import { PaymentEntity } from "../../payment/entities/payment.entity";
 import { CustomerEntity } from "../../customer/entities/customer.entity";
+import { PaymentStatus } from "../utils/payment.status.enum";
 
 @Entity()
 export class OrderEntity {
@@ -44,10 +45,11 @@ export class OrderEntity {
 
   @Column({
     type: "enum",
-    enum: ["paid", "partially paid"], // Inline enum definition
-    default: "partially paid", // Default value
+    enum: PaymentStatus,
+    default: PaymentStatus.PartiallyPaid,
   })
-  paymentStatus: "paid" | "partially paid"; // TypeScript type
+  paymentStatus: PaymentStatus;
+
 
   @OneToOne(() => ReservationEntity, (reservation) => reservation.order)
   reservation: ReservationEntity;

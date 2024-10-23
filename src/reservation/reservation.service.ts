@@ -557,10 +557,15 @@ export class ReservationService {
         // Transform the coupon services into ServiceEntity type
         const transformedServices: ServiceEntity[] = coupon.services.map(
           (service) => this.mapCouponServiceToServiceEntity(service)
+
+
+          
         );
 
         // Merge the transformed services
         services = [...services, ...transformedServices];
+        body.deposit = 0;
+        body.deposit_Content = null;
       }
 
       // Check if rootoshIds are provided
@@ -582,7 +587,8 @@ export class ReservationService {
         price += rootoshTotals.price;
         body.deposit = 0;
         body.deposit_Content = null;
-      } else {
+      } 
+      if(body.services && body.services.length > 0  || body.sharableOfferId  ||body.offerId ) {
         const serviceTotals = await this.calculateTotalDuration(serviceIds);
         duration += serviceTotals.duration;
         price += serviceTotals.price;
@@ -679,13 +685,15 @@ export class ReservationService {
       if (body.rootosh && body.rootosh.length > 0) {
         await this.OrdersService.createOrderForRootosh(reservation.id, userId);
       } else {
+
         // Create an order for the reservation
         await this.OrdersService.createOrder(
           reservation.id,
           userId,
           body.paymentId,
           body.offerId,
-          body.sharableOfferId
+          body.sharableOfferId,
+          body.couponCode
         );
       }
 
@@ -1099,7 +1107,7 @@ export class ReservationService {
     );
     return { status: "deleted" };
   }
-  async cancelReservationAndAddSlot(start: Date, end: Date, branchId: string) {
+  async  cancelReservationAndAddSlot(start: Date, end: Date, branchId: string) {
     const slot = await this.SlotRepository.findOne({
       where: {
         day: start.getDate(),

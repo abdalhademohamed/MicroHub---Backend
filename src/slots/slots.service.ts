@@ -181,11 +181,15 @@ export class SlotService {
         if( artists[j].workingHours <= 0 ){
           continue;
         }
-        const time = artists[j].workingHours - noOfHours;
+        // const time = artists[j].workingHours - noOfHours;
+        let time = artists[j].workingHours - noOfHours;
+
         if ( time < 0) {
           to = new Date(from.getTime() + artists[j].workingHours * 3600 * 1000);
           duration = Math.floor((to.getTime() - from.getTime()) / (1000 * 60));
-          artists[j].workingHours = 0;
+          // artists[j].workingHours = 0;
+          time = 0;
+
         }
         artists[j].workingHours = time;
         const workingEntity = this.WorkingRepository.create({
@@ -197,8 +201,65 @@ export class SlotService {
         workingEntities.push(workingEntity);
       }
     }
-    // console.log(workingEntities);
+    console.log(workingEntities)
     return workingEntities;
+  }
+  @OnEvent('artist:created')
+  async createSlotsForArtist(artist: EmployeeEntity) {
+    const today = new Date();
+    let loopOn = true;
+    // console.log(artist)
+    while (loopOn) {
+      console.log(today.getDate(),today.getMonth() + 1,today.getFullYear())
+      const slot = await this.SlotRepository.findOne({
+        where: {
+          day: today.getDate(),
+          month: today.getMonth() + 1,
+          year: today.getFullYear(),
+          branch: {
+            id: artist.branch.id,
+          },
+        },
+        relations: ['branch']
+      });
+      // console.log(slot);
+      const day = this.getDayFromDate(
+        today.getFullYear(),
+        today.getMonth() + 1,
+        today.getDate(),
+      );
+      if (!slot) {
+        const count = await this.SlotRepository.count({
+          where:{
+            day: MoreThan(today.getDate()),
+            month: MoreThanOrEqual(today.getMonth() + 1),
+            year: MoreThanOrEqual(today.getFullYear()),
+            branch: {
+              id: artist.branch.id,
+            },
+          },
+        });
+        // console.log(count);
+        if (count === 0) {
+          loopOn = false;
+          continue;
+        }
+        today.setDate(today.getDate() + 1);
+        continue;
+      }
+      const workingHours = (
+        await this.branchWorkingHours(artist.branch.id, day)
+      ).workingHours;
+      const workingEntities = this.createWorkingHoursSlotsForArtist(
+        workingHours,
+        today,
+        slot,
+        artist,
+      );
+      // console.log(workingEntities);
+      await this.WorkingRepository.save(workingEntities);
+      today.setDate(today.getDate() + 1);
+    }
   }
   createWorkingHoursSlotsForArtist(
     workingHours: string[],

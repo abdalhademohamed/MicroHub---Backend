@@ -1,5 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { Transform } from "class-transformer";
 import { IsOptional, IsInt, IsEnum, IsDateString, IsString } from "class-validator";
+import { OrderStatus } from "../utils/order.status.enum";
 
 export class FindOrdersByDayDto {
   @ApiProperty({ default: 1, description: "Page number" })
@@ -20,6 +22,13 @@ export class FindOrdersByDayDto {
   @IsOptional()
   @IsString()
   toDate?: string; // Format: 'yyyy-MM-dd'
+  // Update to allow multiple statuses, split by commas
+  @IsOptional()
+  @Transform(({ value }) =>
+    value.split(",").map((status: string) => status.trim())
+  )
+  @IsEnum(OrderStatus, { each: true }) // Ensure each value is a valid OrderStatus
+  orderStatus?: OrderStatus[];
 
   @ApiProperty({
     enum: ["ASC", "DESC"],

@@ -346,173 +346,117 @@ export class ReceiptService {
     const { reservationId, message } = CreateReceiptFromReservationIdDto;
     try {
       let offer = null;
-      let discountPercentage=0
+      let discountPercentage = 0;
+  
       // Fetch the user who created the receipt
       const createdBy = await this.userRepository.findOne({
-        where: { id: userId }, 
-        select: ["id", "username", "email", "role"], // Select only required fields
+        where: { id: userId },
+        select: ["id", "username", "email", "role"],
       });
       if (!createdBy) {
         throw new NotFoundException(`User with ID ${userId} not found`);
       }
-
+  
       // Fetch the order and related reservation and services
       const order = await this.orderRepository.findOne({
-        where: { reservation: { id: reservationId } }, // Assuming reservation has an order reference
-        relations: [
-          "reservation",
-          "reservation.services",
-          "reservation.rootoshes",
-        ],
+        where: { reservation: { id: reservationId } },
+        relations: ["reservation", "reservation.services", "reservation.rootoshes"],
       });
-
+  
       if (!order) {
         throw new NotFoundException(`Order with ID ${order.id} not found`);
       }
-
+  
       const reservation = order.reservation;
       if (!reservation) {
-        throw new NotFoundException(
-          `Reservation not found for Order ID ${order.id}`
-        );
+        throw new NotFoundException(`Reservation not found for Order ID ${order.id}`);
       }
-
+  
       const services = reservation.services;
       const rootoshes = reservation.rootoshes;
-      // if (!services || services.length === 0) {
-      //   throw new NotFoundException("No services found for the reservation");
-      // }
-      // if (services || services.length > 0) {
-      //   throw new NotFoundException("No services found for the reservation");
-      // }
-      // if (rootoshes) {
-      //   // Format the services for receipt
-      //   const formattedPaymentForRootoshes = rootoshes.map((service) => ({
-      //     name: service.english_Name,
-      //     duration: service.duration_Mins,
-      //     price: 0, // Ensure price is a string
-      //   }));
-      // }  // Determine the formatted services/rootoshes for the receipt
+  
       let formattedPaymentForServices = [];
       let formattedPaymentForRootoshes = [];
-      // Declare the offer variable outside the if block
+  
       if (services && services.length > 0) {
         formattedPaymentForServices = services.map((service) => ({
           name: service.english_Name,
           duration: service.duration_Mins,
-          price: service.price.toString(), // Ensure price is a string
+          price: service.price.toString(),
         }));
       } else if (rootoshes && rootoshes.length > 0) {
         formattedPaymentForRootoshes = rootoshes.map((rootosh) => ({
           name: rootosh.english_Name,
           duration: rootosh.duration_Mins,
-          price: 0, // Assuming the price for rootoshes is 0, as per your original logic
+          price: 0,
         }));
       } else {
         throw new NotFoundException("No services or rootoshes found for the reservation");
       }
-
-
+  
+      let totalPayment = 0;
+      let remaining = 0;
+  
+      // Handle coupon logic: If couponId exists, set payment values to 0
+      if (order.couponId) {
+        totalPayment = 0;
+        discountPercentage = 0;
+        remaining = 0;
+      } else if (rootoshes && rootoshes.length > 0) {
         // If rootoshes exist, set total payment and remaining to zero
-    let totalPayment = 0;
-    let remaining = 0;
-
-    if (rootoshes && rootoshes.length > 0) {
-      // Total payment is zero if there are rootoshes
-      totalPayment = 0; 
-      remaining = 0; 
-    } else {
-      // Calculate total payment from services if no rootoshes
-      const totalServicePrice = services.reduce((acc, service) => acc + service.price, 0);
-      totalPayment = totalServicePrice; 
-      
-       // Fetch the offer if offerId exists
-      if (order.offerId) {
-        offer = await this.OfferRepository.findOne({
-          where: { id: order.offerId },
-        });
-        if (!offer) {
-          // If the offer is not found, set it to null
-          offer = null;
+        totalPayment = 0;
+        remaining = 0;
+      } else {
+        // Calculate total payment from services if no rootoshes and no coupon
+        const totalServicePrice = services.reduce((acc, service) => acc + service.price, 0);
+        totalPayment = totalServicePrice;
+  
+        // Fetch the offer if offerId exists
+        if (order.offerId) {
+          offer = await this.OfferRepository.findOne({
+            where: { id: order.offerId },
+          });
+          if (!offer) {
+            offer = null;
+          }
         }
-      }
-
-     if (order.sharableOfferId) {
-        offer = await this.OfferRepository.findOne({
-          where: { id: order.sharableOfferId },
-        });
-        if (!offer) {
-          // If the offer is not found, set it to null
-          offer = null;
+  
+        if (order.sharableOfferId) {
+          offer = await this.OfferRepository.findOne({
+            where: { id: order.sharableOfferId },
+          });
+          if (!offer) {
+            offer = null;
+          }
         }
+  
+        
+        totalPayment = reservation.totalPrice;
+        let discountPayment = totalPayment; // Default to totalPayment
+  
+        // Apply discount if offer exists
+        discountPercentage = offer ? offer.discountPercentage : 0; // Set discount to 0 if no offer
+        discountPayment -= totalPayment * (discountPercentage / 100);
+        remaining = discountPayment - reservation.deposit;
       }
-
-      // // Apply discount if offer exists
-      // const discountPercentage = offer ? offer.discountPercentage : 0; // Set discount to 0 if no offer
-      // totalPayment -= totalPayment * (discountPercentage / 100);
-      // remaining = totalPayment - reservation.deposit;
-    // Calculate total payment
-      totalPayment = reservation.totalPrice;
-      let discountPayment = totalPayment; // Default to totalPayment
-
-      // Apply discount if offer exists
-      discountPercentage = offer ? offer.discountPercentage : 0; // Set discount to 0 if no offer
-      discountPayment -= totalPayment * (discountPercentage / 100);
-      remaining = discountPayment - reservation.deposit;
-    }
-      // // Fetch the offer if offerId exists
-      // if (order.offerId) {
-      //   offer = await this.OfferRepository.findOne({
-      //     where: { id: order.offerId },
-      //   });
-      //   if (!offer) {
-      //     // If the offer is not found, set it to null
-      //     offer = null;
-      //   }
-      // }
-
-      // if (order.sharableOfferId) {
-      //   offer = await this.OfferRepository.findOne({
-      //     where: { id: order.sharableOfferId },
-      //   });
-      //   if (!offer) {
-      //     // If the offer is not found, set it to null
-      //     offer = null;
-      //   }
-      // }
-
-      // // Calculate total payment
-      // const totalPayment = reservation.totalPrice;
-      // let discountPayment = totalPayment; // Default to totalPayment
-
-      // // Apply discount if offer exists
-      // const discountPercentage = offer ? offer.discountPercentage : 0; // Set discount to 0 if no offer
-      // discountPayment -= totalPayment * (discountPercentage / 100);
-      // const remaining = discountPayment - reservation.deposit;
-
-      // // Format the services for receipt
-      // const formattedPaymentForServices = services.map((service) => ({
-      //   name: service.english_Name,
-      //   duration: service.duration_Mins,
-      //   price: service.price.toString(), // Ensure price is a string
-      // }));
-
+  
       // Format the reservation time slot as "startTime-endTime"
-      const startTime = new Date(reservation.start_Time).toLocaleTimeString(
-        "en-GB",
-        { hour: "2-digit", minute: "2-digit" }
-      );
-      const endTime = new Date(reservation.end_Time).toLocaleTimeString(
-        "en-GB",
-        { hour: "2-digit", minute: "2-digit" }
-      );
+      const startTime = new Date(reservation.start_Time).toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      const endTime = new Date(reservation.end_Time).toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
       const reservationTimeSlot = `${startTime}-${endTime}`;
-
-       // Combine payment information for the receipt
-    const paymentForServicesAndRootoshes = [
-      ...formattedPaymentForServices,
-      ...formattedPaymentForRootoshes,
-    ];
+  
+      // Combine payment information for the receipt
+      const paymentForServicesAndRootoshes = [
+        ...formattedPaymentForServices,
+        ...formattedPaymentForRootoshes,
+      ];
+  
       // Create and save the receipt
       const receipt = this.receiptRepository.create({
         order,
@@ -520,28 +464,23 @@ export class ReceiptService {
         message,
         totalPayment,
         paymentForServices: paymentForServicesAndRootoshes,
-        discount:discountPercentage, // Set discount value
+        discount: discountPercentage,
         remaining,
         createdBy,
       });
-
+  
       const savedReceipt = await this.receiptRepository.save(receipt);
-
+  
       // Log the creation action in the audit log
-      await this.saveAuditLogForCreateReceiptFromReservationId(
-        savedReceipt,
-        userId
-      );
-
+      await this.saveAuditLogForCreateReceiptFromReservationId(savedReceipt, userId);
+  
       return savedReceipt;
     } catch (error) {
-      console.error("Error creating receipt:", error); // Log the error
-      throw new InternalServerErrorException(
-        "Failed to create receipt",
-        error.stack
-      );
+      console.error("Error creating receipt:", error);
+      throw new InternalServerErrorException("Failed to create receipt", error.stack);
     }
   }
+  
   // Save the audit log for the create action
   private async saveAuditLogForCreateReceiptFromReservationId(
     receipt: ReceiptEntity,

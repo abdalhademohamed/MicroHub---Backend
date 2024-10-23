@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 import { OrdersService } from "./orders.service";
 import { OrdersController } from "./orders.controller";
 import { OrderEntity } from "./entities/order.entity";
@@ -17,7 +17,7 @@ import { NotificationModule } from "../notification/notification.module";
 import { NotificationEntity } from "../notification/entities/notification.entity";
 import { SharableOfferEntity } from "../sharable-offer/entities/sharable-offer.entity";
 import { GiftCouponModule } from "../gift-coupon/gift-coupon.module";
-
+import { ReservationModule } from "../reservation/reservation.module";
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -30,11 +30,11 @@ import { GiftCouponModule } from "../gift-coupon/gift-coupon.module";
       PaymentEntity,
       PositionEntity,
       OfferEntity,
-      NotificationEntity,
-      SharableOfferEntity
+      SharableOfferEntity,
     ]),
-    NotificationModule, // Add NotificationModule to imports
-    GiftCouponModule
+    NotificationModule,
+    GiftCouponModule,
+    forwardRef(() => ReservationModule), // Use forwardRef for ReservationModule
   ],
   controllers: [OrdersController],
   providers: [OrdersService, CloudinaryService],

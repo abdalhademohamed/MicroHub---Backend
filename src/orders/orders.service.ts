@@ -1,6 +1,8 @@
 import {
   BadRequestException,
   ForbiddenException,
+  forwardRef,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -30,6 +32,8 @@ import { Console } from "console";
 import { SharableOfferEntity } from "../sharable-offer/entities/sharable-offer.entity";
 import { GiftCouponService } from "../gift-coupon/gift-coupon.service";
 import { CreateGiftCouponDto } from "../gift-coupon/dto/create-gift-coupon.dto";
+import { PaymentStatus } from "./utils/payment.status.enum";
+import { ReservationService } from "../reservation/reservation.service";
 
 @Injectable()
 export class OrdersService {
@@ -62,7 +66,9 @@ export class OrdersService {
 
     @InjectRepository(SharableOfferEntity)
     private readonly SharableOfferRepository: Repository<SharableOfferEntity>,
-    private readonly GiftCouponService: GiftCouponService
+    private readonly GiftCouponService: GiftCouponService,
+    @Inject(forwardRef(() => ReservationService))  // Inject ReservationService
+    private readonly reservationService: ReservationService,
   ) {}
   // Method to generate a unique incremental invoice number
   private async generateUniqueInvoiceNumber(): Promise<number> {
@@ -301,14 +307,15 @@ export class OrdersService {
     userId: string,
     paymentId: string,
     offerId?: string,
-    sharableOfferId?: string
+    sharableOfferId?: string,
+    couponCode?: string
+
   ): Promise<OrderEntity> {
     // Fetch reservation with related services
     const reservation = await this.reservationRepository.findOne({
       where: { id: reservationId },
       relations: ["services", "customer", "branch"],
     });
-
     if (!reservation) {
       throw new NotFoundException("Reservation not found");
     }
@@ -369,6 +376,12 @@ export class OrdersService {
       // // After saving the sharable offer, create a gift coupon for its services
       // await this.GiftCouponService.createGiftCoupon(createGiftCouponDto);
     }
+
+     // Set payment status based on coupon code
+  let payStatus = PaymentStatus.PartiallyPaid;
+  if (couponCode) {
+    payStatus = PaymentStatus.Paid;
+  }
     const invoiceNumber = await this.generateUniqueInvoiceNumber();
 
     // Create new order
@@ -382,7 +395,7 @@ export class OrdersService {
         .map((service) => service.arabic_Name)
         .join(", "),
       status: OrderStatus.Pending,
-      paymentStatus: "partially paid",
+      paymentStatus:payStatus , // Set payment status dynamically
       invoiceNumber: invoiceNumber,
       comments: [],
       reservation: reservation,
@@ -554,7 +567,7 @@ export class OrdersService {
         .map((rootoshes) => rootoshes.arabic_Name)
         .join(", "),
       status: OrderStatus.Pending,
-      paymentStatus: "paid",
+      paymentStatus: PaymentStatus.Paid,
       invoiceNumber: invoiceNumber,
       comments: [],
       reservation: reservation,
@@ -815,7 +828,7 @@ export class OrdersService {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async updatePaymentStatus(
     orderId: string,
-    newPaymentStatus: "paid" | "partially paid",
+    newPaymentStatus:PaymentStatus.Paid | PaymentStatus.PartiallyPaid,
     image: Express.Multer.File,
     userId: string // Optional parameter for the user ID
   ): Promise<OrderEntity> {
@@ -833,8 +846,8 @@ export class OrdersService {
       }
       // Prevent changing the status back to "partially paid" if it is currently "paid"
       if (
-        newPaymentStatus === "partially paid" &&
-        order.paymentStatus === "paid"
+        newPaymentStatus === PaymentStatus.PartiallyPaid &&
+        order.paymentStatus === PaymentStatus.Paid
       ) {
         throw new BadRequestException(
           "Payment status cannot be changed back to 'partially paid' after it has been set to 'paid'."
@@ -843,21 +856,21 @@ export class OrdersService {
 
       // Check if the current payment status allows updating to "paid"
       if (
-        newPaymentStatus === "paid" &&
-        order.paymentStatus !== "partially paid"
+        newPaymentStatus === PaymentStatus.Paid &&
+        order.paymentStatus !== PaymentStatus.PartiallyPaid
       ) {
         throw new BadRequestException(
           "Payment status can only be updated to 'paid' if the current status is 'partially paid'."
         );
       }
       // Check if the new status is 'paid' and ensure the image is provided
-      if (newPaymentStatus === "paid" && !image) {
+      if (newPaymentStatus === PaymentStatus.Paid && !image) {
         throw new BadRequestException(
           "An image is required when updating the payment status to 'paid'."
         );
       }
       // Update the paymentStatus
-      order.paymentStatus = newPaymentStatus;
+      order.paymentStatus = newPaymentStatus === "paid" ? PaymentStatus.Paid : PaymentStatus.PartiallyPaid;
 
       // Update image URL if provided
       if (image) {
@@ -1008,7 +1021,7 @@ export class OrdersService {
         let paymentAmount: number;
         order.status = OrderStatus.Canceled;
 
-        if (order.paymentStatus === "paid") {
+        if (order.paymentStatus === PaymentStatus.Paid) {
           if (order.receipts.length === 0) {
             throw new NotFoundException(
               `No receipt found for order with ID ${orderId}`
@@ -1016,7 +1029,7 @@ export class OrdersService {
           }
           const receipt = order.receipts[0]; // Assuming you need the first receipt
           paymentAmount = receipt.totalPayment;
-        } else if (order.paymentStatus === "partially paid") {
+        } else if (order.paymentStatus === PaymentStatus.PartiallyPaid) {
           paymentAmount = deposit;
         } else {
           throw new InternalServerErrorException(
@@ -1083,7 +1096,7 @@ export class OrdersService {
       }
 
       // Ensure that payment status is 'paid'
-      if (order.paymentStatus !== "paid") {
+      if (order.paymentStatus !== PaymentStatus.Paid) {
         throw new BadRequestException(
           "Cannot update order status to 'InQueue' unless the payment status is 'paid'."
         );
@@ -1232,6 +1245,8 @@ export class OrdersService {
 
           await transactionalEntityManager.save(AuditLogEntity, log);
           if (order.status === OrderStatus.Canceled) {
+
+            await this.reservationService.cancelReservationAndAddSlot(order.reservation.start_Time,order.reservation.end_Time,order.branch.id)
             const usersToNotify = await transactionalEntityManager.find(
               UserEntity,
               {
@@ -1251,6 +1266,9 @@ export class OrdersService {
                 `A order has been canceled: ${updatedOrder.id} by : ${userId}`
               );
             }
+
+
+
           }
           if (order.status === OrderStatus.Completed) {
             const usersToNotify = await transactionalEntityManager.find(
@@ -1603,7 +1621,7 @@ export class OrdersService {
         position: artist.position.postion,
       };
       // Ensure that payment status is 'paid'
-      if (order.paymentStatus !== "paid") {
+      if (order.paymentStatus !== PaymentStatus.Paid) {
         throw new BadRequestException(
           "Cannot update order status to 'InQueue' OR assign Artist unless the payment status is 'paid'."
         );
@@ -1928,6 +1946,7 @@ export class OrdersService {
       sort = "ASC",
       fromDate,
       toDate,
+      orderStatus,
     } = findOrdersByDayDto;
   
     try {
@@ -1936,12 +1955,12 @@ export class OrdersService {
         where: { id: userId },
         relations: [
           "orders",
-          "orders.customer", // Ensure 'customer' relation is loaded
-          "orders.payment", // Ensure 'payment' relation is loaded
-          "orders.artist", // Ensure 'artist' relation is loaded
-          "orders.reservation", // Include reservations
-          "orders.reservation.services", // Include services for the reservations
-          "branch", // Ensure 'branch' relation is loaded
+          "orders.customer",
+          "orders.payment",
+          "orders.artist",
+          "orders.reservation",
+          "orders.reservation.services",
+          "branch",
         ],
       });
   
@@ -1954,30 +1973,39 @@ export class OrdersService {
       const toDateObj = toDate ? new Date(toDate) : null;
   
       if (fromDateObj) {
-        fromDateObj.setHours(0, 0, 0, 0); // Set fromDate to the start of the day (00:00:00)
+        fromDateObj.setHours(0, 0, 0, 0);
       }
       if (toDateObj) {
-        toDateObj.setHours(23, 59, 59, 999); // Set toDate to the end of the day (23:59:59)
+        toDateObj.setHours(23, 59, 59, 999);
       }
   
       const filteredOrders = employee.orders.filter((order) => {
         const orderDate = new Date(order.date);
+  
+        // Apply date filters
         if (fromDateObj && orderDate < fromDateObj) {
           return false;
         }
         if (toDateObj && orderDate > toDateObj) {
           return false;
         }
+  
+        // Apply orderStatus filter if provided
+        if (orderStatus && !orderStatus.includes(order.status)) {
+          return false;
+        }
+  
         return true;
       });
   
-      // Apply sorting
+      // Apply sorting based on sort direction
       const sortedOrders = filteredOrders.sort((a, b) => {
         const dateA = new Date(a.date);
         const dateB = new Date(b.date);
+        
         return sort === "ASC"
-          ? dateA.getTime() - dateB.getTime()
-          : dateB.getTime() - dateA.getTime();
+          ? dateA.getTime() - dateB.getTime() // Oldest first
+          : dateB.getTime() - dateA.getTime(); // Most recent first
       });
   
       // Apply pagination
@@ -1986,10 +2014,10 @@ export class OrdersService {
         page * limit
       );
   
-      // Map orders to include artist, payment, customer, branch, and reservations with services
+      // Map orders to include all necessary details
       const mappedOrders = paginatedOrders.map((order) => ({
         id: order.id,
-        date: order.date.toString(), // Ensure correct date format
+        date: order.date.toString(),
         serviceEnglish: order.serviceEnglish,
         serviceArabic: order.serviceArabic,
         invoiceNumber: order.invoiceNumber,
@@ -1997,75 +2025,59 @@ export class OrdersService {
         paymentStatus: order.paymentStatus,
         image_order_status_Url: order.image_order_status_Url,
         image_order_payment_status_Url: order.image_order_payment_status_Url,
-        offerId:order.offerId,
-        sharableOfferId:order.sharableOfferId,
-        couponId:order.couponId,
-        artist: order.artist
-          ? {
-              id: order.artist.id,
-              username: order.artist.username,
-              email: order.artist.email,
-              role: order.artist.role,
-              english_Name: order.artist.english_Name,
-              arabic_Name: order.artist.arabic_Name,
-            
-              image: order.artist.image,
-              available: order.artist.available,
-              totalReviews: order.artist.totalReviews,
-              status: order.artist.status,
-              oldestAvgRating: order.artist.oldestAvgRating,
-              newestAvgRating: order.artist.newestAvgRating,
-            }
-          : null,
-        payment: order.payment
-          ? {
-              id: order.payment.id,
-              methodEnglish: order.payment.methodEnglish,
-              methodArabic: order.payment.methodArabic,
-              image: order.payment.image,
-              createdAt: order.payment.createdAt.toISOString(),
-            }
-          : null,
-        customer: order.customer
-          ? {
-              id: order.customer.id,
-              country_Code: order.customer.country_Code,
-              phoneNumber: order.customer.phoneNumber,
-              fullName: order.customer.fullName,
-              dateOfBirth: order.customer.dateOfBirth,
-            }
-          : null,
-        branch: employee.branch
-          ? {
-              id: employee.branch.id,
-              name: employee.branch.name,
-              // Add more branch fields as needed
-            }
-          : null,
-        reservation: order.reservation
-          ? {
-              id: order.reservation.id,
-              reservationDay: order.reservation.reservationDay,
-              reservationMonth: order.reservation.reservationMonth,
-              reservationYear: order.reservation.reservationYear,
-              start_Time: order.reservation.start_Time,
-              end_Time: order.reservation.end_Time,
-              totalPrice: order.reservation.totalPrice,
-              deposit: order.reservation.deposit,
-              services: order.reservation.services
-                ? order.reservation.services.map(service => ({
-                    id: service.id,
-                    arabic_Name: service.arabic_Name, // Add more fields as needed
-                    english_Name: service.english_Name,
-                    // Add more fields as needed
-                    duration_Mins: service.duration_Mins,
-                    rootosh_Number: service.rootosh_Number,
-                    months_To_Expire: service.months_To_Expire,
-
-                  }))
-                : [],
-            }
-          : null,
+        offerId: order.offerId,
+        sharableOfferId: order.sharableOfferId,
+        couponId: order.couponId,
+        artist: order.artist ? {
+          id: order.artist.id,
+          username: order.artist.username,
+          email: order.artist.email,
+          role: order.artist.role,
+          english_Name: order.artist.english_Name,
+          arabic_Name: order.artist.arabic_Name,
+          image: order.artist.image,
+          available: order.artist.available,
+          totalReviews: order.artist.totalReviews,
+          status: order.artist.status,
+          oldestAvgRating: order.artist.oldestAvgRating,
+          newestAvgRating: order.artist.newestAvgRating,
+        } : null,
+        payment: order.payment ? {
+          id: order.payment.id,
+          methodEnglish: order.payment.methodEnglish,
+          methodArabic: order.payment.methodArabic,
+          image: order.payment.image,
+          createdAt: order.payment.createdAt.toISOString(),
+        } : null,
+        customer: order.customer ? {
+          id: order.customer.id,
+          country_Code: order.customer.country_Code,
+          phoneNumber: order.customer.phoneNumber,
+          fullName: order.customer.fullName,
+          dateOfBirth: order.customer.dateOfBirth,
+        } : null,
+        branch: employee.branch ? {
+          id: employee.branch.id,
+          name: employee.branch.name,
+        } : null,
+        reservation: order.reservation ? {
+          id: order.reservation.id,
+          reservationDay: order.reservation.reservationDay,
+          reservationMonth: order.reservation.reservationMonth,
+          reservationYear: order.reservation.reservationYear,
+          start_Time: order.reservation.start_Time,
+          end_Time: order.reservation.end_Time,
+          totalPrice: order.reservation.totalPrice,
+          deposit: order.reservation.deposit,
+          services: order.reservation.services.map(service => ({
+            id: service.id,
+            arabic_Name: service.arabic_Name,
+            english_Name: service.english_Name,
+            duration_Mins: service.duration_Mins,
+            rootosh_Number: service.rootosh_Number,
+            months_To_Expire: service.months_To_Expire,
+          })),
+        } : null,
       }));
   
       // Return paginated result
@@ -2078,6 +2090,7 @@ export class OrdersService {
       );
     }
   }
+  
   
   
 
