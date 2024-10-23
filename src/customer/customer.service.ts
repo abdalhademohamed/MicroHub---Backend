@@ -156,7 +156,7 @@ export class CustomerService {
     return await this.customerRepository.count();
   }
 
-  async getAllCustomers(filters: GetCustomerPaginatedsDto): Promise<{ customers: CustomerEntity[]; total: number }> {
+  async getAllCustomers(filters: GetCustomerPaginatedsDto): Promise<{ items: CustomerEntity[]; total: number }> {
     const { branchId, fromDate, toDate, page = 1, limit = 10 } = filters;
 
     const query = this.customerRepository.createQueryBuilder('customer')
@@ -179,10 +179,10 @@ export class CustomerService {
     query.skip((page - 1) * limit)
          .take(limit);
 
-    const [customers, total] = await query.getManyAndCount();
+    const [items, total] = await query.getManyAndCount();
 
     return {
-      customers,
+      items,
       total,
     };
   }
