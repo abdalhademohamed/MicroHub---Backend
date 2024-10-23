@@ -54,7 +54,7 @@ export class EmployeeController {
       );
   }
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST,Role.ACCOUNTANT)
   @Get("/count")
   async getEmployeeCount(
     @Query("branchId") branchId?: string,
@@ -89,7 +89,7 @@ export class EmployeeController {
 
   
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST,Role.ARTISTMANAGER)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST,Role.ARTISTMANAGER,Role.ACCOUNTANT)
   @Get()
   async getAllEmployees(
     @Query("page") page: number = 1,
@@ -113,7 +113,7 @@ export class EmployeeController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN,Role.ARTISTMANAGER)
+  @Roles(Role.SUPERADMIN,Role.ARTISTMANAGER,Role.ACCOUNTANT)
   @Get(":id")
   async getEmployeeById(@Param("id") id: string): Promise<EmployeeEntity> {
     return await this.employeeService.getEmployeeById(id);

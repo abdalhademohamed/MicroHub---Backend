@@ -303,8 +303,9 @@ export class EmployeeService {
             statusCode: 400,
           };
         }
+        this.eventEmitter.emit('artist:hours', { duration: employee.workingHours * 60, branchId: employee.branch.id });
         employee.branch = newBranch; // Update the employee's branch
-      }
+        this.eventEmitter.emit('artist:created', employee);      }
   
       // Step 4: Handle image upload
       if (image) {

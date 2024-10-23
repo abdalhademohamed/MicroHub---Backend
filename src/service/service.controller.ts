@@ -33,7 +33,7 @@ export class ServiceController {
   constructor(private readonly serviceService: ServiceService) {}
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN,Role.ACCOUNTANT)
   @Get("/count")
   async getServiceCount(): Promise<{ count: number }> {
     const count = await this.serviceService.countServices();
@@ -63,7 +63,7 @@ export class ServiceController {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST,Role.ARTISTMANAGER)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST,Role.ARTISTMANAGER,Role.ACCOUNTANT)
   @Get("sort")
   async getAllServices(
     @Query("page") page: number = 1,

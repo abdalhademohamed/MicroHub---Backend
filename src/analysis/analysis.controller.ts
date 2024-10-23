@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from "@nestjs/common";
+import { Controller, Get, Param, Query, UseGuards } from "@nestjs/common";
 import { AnalysisService } from "./analysis.service";
 import { AnalysisDto } from "./dto/deposit.dto";
 import { ApiOperation, ApiQuery, ApiResponse } from "@nestjs/swagger";
@@ -9,6 +9,10 @@ import { GetPaymentMethodReportDto } from "./dto/get.payment.report.dto";
 import { GenerateOrderReportDto } from "./dto/get.orders.report.dto";
 import { GetTotalDepositsDto } from "./dto/get.total.depost.branch.dto";
 import { GetTotalRefundsDto } from "./dto/get.total.branch.refund.dto";
+import { RolesGuard } from "../auth/guards/role.guards";
+import { Role } from "../user/utils/user.enum";
+import { Roles } from "../auth/Roles.decorator";
+import { AccessTokenGuard } from "../auth/guards/accessToken.guard";
 
 @Controller("analysis")
 export class AnalysisController {
@@ -18,6 +22,8 @@ export class AnalysisController {
   /* -------------------------------------------------------------------------- */
   /*                                   offers                                   */
   /* -------------------------------------------------------------------------- */
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ACCOUNTANT)
   @Get('offer')
   @ApiResponse({ status: 200, description: 'Retrieve offers report' })
   async getOfferReport(@Query() filterDto: OfferReportDto) {
@@ -28,7 +34,8 @@ export class AnalysisController {
 /* -------------------------------------------------------------------------- */
 /*                                  services                                  */
 /* -------------------------------------------------------------------------- */
-
+@UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ACCOUNTANT)
 @Get('service')
 async getServiceReport(@Query() GetServiceReportDto: GetServiceReportDto) {
   return this.analysisService.getServiceReport(GetServiceReportDto);
@@ -42,7 +49,8 @@ async getServiceReport(@Query() GetServiceReportDto: GetServiceReportDto) {
 /*                                 Reservation                                */
 /* -------------------------------------------------------------------------- */
 
-
+@UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ACCOUNTANT)
   @Get('reservation')
   @ApiOperation({ summary: 'Get report for reservations' })
   @ApiQuery({ name: 'fromData', required: false, description: 'Optional start date for filtering reservations' })
@@ -63,7 +71,8 @@ async getServiceReport(@Query() GetServiceReportDto: GetServiceReportDto) {
 /* -------------------------------------------------------------------------- */
 
 
-
+@UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ACCOUNTANT)
 @Get('sharable/offer')
 @ApiResponse({ status: 200, description: 'Retrieve sharable offers report' })
 async getSharableOfferReport(@Query() filterDto: SharableOfferReportDto) {
@@ -81,6 +90,8 @@ async getSharableOfferReport(@Query() filterDto: SharableOfferReportDto) {
 // ): Promise<any> {
 //   return this.analysisService.getPaymentMethodReport(query);
 // }
+@UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ACCOUNTANT)
 @Get('payment')
 @ApiOperation({ summary: 'Get payment method usage report' })
 @ApiResponse({ status: 200, description: 'Payment method usage report generated successfully.' })
@@ -98,7 +109,8 @@ async getPaymentMethodUsageReport(
 
 
 
-
+@UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ACCOUNTANT)
 @Get('order')
 async getOrderReport(    @Query() query: GenerateOrderReportDto,
 ) {
@@ -109,7 +121,8 @@ async getOrderReport(    @Query() query: GenerateOrderReportDto,
 /* -------------------------------------------------------------------------- */
 /*                                  Employee                                  */
 /* -------------------------------------------------------------------------- */
-
+@UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ACCOUNTANT)
 @Get('employee')
   async getCoordinatorReceptionistOrderReport(
     @Query('fromDate') fromDate?: string, // Optional fromDate
@@ -128,31 +141,36 @@ async getOrderReport(    @Query() query: GenerateOrderReportDto,
 
 
 
-
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ACCOUNTANT)
   @Get('count')
   async getCounts() {
     return this.analysisService.getCount();
   }
- 
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ACCOUNTANT)
   @Get('total/deposit')
   async getTotalDeposits(@Query() dto: GetTotalDepositsDto, ) {
     
     return await this.analysisService.getTotalDepositsByBranch(dto);
     
   }
-
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ACCOUNTANT)
   @Get('total/refund')
   async getTotalRefunds(@Query() dto: GetTotalRefundsDto, ) {
    return await this.analysisService.getTotalRefunds(dto);
 
   }
   
- 
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ACCOUNTANT)
   @Get("all-prices")
   async getAllPrices() {
     return this.analysisService.getAllPrices();
   }
-
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ACCOUNTANT)
   @Get("prices-by-method")
   async getPricesGroupedByMethod() {
     return this.analysisService.getPricesGroupedByMethod();
