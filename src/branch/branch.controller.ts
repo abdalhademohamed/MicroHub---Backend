@@ -50,14 +50,14 @@ export class BranchController {
   ) {}
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER)
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ACCOUNTANT)
   @Get("count")
   async getBranchCount(): Promise<{ count: number }> {
     const count = await this.branchService.countBranches();
     return { count };
   }
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER)
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ACCOUNTANT)
   @Post()
   @UseInterceptors(FileInterceptor("image")) // 'file' is the name of the field in the form-data
   async createBranch(
@@ -94,6 +94,7 @@ export class BranchController {
     Role.BRANCHMANAGER,
     Role.RECEPTIONIST,
     Role.ARTISTMANAGER
+    ,Role.ACCOUNTANT
   )
   @Get("sorted")
   @ApiQuery({

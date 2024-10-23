@@ -11,7 +11,7 @@ import { Repository } from "typeorm";
 import { differenceInMilliseconds, formatDistanceToNow } from "date-fns";
 import { GetCustomerDto } from "./dto/get.customer.dto";
 import { GetCustomerPaginatedsDto } from "./dto/get.customers.paginated.dto";
-import { ReservationEntity } from "src/reservation/entities/reservation.entity";
+import { ReservationEntity } from "../reservation/entities/reservation.entity";
 
 @Injectable()
 export class CustomerService {
