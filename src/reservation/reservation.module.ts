@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 import { ReservationService } from "./reservation.service";
 import { ReservationController } from "./reservation.controller";
 import { TypeOrmModule } from "@nestjs/typeorm";
@@ -22,6 +22,8 @@ import { GiftCouponEntity } from "../gift-coupon/entities/gift-coupon.entity";
 import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
 import { NotificationModule } from "../notification/notification.module";
 import { GiftCouponModule } from "../gift-coupon/gift-coupon.module";
+import { NotificationService } from "src/notification/notification.service";
+import { OrdersModule } from "src/orders/orders.module";
 
 @Module({
   imports: [
@@ -36,25 +38,21 @@ import { GiftCouponModule } from "../gift-coupon/gift-coupon.module";
       WorkingEntity,
       SlotsEntity,
       OrderEntity,
-      UserEntity,
       PaymentEntity,
       OfferEntity,
       SharableOfferEntity,
       GiftCouponEntity,
       RootoshEntity,
-      GiftCouponEntity,
-
     ]),
     NotificationModule,
-    GiftCouponModule
+    GiftCouponModule,
   ],
   controllers: [ReservationController],
   providers: [
     ReservationService,
     OrdersService,
     CloudinaryService, // Add OrdersService here
-    // ReceiptService
   ],
-  exports: [ReservationService],
+  exports: [ReservationService],  // Export ReservationService here
 })
 export class ReservationModule {}

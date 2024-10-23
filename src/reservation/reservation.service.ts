@@ -1107,7 +1107,7 @@ export class ReservationService {
     );
     return { status: "deleted" };
   }
-  async cancelReservationAndAddSlot(start: Date, end: Date, branchId: string) {
+  async  cancelReservationAndAddSlot(start: Date, end: Date, branchId: string) {
     const slot = await this.SlotRepository.findOne({
       where: {
         day: start.getDate(),
