@@ -11,12 +11,16 @@ import { Repository } from "typeorm";
 import { differenceInMilliseconds, formatDistanceToNow } from "date-fns";
 import { GetCustomerDto } from "./dto/get.customer.dto";
 import { GetCustomerPaginatedsDto } from "./dto/get.customers.paginated.dto";
+import { ReservationEntity } from "src/reservation/entities/reservation.entity";
 
 @Injectable()
 export class CustomerService {
   constructor(
     @InjectRepository(CustomerEntity)
     private readonly customerRepository: Repository<CustomerEntity>,
+    @InjectRepository(ReservationEntity)
+    private readonly ReservationRepository: Repository<ReservationEntity>,
+
   ) {}
   async getCustomerByPhoneNumber(phoneNumber: string): Promise<GetCustomerDto> {
     try {
@@ -155,36 +159,41 @@ export class CustomerService {
   async countCustomers(): Promise<number> {
     return await this.customerRepository.count();
   }
-
-  async getAllCustomers(filters: GetCustomerPaginatedsDto): Promise<{ items: CustomerEntity[]; total: number }> {
+  async getAllCustomers(
+    filters: GetCustomerPaginatedsDto,
+  ): Promise<{ items: CustomerEntity[]; total: number }> {
     const { branchId, fromDate, toDate, page = 1, limit = 10 } = filters;
-
-    const query = this.customerRepository.createQueryBuilder('customer')
-      .leftJoinAndSelect('customer.reservations', 'reservation');
-
-    // Apply filters
-    if (branchId) {
-      query.andWhere('reservation.branchId = :branchId', { branchId });
-    }
-
-    if (fromDate) {
-      query.andWhere('reservation.start_Time >= :fromDate', { fromDate: new Date(fromDate + 'T00:00:00') });
-    }
-
-    if (toDate) {
-      query.andWhere('reservation.start_Time <= :toDate', { toDate: new Date(toDate + 'T23:59:59') });
-    }
-
+  
+    // Step 1: Fetch customers
+    const query = this.customerRepository.createQueryBuilder('customer');
+  
     // Pagination
-    query.skip((page - 1) * limit)
-         .take(limit);
-
-    const [items, total] = await query.getManyAndCount();
-
-    return {
-      items,
-      total,
-    };
+    query.skip((page - 1) * limit).take(limit);
+  
+    const [customers, total] = await query.getManyAndCount();
+  
+    // Step 2: Fetch reservation counts for each customer using a separate query
+    const reservationCounts = await this.ReservationRepository
+      .createQueryBuilder('reservation')
+      .select('reservation.customerId', 'customerId')
+      .addSelect('COUNT(reservation.id)', 'reservationCount')
+      .groupBy('reservation.customerId')
+      .getRawMany();
+  
+    // Step 3: Map reservation counts to each customer
+    const items = customers.map(customer => {
+      const count = reservationCounts.find(
+        count => count.customerId === customer.id,
+      );
+      return {
+        ...customer,
+        reservationCount: count ? parseInt(count.reservationCount, 10) : 0,
+      };
+    });
+  
+    return { items, total };
   }
+  
+  
 }
 

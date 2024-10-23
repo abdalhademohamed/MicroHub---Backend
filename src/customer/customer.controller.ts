@@ -22,7 +22,7 @@ import { GetCustomerPaginatedsDto } from "./dto/get.customers.paginated.dto";
 export class CustomerController {
   constructor(private readonly customerService: CustomerService) {}
   @Get('sorted')
-  async getCustomers(@Query() filters: GetCustomerPaginatedsDto) {
+   async getCustomers(@Query() filters: GetCustomerPaginatedsDto) {
     return this.customerService.getAllCustomers(filters);
   }
   @Get("count")
