@@ -1246,7 +1246,7 @@ export class OrdersService {
           await transactionalEntityManager.save(AuditLogEntity, log);
           if (order.status === OrderStatus.Canceled) {
 
-            await this.reservationService.deleteReservation(order.id)
+            await this.reservationService.deleteReservation(order.reservation.id)
             const usersToNotify = await transactionalEntityManager.find(
               UserEntity,
               {
