@@ -958,6 +958,14 @@ export class ReservationService {
 
   async updateTime(id: string, body: UpdateTimeReservationDto, userId: string) {
     try {
+      // let serviceIds: string[] = [];
+      // let services: ServiceEntity[] = [];
+      // let rootoshIds: string[] = []; // Initialize rootoshIds array
+      // let rootoshes: RootoshEntity[] = []; // Initialize rootoshes array
+      // // Initialize duration and price variables
+      // let duration = 0;
+      // let price = 0;
+      // let result;
       // Fetch the reservation with necessary relations
       const reservation = await this.ReservationRepository.findOne({
         where: { id },
@@ -966,11 +974,30 @@ export class ReservationService {
           services: true,
         },
       });
+      const oldReservation = { ...reservation }; // Clone the old reservation for comparison
 
       if (!reservation) {
         throw new NotFoundException(`Reservation with ID ${id} not found`);
       }
+      // if (reservation.rootoshes && reservation.rootoshes.length > 0) {
+      //   rootoshIds = reservation.rootoshes;
 
+      //   // Fetch rootosh entities based on provided IDs
+      //   rootoshes = await this.RootoshRepository.find({
+      //     where: { id: In(rootoshIds) },
+      //   });
+      //   if (rootoshes.length !== rootoshIds.length) {
+      //     throw new BadRequestException("Some rootosh IDs were not found");
+      //   }
+
+      //   const rootoshTotals =
+      //     await this.calculateRootoshTotalDuration(rootoshIds);
+
+      //   duration += rootoshTotals.duration;
+      //   price += rootoshTotals.price;
+      //   reservation.deposit = 0;
+      //   reservation.deposit_Content = null;
+      // } 
       // Calculate total price and duration of services
       const acc = { price: 0, duration: 0 };
       for (const service of reservation.services) {
@@ -1007,16 +1034,22 @@ export class ReservationService {
         workingHours[index].slot
       );
 
-      await this.cancelReservationAndAddSlot(
-        reservation.start_Time,
-        reservation.end_Time,
-        reservation.branch.id
-      );
+      await this.deleteReservation(reservation.id)
+
+      // await this.cancelReservationAndAddSlot(
+      //   reservation.start_Time,
+      //   reservation.end_Time,
+      //   reservation.branch.id
+      // );
+
       await this.WorkingHourEntity.save(newWorkingHours);
       await this.WorkingHourEntity.delete({ id: workingHours[index].id });
 
+
+
+
+  
       // Log the changes before updating the reservation
-      const oldReservation = { ...reservation }; // Clone the old reservation for comparison
 
       // Update the reservation with new times
       reservation.start_Time = startTime;
@@ -1084,6 +1117,7 @@ export class ReservationService {
     }
   }
 
+
   async deleteReservation(id: string) {
     const reservation = await this.ReservationRepository.findOne({
       where: { id, isDeleted: false },
@@ -1107,7 +1141,7 @@ export class ReservationService {
     );
     return { status: "deleted" };
   }
-  async  cancelReservationAndAddSlot(start: Date, end: Date, branchId: string) {
+  async cancelReservationAndAddSlot(start: Date, end: Date, branchId: string) {
     const slot = await this.SlotRepository.findOne({
       where: {
         day: start.getDate(),
@@ -1122,14 +1156,28 @@ export class ReservationService {
       throw new HttpException("slot not found", 400);
     }
     const startWorkingHour = await this.WorkingHourEntity.findOne({
-      where: { to: start },
+      where: { 
+        to: start,
+        slot: {
+          branch: {
+            id: branchId,
+          }
+        }
+      },
     });
     const endWorkingHour = await this.WorkingHourEntity.findOne({
-      where: { from: end },
+      where: { 
+        from: end,
+        slot: {
+          branch: {
+            id: branchId,
+          }
+        }
+      },
     });
     if (startWorkingHour) {
       start = startWorkingHour.from;
-      await this.WorkingHourEntity.delete(startWorkingHour);
+      await this.WorkingHourEntity.remove(startWorkingHour);
     }
     if (endWorkingHour) {
       end = endWorkingHour.to;
@@ -1139,11 +1187,10 @@ export class ReservationService {
       from: start,
       to: end,
       slot,
-      duration: Math.ceil((start.getTime() - end.getTime()) / (1000 * 60)),
+      duration: Math.ceil((end.getTime() - start.getTime()) / (1000 * 60)),
     });
     await this.WorkingHourEntity.save(workingSlot);
-  }
-
+  }
   async getTop5Reservations(
     startDate: string,
     endDate: string

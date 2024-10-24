@@ -148,7 +148,7 @@ async getOrderReport(    @Query() query: GenerateOrderReportDto,
     return this.analysisService.getCount();
   }
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ACCOUNTANT)
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ACCOUNTANT,Role.ARTISTMANAGER)
   @Get('total/deposit')
   async getTotalDeposits(@Query() dto: GetTotalDepositsDto, ) {
     
