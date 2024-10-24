@@ -353,7 +353,7 @@ export class OrdersService {
       await this.OfferRepository.save(offer); // Save the updated offer
     }
 
-    if (sharableOfferId!==null) {
+    if (sharableOfferId) {
       const sharableOffer = await this.SharableOfferRepository.findOne({
         where: { id: sharableOfferId },
       });
