@@ -786,14 +786,14 @@ export class ReservationService {
       }
 
       if (reservation.services && reservation.services.length > 0) {
-        const acc = { price: 0, duration: 0 };
+        // const acc = { price: 0, duration: 0 };
         for (const service of reservation.services) {
-          acc.price += service.price;
-          acc.duration += service.duration_Mins;
+          price += service.price;
+          duration += service.duration_Mins;
         }
         // Adjust based on both services and rootosh
-        price = acc.price;
-        duration = acc.duration;
+        // price = acc.price;
+        // duration = acc.duration;
       }
 
       // Calculate new start and end times
