@@ -1016,8 +1016,8 @@ export class OrdersService {
             `No reservation found for order with ID ${orderId}`
           );
         }
-        console.log(order.reservation.id)
         await this.reservationService.deleteReservation(order.reservation.id)
+         
         const deposit = order.reservation.deposit; // Get deposit from the reservation
         let paymentAmount: number;
         order.status = OrderStatus.Canceled;
