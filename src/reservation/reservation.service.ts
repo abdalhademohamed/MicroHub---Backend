@@ -971,8 +971,26 @@ export class ReservationService {
       if (!reservation) {
         throw new NotFoundException(`Reservation with ID ${id} not found`);
       }
+ // if (reservation.rootoshes && reservation.rootoshes.length > 0) {
+      //   rootoshIds = reservation.rootoshes;
 
+      // // Fetch rootosh entities based on provided IDs
+      // rootoshes = await this.RootoshRepository.find({
+      //   where: { id: In(rootoshIds) },
+      // });
+      // if (rootoshes.length !== rootoshIds.length) {
+      //   throw new BadRequestException("Some rootosh IDs were not found");
+      // }
+
+      // const rootoshTotals =
+      //   await this.calculateRootoshTotalDuration(rootoshIds);
+
+      // duration += rootoshTotals.duration;
+      // price += rootoshTotals.price;
+      // reservation.deposit = 0;
+      // reservation.deposit_Content = null;
       // Calculate total price and duration of services
+      // }
       const acc = { price: 0, duration: 0 };
       for (const service of reservation.services) {
         acc.price += service.price;
@@ -1008,12 +1026,12 @@ export class ReservationService {
         workingHours[index].slot
       );
 
-      // await this.deleteReservation(reservation.id)
-      await this.cancelReservationAndAddSlot(
-        reservation.start_Time,
-        reservation.end_Time,
-        reservation.branch.id
-      );
+      await this.deleteReservation(reservation.id)
+      // await this.cancelReservationAndAddSlot(
+      //   reservation.start_Time,
+      //   reservation.end_Time,
+      //   reservation.branch.id
+      // );
       await this.WorkingHourEntity.save(newWorkingHours);
       await this.WorkingHourEntity.delete({ id: workingHours[index].id });
 
