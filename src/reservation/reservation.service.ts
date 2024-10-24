@@ -991,7 +991,11 @@ export class ReservationService {
           "The custom schedule conflicts with an existing reservation."
         );
       }
-  
+   // Update the reservation with new times
+   reservation.start_Time = startTime;
+   reservation.end_Time = endTime;
+
+   await this.ReservationRepository.save(reservation);
       const newWorkingHours = this.newAddedWorkingHours(
         {
           fromOriginal: workingHours[index].from,
@@ -1017,11 +1021,7 @@ export class ReservationService {
   
       // Log the changes before updating the reservation
 
-      // Update the reservation with new times
-      reservation.start_Time = startTime;
-      reservation.end_Time = endTime;
-
-      await this.ReservationRepository.save(reservation);
+     
       const updatedOrder =
         await this.OrdersService.updateOrderTimeFromReservation(
           reservation.id,
