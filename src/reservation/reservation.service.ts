@@ -1084,6 +1084,7 @@ export class ReservationService {
     }
   }
 
+
   async deleteReservation(id: string) {
     const reservation = await this.ReservationRepository.findOne({
       where: { id, isDeleted: false },
@@ -1107,7 +1108,7 @@ export class ReservationService {
     );
     return { status: "deleted" };
   }
-  async  cancelReservationAndAddSlot(start: Date, end: Date, branchId: string) {
+  async cancelReservationAndAddSlot(start: Date, end: Date, branchId: string) {
     const slot = await this.SlotRepository.findOne({
       where: {
         day: start.getDate(),
@@ -1122,14 +1123,28 @@ export class ReservationService {
       throw new HttpException("slot not found", 400);
     }
     const startWorkingHour = await this.WorkingHourEntity.findOne({
-      where: { to: start },
+      where: { 
+        to: start,
+        slot: {
+          branch: {
+            id: branchId,
+          }
+        }
+      },
     });
     const endWorkingHour = await this.WorkingHourEntity.findOne({
-      where: { from: end },
+      where: { 
+        from: end,
+        slot: {
+          branch: {
+            id: branchId,
+          }
+        }
+      },
     });
     if (startWorkingHour) {
       start = startWorkingHour.from;
-      await this.WorkingHourEntity.delete(startWorkingHour);
+      await this.WorkingHourEntity.remove(startWorkingHour);
     }
     if (endWorkingHour) {
       end = endWorkingHour.to;
@@ -1142,7 +1157,7 @@ export class ReservationService {
       duration: Math.ceil((start.getTime() - end.getTime()) / (1000 * 60)),
     });
     await this.WorkingHourEntity.save(workingSlot);
-  }
+  }
 
   async getTop5Reservations(
     startDate: string,
