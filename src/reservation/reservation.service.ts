@@ -964,6 +964,7 @@ export class ReservationService {
         relations: {
           branch: true,
           services: true,
+          rootoshes:true,
         },
       });
 
@@ -1007,12 +1008,12 @@ export class ReservationService {
         workingHours[index].slot
       );
 
-      await this.deleteReservation(reservation.id)
-      // await this.cancelReservationAndAddSlot(
-      //   reservation.start_Time,
-      //   reservation.end_Time,
-      //   reservation.branch.id
-      // );
+      // await this.deleteReservation(reservation.id)
+      await this.cancelReservationAndAddSlot(
+        reservation.start_Time,
+        reservation.end_Time,
+        reservation.branch.id
+      );
       await this.WorkingHourEntity.save(newWorkingHours);
       await this.WorkingHourEntity.delete({ id: workingHours[index].id });
 
