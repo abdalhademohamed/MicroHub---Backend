@@ -958,15 +958,6 @@ export class ReservationService {
 
   async updateTime(id: string, body: UpdateTimeReservationDto, userId: string) {
     try {
-      // let serviceIds: string[] = [];
-      // let services: ServiceEntity[] = [];
-      // let rootoshIds: string[] = []; // Initialize rootoshIds array
-      // let rootoshes: RootoshEntity[] = []; // Initialize rootoshes array
-      // // Initialize duration and price variables
-      // let duration = 0;
-      // let price = 0;
-      // let result;
-      // Fetch the reservation with necessary relations
       const reservation = await this.ReservationRepository.findOne({
         where: { id },
         relations: {
@@ -979,41 +970,19 @@ export class ReservationService {
       if (!reservation) {
         throw new NotFoundException(`Reservation with ID ${id} not found`);
       }
-      // if (reservation.rootoshes && reservation.rootoshes.length > 0) {
-      //   rootoshIds = reservation.rootoshes;
-
-      //   // Fetch rootosh entities based on provided IDs
-      //   rootoshes = await this.RootoshRepository.find({
-      //     where: { id: In(rootoshIds) },
-      //   });
-      //   if (rootoshes.length !== rootoshIds.length) {
-      //     throw new BadRequestException("Some rootosh IDs were not found");
-      //   }
-
-      //   const rootoshTotals =
-      //     await this.calculateRootoshTotalDuration(rootoshIds);
-
-      //   duration += rootoshTotals.duration;
-      //   price += rootoshTotals.price;
-      //   reservation.deposit = 0;
-      //   reservation.deposit_Content = null;
-      // } 
-      // Calculate total price and duration of services
       const acc = { price: 0, duration: 0 };
       for (const service of reservation.services) {
         acc.price += service.price;
         acc.duration += service.duration_Mins;
       }
-
-      // Determine new start and end times
       const startTime = new Date(body.startTime);
-      const endTime = new Date(startTime.getTime() + 1000 * 60 * acc.duration);
+      const endTime = new Date(startTime.getTime() + acc.duration * 60 * 1000);
 
-      // Check if the new times fit within working hours
       const workingHours = await this.getWorkingHoursAtSpecificDate(
         reservation.branch.id,
         startTime
       );
+  
       const index = workingHours.findIndex(
         (w) => w.from <= startTime && w.to >= endTime
       );
@@ -1022,8 +991,7 @@ export class ReservationService {
           "The custom schedule conflicts with an existing reservation."
         );
       }
-
-      // Prepare new working hours and update
+  
       const newWorkingHours = this.newAddedWorkingHours(
         {
           fromOriginal: workingHours[index].from,
@@ -1033,17 +1001,15 @@ export class ReservationService {
         },
         workingHours[index].slot
       );
-
-      await this.deleteReservation(reservation.id)
-
-      // await this.cancelReservationAndAddSlot(
-      //   reservation.start_Time,
-      //   reservation.end_Time,
-      //   reservation.branch.id
-      // );
-
+  
       await this.WorkingHourEntity.save(newWorkingHours);
       await this.WorkingHourEntity.delete({ id: workingHours[index].id });
+
+      await this.cancelReservationAndAddSlot(
+        oldReservation.start_Time,
+        oldReservation.end_Time,
+        oldReservation.branch.id
+      );
 
 
 
