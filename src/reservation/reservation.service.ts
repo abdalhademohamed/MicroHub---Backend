@@ -958,14 +958,14 @@ export class ReservationService {
 
   async updateTime(id: string, body: UpdateTimeReservationDto, userId: string) {
     try {
-      let serviceIds: string[] = [];
-      let services: ServiceEntity[] = [];
-      let rootoshIds: string[] = []; // Initialize rootoshIds array
-      let rootoshes: RootoshEntity[] = []; // Initialize rootoshes array
-      // Initialize duration and price variables
-      let duration = 0;
-      let price = 0;
-      let result;
+      // let serviceIds: string[] = [];
+      // let services: ServiceEntity[] = [];
+      // let rootoshIds: string[] = []; // Initialize rootoshIds array
+      // let rootoshes: RootoshEntity[] = []; // Initialize rootoshes array
+      // // Initialize duration and price variables
+      // let duration = 0;
+      // let price = 0;
+      // let result;
       // Fetch the reservation with necessary relations
       const reservation = await this.ReservationRepository.findOne({
         where: { id },
@@ -1022,7 +1022,6 @@ export class ReservationService {
           "The custom schedule conflicts with an existing reservation."
         );
       }
-      await this.deleteReservation(oldReservation.id)
 
       // Prepare new working hours and update
       const newWorkingHours = this.newAddedWorkingHours(
@@ -1034,6 +1033,8 @@ export class ReservationService {
         },
         workingHours[index].slot
       );
+
+      await this.deleteReservation(reservation.id)
 
       // await this.cancelReservationAndAddSlot(
       //   reservation.start_Time,
