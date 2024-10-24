@@ -958,6 +958,14 @@ export class ReservationService {
 
   async updateTime(id: string, body: UpdateTimeReservationDto, userId: string) {
     try {
+      let serviceIds: string[] = [];
+      let services: ServiceEntity[] = [];
+      let rootoshIds: string[] = []; // Initialize rootoshIds array
+      let rootoshes: RootoshEntity[] = []; // Initialize rootoshes array
+      // Initialize duration and price variables
+      let duration = 0;
+      let price = 0;
+      let result;
       // Fetch the reservation with necessary relations
       const reservation = await this.ReservationRepository.findOne({
         where: { id },
@@ -966,11 +974,30 @@ export class ReservationService {
           services: true,
         },
       });
+      const oldReservation = { ...reservation }; // Clone the old reservation for comparison
 
       if (!reservation) {
         throw new NotFoundException(`Reservation with ID ${id} not found`);
       }
+      // if (reservation.rootoshes && reservation.rootoshes.length > 0) {
+      //   rootoshIds = reservation.rootoshes;
 
+      //   // Fetch rootosh entities based on provided IDs
+      //   rootoshes = await this.RootoshRepository.find({
+      //     where: { id: In(rootoshIds) },
+      //   });
+      //   if (rootoshes.length !== rootoshIds.length) {
+      //     throw new BadRequestException("Some rootosh IDs were not found");
+      //   }
+
+      //   const rootoshTotals =
+      //     await this.calculateRootoshTotalDuration(rootoshIds);
+
+      //   duration += rootoshTotals.duration;
+      //   price += rootoshTotals.price;
+      //   reservation.deposit = 0;
+      //   reservation.deposit_Content = null;
+      // } 
       // Calculate total price and duration of services
       const acc = { price: 0, duration: 0 };
       for (const service of reservation.services) {
@@ -995,6 +1022,7 @@ export class ReservationService {
           "The custom schedule conflicts with an existing reservation."
         );
       }
+      await this.deleteReservation(oldReservation.id)
 
       // Prepare new working hours and update
       const newWorkingHours = this.newAddedWorkingHours(
@@ -1007,17 +1035,20 @@ export class ReservationService {
         workingHours[index].slot
       );
 
-      await this.deleteReservation(reservation.id)
       // await this.cancelReservationAndAddSlot(
       //   reservation.start_Time,
       //   reservation.end_Time,
       //   reservation.branch.id
       // );
+
       await this.WorkingHourEntity.save(newWorkingHours);
       await this.WorkingHourEntity.delete({ id: workingHours[index].id });
 
+
+
+
+  
       // Log the changes before updating the reservation
-      const oldReservation = { ...reservation }; // Clone the old reservation for comparison
 
       // Update the reservation with new times
       reservation.start_Time = startTime;
