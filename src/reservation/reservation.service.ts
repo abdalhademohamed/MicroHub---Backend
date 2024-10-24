@@ -1086,112 +1086,78 @@ export class ReservationService {
 
 
   async deleteReservation(id: string) {
-    try {
-      const reservation = await this.ReservationRepository.findOne({
-        where: { id, isDeleted: false },
-        relations: { branch: true },
-      });
-      if (!reservation) {
-        throw new NotFoundException(`Reservation with ID ${id} not found`);
-      }
-  
-      reservation.isDeleted = true;
-      // Delete the reservation
-      await this.ReservationRepository.save(reservation);
-  
-      // If reservation already started, just return "deleted" status
-      if (reservation.start_Time <= new Date()) {
-        return { status: "deleted" };
-      }
-  
-      // Cancel the reservation and add available time slots back
-      await this.cancelReservationAndAddSlot(
-        reservation.start_Time,
-        reservation.end_Time,
-        reservation.branch.id
-      );
-  
+    const reservation = await this.ReservationRepository.findOne({
+      where: { id, isDeleted: false },
+      relations: {
+        branch: true,
+      },
+    });
+    if (!reservation) {
+      throw new NotFoundException(`Reservation with ID ${id} not found`);
+    }
+    reservation.isDeleted = true;
+    // Delete the reservation
+    await this.ReservationRepository.save(reservation);
+    if (reservation.start_Time <= new Date()) {
       return { status: "deleted" };
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error; // Re-throw the NotFoundException
-      }
-      // Catch-all for any other unexpected errors
-      throw new HttpException(
-        `Failed to delete reservation with ID ${id}: ${error.message}`,
-        500
-      );
     }
+    await this.cancelReservationAndAddSlot(
+      reservation.start_Time,
+      reservation.end_Time,
+      reservation.branch.id
+    );
+    return { status: "deleted" };
   }
-  
   async cancelReservationAndAddSlot(start: Date, end: Date, branchId: string) {
-    try {
-      // Find the slot based on date and branch
-      const slot = await this.SlotRepository.findOne({
-        where: {
-          day: start.getDate(),
-          month: start.getMonth() + 1,
-          year: start.getFullYear(),
-          branch: { id: branchId },
+    const slot = await this.SlotRepository.findOne({
+      where: {
+        day: start.getDate(),
+        month: start.getMonth() + 1,
+        year: start.getFullYear(),
+        branch: {
+          id: branchId,
         },
-      });
-  
-      if (!slot) {
-        throw new NotFoundException('Slot not found for the given branch and date');
-      }
-  
-      // Find start working hour
-      const startWorkingHour = await this.WorkingHourEntity.findOne({
-        where: {
-          to: start,
-          slot: {
-            branch: { id: branchId },
-          },
-        },
-      });
-  
-      // Find end working hour
-      const endWorkingHour = await this.WorkingHourEntity.findOne({
-        where: {
-          from: end,
-          slot: {
-            branch: { id: branchId },
-          },
-        },
-      });
-  
-      // Adjust and remove working hours if necessary
-      if (startWorkingHour) {
-        start = startWorkingHour.from;
-        await this.WorkingHourEntity.remove(startWorkingHour);
-      }
-  
-      if (endWorkingHour) {
-        end = endWorkingHour.to;
-        await this.WorkingHourEntity.remove(endWorkingHour);
-      }
-  
-      // Create new working slot
-      const workingSlot = this.WorkingHourEntity.create({
-        from: start,
-        to: end,
-        slot,
-        duration: Math.ceil((end.getTime() - start.getTime()) / (1000 * 60)),
-      });
-  
-      await this.WorkingHourEntity.save(workingSlot);
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error; // Re-throw the NotFoundException
-      }
-  
-      // Check for any database-related issues or invalid operations
-      throw new HttpException(
-        `Failed to adjust working slot for branch ${branchId}: ${error.message}`,
-        500
-      );
+      },
+    });
+    if (!slot) {
+      throw new HttpException("slot not found", 400);
     }
-  }
+    const startWorkingHour = await this.WorkingHourEntity.findOne({
+      where: { 
+        to: start,
+        slot: {
+          branch: {
+            id: branchId,
+          }
+        }
+      },
+    });
+    const endWorkingHour = await this.WorkingHourEntity.findOne({
+      where: { 
+        from: end,
+        slot: {
+          branch: {
+            id: branchId,
+          }
+        }
+      },
+    });
+    if (startWorkingHour) {
+      start = startWorkingHour.from;
+      await this.WorkingHourEntity.remove(startWorkingHour);
+    }
+    if (endWorkingHour) {
+      end = endWorkingHour.to;
+      await this.WorkingHourEntity.remove(endWorkingHour);
+    }
+    const workingSlot = this.WorkingHourEntity.create({
+      from: start,
+      to: end,
+      slot,
+      duration: Math.ceil((end.getTime() - start.getTime()) / (1000 * 60)),
+    });
+    await this.WorkingHourEntity.save(workingSlot);
+  }
   async getTop5Reservations(
     startDate: string,
     endDate: string
