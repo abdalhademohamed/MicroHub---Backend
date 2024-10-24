@@ -792,8 +792,8 @@ export class ReservationService {
           acc.duration += service.duration_Mins;
         }
         // Adjust based on both services and rootosh
-        price += acc.price;
-        duration += acc.duration;
+        price = acc.price;
+        duration = acc.duration;
       }
 
       // Calculate new start and end times
