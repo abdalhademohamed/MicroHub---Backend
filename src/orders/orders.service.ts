@@ -1154,6 +1154,7 @@ export class OrdersService {
 
       const orderDate = new Date(order.date); // Assuming 'order.date' contains the order date
       orderDate.setHours(0, 0, 0, 0); // Reset time part to compare only date
+  
 
       if (orderDate.getTime() !== today.getTime()) {
         throw new BadRequestException(
@@ -1526,6 +1527,8 @@ export class OrdersService {
         throw new NotFoundException(`Employee with userId ${userId} not found`);
       }
   
+     
+
       // Handle date filtering (fromDate and toDate)
       const fromDateObj = fromDate ? new Date(fromDate) : null;
       const toDateObj = toDate ? new Date(toDate) : null;
@@ -1635,13 +1638,14 @@ export class OrdersService {
             rootosh_Number: service.rootosh_Number,
             months_To_Expire: service.months_To_Expire,
           })),
-          rootoshes: order.reservation.rootoshes.map(rootosh => ({
+          // Check if rootoshes exists before mapping
+          rootoshes: order.reservation.rootoshes ? order.reservation.rootoshes.map(rootosh => ({
             id: rootosh.id,
             arabic_Name: rootosh.arabic_Name,
             english_Name: rootosh.english_Name,
             expireduration: rootosh.expireduration,
             duration_Mins: rootosh.duration_Mins,
-          })),
+          })) : [],  // Default to an empty array if rootoshes is undefined
         } : null,
       }));
   
