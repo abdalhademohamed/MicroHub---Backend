@@ -78,6 +78,8 @@ export class ReviewsService {
         relations: ["reservation.customer", "artist"],
       });
     
+      
+
       // Check if the order exists
       if (!newestOrder) {
         throw new NotFoundException({
@@ -198,11 +200,7 @@ export class ReviewsService {
         {
           message: `Failed to create review`,
           error: error.message || error,
-          details: {
-            body,
-            userId,
-            stack: error.stack, // Include stack trace for debugging (optional)
-          },
+          
         },
         error.status || 500, // Preserve the original error status if it exists
       );

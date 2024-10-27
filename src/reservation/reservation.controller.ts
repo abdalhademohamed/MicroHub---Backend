@@ -154,6 +154,21 @@ export class ReservationController {
       throw new BadRequestException("User not authenticated");
     }
     return this.reservationService.updateTime(id, updateReservationDto, userId);
+  } /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR)
+  @Put("rootosh/time/:id")
+  async updateReservationStartTimeForRootosh(
+    @Request() req: any, // Request object to access the user
+    @Param("id") id: string,
+    @Body() updateReservationDto: UpdateTimeReservationDto
+  ) {
+    const userId = req.user.sub; // Extract user ID from request
+
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
+    return this.reservationService.updateTimeforRootosh(id, updateReservationDto, userId);
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Delete(":id")

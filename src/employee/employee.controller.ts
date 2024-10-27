@@ -129,32 +129,20 @@ export class EmployeeController {
     @Body() updateEmployeeDto: UpdateEmployeeDto,
     @UploadedFile() image: Express.Multer.File, // If uploading a file
   ): Promise<EmployeeEntity | { message: string; error: string; statusCode: number }> {
-    try {
-      // If there's a file, add it to the DTO or handle it separately
-      if (image) {
-        updateEmployeeDto.image = image.path; // Adjust based on how you handle file paths
-      }
-      const userId = req.user.sub; // Extract user ID from request
-
-      if (!userId) {
-        throw new BadRequestException("User not authenticated");
-      }
-      return await this.employeeService.updateEmployee(
-        id,
-        updateEmployeeDto,
-        userId,
-        image,
-      );
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw new NotFoundException(error.message);
-      } else {
-        throw new InternalServerErrorException(
-          "Failed to update employee",
-          error.stack,
-        );
-      }
+    if (image) {
+      updateEmployeeDto.image = image.path; // Adjust based on how you handle file paths
     }
+    const userId = req.user.sub; // Extract user ID from request
+
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
+    return await this.employeeService.updateEmployee(
+      id,
+      updateEmployeeDto,
+      userId,
+      image,
+    );
   }
 
   // @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first

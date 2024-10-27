@@ -18,6 +18,8 @@ import { NotificationEntity } from "../notification/entities/notification.entity
 import { SharableOfferEntity } from "../sharable-offer/entities/sharable-offer.entity";
 import { GiftCouponModule } from "../gift-coupon/gift-coupon.module";
 import { ReservationModule } from "../reservation/reservation.module";
+import { CustomerEntity } from "src/customer/entities/customer.entity";
+import { RootoshEntity } from "src/rootosh/entities/rootosh.entity";
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -31,6 +33,8 @@ import { ReservationModule } from "../reservation/reservation.module";
       PositionEntity,
       OfferEntity,
       SharableOfferEntity,
+      CustomerEntity,
+      RootoshEntity
     ]),
     NotificationModule,
     GiftCouponModule,
