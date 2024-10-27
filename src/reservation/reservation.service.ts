@@ -860,7 +860,132 @@ export class ReservationService {
     }
   }
 
+  async updateTimeforRootosh(id: string, body: UpdateTimeReservationDto, userId: string) {
+    try {
+      const reservation = await this.ReservationRepository.findOne({
+        where: { id },
+        relations: {
+          branch: true,
+          rootoshes: true,
+        },
+      });
+      const oldReservation = { ...reservation }; // Clone the old reservation for comparison
 
+      if (!reservation) {
+        throw new NotFoundException(`Reservation with ID ${id} not found`);
+      }
+      const acc = { price: 0, duration: 0 };
+      for (const rootosh of reservation.rootoshes) {
+        acc.price += 0;
+        acc.duration += rootosh.duration_Mins;
+      }
+      const startTime = new Date(body.startTime);
+      const endTime = new Date(startTime.getTime() + acc.duration * 60 * 1000);
+
+      const workingHours = await this.getWorkingHoursAtSpecificDate(
+        reservation.branch.id,
+        startTime
+      );
+  
+      const index = workingHours.findIndex(
+        (w) => w.from <= startTime && w.to >= endTime
+      );
+      if (index === -1) {
+        throw new BadRequestException(
+          "The custom schedule conflicts with an existing reservation."
+        );
+      }
+   // Update the reservation with new times
+   reservation.start_Time = startTime;
+   reservation.end_Time = endTime;
+
+   await this.ReservationRepository.save(reservation);
+      const newWorkingHours = this.newAddedWorkingHours(
+        {
+          fromOriginal: workingHours[index].from,
+          toOriginal: workingHours[index].to,
+          fromUser: startTime,
+          toUser: endTime,
+        },
+        workingHours[index].slot
+      );
+  
+      await this.WorkingHourEntity.save(newWorkingHours);
+      await this.WorkingHourEntity.delete({ id: workingHours[index].id });
+
+      await this.cancelReservationAndAddSlot(
+        oldReservation.start_Time,
+        oldReservation.end_Time,
+        oldReservation.branch.id
+      );
+
+
+
+
+  
+      // Log the changes before updating the reservation
+
+     
+      const updatedOrder =
+        await this.OrdersService.updateOrderTimeFromReservation(
+          reservation.id,
+          userId
+        );
+
+      // Create an audit log entry
+      const changedColumns = ["start_Time", "end_Time"];
+      const changesDetails = {};
+
+      changedColumns.forEach((column) => {
+        changesDetails[column] = {
+          oldValue: oldReservation[column],
+          newValue: reservation[column],
+        };
+      });
+
+      const log = new AuditLogEntity();
+      log.tableName = "reservation";
+      log.action = "UPDATE";
+      log.entityId = reservation.id;
+      log.changedColumns = changedColumns;
+      log.changesDetails = changesDetails;
+      log.performedBy = userId;
+
+      const user = await this.UserRepository.findOne({
+        where: { id: userId },
+        select: ["id", "username", "email", "role"],
+      });
+      if (user) {
+        log.userDetails = user;
+      }
+
+      await this.entityManager.save(AuditLogEntity, log);
+
+      return { status: "Time updated", updatedOrder };
+    } catch (error) {
+      // Categorize and log errors
+      if (error instanceof NotFoundException) {
+        // Log specific error for not found exception
+        console.error(`Error: ${error.message}`, { error });
+        throw error; // Re-throw to preserve the original exception
+      } else if (error instanceof BadRequestException) {
+        // Log specific error for bad request exception
+        console.error(`Error: ${error.message}`, { error });
+        throw error; // Re-throw to preserve the original exception
+      } else {
+        // Log unexpected errors
+        console.error("An unexpected error occurred during updateTime:", {
+          error,
+          id,
+          userId,
+          body,
+        });
+        throw new InternalServerErrorException(
+          "An error occurred while updating the reservation."
+        );
+      }
+    }
+  }
   async deleteReservation(id: string) {
     const reservation = await this.ReservationRepository.findOne({
       where: { id, isDeleted: false },
