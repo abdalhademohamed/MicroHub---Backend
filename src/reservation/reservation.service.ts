@@ -315,7 +315,7 @@ export class ReservationService {
       }
 
       // Check for coupon code and add its services if applicable
-      if (body.couponCode) {
+      if (body.couponCode && body.services && body.services.length > 0) {
         const coupon = await this.GiftCouponRepository.findOne({
           where: { couponCode: body.couponCode },
         });
@@ -360,11 +360,30 @@ export class ReservationService {
         body.deposit = 0;
         body.deposit_Content = null;
       }
+
       if (
-        (body.services && body.services.length > 0) ||
-        body.sharableOfferId ||
-        body.offerId
+        body.services &&
+        body.services.length === 0 &&
+        !body.offerId &&
+        !body.sharableOfferId &&
+        !body.couponCode &&
+        !body.rootosh
       ) {
+        const serviceTotals = await this.calculateTotalDuration(serviceIds);
+        duration += serviceTotals.duration;
+        price += serviceTotals.price;
+
+        // Ensure image is provided
+        if (!image) {
+          throw new BadRequestException("Photo is required");
+        }
+
+        // Upload image to Cloudinary
+        const folderName = "reservation";
+        result = await this.CloudinaryService.uploadImage(image, folderName);
+        body.deposit_Content = result.url;
+      }
+      if (body.sharableOfferId || body.offerId) {
         const serviceTotals = await this.calculateTotalDuration(serviceIds);
         duration += serviceTotals.duration;
         price += serviceTotals.price;
@@ -759,7 +778,7 @@ export class ReservationService {
         reservation.branch.id,
         startTime
       );
-  
+
       const index = workingHours.findIndex(
         (w) => w.from <= startTime && w.to >= endTime
       );
@@ -768,11 +787,11 @@ export class ReservationService {
           "The custom schedule conflicts with an existing reservation."
         );
       }
-   // Update the reservation with new times
-   reservation.start_Time = startTime;
-   reservation.end_Time = endTime;
+      // Update the reservation with new times
+      reservation.start_Time = startTime;
+      reservation.end_Time = endTime;
 
-   await this.ReservationRepository.save(reservation);
+      await this.ReservationRepository.save(reservation);
       const newWorkingHours = this.newAddedWorkingHours(
         {
           fromOriginal: workingHours[index].from,
@@ -782,7 +801,7 @@ export class ReservationService {
         },
         workingHours[index].slot
       );
-  
+
       await this.WorkingHourEntity.save(newWorkingHours);
       await this.WorkingHourEntity.delete({ id: workingHours[index].id });
 
@@ -792,13 +811,8 @@ export class ReservationService {
         oldReservation.branch.id
       );
 
-
-
-
-  
       // Log the changes before updating the reservation
 
-     
       const updatedOrder =
         await this.OrdersService.updateOrderTimeFromReservation(
           reservation.id,
@@ -860,7 +874,11 @@ export class ReservationService {
     }
   }
 
-  async updateTimeforRootosh(id: string, body: UpdateTimeReservationDto, userId: string) {
+  async updateTimeforRootosh(
+    id: string,
+    body: UpdateTimeReservationDto,
+    userId: string
+  ) {
     try {
       const reservation = await this.ReservationRepository.findOne({
         where: { id },
@@ -886,7 +904,7 @@ export class ReservationService {
         reservation.branch.id,
         startTime
       );
-  
+
       const index = workingHours.findIndex(
         (w) => w.from <= startTime && w.to >= endTime
       );
@@ -895,11 +913,11 @@ export class ReservationService {
           "The custom schedule conflicts with an existing reservation."
         );
       }
-   // Update the reservation with new times
-   reservation.start_Time = startTime;
-   reservation.end_Time = endTime;
+      // Update the reservation with new times
+      reservation.start_Time = startTime;
+      reservation.end_Time = endTime;
 
-   await this.ReservationRepository.save(reservation);
+      await this.ReservationRepository.save(reservation);
       const newWorkingHours = this.newAddedWorkingHours(
         {
           fromOriginal: workingHours[index].from,
@@ -909,7 +927,7 @@ export class ReservationService {
         },
         workingHours[index].slot
       );
-  
+
       await this.WorkingHourEntity.save(newWorkingHours);
       await this.WorkingHourEntity.delete({ id: workingHours[index].id });
 
@@ -919,13 +937,8 @@ export class ReservationService {
         oldReservation.branch.id
       );
 
-
-
-
-  
       // Log the changes before updating the reservation
 
-     
       const updatedOrder =
         await this.OrdersService.updateOrderTimeFromReservation(
           reservation.id,
