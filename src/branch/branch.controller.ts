@@ -49,6 +49,82 @@ export class BranchController {
     private readonly CloudinaryService: CloudinaryService,
   ) {}
 
+
+  
+ @Get("calendar")
+  @ApiQuery({
+    name: "branchId",
+    type: String,
+    description: "Branch ID to filter by",
+  })
+  @ApiQuery({
+    name: "dayOfWeek",
+    type: String,
+    required: false,
+    description: "Day of the week to filter by (e.g., Monday)",
+  })
+  @ApiQuery({
+    name: "date",
+    type: String,
+    required: false,
+    description: "Date for reservations in string format (e.g., 2024-09-05)",
+  })
+  @ApiQuery({
+    name: "page",
+    type: Number,
+    required: false,
+    description: "Page number for pagination",
+    example: 1,
+  })
+  @ApiQuery({
+    name: "limit",
+    type: Number,
+    required: false,
+    description: "Number of items per page",
+    example: 10,
+  })
+  @ApiQuery({
+    name: "order",
+    type: String,
+    enum: ["ASC", "DESC"],
+    required: false,
+    description: "Order of reservations by start time",
+    example: "ASC",
+  })
+  async getBranchCalendar(
+    @Query() filterDto: FilterBranchCalendarDto,
+  ): Promise<{
+    branch: {
+      id: string;
+      name: string;
+      location: string;
+      image: string;
+    };
+    workingHours: { dayOfWeek: string; hours: string[] }[];
+    reservations: any[];
+    total: number;
+    currentPage: number;
+    totalPages: number;
+  }> {
+    if (!filterDto.branchId) {
+      throw new BadRequestException("Branch ID is required");
+    }
+
+    // Ensure filterDto has default values for page and limit
+    // filterDto.page = filterDto.page || 1;
+    // filterDto.limit = filterDto.limit || 10;
+
+    // if (filterDto.page < 1) {
+    //   throw new BadRequestException('Page must be greater than or equal to 1');
+    // }
+
+    // if (filterDto.limit < 1) {
+    //   throw new BadRequestException('Limit must be greater than or equal to 1');
+    // }
+
+    return this.branchService.getBranchCalendar(filterDto);
+  }
+
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ACCOUNTANT)
   @Get("count")
@@ -177,80 +253,7 @@ export class BranchController {
     return result;
   }
 
-  @Get("calendar")
-  @ApiQuery({
-    name: "branchId",
-    type: String,
-    description: "Branch ID to filter by",
-  })
-  @ApiQuery({
-    name: "dayOfWeek",
-    type: String,
-    required: false,
-    description: "Day of the week to filter by (e.g., Monday)",
-  })
-  @ApiQuery({
-    name: "date",
-    type: String,
-    required: false,
-    description: "Date for reservations in string format (e.g., 2024-09-05)",
-  })
-  @ApiQuery({
-    name: "page",
-    type: Number,
-    required: false,
-    description: "Page number for pagination",
-    example: 1,
-  })
-  @ApiQuery({
-    name: "limit",
-    type: Number,
-    required: false,
-    description: "Number of items per page",
-    example: 10,
-  })
-  @ApiQuery({
-    name: "order",
-    type: String,
-    enum: ["ASC", "DESC"],
-    required: false,
-    description: "Order of reservations by start time",
-    example: "ASC",
-  })
-  async getBranchCalendar(
-    @Query() filterDto: FilterBranchCalendarDto,
-  ): Promise<{
-    branch: {
-      id: string;
-      name: string;
-      location: string;
-      image: string;
-    };
-    workingHours: { dayOfWeek: string; hours: string[] }[];
-    reservations: any[];
-    total: number;
-    currentPage: number;
-    totalPages: number;
-  }> {
-    if (!filterDto.branchId) {
-      throw new BadRequestException("Branch ID is required");
-    }
-
-    // Ensure filterDto has default values for page and limit
-    // filterDto.page = filterDto.page || 1;
-    // filterDto.limit = filterDto.limit || 10;
-
-    // if (filterDto.page < 1) {
-    //   throw new BadRequestException('Page must be greater than or equal to 1');
-    // }
-
-    // if (filterDto.limit < 1) {
-    //   throw new BadRequestException('Limit must be greater than or equal to 1');
-    // }
-
-    return this.branchService.getBranchCalendar(filterDto);
-  }
-
+ 
   @Put(":id")
   @UseGuards(AccessTokenGuard, RolesGuard)
   @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER)
