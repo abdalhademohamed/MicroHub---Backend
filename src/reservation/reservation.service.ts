@@ -1118,59 +1118,60 @@ export class ReservationService {
         phoneNumber: string;
         fullName: string;
       };
+      orderStatus: string;
     }[];
     total: number;
   }> {
     const { branchId, fromDate, toDate, page = "1", limit = "10" } = dto;
-
+  
     // Set the fromDate to the start of the day (00:00:00)
     let startOfDay: Date | undefined;
     if (fromDate) {
       startOfDay = new Date(fromDate);
-      startOfDay.setHours(0, 0, 0, 0); // Set time to 00:00:00
+      startOfDay.setHours(0, 0, 0, 0);
     }
-
+  
     // Set the toDate to the end of the day (23:59:59)
     let endOfDay: Date | undefined;
     if (toDate) {
       endOfDay = new Date(toDate);
-      endOfDay.setHours(23, 59, 59, 999); // Set time to 23:59:59
+      endOfDay.setHours(23, 59, 59, 999);
     }
-
+  
     const query = this.ReservationRepository.createQueryBuilder("reservation")
-      .leftJoinAndSelect("reservation.customer", "customer") // Ensure customer details are included
+      .leftJoinAndSelect("reservation.customer", "customer") // Include customer details
       .leftJoin("reservation.branch", "branch") // Join branch
+      .leftJoinAndSelect("reservation.order", "order") // Join order to get orderStatus
       .select([
         "reservation.id",
         "reservation.start_Time",
         "reservation.end_Time",
-        "customer.id", // Customer ID
-        "customer.fullName", // Customer full name
-        "customer.phoneNumber", // Customer phone number
+        "customer.id",
+        "customer.fullName",
+        "customer.phoneNumber",
+        "order.status", // Select order status
       ]);
-
+  
     // Filter by branchId
     if (branchId) {
       query.andWhere("branch.id = :branchId", { branchId });
     }
-
+  
     // Filter by date range using adjusted start and end times
     if (startOfDay) {
-      query.andWhere("reservation.start_Time >= :fromDate", {
-        fromDate: startOfDay,
-      });
+      query.andWhere("reservation.start_Time >= :fromDate", { fromDate: startOfDay });
     }
     if (endOfDay) {
       query.andWhere("reservation.end_Time <= :toDate", { toDate: endOfDay });
     }
-
+  
     // Pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
     query.skip(skip).take(parseInt(limit));
-
+  
     // Execute the query
     const [reservations, total] = await query.getManyAndCount();
-
+  
     // Map the results to flatten the response
     const items = reservations.map((reservation) => ({
       id: reservation.id,
@@ -1181,8 +1182,11 @@ export class ReservationService {
         phoneNumber: reservation.customer.phoneNumber,
         fullName: reservation.customer.fullName,
       },
+      orderStatus: reservation.order?.status , // Include actual order status or set default if undefined
     }));
-
+  
     return { items, total };
   }
+  
+  
 }
