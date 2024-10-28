@@ -316,6 +316,7 @@ export class ReservationService {
 
       // Check for coupon code and add its services if applicable
       if (body.couponCode && body.services && body.services.length > 0) {
+        
         const coupon = await this.GiftCouponRepository.findOne({
           where: { couponCode: body.couponCode },
         });
@@ -338,6 +339,8 @@ export class ReservationService {
         services = [...services, ...transformedServices];
         body.deposit = 0;
         body.deposit_Content = null;
+        const serviceTotals = await this.calculateTotalDuration(serviceIds);
+        duration += serviceTotals.duration;
       }
 
       // Check if rootoshIds are provided
@@ -361,22 +364,26 @@ export class ReservationService {
         body.deposit_Content = null;
       }
 
+
+
+     
       if (
         body.services &&
-        body.services.length === 0 &&
+        body.services.length > 0 &&
         !body.offerId &&
         !body.sharableOfferId &&
         !body.couponCode &&
         !body.rootosh
       ) {
-        const serviceTotals = await this.calculateTotalDuration(serviceIds);
-        duration += serviceTotals.duration;
-        price += serviceTotals.price;
-
         // Ensure image is provided
         if (!image) {
           throw new BadRequestException("Photo is required");
         }
+        const serviceTotals = await this.calculateTotalDuration(serviceIds);
+        duration += serviceTotals.duration;
+        price += serviceTotals.price;
+
+        
 
         // Upload image to Cloudinary
         const folderName = "reservation";
