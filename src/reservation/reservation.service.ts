@@ -1125,7 +1125,10 @@ export class ReservationService {
         phoneNumber: string;
         fullName: string;
       };
-      orderStatus: string;
+      order: {
+        id: string;
+        status: string;
+      } | null; // Include order ID and status, nullable if no order is associated
     }[];
     total: number;
   }> {
@@ -1148,7 +1151,7 @@ export class ReservationService {
     const query = this.ReservationRepository.createQueryBuilder("reservation")
       .leftJoinAndSelect("reservation.customer", "customer") // Include customer details
       .leftJoin("reservation.branch", "branch") // Join branch
-      .leftJoinAndSelect("reservation.order", "order") // Join order to get orderStatus
+      .leftJoinAndSelect("reservation.order", "order") // Join order to get order ID and status
       .select([
         "reservation.id",
         "reservation.start_Time",
@@ -1156,6 +1159,7 @@ export class ReservationService {
         "customer.id",
         "customer.fullName",
         "customer.phoneNumber",
+        "order.id", // Select order ID
         "order.status", // Select order status
       ]);
   
@@ -1189,11 +1193,15 @@ export class ReservationService {
         phoneNumber: reservation.customer.phoneNumber,
         fullName: reservation.customer.fullName,
       },
-      orderStatus: reservation.order?.status , // Include actual order status or set default if undefined
+      order: reservation.order ? { // Check if order exists
+        id: reservation.order.id,
+        status: reservation.order.status,
+      } : null, // Set to null if no order is associated
     }));
   
     return { items, total };
   }
+  
   
   
 }
