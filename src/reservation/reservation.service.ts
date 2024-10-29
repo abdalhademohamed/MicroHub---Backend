@@ -249,6 +249,7 @@ export class ReservationService {
       if (!branch) {
         throw new NotFoundException("Branch not found");
       }
+   
 
       let serviceIds: string[] = [];
       let services: ServiceEntity[] = [];
@@ -296,6 +297,20 @@ export class ReservationService {
         }
         serviceIds = offer.services.map((service) => service.id); // Extract service IDs from the offer
         services = offer.services; // Use services from the offer
+
+        const serviceTotals = await this.calculateTotalDuration(serviceIds);
+        duration += serviceTotals.duration;
+        price += serviceTotals.price;
+
+        // Ensure image is provided
+        if (!image) {
+          throw new BadRequestException("Photo is required");
+        }
+
+        // Upload image to Cloudinary
+        const folderName = "reservation";
+        result = await this.CloudinaryService.uploadImage(image, folderName);
+        body.deposit_Content = result.url;
       }
 
       // Check for sharable offer and add its services if applicable
@@ -312,6 +327,19 @@ export class ReservationService {
         } else {
           throw new BadRequestException("Sharable offer has no valid services");
         }
+        const serviceTotals = await this.calculateTotalDuration(serviceIds);
+        duration += serviceTotals.duration;
+        price += serviceTotals.price;
+
+        // Ensure image is provided
+        if (!image) {
+          throw new BadRequestException("Photo is required");
+        }
+
+        // Upload image to Cloudinary
+        const folderName = "reservation";
+        result = await this.CloudinaryService.uploadImage(image, folderName);
+        body.deposit_Content = result.url;
       }
 
       // Check for coupon code and add its services if applicable
@@ -391,19 +419,7 @@ export class ReservationService {
         body.deposit_Content = result.url;
       }
       if (body.sharableOfferId || body.offerId) {
-        const serviceTotals = await this.calculateTotalDuration(serviceIds);
-        duration += serviceTotals.duration;
-        price += serviceTotals.price;
-
-        // Ensure image is provided
-        if (!image) {
-          throw new BadRequestException("Photo is required");
-        }
-
-        // Upload image to Cloudinary
-        const folderName = "reservation";
-        result = await this.CloudinaryService.uploadImage(image, folderName);
-        body.deposit_Content = result.url;
+      
       }
 
       // Handle custom time
@@ -534,6 +550,7 @@ export class ReservationService {
 
       return { reservation };
     } catch (error) {
+      console.log(error)
       // Granular error handling and categorization
       if (error instanceof NotFoundException) {
         throw new NotFoundException({

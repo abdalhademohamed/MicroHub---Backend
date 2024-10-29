@@ -35,6 +35,7 @@ import { CreateGiftCouponDto } from "../gift-coupon/dto/create-gift-coupon.dto";
 import { PaymentStatus } from "./utils/payment.status.enum";
 import { ReservationService } from "../reservation/reservation.service";
 import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
+import { GiftCouponEntity } from "src/gift-coupon/entities/gift-coupon.entity";
 
 @Injectable()
 export class OrdersService {
@@ -73,7 +74,8 @@ export class OrdersService {
     @InjectRepository(CustomerEntity)
     private readonly CustomerRepository: Repository<CustomerEntity>,
     @InjectRepository(RootoshEntity)
-    private readonly RootoshRepository: Repository<RootoshEntity>
+    private readonly RootoshRepository: Repository<RootoshEntity>,
+    
   ) {}
   // Method to generate a unique incremental invoice number
   private async generateUniqueInvoiceNumber(): Promise<number> {
@@ -100,6 +102,7 @@ export class OrdersService {
     couponCode?: string
   ): Promise<OrderEntity> {
     let payment;
+    let couponId
     // Fetch reservation with related services
     const reservation = await this.reservationRepository.findOne({
       where: { id: reservationId },
@@ -120,6 +123,7 @@ export class OrdersService {
 
     if (couponCode) {
       payment = null;
+      couponId = await this.GiftCouponService.getGiftCouponByCouponCode(couponCode);
     } else {
       // Find the payment method with 'Visa'
       payment = await this.PaymentRepository.findOne({
@@ -131,6 +135,7 @@ export class OrdersService {
           "Visa payment method not found, please add payment method called Visa in English & Arabic"
         );
       }
+
     }
 
     if (offerId) {
@@ -202,6 +207,7 @@ export class OrdersService {
       payment, // Assign the Visa payment method to the order
       offerId,
       sharableOfferId,
+      couponId,
     });
 
     try {

@@ -63,7 +63,7 @@ export class ReservationController {
     @Body() CreateCustomerDto: CreateReservationDto, // Array of customer DTOs
     @UploadedFile() image: Express.Multer.File // Handle the uploaded file
   ): Promise<any> {
-    try {
+  
       // Call the service to create reservations 
       // console.log("data:",CreateCustomerDto)
       const userId = req.user.sub; // Extract user ID from request
@@ -76,10 +76,7 @@ export class ReservationController {
         image,
         userId
       );
-    } catch (error) {
-      // Handle errors appropriately
-      throw new BadRequestException(error.message);
-    }
+   
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Get("booking/:branchId")
