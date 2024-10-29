@@ -249,6 +249,7 @@ export class ReservationService {
       if (!branch) {
         throw new NotFoundException("Branch not found");
       }
+   
 
       let serviceIds: string[] = [];
       let services: ServiceEntity[] = [];
@@ -549,6 +550,7 @@ export class ReservationService {
 
       return { reservation };
     } catch (error) {
+      console.log(error)
       // Granular error handling and categorization
       if (error instanceof NotFoundException) {
         throw new NotFoundException({
