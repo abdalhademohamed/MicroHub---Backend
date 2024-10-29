@@ -35,7 +35,6 @@ import { CreateGiftCouponDto } from "../gift-coupon/dto/create-gift-coupon.dto";
 import { PaymentStatus } from "./utils/payment.status.enum";
 import { ReservationService } from "../reservation/reservation.service";
 import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
-import { GiftCouponEntity } from "src/gift-coupon/entities/gift-coupon.entity";
 
 @Injectable()
 export class OrdersService {
