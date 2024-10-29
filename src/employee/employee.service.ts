@@ -290,27 +290,29 @@ export class EmployeeService {
         });
         if (!newBranch) {
           throw new NotFoundException(`Branch with ID ${branchId} not found.`);
-        }
-        if (employee.position.postion === Postion.ARTIST) {
-          const artistCount = await this.employeeRepository.count({
-            where: {
-              position: { postion: Postion.ARTIST },
-              branch: { id: employee.branch.id },
-            },
-          });
+        }if(position){
+          if (employee.position.postion === Postion.ARTIST) {
+            const artistCount = await this.employeeRepository.count({
+              where: {
+                position: { postion: Postion.ARTIST },
+                branch: { id: employee.branch.id },
+              },
+            });
+    
+            if (artistCount === 1) {
+              return {
+                message: "BadRequestException",
+                error: "Cannot change position to artist as this employee is the only artist in the branch.",
+                statusCode: 400,
+              };
+            }
+            this.eventEmitter.emit('artist:hours', { duration: employee.workingHours * 60, branchId: employee.branch.id });
   
-          if (artistCount === 1) {
-            return {
-              message: "BadRequestException",
-              error: "Cannot change position to artist as this employee is the only artist in the branch.",
-              statusCode: 400,
-            };
+            this.eventEmitter.emit('artist:created', employee);      
+  
           }
-          this.eventEmitter.emit('artist:hours', { duration: employee.workingHours * 60, branchId: employee.branch.id });
-
-          this.eventEmitter.emit('artist:created', employee);      
-
         }
+        
         // const artistCount = await this.employeeRepository.count({
         //   where: {
         //     position: { postion: Postion.ARTIST },
