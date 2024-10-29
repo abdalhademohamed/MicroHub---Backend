@@ -369,6 +369,17 @@ export class EmployeeService {
         employee.email = email.trim();
         isUserUpdated = true;
       }
+      if (
+        email &&
+        email.trim().toLowerCase() === user.email.trim().toLowerCase()
+      ) {
+        return {
+          message: "BadRequestException",
+          error: "this is your current email",
+          statusCode: 400,
+        };
+      }
+      
   
       if (english_Name && english_Name !== user.username) {
         user.username = english_Name;
