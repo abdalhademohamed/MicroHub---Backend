@@ -53,7 +53,7 @@ export class GiftCouponController {
   }
 
 @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.ARTIST)
+  @Roles(Role.ARTIST,Role.SUPERADMIN)
   @Patch('update/services/:couponId')
   async updateGiftCouponServices(
     @Param('couponId') couponId: string,
