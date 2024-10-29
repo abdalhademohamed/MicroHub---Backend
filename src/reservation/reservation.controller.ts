@@ -110,8 +110,8 @@ export class ReservationController {
     return this.reservationService.getAllReservations(filterDto, branchId);
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  // @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  // @Roles(Role.SUPERADMIN)
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN,Role.RECEPTIONIST)
   // Update a reservation by ID
   @Post("customer")
   async createCustomer(@Body() body: CreateCustomerDto) {
@@ -141,7 +141,7 @@ export class ReservationController {
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST)
   @Put("time/:id")
   async updateReservationStartTime(
     @Request() req: any, // Request object to access the user
@@ -156,7 +156,7 @@ export class ReservationController {
     return this.reservationService.updateTime(id, updateReservationDto, userId);
   } /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST)
   @Put("rootosh/time/:id")
   async updateReservationStartTimeForRootosh(
     @Request() req: any, // Request object to access the user

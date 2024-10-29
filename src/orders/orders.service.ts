@@ -34,7 +34,7 @@ import { GiftCouponService } from "../gift-coupon/gift-coupon.service";
 import { CreateGiftCouponDto } from "../gift-coupon/dto/create-gift-coupon.dto";
 import { PaymentStatus } from "./utils/payment.status.enum";
 import { ReservationService } from "../reservation/reservation.service";
-import { RootoshEntity } from "src/rootosh/entities/rootosh.entity";
+import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
 
 @Injectable()
 export class OrdersService {
@@ -68,12 +68,12 @@ export class OrdersService {
     @InjectRepository(SharableOfferEntity)
     private readonly SharableOfferRepository: Repository<SharableOfferEntity>,
     private readonly GiftCouponService: GiftCouponService,
-    @Inject(forwardRef(() => ReservationService))  // Inject ReservationService
+    @Inject(forwardRef(() => ReservationService)) // Inject ReservationService
     private readonly reservationService: ReservationService,
     @InjectRepository(CustomerEntity)
     private readonly CustomerRepository: Repository<CustomerEntity>,
     @InjectRepository(RootoshEntity)
-    private readonly RootoshRepository: Repository<RootoshEntity>,
+    private readonly RootoshRepository: Repository<RootoshEntity>
   ) {}
   // Method to generate a unique incremental invoice number
   private async generateUniqueInvoiceNumber(): Promise<number> {
@@ -88,7 +88,6 @@ export class OrdersService {
     return nextInvoiceNumber;
   }
 
- 
   /* -------------------------------------------------------------------------- */
   /*                                 createOrder                                */
   /* -------------------------------------------------------------------------- */
@@ -99,8 +98,8 @@ export class OrdersService {
     offerId?: string,
     sharableOfferId?: string,
     couponCode?: string
-
   ): Promise<OrderEntity> {
+    let payment;
     // Fetch reservation with related services
     const reservation = await this.reservationRepository.findOne({
       where: { id: reservationId },
@@ -119,16 +118,21 @@ export class OrdersService {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
-    // Find the payment method with 'Visa'
-    const visaPayment = await this.PaymentRepository.findOne({
-      where: { id: paymentId },
-    });
+    if (couponCode) {
+      payment = null;
+    } else {
+      // Find the payment method with 'Visa'
+      payment = await this.PaymentRepository.findOne({
+        where: { id: paymentId },
+      });
 
-    if (!visaPayment) {
-      throw new NotFoundException(
-        "Visa payment method not found, please add payment method called Visa in English & Arabic"
-      );
+      if (!payment) {
+        throw new NotFoundException(
+          "Visa payment method not found, please add payment method called Visa in English & Arabic"
+        );
+      }
     }
+
     if (offerId) {
       const offer = await this.OfferRepository.findOne({
         where: { id: offerId },
@@ -167,11 +171,11 @@ export class OrdersService {
       // await this.GiftCouponService.createGiftCoupon(createGiftCouponDto);
     }
 
-     // Set payment status based on coupon code
-  let payStatus = PaymentStatus.PartiallyPaid;
-  if (couponCode) {
-    payStatus = PaymentStatus.Paid;
-  }
+    // Set payment status based on coupon code
+    let payStatus = PaymentStatus.PartiallyPaid;
+    if (couponCode) {
+      payStatus = PaymentStatus.Paid;
+    }
     const invoiceNumber = await this.generateUniqueInvoiceNumber();
 
     // Create new order
@@ -185,7 +189,7 @@ export class OrdersService {
         .map((service) => service.arabic_Name)
         .join(", "),
       status: OrderStatus.Pending,
-      paymentStatus:payStatus , // Set payment status dynamically
+      paymentStatus: payStatus, // Set payment status dynamically
       invoiceNumber: invoiceNumber,
       comments: [],
       reservation: reservation,
@@ -195,7 +199,7 @@ export class OrdersService {
       },
       artist: null,
       createdBy, // Set createdBy field with limited user data
-      payment: visaPayment, // Assign the Visa payment method to the order
+      payment, // Assign the Visa payment method to the order
       offerId,
       sharableOfferId,
     });
@@ -618,7 +622,7 @@ export class OrdersService {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async updatePaymentStatus(
     orderId: string,
-    newPaymentStatus:PaymentStatus.Paid | PaymentStatus.PartiallyPaid,
+    newPaymentStatus: PaymentStatus.Paid | PaymentStatus.PartiallyPaid,
     image: Express.Multer.File,
     userId: string // Optional parameter for the user ID
   ): Promise<OrderEntity> {
@@ -660,7 +664,10 @@ export class OrdersService {
         );
       }
       // Update the paymentStatus
-      order.paymentStatus = newPaymentStatus === "paid" ? PaymentStatus.Paid : PaymentStatus.PartiallyPaid;
+      order.paymentStatus =
+        newPaymentStatus === "paid"
+          ? PaymentStatus.Paid
+          : PaymentStatus.PartiallyPaid;
 
       // Update image URL if provided
       if (image) {
@@ -806,8 +813,8 @@ export class OrdersService {
             `No reservation found for order with ID ${orderId}`
           );
         }
-        console.log(order.reservation.id)
-        await this.reservationService.deleteReservation(order.reservation.id)
+        console.log(order.reservation.id);
+        await this.reservationService.deleteReservation(order.reservation.id);
         const deposit = order.reservation.deposit; // Get deposit from the reservation
         let paymentAmount: number;
         order.status = OrderStatus.Canceled;
@@ -827,8 +834,6 @@ export class OrdersService {
             `Invalid payment status: ${order.paymentStatus}`
           );
         }
-
-
 
         await this.orderRepository.save(order);
         return { order, paymentAmount };
@@ -1039,7 +1044,6 @@ export class OrdersService {
 
           await transactionalEntityManager.save(AuditLogEntity, log);
           if (order.status === OrderStatus.Canceled) {
-            
             const usersToNotify = await transactionalEntityManager.find(
               UserEntity,
               {
@@ -1059,9 +1063,6 @@ export class OrdersService {
                 `A order has been canceled: ${updatedOrder.id} by : ${userId}`
               );
             }
-
-
-
           }
           if (order.status === OrderStatus.Completed) {
             const usersToNotify = await transactionalEntityManager.find(
@@ -1093,7 +1094,6 @@ export class OrdersService {
     }
   }
 
-
   // private async clearCustomerRootoshList(customerId: string): Promise<void> {
   //   const customer = await this.CustomerRepository.findOne({ where: { id: customerId }, relations: ['rootosh'] });
 
@@ -1112,8 +1112,7 @@ export class OrdersService {
   //   // await this.customerRepository.save(customer);
   // }
 
-
- async assignOrderToArtist(
+  async assignOrderToArtist(
     orderId: string,
     artistId: string,
     userId: string // Include userId for logging
@@ -1154,7 +1153,6 @@ export class OrdersService {
 
       const orderDate = new Date(order.date); // Assuming 'order.date' contains the order date
       orderDate.setHours(0, 0, 0, 0); // Reset time part to compare only date
-  
 
       if (orderDate.getTime() !== today.getTime()) {
         throw new BadRequestException(
@@ -1278,15 +1276,15 @@ export class OrdersService {
       serviceId,
       customerId,
     } = findOrdersDto;
-  
+
     let branchId = findOrdersDto.branchId;
-  
+
     try {
       const employee = await this.employeeRepository.findOne({
         where: { id: userId },
         relations: ["branch"],
       });
-  
+
       if (
         employee &&
         (employee.role === Role.RECEPTIONIST ||
@@ -1295,7 +1293,7 @@ export class OrdersService {
       ) {
         branchId = employee.branch.id;
       }
-  
+
       const query = this.orderRepository
         .createQueryBuilder("o")
         .leftJoinAndSelect("o.artist", "a")
@@ -1307,25 +1305,25 @@ export class OrdersService {
         .addSelect(["ub.id", "ub.username"])
         .leftJoinAndSelect("o.reservation", "r")
         .leftJoinAndSelect("r.services", "s")
-        .leftJoinAndSelect("r.rootoshes", "ro")  // Adding the rootoshes join here
+        .leftJoinAndSelect("r.rootoshes", "ro") // Adding the rootoshes join here
 
         .addSelect(["r.id", "r.start_Time", "r.end_Time", "r.totalPrice"])
         .take(limit)
         .skip((page - 1) * limit)
         .orderBy(`o.date`, sort.toUpperCase() as "ASC" | "DESC");
-  
+
       if (employeeName) {
         query.andWhere("a.english_Name ILIKE :employeeName", {
           employeeName: `%${employeeName}%`,
         });
       }
-  
+
       if (branchId) {
         query.andWhere("CAST(o.branch ->> 'id' AS uuid) = :branchId", {
           branchId,
         });
       }
-  
+
       if (fromDate || toDate) {
         if (fromDate) {
           query.andWhere("o.date >= :fromDate", {
@@ -1338,33 +1336,32 @@ export class OrdersService {
           });
         }
       }
-  
+
       if (paymentStatus) {
         query.andWhere("o.paymentStatus = :paymentStatus", { paymentStatus });
       }
-  
+
       // Handle multiple order statuses
       if (orderStatus && orderStatus.length > 0) {
         query.andWhere("o.status IN (:...orderStatus)", { orderStatus });
       }
-  
+
       if (serviceId) {
         query.andWhere("s.id = :serviceId", { serviceId });
       }
-  
+
       if (customerId) {
         query.andWhere("c.id = :customerId", { customerId });
       }
-  
+
       const [items, total] = await query.getManyAndCount();
-  
+
       return { items, total };
     } catch (error) {
       console.error("Error fetching orders:", error);
       throw new Error("Unable to fetch orders.");
     }
   }
-  
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Method to get the count of each order status
@@ -1507,7 +1504,7 @@ export class OrdersService {
       toDate,
       orderStatus,
     } = findOrdersByDayDto;
-  
+
     try {
       // Fetch the employee by userId, including relations
       const employee = await this.employeeRepository.findOne({
@@ -1522,27 +1519,25 @@ export class OrdersService {
           "branch",
         ],
       });
-  
+
       if (!employee) {
         throw new NotFoundException(`Employee with userId ${userId} not found`);
       }
-  
-     
 
       // Handle date filtering (fromDate and toDate)
       const fromDateObj = fromDate ? new Date(fromDate) : null;
       const toDateObj = toDate ? new Date(toDate) : null;
-  
+
       if (fromDateObj) {
         fromDateObj.setHours(0, 0, 0, 0);
       }
       if (toDateObj) {
         toDateObj.setHours(23, 59, 59, 999);
       }
-  
+
       const filteredOrders = employee.orders.filter((order) => {
         const orderDate = new Date(order.date);
-  
+
         // Apply date filters
         if (fromDateObj && orderDate < fromDateObj) {
           return false;
@@ -1550,31 +1545,31 @@ export class OrdersService {
         if (toDateObj && orderDate > toDateObj) {
           return false;
         }
-  
+
         // Apply orderStatus filter if provided
         if (orderStatus && !orderStatus.includes(order.status)) {
           return false;
         }
-  
+
         return true;
       });
-  
+
       // Apply sorting based on sort direction
       const sortedOrders = filteredOrders.sort((a, b) => {
         const dateA = new Date(a.date);
         const dateB = new Date(b.date);
-        
+
         return sort === "ASC"
           ? dateA.getTime() - dateB.getTime() // Oldest first
           : dateB.getTime() - dateA.getTime(); // Most recent first
       });
-  
+
       // Apply pagination
       const paginatedOrders = sortedOrders.slice(
         (page - 1) * limit,
         page * limit
       );
-  
+
       // Map orders to include all necessary details
       const mappedOrders = paginatedOrders.map((order) => ({
         id: order.id,
@@ -1589,66 +1584,78 @@ export class OrdersService {
         offerId: order.offerId,
         sharableOfferId: order.sharableOfferId,
         couponId: order.couponId,
-        artist: order.artist ? {
-          id: order.artist.id,
-          username: order.artist.username,
-          email: order.artist.email,
-          role: order.artist.role,
-          english_Name: order.artist.english_Name,
-          arabic_Name: order.artist.arabic_Name,
-          image: order.artist.image,
-          available: order.artist.available,
-          totalReviews: order.artist.totalReviews,
-          status: order.artist.status,
-          oldestAvgRating: order.artist.oldestAvgRating,
-          newestAvgRating: order.artist.newestAvgRating,
-        } : null,
-        payment: order.payment ? {
-          id: order.payment.id,
-          methodEnglish: order.payment.methodEnglish,
-          methodArabic: order.payment.methodArabic,
-          image: order.payment.image,
-          createdAt: order.payment.createdAt.toISOString(),
-        } : null,
-        customer: order.customer ? {
-          id: order.customer.id,
-          country_Code: order.customer.country_Code,
-          phoneNumber: order.customer.phoneNumber,
-          fullName: order.customer.fullName,
-          dateOfBirth: order.customer.dateOfBirth,
-        } : null,
-        branch: employee.branch ? {
-          id: employee.branch.id,
-          name: employee.branch.name,
-        } : null,
-        reservation: order.reservation ? {
-          id: order.reservation.id,
-          reservationDay: order.reservation.reservationDay,
-          reservationMonth: order.reservation.reservationMonth,
-          reservationYear: order.reservation.reservationYear,
-          start_Time: order.reservation.start_Time,
-          end_Time: order.reservation.end_Time,
-          totalPrice: order.reservation.totalPrice,
-          deposit: order.reservation.deposit,
-          services: order.reservation.services.map(service => ({
-            id: service.id,
-            arabic_Name: service.arabic_Name,
-            english_Name: service.english_Name,
-            duration_Mins: service.duration_Mins,
-            rootosh_Number: service.rootosh_Number,
-            months_To_Expire: service.months_To_Expire,
-          })),
-          // Check if rootoshes exists before mapping
-          rootoshes: order.reservation.rootoshes ? order.reservation.rootoshes.map(rootosh => ({
-            id: rootosh.id,
-            arabic_Name: rootosh.arabic_Name,
-            english_Name: rootosh.english_Name,
-            expireduration: rootosh.expireduration,
-            duration_Mins: rootosh.duration_Mins,
-          })) : [],  // Default to an empty array if rootoshes is undefined
-        } : null,
+        artist: order.artist
+          ? {
+              id: order.artist.id,
+              username: order.artist.username,
+              email: order.artist.email,
+              role: order.artist.role,
+              english_Name: order.artist.english_Name,
+              arabic_Name: order.artist.arabic_Name,
+              image: order.artist.image,
+              available: order.artist.available,
+              totalReviews: order.artist.totalReviews,
+              status: order.artist.status,
+              oldestAvgRating: order.artist.oldestAvgRating,
+              newestAvgRating: order.artist.newestAvgRating,
+            }
+          : null,
+        payment: order.payment
+          ? {
+              id: order.payment.id,
+              methodEnglish: order.payment.methodEnglish,
+              methodArabic: order.payment.methodArabic,
+              image: order.payment.image,
+              createdAt: order.payment.createdAt.toISOString(),
+            }
+          : null,
+        customer: order.customer
+          ? {
+              id: order.customer.id,
+              country_Code: order.customer.country_Code,
+              phoneNumber: order.customer.phoneNumber,
+              fullName: order.customer.fullName,
+              dateOfBirth: order.customer.dateOfBirth,
+            }
+          : null,
+        branch: employee.branch
+          ? {
+              id: employee.branch.id,
+              name: employee.branch.name,
+            }
+          : null,
+        reservation: order.reservation
+          ? {
+              id: order.reservation.id,
+              reservationDay: order.reservation.reservationDay,
+              reservationMonth: order.reservation.reservationMonth,
+              reservationYear: order.reservation.reservationYear,
+              start_Time: order.reservation.start_Time,
+              end_Time: order.reservation.end_Time,
+              totalPrice: order.reservation.totalPrice,
+              deposit: order.reservation.deposit,
+              services: order.reservation.services.map((service) => ({
+                id: service.id,
+                arabic_Name: service.arabic_Name,
+                english_Name: service.english_Name,
+                duration_Mins: service.duration_Mins,
+                rootosh_Number: service.rootosh_Number,
+                months_To_Expire: service.months_To_Expire,
+              })),
+              // Check if rootoshes exists before mapping
+              rootoshes: order.reservation.rootoshes
+                ? order.reservation.rootoshes.map((rootosh) => ({
+                    id: rootosh.id,
+                    arabic_Name: rootosh.arabic_Name,
+                    english_Name: rootosh.english_Name,
+                    expireduration: rootosh.expireduration,
+                    duration_Mins: rootosh.duration_Mins,
+                  }))
+                : [], // Default to an empty array if rootoshes is undefined
+            }
+          : null,
       }));
-  
+
       // Return paginated result
       return { items: mappedOrders, total: filteredOrders.length };
     } catch (error) {
@@ -1659,9 +1666,6 @@ export class OrdersService {
       );
     }
   }
-  
-  
-  
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

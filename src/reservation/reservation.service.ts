@@ -315,7 +315,8 @@ export class ReservationService {
       }
 
       // Check for coupon code and add its services if applicable
-      if (body.couponCode) {
+      if (body.couponCode && body.services && body.services.length > 0) {
+        
         const coupon = await this.GiftCouponRepository.findOne({
           where: { couponCode: body.couponCode },
         });
@@ -338,6 +339,8 @@ export class ReservationService {
         services = [...services, ...transformedServices];
         body.deposit = 0;
         body.deposit_Content = null;
+        const serviceTotals = await this.calculateTotalDuration(serviceIds);
+        duration += serviceTotals.duration;
       }
 
       // Check if rootoshIds are provided
@@ -360,11 +363,34 @@ export class ReservationService {
         body.deposit = 0;
         body.deposit_Content = null;
       }
+
+
+
+     
       if (
-        (body.services && body.services.length > 0) ||
-        body.sharableOfferId ||
-        body.offerId
+        body.services &&
+        body.services.length > 0 &&
+        !body.offerId &&
+        !body.sharableOfferId &&
+        !body.couponCode &&
+        !body.rootosh
       ) {
+        // Ensure image is provided
+        if (!image) {
+          throw new BadRequestException("Photo is required");
+        }
+        const serviceTotals = await this.calculateTotalDuration(serviceIds);
+        duration += serviceTotals.duration;
+        price += serviceTotals.price;
+
+        
+
+        // Upload image to Cloudinary
+        const folderName = "reservation";
+        result = await this.CloudinaryService.uploadImage(image, folderName);
+        body.deposit_Content = result.url;
+      }
+      if (body.sharableOfferId || body.offerId) {
         const serviceTotals = await this.calculateTotalDuration(serviceIds);
         duration += serviceTotals.duration;
         price += serviceTotals.price;
@@ -759,7 +785,7 @@ export class ReservationService {
         reservation.branch.id,
         startTime
       );
-  
+
       const index = workingHours.findIndex(
         (w) => w.from <= startTime && w.to >= endTime
       );
@@ -768,11 +794,11 @@ export class ReservationService {
           "The custom schedule conflicts with an existing reservation."
         );
       }
-   // Update the reservation with new times
-   reservation.start_Time = startTime;
-   reservation.end_Time = endTime;
+      // Update the reservation with new times
+      reservation.start_Time = startTime;
+      reservation.end_Time = endTime;
 
-   await this.ReservationRepository.save(reservation);
+      await this.ReservationRepository.save(reservation);
       const newWorkingHours = this.newAddedWorkingHours(
         {
           fromOriginal: workingHours[index].from,
@@ -782,7 +808,7 @@ export class ReservationService {
         },
         workingHours[index].slot
       );
-  
+
       await this.WorkingHourEntity.save(newWorkingHours);
       await this.WorkingHourEntity.delete({ id: workingHours[index].id });
 
@@ -792,13 +818,8 @@ export class ReservationService {
         oldReservation.branch.id
       );
 
-
-
-
-  
       // Log the changes before updating the reservation
 
-     
       const updatedOrder =
         await this.OrdersService.updateOrderTimeFromReservation(
           reservation.id,
@@ -860,7 +881,11 @@ export class ReservationService {
     }
   }
 
-  async updateTimeforRootosh(id: string, body: UpdateTimeReservationDto, userId: string) {
+  async updateTimeforRootosh(
+    id: string,
+    body: UpdateTimeReservationDto,
+    userId: string
+  ) {
     try {
       const reservation = await this.ReservationRepository.findOne({
         where: { id },
@@ -886,7 +911,7 @@ export class ReservationService {
         reservation.branch.id,
         startTime
       );
-  
+
       const index = workingHours.findIndex(
         (w) => w.from <= startTime && w.to >= endTime
       );
@@ -895,11 +920,11 @@ export class ReservationService {
           "The custom schedule conflicts with an existing reservation."
         );
       }
-   // Update the reservation with new times
-   reservation.start_Time = startTime;
-   reservation.end_Time = endTime;
+      // Update the reservation with new times
+      reservation.start_Time = startTime;
+      reservation.end_Time = endTime;
 
-   await this.ReservationRepository.save(reservation);
+      await this.ReservationRepository.save(reservation);
       const newWorkingHours = this.newAddedWorkingHours(
         {
           fromOriginal: workingHours[index].from,
@@ -909,7 +934,7 @@ export class ReservationService {
         },
         workingHours[index].slot
       );
-  
+
       await this.WorkingHourEntity.save(newWorkingHours);
       await this.WorkingHourEntity.delete({ id: workingHours[index].id });
 
@@ -919,13 +944,8 @@ export class ReservationService {
         oldReservation.branch.id
       );
 
-
-
-
-  
       // Log the changes before updating the reservation
 
-     
       const updatedOrder =
         await this.OrdersService.updateOrderTimeFromReservation(
           reservation.id,
@@ -1105,59 +1125,64 @@ export class ReservationService {
         phoneNumber: string;
         fullName: string;
       };
+      order: {
+        id: string;
+        status: string;
+      } | null; // Include order ID and status, nullable if no order is associated
     }[];
     total: number;
   }> {
     const { branchId, fromDate, toDate, page = "1", limit = "10" } = dto;
-
+  
     // Set the fromDate to the start of the day (00:00:00)
     let startOfDay: Date | undefined;
     if (fromDate) {
       startOfDay = new Date(fromDate);
-      startOfDay.setHours(0, 0, 0, 0); // Set time to 00:00:00
+      startOfDay.setHours(0, 0, 0, 0);
     }
-
+  
     // Set the toDate to the end of the day (23:59:59)
     let endOfDay: Date | undefined;
     if (toDate) {
       endOfDay = new Date(toDate);
-      endOfDay.setHours(23, 59, 59, 999); // Set time to 23:59:59
+      endOfDay.setHours(23, 59, 59, 999);
     }
-
+  
     const query = this.ReservationRepository.createQueryBuilder("reservation")
-      .leftJoinAndSelect("reservation.customer", "customer") // Ensure customer details are included
+      .leftJoinAndSelect("reservation.customer", "customer") // Include customer details
       .leftJoin("reservation.branch", "branch") // Join branch
+      .leftJoinAndSelect("reservation.order", "order") // Join order to get order ID and status
       .select([
         "reservation.id",
         "reservation.start_Time",
         "reservation.end_Time",
-        "customer.id", // Customer ID
-        "customer.fullName", // Customer full name
-        "customer.phoneNumber", // Customer phone number
+        "customer.id",
+        "customer.fullName",
+        "customer.phoneNumber",
+        "order.id", // Select order ID
+        "order.status", // Select order status
       ]);
-
+  
     // Filter by branchId
     if (branchId) {
       query.andWhere("branch.id = :branchId", { branchId });
     }
-
+  
     // Filter by date range using adjusted start and end times
     if (startOfDay) {
-      query.andWhere("reservation.start_Time >= :fromDate", {
-        fromDate: startOfDay,
-      });
+      query.andWhere("reservation.start_Time >= :fromDate", { fromDate: startOfDay });
     }
     if (endOfDay) {
       query.andWhere("reservation.end_Time <= :toDate", { toDate: endOfDay });
     }
-
+  
     // Pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
     query.skip(skip).take(parseInt(limit));
-
+  
     // Execute the query
     const [reservations, total] = await query.getManyAndCount();
-
+  
     // Map the results to flatten the response
     const items = reservations.map((reservation) => ({
       id: reservation.id,
@@ -1168,8 +1193,15 @@ export class ReservationService {
         phoneNumber: reservation.customer.phoneNumber,
         fullName: reservation.customer.fullName,
       },
+      order: reservation.order ? { // Check if order exists
+        id: reservation.order.id,
+        status: reservation.order.status,
+      } : null, // Set to null if no order is associated
     }));
-
+  
     return { items, total };
   }
+  
+  
+  
 }
