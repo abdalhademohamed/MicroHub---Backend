@@ -102,7 +102,7 @@ export class OrdersService {
     couponCode?: string
   ): Promise<OrderEntity> {
     let payment;
-    let coupon
+    let couponId
     // Fetch reservation with related services
     const reservation = await this.reservationRepository.findOne({
       where: { id: reservationId },
@@ -123,7 +123,7 @@ export class OrdersService {
 
     if (couponCode) {
       payment = null;
-      coupon = await this.GiftCouponService.getGiftCouponByCouponCode(couponCode);
+      couponId = await this.GiftCouponService.getGiftCouponByCouponCode(couponCode);
     } else {
       // Find the payment method with 'Visa'
       payment = await this.PaymentRepository.findOne({
@@ -135,6 +135,7 @@ export class OrdersService {
           "Visa payment method not found, please add payment method called Visa in English & Arabic"
         );
       }
+
     }
 
     if (offerId) {
@@ -206,7 +207,7 @@ export class OrdersService {
       payment, // Assign the Visa payment method to the order
       offerId,
       sharableOfferId,
-      couponId:coupon.id,
+      couponId,
     });
 
     try {
