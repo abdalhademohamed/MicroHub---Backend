@@ -7,6 +7,7 @@ import {
 import { Between, Repository } from "typeorm";
 import { CommentEntity } from "./entities/comment.entity";
 import { InjectRepository } from "@nestjs/typeorm";
+import { GetCommentsDto } from "./dto/get.comments.dto";
 
 @Injectable()
 export class CommentService {
@@ -68,5 +69,38 @@ export class CommentService {
         error.stack,
       );
     }
+  }
+
+
+
+
+  async getComments(dto: GetCommentsDto) {
+    const { fromDate, toDate, page, limit } = dto;
+
+    const query = this.commentRepository.createQueryBuilder('comment')
+      .leftJoinAndSelect('comment.order', 'order')
+      .leftJoinAndSelect('comment.employee', 'employee')
+      .orderBy('comment.createdAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    // Apply date filtering if fromDate and toDate are provided
+    if (fromDate) {
+      query.andWhere('comment.createdAt >= :fromDate', { fromDate });
+    }
+    if (toDate) {
+      query.andWhere('comment.createdAt <= :toDate', { toDate });
+    }
+
+    // Execute the query and return results
+    const [comments, total] = await query.getManyAndCount();
+
+    return {
+      comments,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 }
