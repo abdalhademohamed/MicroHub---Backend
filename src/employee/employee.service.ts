@@ -36,6 +36,7 @@ import { ReservationEntity } from "../reservation/entities/reservation.entity";
 import { SlotsEntity } from "../slots/entities/slots.entity";
 import { WorkingEntity } from "../slots/entities/working.entity";
 import { OrderStatus } from "../orders/utils/order.status.enum";
+import { ReviewEntity } from "src/reviews/entities/review.entity";
 
 @Injectable()
 export class EmployeeService {
@@ -793,5 +794,45 @@ export class EmployeeService {
         completedOrdersCount: parseInt(raw.completedOrdersCount, 10), // Convert count to a number
       };
     });
+  }
+
+  async getArtistsWithReviews() {
+    return this.employeeRepository
+      .createQueryBuilder('employee')
+      .leftJoinAndSelect("employee.position", "position") // Join position related to the employee
+      .leftJoinAndSelect('employee.reviews', 'reviews')
+      .where("position.postion = :position", { position: Postion.ARTIST }) // Filter by position
+      .loadRelationCountAndMap('employee.totalReviews', 'employee.reviews')
+      .addSelect([
+        'employee.oldestAvgRating',
+        'employee.newestAvgRating',
+        'reviews.rating',
+        'reviews.comment_Before',
+        'reviews.comment_After',
+        'reviews.orderFirstTime',
+      ])
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('AVG(reviews.rating)', 'averageRating')
+          .from(ReviewEntity, 'reviews')
+          .where('reviews.employeeId = employee.id');
+      }, 'employee.avgRating')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('reviews.rating', 'newestAvgRating')
+          .from(ReviewEntity, 'reviews')
+          .where('reviews.employeeId = employee.id')
+          .orderBy('reviews.createdAt', 'DESC')
+          .limit(1);
+      }, 'employee.newestAvgRating')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('reviews.rating', 'oldestAvgRating')
+          .from(ReviewEntity, 'reviews')
+          .where('reviews.employeeId = employee.id')
+          .orderBy('reviews.createdAt', 'ASC')
+          .limit(1);
+      }, 'employee.oldestAvgRating')
+      .getMany();
   }
 }
