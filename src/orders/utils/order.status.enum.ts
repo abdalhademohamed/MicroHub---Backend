@@ -6,4 +6,6 @@ export enum OrderStatus {
   Reviewed = "Reviewed",
   Completed = "Completed",
   Canceled = "Canceled",
+  Abscent = "Abscent",
+
 }

@@ -73,8 +73,7 @@ export class OrdersService {
     @InjectRepository(CustomerEntity)
     private readonly CustomerRepository: Repository<CustomerEntity>,
     @InjectRepository(RootoshEntity)
-    private readonly RootoshRepository: Repository<RootoshEntity>,
-    
+    private readonly RootoshRepository: Repository<RootoshEntity>
   ) {}
   // Method to generate a unique incremental invoice number
   private async generateUniqueInvoiceNumber(): Promise<number> {
@@ -101,7 +100,7 @@ export class OrdersService {
     couponCode?: string
   ): Promise<OrderEntity> {
     let payment;
-    let couponId
+    let couponId;
     // Fetch reservation with related services
     const reservation = await this.reservationRepository.findOne({
       where: { id: reservationId },
@@ -122,7 +121,8 @@ export class OrdersService {
 
     if (couponCode) {
       payment = null;
-      couponId = await this.GiftCouponService.getGiftCouponByCouponCode(couponCode);
+      couponId =
+        await this.GiftCouponService.getGiftCouponByCouponCode(couponCode);
     } else {
       // Find the payment method with 'Visa'
       payment = await this.PaymentRepository.findOne({
@@ -134,7 +134,6 @@ export class OrdersService {
           "Visa payment method not found, please add payment method called Visa in English & Arabic"
         );
       }
-
     }
 
     if (offerId) {
@@ -854,6 +853,21 @@ export class OrdersService {
         }
       }
     }
+
+    // Ensure that an image is provided when canceling the order
+    if (newStatus === OrderStatus.Abscent) {
+      if (!order.reservation) {
+        throw new NotFoundException(
+          `No reservation found for order with ID ${orderId}`
+        );
+      }
+      await this.reservationService.deleteReservation(order.reservation.id);
+      const deposit = order.reservation.deposit; // Get deposit from the reservation
+      let paymentAmount: number;
+      order.status = OrderStatus.Abscent;
+      await this.orderRepository.save(order);
+
+    }
     // Restrict changes once the status is 'Completed'
     if (
       order.status === OrderStatus.Completed &&
@@ -1419,6 +1433,7 @@ export class OrdersService {
       [OrderStatus.Reviewed]: 0,
       [OrderStatus.Completed]: 0,
       [OrderStatus.Canceled]: 0,
+      [OrderStatus.Abscent]: 0,
     };
 
     // Populate the orderStatusCounts object with the results from the query
@@ -1487,6 +1502,7 @@ export class OrdersService {
       [OrderStatus.Reviewed]: 0,
       [OrderStatus.Completed]: 0,
       [OrderStatus.Canceled]: 0,
+      [OrderStatus.Abscent]: 0,
     };
 
     // Populate the orderStatusCounts object with the results from the query
@@ -1807,6 +1823,7 @@ export class OrdersService {
       [OrderStatus.Reviewed]: 0,
       [OrderStatus.Completed]: 0,
       [OrderStatus.Canceled]: 0,
+      [OrderStatus.Abscent]: 0,
     };
 
     // Retrieve the user based on userId
