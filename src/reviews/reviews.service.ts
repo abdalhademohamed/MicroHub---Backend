@@ -179,6 +179,8 @@ export class ReviewsService {
       await this.saveReviewAndAuditLog(review, userId);
       ids.push(orders[0].artist.id);
       reviews.push(review);
+      employee.totalReviews+=1
+      await this.employeeRepository.save(employee);
 
       // Send notification to the artist for the second review
       await this.notificationService.createNotification(

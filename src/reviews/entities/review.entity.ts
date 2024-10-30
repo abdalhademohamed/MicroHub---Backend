@@ -33,7 +33,8 @@ export class ReviewEntity {
   orderFirstTime: boolean;
 
 
-  
+  @Column({ default: new Date() })
+  createdAt: Date; 
   @Column({nullable:true})
   comment_Before: string; // before after
 
