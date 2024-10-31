@@ -35,7 +35,8 @@ import { CreateGiftCouponDto } from "../gift-coupon/dto/create-gift-coupon.dto";
 import { PaymentStatus } from "./utils/payment.status.enum";
 import { ReservationService } from "../reservation/reservation.service";
 import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
-import { GiftCouponEntity } from "src/gift-coupon/entities/gift-coupon.entity";
+import { GetCommentsDto } from "./dto/get-comments.dto";
+import { CommentEntity } from "../comment/entities/comment.entity";
 
 @Injectable()
 export class OrdersService {
@@ -73,9 +74,8 @@ export class OrdersService {
     private readonly reservationService: ReservationService,
     @InjectRepository(CustomerEntity)
     private readonly CustomerRepository: Repository<CustomerEntity>,
-    @InjectRepository(RootoshEntity)
-    private readonly RootoshRepository: Repository<RootoshEntity>,
-    
+    @InjectRepository(CommentEntity)
+    private readonly CommentRepository: Repository<CommentEntity>
   ) {}
   // Method to generate a unique incremental invoice number
   private async generateUniqueInvoiceNumber(): Promise<number> {
@@ -102,7 +102,7 @@ export class OrdersService {
     couponCode?: string
   ): Promise<OrderEntity> {
     let payment;
-    let couponId
+    let couponId;
     // Fetch reservation with related services
     const reservation = await this.reservationRepository.findOne({
       where: { id: reservationId },
@@ -123,7 +123,8 @@ export class OrdersService {
 
     if (couponCode) {
       payment = null;
-      couponId = await this.GiftCouponService.getGiftCouponByCouponCode(couponCode);
+      couponId =
+        await this.GiftCouponService.getGiftCouponByCouponCode(couponCode);
     } else {
       // Find the payment method with 'Visa'
       payment = await this.PaymentRepository.findOne({
@@ -135,7 +136,6 @@ export class OrdersService {
           "Visa payment method not found, please add payment method called Visa in English & Arabic"
         );
       }
-
     }
 
     if (offerId) {
@@ -218,7 +218,7 @@ export class OrdersService {
             OrderEntity,
             newOrder
           );
-
+          
           // Update customer's last services list and last rootoshes
           const customer = await transactionalEntityManager.findOne(
             CustomerEntity,
@@ -855,6 +855,21 @@ export class OrdersService {
         }
       }
     }
+
+    // Ensure that an image is provided when canceling the order
+    if (newStatus === OrderStatus.Abscent) {
+      if (!order.reservation) {
+        throw new NotFoundException(
+          `No reservation found for order with ID ${orderId}`
+        );
+      }
+      await this.reservationService.deleteReservation(order.reservation.id);
+      const deposit = order.reservation.deposit; // Get deposit from the reservation
+      let paymentAmount: number;
+      order.status = OrderStatus.Abscent;
+      await this.orderRepository.save(order);
+
+    }
     // Restrict changes once the status is 'Completed'
     if (
       order.status === OrderStatus.Completed &&
@@ -1420,6 +1435,7 @@ export class OrdersService {
       [OrderStatus.Reviewed]: 0,
       [OrderStatus.Completed]: 0,
       [OrderStatus.Canceled]: 0,
+      [OrderStatus.Abscent]: 0,
     };
 
     // Populate the orderStatusCounts object with the results from the query
@@ -1488,6 +1504,7 @@ export class OrdersService {
       [OrderStatus.Reviewed]: 0,
       [OrderStatus.Completed]: 0,
       [OrderStatus.Canceled]: 0,
+      [OrderStatus.Abscent]: 0,
     };
 
     // Populate the orderStatusCounts object with the results from the query
@@ -1808,6 +1825,7 @@ export class OrdersService {
       [OrderStatus.Reviewed]: 0,
       [OrderStatus.Completed]: 0,
       [OrderStatus.Canceled]: 0,
+      [OrderStatus.Abscent]: 0,
     };
 
     // Retrieve the user based on userId
@@ -1854,4 +1872,38 @@ export class OrdersService {
 
     return orderStatusCounts;
   }
+
+  async getCustomerComments(customerId: string, getCommentsDto: GetCommentsDto) {
+    const { page, limit, fromDate, toDate, sort } = getCommentsDto;
+
+    const query = this.CommentRepository.createQueryBuilder('comment')
+      .leftJoinAndSelect('comment.order', 'order')
+      .leftJoinAndSelect('order.customer', 'customer')
+      .where('customer.id = :customerId', { customerId });
+
+    if (fromDate) {
+      query.andWhere('comment.createdAt >= :fromDate', { fromDate });
+    }
+
+    if (toDate) {
+      query.andWhere('comment.createdAt <= :toDate', { toDate });
+    }
+
+    query
+      .orderBy('comment.createdAt', sort)
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const [items, total] = await query.getManyAndCount();
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+
 }

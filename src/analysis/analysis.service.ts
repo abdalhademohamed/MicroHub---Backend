@@ -608,6 +608,8 @@ async generateOrderReport(dto: GenerateOrderReportDto): Promise<any> {
     [OrderStatus.Pending]: 0,
     [OrderStatus.InQueue]: 0,
     [OrderStatus.Working]: 0,
+    [OrderStatus.Abscent]: 0,
+
     // Add other statuses as needed
   };
   

@@ -24,7 +24,6 @@ import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
   imports: [
     TypeOrmModule.forFeature([
       OrderEntity,
-      CommentEntity,
       ReservationEntity,
       EmployeeEntity,
       ReceiptEntity,
@@ -34,7 +33,9 @@ import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
       OfferEntity,
       SharableOfferEntity,
       CustomerEntity,
-      RootoshEntity
+      RootoshEntity,
+      CommentEntity,
+
     ]),
     NotificationModule,
     GiftCouponModule,

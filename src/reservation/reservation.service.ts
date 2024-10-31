@@ -501,12 +501,13 @@ export class ReservationService {
       //     `Reservations exist for the entire week at branch ${branch.name}.`
       //   );
       // }
-
-      if (body.rootosh && body.rootosh.length > 0) {
-        await this.OrdersService.createOrderForRootosh(reservation.id, userId);
+      if (body.rootosh) {
+        const orderId = await this.OrdersService.createOrderForRootosh(reservation.id, userId);
+        if (!orderId) {
+          throw new InternalServerErrorException("Failed to create order for rootosh.");
+        }
       } else {
-        // Create an order for the reservation
-        await this.OrdersService.createOrder(
+        const orderId = await this.OrdersService.createOrder(
           reservation.id,
           userId,
           body.paymentId,
@@ -514,6 +515,9 @@ export class ReservationService {
           body.sharableOfferId,
           body.couponCode
         );
+        if (!orderId) {
+          throw new InternalServerErrorException("Failed to create order.");
+        }
       }
 
       // Adjust working hours based on the new reservation
@@ -1100,21 +1104,22 @@ export class ReservationService {
     startDate: string,
     endDate: string
   ): Promise<any[]> {
-    // Use a generic type here since we're transforming the response
+    // Parse the start and end dates
     const start = new Date(startDate);
     const end = new Date(endDate);
     end.setDate(end.getDate() + 1); // Include the end date in the query
-
+  
     const topReservations = await this.ReservationRepository.createQueryBuilder(
       "reservation"
     )
-      .leftJoinAndSelect("reservation.customer", "customer") // Adjust this if the relationship name is different
+      .leftJoinAndSelect("reservation.customer", "customer") // Join with customer
+      .leftJoinAndSelect("reservation.order", "order") // Join with order
       .where("reservation.createdAt BETWEEN :start AND :end", { start, end })
       .orderBy("reservation.totalPrice", "DESC")
-      .take(5) // Limit the results to top 5
+      .take(5) // Limit to top 5 reservations
       .getMany();
-
-    // Map the results to the desired structure
+  
+    // Map the results to the desired structure, including orderId with a null check
     return topReservations.map((reservation) => ({
       id: reservation.id,
       start_Time: reservation.start_Time,
@@ -1123,6 +1128,7 @@ export class ReservationService {
       deposit: reservation.deposit,
       createdAt: reservation.createdAt,
       isDeleted: reservation.isDeleted,
+      orderId: reservation.order ? reservation.order.id : null, // Check if order exists
       customer: {
         id: reservation.customer.id, // Ensure this property exists in the Customer entity
         name: reservation.customer.fullName, // Replace with the actual property names from the Customer entity
@@ -1131,7 +1137,8 @@ export class ReservationService {
       },
     }));
   }
-
+  
+  
   async getReservationsTimes(dto: GetReservationsTimesDto): Promise<{
     items: {
       id: string;

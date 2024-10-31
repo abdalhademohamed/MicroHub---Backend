@@ -53,6 +53,11 @@ export class EmployeeController {
         body.workingHours,
       );
   }
+
+  @Get('artists')
+  async getArtistsWithReviews() {
+    return this.employeeService.getArtistsWithReviews();
+  }
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST,Role.ACCOUNTANT)
   @Get("/count")

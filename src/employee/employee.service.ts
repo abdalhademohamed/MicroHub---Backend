@@ -12,7 +12,14 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { EmployeeEntity } from "./entities/employee.entity";
 import { BranchEntity } from "../branch/entities/branch.entity";
 import { PositionEntity } from "../postion/entities/postion.entity";
-import { EntityManager, In, Like, MoreThan, MoreThanOrEqual, Repository } from "typeorm";
+import {
+  EntityManager,
+  In,
+  Like,
+  MoreThan,
+  MoreThanOrEqual,
+  Repository,
+} from "typeorm";
 import { EmployeeTypeEntity } from "../employetype/entities/employetype.entity";
 import { CloudinaryService } from "../cloudinary/cloudinary.service";
 import * as bcrypt from "bcrypt";
@@ -29,6 +36,7 @@ import { ReservationEntity } from "../reservation/entities/reservation.entity";
 import { SlotsEntity } from "../slots/entities/slots.entity";
 import { WorkingEntity } from "../slots/entities/working.entity";
 import { OrderStatus } from "../orders/utils/order.status.enum";
+import { ReviewEntity } from "../reviews/entities/review.entity";
 
 @Injectable()
 export class EmployeeService {
@@ -61,8 +69,7 @@ export class EmployeeService {
     @InjectRepository(SlotsEntity)
     private readonly SlotRepository: Repository<SlotsEntity>,
     @InjectRepository(WorkingEntity)
-    private readonly WorkingRepository: Repository<WorkingEntity>,
-    
+    private readonly WorkingRepository: Repository<WorkingEntity>
   ) {}
 
   async createEmployee(
@@ -210,21 +217,23 @@ export class EmployeeService {
     updateEmployeeDto: UpdateEmployeeDto,
     userId: string,
     image: Express.Multer.File
-  ): Promise<EmployeeEntity | { message: string; error: string; statusCode: number }> {
+  ): Promise<
+    EmployeeEntity | { message: string; error: string; statusCode: number }
+  > {
     try {
       // Step 1: Find the employee by ID
       const employee = await this.employeeRepository.findOne({
         where: { id },
         relations: ["branch", "position", "employeeType"],
       });
-  
+
       if (!employee) {
         throw new NotFoundException(`Employee with ID ${id} not found.`);
       }
-  
+
       // Step 2: Track original values for auditing purposes
       const originalEmployee = { ...employee };
-  
+
       // Step 3: Destructure and update employee details from DTO
       const {
         english_Name,
@@ -239,17 +248,19 @@ export class EmployeeService {
         branchId, // Update branch
         position, // Update position
       } = updateEmployeeDto;
-  
+
       // Check if updating to artist position
       if (position) {
         const newPosition = await this.positionRepository.findOne({
           where: { id: position },
         });
         if (!newPosition) {
-          throw new NotFoundException(`Position with ID ${position} not found.`);
+          throw new NotFoundException(
+            `Position with ID ${position} not found.`
+          );
         }
-        console.log(newPosition.postion)
-        console.log(employee.position.postion)
+        console.log(newPosition.postion);
+        console.log(employee.position.postion);
 
         // If the new position is not "artist" and the employee is the only artist in the branch
         if (
@@ -262,27 +273,28 @@ export class EmployeeService {
               branch: { id: employee.branch.id },
             },
           });
-  
+
           if (artistCount === 1) {
             return {
               message: "BadRequestException",
-              error: "Cannot change position to artist as this employee is the only artist in the branch.",
+              error:
+                "Cannot change position to artist as this employee is the only artist in the branch.",
               statusCode: 400,
             };
           }
         }
-  
+
         employee.position = newPosition; // Update the employee's position
         employee.role = this.determineRoleFromPosition(newPosition);
       }
-  
+
       employee.english_Name = english_Name ?? employee.english_Name;
       employee.arabic_Name = arabic_Name ?? employee.arabic_Name;
       employee.workingHours = workingHours ?? employee.workingHours;
       employee.countryCode = countryCode ?? employee.countryCode;
       employee.phoneNumber = phoneNumber ?? employee.phoneNumber;
       employee.available = available ?? employee.available;
-  
+
       // Update the branch if branchId is provided
       if (branchId) {
         const newBranch = await this.branchRepository.findOne({
@@ -291,26 +303,32 @@ export class EmployeeService {
         if (!newBranch) {
           throw new NotFoundException(`Branch with ID ${branchId} not found.`);
         }
-        if (employee.position.postion === Postion.ARTIST) {
-          const artistCount = await this.employeeRepository.count({
-            where: {
-              position: { postion: Postion.ARTIST },
-              branch: { id: employee.branch.id },
-            },
-          });
-  
-          if (artistCount === 1) {
-            return {
-              message: "BadRequestException",
-              error: "Cannot change position to artist as this employee is the only artist in the branch.",
-              statusCode: 400,
-            };
+        if (position) {
+          if (employee.position.postion === Postion.ARTIST) {
+            const artistCount = await this.employeeRepository.count({
+              where: {
+                position: { postion: Postion.ARTIST },
+                branch: { id: employee.branch.id },
+              },
+            });
+
+            if (artistCount === 1) {
+              return {
+                message: "BadRequestException",
+                error:
+                  "Cannot change position to artist as this employee is the only artist in the branch.",
+                statusCode: 400,
+              };
+            }
+            this.eventEmitter.emit("artist:hours", {
+              duration: employee.workingHours * 60,
+              branchId: employee.branch.id,
+            });
+
+            this.eventEmitter.emit("artist:created", employee);
           }
-          this.eventEmitter.emit('artist:hours', { duration: employee.workingHours * 60, branchId: employee.branch.id });
-
-          this.eventEmitter.emit('artist:created', employee);      
-
         }
+
         // const artistCount = await this.employeeRepository.count({
         //   where: {
         //     position: { postion: Postion.ARTIST },
@@ -327,7 +345,7 @@ export class EmployeeService {
         // }
         employee.branch = newBranch; // Update the employee's branch
       }
-  
+
       // Step 4: Handle image upload
       if (image) {
         const folderName = "employee";
@@ -345,7 +363,7 @@ export class EmployeeService {
           };
         }
       }
-  
+
       // Step 5: Find and update user details
       const user = await this.UserRepository.findOne({ where: { id } });
       if (!user) {
@@ -355,10 +373,10 @@ export class EmployeeService {
           statusCode: 404,
         };
       }
-  
+
       // Step 6: Update user email and username if necessary
       let isUserUpdated = false;
-  
+
       if (
         email &&
         email.trim().toLowerCase() !== user.email.trim().toLowerCase()
@@ -367,29 +385,39 @@ export class EmployeeService {
         employee.email = email.trim();
         isUserUpdated = true;
       }
-  
+      // if (
+      //   email &&
+      //   email.trim().toLowerCase() === user.email.trim().toLowerCase()
+      // ) {
+      //   return {
+      //     message: "BadRequestException",
+      //     error: "this is your current email",
+      //     statusCode: 400,
+      //   };
+      // }
+
       if (english_Name && english_Name !== user.username) {
         user.username = english_Name;
         isUserUpdated = true;
       }
-  
+
       if (password) {
         user.password = await bcrypt.hash(password, 10);
         isUserUpdated = true;
       }
-  
+
       // Save the user entity if any updates were made
       if (isUserUpdated) {
         await this.UserRepository.save(user);
       }
-  
+
       // Step 7: Save updated employee details
       const updatedEmployee = await this.employeeRepository.save(employee);
-  
+
       // Step 8: Audit log - Track changes
       const changedColumns = [];
       const changesDetails = {};
-  
+
       this.logChangedField(
         "english_Name",
         originalEmployee,
@@ -453,7 +481,7 @@ export class EmployeeService {
         changedColumns,
         changesDetails
       ); // Track position changes
-  
+
       // Step 9: Create an audit log entry
       const auditLog = new AuditLogEntity();
       auditLog.tableName = "employee";
@@ -462,7 +490,7 @@ export class EmployeeService {
       auditLog.performedBy = userId;
       auditLog.changedColumns = changedColumns;
       auditLog.changesDetails = changesDetails;
-  
+
       if (userId) {
         auditLog.userDetails = {
           id: user.id,
@@ -472,14 +500,14 @@ export class EmployeeService {
         };
       }
       await this.AuditLogRepository.save(auditLog);
-  
+
       // Log the updated employee after saving
       // console.log("Employee updated successfully:", updatedEmployee);
-  
+
       return updatedEmployee;
     } catch (error) {
       console.error("Update Employee Error:", error);
-  
+
       // Directly return a formatted error response
       return {
         message: "Failed to update employee",
@@ -488,50 +516,51 @@ export class EmployeeService {
       };
     }
   }
-  async updateArtistWorkingHours(artistId: string, workingHours: number){
+  async updateArtistWorkingHours(artistId: string, workingHours: number) {
     const employee = await this.employeeRepository.findOne({
       where: { id: artistId, role: Role.ARTIST },
-      relations: ["branch" ],
+      relations: ["branch"],
     });
     const currentWorkingHours = employee.workingHours;
-    if(!employee){
+    if (!employee) {
       throw new NotFoundException(`Artist with ID ${artistId} not found.`);
     }
-    if( currentWorkingHours == workingHours ){
-      throw new HttpException('invalid working hours ', 400);
+    if (currentWorkingHours == workingHours) {
+      throw new HttpException("invalid working hours ", 400);
     }
     // const sum = await this.employeeRepository.sum('workingHours', { branch: { id: employee.branch.id }, role: Role.ARTIST });
-    if(currentWorkingHours < workingHours){
+    if (currentWorkingHours < workingHours) {
       employee.workingHours = workingHours - currentWorkingHours;
-      this.eventEmitter.emit('artist:created', employee);
+      this.eventEmitter.emit("artist:created", employee);
       employee.workingHours = workingHours;
       await this.employeeRepository.save(employee);
-    }else if( currentWorkingHours > workingHours ){
+    } else if (currentWorkingHours > workingHours) {
       const wH = (currentWorkingHours - workingHours) * 60;
       const today = new Date();
-      const slots = await this.SlotRepository
-        .find({ 
-          where: { 
-            branch: { id: employee.branch.id }, 
-            day: MoreThan(today.getDate()),
-            month: MoreThanOrEqual(today.getMonth() + 1),
-            year: MoreThanOrEqual(today.getFullYear()), 
-          },
-          relations: ['branch', 'workingEntity']
-        })
-      for( var i = 0; i < slots.length; i++ ){
-        const sum = slots[i].workingEntity.reduce((acc, slot)=>{
+      const slots = await this.SlotRepository.find({
+        where: {
+          branch: { id: employee.branch.id },
+          day: MoreThan(today.getDate()),
+          month: MoreThanOrEqual(today.getMonth() + 1),
+          year: MoreThanOrEqual(today.getFullYear()),
+        },
+        relations: ["branch", "workingEntity"],
+      });
+      for (var i = 0; i < slots.length; i++) {
+        const sum = slots[i].workingEntity.reduce((acc, slot) => {
           return acc + slot.duration;
         }, 0);
-        if(wH > sum){
-          throw new HttpException('invalid working entity ', 400);
+        if (wH > sum) {
+          throw new HttpException("invalid working entity ", 400);
         }
       }
-      this.eventEmitter.emit('artist:hours', { duration: wH, branchId: employee.branch.id });
+      this.eventEmitter.emit("artist:hours", {
+        duration: wH,
+        branchId: employee.branch.id,
+      });
     }
-    return { status: 'working hours updated' }
+    return { status: "working hours updated" };
   }
-  
 
   private determineRoleFromPosition(position: PositionEntity): Role {
     // Example mapping logic based on the Postion enum
@@ -700,29 +729,110 @@ export class EmployeeService {
     return await query.getCount();
   }
 
-
-  async getTopArtistsWithCompletedOrders(): Promise<EmployeeEntity[]> {
-  
+  async getTopArtistsWithCompletedOrders(): Promise<any[]> {
     const topArtists = await this.employeeRepository
-      .createQueryBuilder('employee')
-      .leftJoinAndSelect('employee.orders', 'order') // Join orders related to the employee
-      .leftJoinAndSelect('employee.position', 'position') // Join position related to the employee
-      .where('position.postion = :position', { position: Postion.ARTIST }) // Filter by position
-      .andWhere('order.status = :status', { status: OrderStatus.Completed }) // Filter by order status
-      .select(['employee', 'COUNT(order.id) AS completedOrdersCount']) // Select employee and count of completed orders
-      .groupBy('employee.id') // Group by employee ID
-      .addGroupBy('position.id') // Group by position ID
-      .orderBy('completedOrdersCount', 'DESC') // Order by the count of completed orders
+      .createQueryBuilder("employee")
+      .leftJoinAndSelect("employee.orders", "order") // Join orders related to the employee
+      .leftJoinAndSelect("employee.position", "position") // Join position related to the employee
+      .leftJoinAndSelect("employee.branch", "branch") // Join branch
+      .leftJoinAndSelect("employee.employeeType", "employeeType") // Join employeeType
+      .where("position.postion = :position", { position: Postion.ARTIST }) // Filter by position
+      .andWhere("order.status = :status", { status: OrderStatus.Completed }) // Filter by order status
+      .select([
+        "employee",
+        "branch",
+        "position",
+        "employeeType",
+        'COUNT(order.id) AS "completedOrdersCount"', // Explicitly alias the count
+      ])
+      .groupBy("employee.id") // Group by employee ID
+      .addGroupBy("position.id") // Group by position ID
+      .addGroupBy("branch.id") // Group by branch ID
+      .addGroupBy("employeeType.id") // Group by employeeType ID
+      .orderBy('"completedOrdersCount"', 'DESC') // Order by the count of completed orders
       .limit(5) // Limit to the top 5 employees
       .getRawMany(); // Use getRawMany to get raw results
-  
-    // Map raw results to EmployeeEntity instances if needed
-    return topArtists.map(raw => {
-      const employee = new EmployeeEntity();
-      // Map fields from raw result to EmployeeEntity
-      Object.assign(employee, raw); // Assuming EmployeeEntity has the same structure
-      return employee;
+
+    // Transform the raw results into the desired structure
+    return topArtists.map((raw) => {
+      return {
+        id: raw.employee_id,
+        username: raw.employee_username,
+        email: raw.employee_email,
+
+        role: raw.employee_role,
+
+        english_Name: raw.employee_english_Name,
+        arabic_Name: raw.employee_arabic_Name,
+        workingHours: raw.employee_workingHours,
+
+        phoneNumber: raw.employee_phoneNumber,
+        image: raw.employee_image,
+        speciality: raw.employee_speciality,
+        available: raw.employee_available,
+        totalReviews: raw.employee_totalReviews,
+        status: raw.employee_status,
+        oldestAvgRating: raw.employee_oldestAvgRating,
+        newestAvgRating: raw.employee_newestAvgRating,
+        branch: {
+          id: raw.branch_id,
+          name: raw.branch_name,
+          location: raw.branch_location,
+          image: raw.branch_image,
+        },
+        position: {
+          id: raw.position_id,
+          postion: raw.position_postion,
+          positionInEnglish: raw.position_positionInEnglish,
+          positionInArabic: raw.position_positionInArabic,
+        },
+        employeeType: {
+          id: raw.employeeType_id,
+          typeEnglish: raw.employeeType_typeEnglish,
+          typeArabic: raw.employeeType_typeArabic,
+        },
+        completedOrdersCount: parseInt(raw.completedOrdersCount, 10), // Convert count to a number
+      };
     });
   }
-   
+
+  async getArtistsWithReviews() {
+    return this.employeeRepository
+      .createQueryBuilder('employee')
+      .leftJoinAndSelect("employee.position", "position") // Join position related to the employee
+      .leftJoinAndSelect('employee.reviews', 'reviews')
+      .where("position.postion = :position", { position: Postion.ARTIST }) // Filter by position
+      .loadRelationCountAndMap('employee.totalReviews', 'employee.reviews')
+      .addSelect([
+        'employee.oldestAvgRating',
+        'employee.newestAvgRating',
+        'reviews.rating',
+        'reviews.comment_Before',
+        'reviews.comment_After',
+        'reviews.orderFirstTime',
+      ])
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('AVG(reviews.rating)', 'averageRating')
+          .from(ReviewEntity, 'reviews')
+          .where('reviews.employeeId = employee.id');
+      }, 'employee.avgRating')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('reviews.rating', 'newestAvgRating')
+          .from(ReviewEntity, 'reviews')
+          .where('reviews.employeeId = employee.id')
+          .orderBy('reviews.createdAt', 'DESC')
+          .limit(1);
+      }, 'employee.newestAvgRating')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('reviews.rating', 'oldestAvgRating')
+          .from(ReviewEntity, 'reviews')
+          .where('reviews.employeeId = employee.id')
+          .orderBy('reviews.createdAt', 'ASC')
+          .limit(1);
+      }, 'employee.oldestAvgRating')
+      .getMany();
+  }
 }

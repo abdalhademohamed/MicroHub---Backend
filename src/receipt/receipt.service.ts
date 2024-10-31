@@ -18,6 +18,7 @@ import { ServiceEntity } from "../service/entities/service.entity";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { OfferEntity } from "../offer/entities/offer.entity";
 import { CreateReceiptFromReservationIdDto } from "./dto/create.receipt.from.reservationId.dto";
+import { GetReceiptsDto } from "./dto/get-receipts.dto";
 
 @Injectable()
 export class ReceiptService {
@@ -717,4 +718,40 @@ export class ReceiptService {
 
     return receipt; // paymentForServices will now be correctly returned as an array
   }
+
+
+async getReceipts(getReceiptsDto: GetReceiptsDto) {
+  const { fromDate, toDate, page, limit, sort } = getReceiptsDto;
+
+  const query = this.receiptRepository.createQueryBuilder('receipt');
+
+  // Filtering by fromDate
+  if (fromDate) {
+    query.andWhere('receipt.generatedAt >= :fromDate', { fromDate });
+  }
+
+  // Filtering by toDate
+  if (toDate) {
+    query.andWhere('receipt.generatedAt <= :toDate', { toDate });
+  }
+
+  // Sorting if provided
+  if (sort) {
+    query.orderBy('receipt.generatedAt', sort);
+  }
+
+  // Pagination
+  const [items, total] = await query
+    .skip((page - 1) * limit)
+    .take(limit)
+    .getManyAndCount();
+
+  return {
+    total,
+    page,
+    limit,
+    items,
+  };
+}
+
 }
