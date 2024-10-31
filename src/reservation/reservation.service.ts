@@ -1101,12 +1101,12 @@ export class ReservationService {
     await this.WorkingHourEntity.save(workingSlot);
   }
   async getTop5Reservations(
-    startDate: string,
-    endDate: string
+    fromDate: string,
+    toDate: string
   ): Promise<any[]> {
     // Parse the start and end dates
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    const start = new Date(fromDate);
+    const end = new Date(toDate);
     end.setDate(end.getDate() + 1); // Include the end date in the query
   
     const topReservations = await this.ReservationRepository.createQueryBuilder(

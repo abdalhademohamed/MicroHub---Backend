@@ -36,12 +36,12 @@ export class ReservationController {
   constructor(private readonly reservationService: ReservationService) {}
 
  
-  @Get('top5')
+  @Get('top5')  
   async getTop5Reservations(
-    @Query('fromDate') startDate: string,
-    @Query('toDate') endDate: string,
+    @Query('fromDate') fromDate: string,
+    @Query('toDate') toDate: string,
   ): Promise<ReservationEntity[]> {
-    return this.reservationService.getTop5Reservations(startDate, endDate);
+    return this.reservationService.getTop5Reservations(fromDate, toDate);
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Get('times')
