@@ -729,8 +729,11 @@ export class EmployeeService {
     return await query.getCount();
   }
 
-  async getTopArtistsWithCompletedOrders(): Promise<any[]> {
-    const topArtists = await this.employeeRepository
+  async getTopArtistsWithCompletedOrders(
+    fromDate?: Date,
+    toDate?: Date
+  ): Promise<any[]> {
+    const queryBuilder = this.employeeRepository
       .createQueryBuilder("employee")
       .leftJoinAndSelect("employee.orders", "order") // Join orders related to the employee
       .leftJoinAndSelect("employee.position", "position") // Join position related to the employee
@@ -750,22 +753,32 @@ export class EmployeeService {
       .addGroupBy("branch.id") // Group by branch ID
       .addGroupBy("employeeType.id") // Group by employeeType ID
       .orderBy('"completedOrdersCount"', 'DESC') // Order by the count of completed orders
-      .limit(5) // Limit to the top 5 employees
-      .getRawMany(); // Use getRawMany to get raw results
-
+      .limit(5); // Limit to the top 5 employees
+  
+    // Add date filtering only if fromDate or toDate are provided
+    if (fromDate) {
+      queryBuilder.andWhere("order.createdAt >= :fromDate", { 
+        fromDate: fromDate.toISOString(),
+      });
+    }
+    if (toDate) {
+      queryBuilder.andWhere("order.createdAt <= :toDate", { 
+        toDate: toDate.toISOString(),
+      });
+    }
+  
+    const topArtists = await queryBuilder.getRawMany(); // Use getRawMany to get raw results
+  
     // Transform the raw results into the desired structure
     return topArtists.map((raw) => {
       return {
         id: raw.employee_id,
         username: raw.employee_username,
         email: raw.employee_email,
-
         role: raw.employee_role,
-
         english_Name: raw.employee_english_Name,
         arabic_Name: raw.employee_arabic_Name,
         workingHours: raw.employee_workingHours,
-
         phoneNumber: raw.employee_phoneNumber,
         image: raw.employee_image,
         speciality: raw.employee_speciality,
@@ -795,6 +808,7 @@ export class EmployeeService {
       };
     });
   }
+  
 
   async getArtistsWithReviews() {
     return this.employeeRepository
