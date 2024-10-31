@@ -35,6 +35,8 @@ import { CreateGiftCouponDto } from "../gift-coupon/dto/create-gift-coupon.dto";
 import { PaymentStatus } from "./utils/payment.status.enum";
 import { ReservationService } from "../reservation/reservation.service";
 import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
+import { GetCommentsDto } from "./dto/get-comments.dto";
+import { CommentEntity } from "src/comment/entities/comment.entity";
 
 @Injectable()
 export class OrdersService {
@@ -72,8 +74,8 @@ export class OrdersService {
     private readonly reservationService: ReservationService,
     @InjectRepository(CustomerEntity)
     private readonly CustomerRepository: Repository<CustomerEntity>,
-    @InjectRepository(RootoshEntity)
-    private readonly RootoshRepository: Repository<RootoshEntity>
+    @InjectRepository(CommentEntity)
+    private readonly CommentRepository: Repository<CommentEntity>
   ) {}
   // Method to generate a unique incremental invoice number
   private async generateUniqueInvoiceNumber(): Promise<number> {
@@ -216,7 +218,7 @@ export class OrdersService {
             OrderEntity,
             newOrder
           );
-
+          
           // Update customer's last services list and last rootoshes
           const customer = await transactionalEntityManager.findOne(
             CustomerEntity,
@@ -1870,4 +1872,38 @@ export class OrdersService {
 
     return orderStatusCounts;
   }
+
+  async getCustomerComments(customerId: string, getCommentsDto: GetCommentsDto) {
+    const { page, limit, fromDate, toDate, sort } = getCommentsDto;
+
+    const query = this.CommentRepository.createQueryBuilder('comment')
+      .leftJoinAndSelect('comment.order', 'order')
+      .leftJoinAndSelect('order.customer', 'customer')
+      .where('customer.id = :customerId', { customerId });
+
+    if (fromDate) {
+      query.andWhere('comment.createdAt >= :fromDate', { fromDate });
+    }
+
+    if (toDate) {
+      query.andWhere('comment.createdAt <= :toDate', { toDate });
+    }
+
+    query
+      .orderBy('comment.createdAt', sort)
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const [items, total] = await query.getManyAndCount();
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+
 }
