@@ -13,6 +13,7 @@ import {
   BadRequestException,
   UseGuards,
   NotFoundException,
+  Query,
 } from "@nestjs/common";
 import { ReceiptService } from "./receipt.service";
 import { CreateReceiptDto } from "./dto/create.receipt.dto";
@@ -25,13 +26,17 @@ import { RolesGuard } from "../auth/guards/role.guards";
 import { Response as ExpressResponse } from "express";
 import { ReceiptEntity } from "./entities/receipt.entity";
 import { CreateReceiptFromReservationIdDto } from "./dto/create.receipt.from.reservationId.dto";
+import { GetReceiptsDto } from "./dto/get-receipts.dto";
 
 @ApiTags("receipt")
 @Controller("receipt")
 export class ReceiptController {
   constructor(private readonly receiptService: ReceiptService) {}
 
-
+  @Get()
+  async getReceipts(@Query() getReceiptsDto: GetReceiptsDto) {
+    return this.receiptService.getReceipts(getReceiptsDto);
+  }
 
    // Endpoint to create a receipt
    @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
