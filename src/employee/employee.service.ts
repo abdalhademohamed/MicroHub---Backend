@@ -36,7 +36,7 @@ import { ReservationEntity } from "../reservation/entities/reservation.entity";
 import { SlotsEntity } from "../slots/entities/slots.entity";
 import { WorkingEntity } from "../slots/entities/working.entity";
 import { OrderStatus } from "../orders/utils/order.status.enum";
-import { ReviewEntity } from "src/reviews/entities/review.entity";
+import { ReviewEntity } from "../reviews/entities/review.entity";
 
 @Injectable()
 export class EmployeeService {

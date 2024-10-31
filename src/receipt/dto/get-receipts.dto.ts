@@ -1,4 +1,3 @@
-// src/receipt/dto/get-receipts.dto.ts
 import { IsOptional, IsString, IsDateString, IsNumber, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 

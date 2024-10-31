@@ -1,4 +1,3 @@
-// src/order/dto/get-comments.dto.ts
 
 import { IsOptional, IsString, IsDateString, IsEnum, IsInt, Min } from 'class-validator';
 import { Type } from 'class-transformer';

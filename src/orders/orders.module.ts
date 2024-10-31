@@ -20,7 +20,6 @@ import { GiftCouponModule } from "../gift-coupon/gift-coupon.module";
 import { ReservationModule } from "../reservation/reservation.module";
 import { CustomerEntity } from "../customer/entities/customer.entity";
 import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
-import { CommentModule } from "src/comment/comment.module";
 @Module({
   imports: [
     TypeOrmModule.forFeature([

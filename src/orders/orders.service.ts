@@ -36,7 +36,7 @@ import { PaymentStatus } from "./utils/payment.status.enum";
 import { ReservationService } from "../reservation/reservation.service";
 import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
 import { GetCommentsDto } from "./dto/get-comments.dto";
-import { CommentEntity } from "src/comment/entities/comment.entity";
+import { CommentEntity } from "../comment/entities/comment.entity";
 
 @Injectable()
 export class OrdersService {
