@@ -720,38 +720,55 @@ export class ReceiptService {
   }
 
 
-async getReceipts(getReceiptsDto: GetReceiptsDto) {
-  const { fromDate, toDate, page, limit, sort } = getReceiptsDto;
-
-  const query = this.receiptRepository.createQueryBuilder('receipt');
-
-  // Filtering by fromDate
-  if (fromDate) {
-    query.andWhere('receipt.generatedAt >= :fromDate', { fromDate });
+  async getReceipts(getReceiptsDto: GetReceiptsDto) {
+    const { fromDate, toDate, page, limit, sort, branchId } = getReceiptsDto;
+  
+    const query = this.receiptRepository.createQueryBuilder('receipt')
+      .leftJoinAndSelect('receipt.order', 'order')
+      .leftJoinAndSelect('order.payment', 'payment')
+      .leftJoinAndSelect('receipt.createdBy', 'createdBy');
+  
+    // Filtering by fromDate
+    if (fromDate) {
+      query.andWhere('receipt.generatedAt >= :fromDate', { fromDate });
+    }
+  
+    // Filtering by toDate
+    if (toDate) {
+      query.andWhere('receipt.generatedAt <= :toDate', { toDate });
+    }
+  
+   
+  // Filtering by branchId if provided
+  if (branchId) {
+    query.andWhere(`(order.branch ->> 'id')::text = :branchId`, { branchId });
   }
-
-  // Filtering by toDate
-  if (toDate) {
-    query.andWhere('receipt.generatedAt <= :toDate', { toDate });
+  
+    // Sorting if provided
+    if (sort) {
+      query.orderBy('receipt.generatedAt', sort);
+    }
+  
+    // Pagination
+    const [items, total] = await query
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+  
+    return {
+      total,
+      page,
+      limit,
+      items: items.map(receipt => ({
+        ...receipt,
+        createdBy: receipt.createdBy ? {
+          id: receipt.createdBy.id,
+          username: receipt.createdBy.username,
+          email: receipt.createdBy.email,
+        } : null,
+      })),
+    };
   }
-
-  // Sorting if provided
-  if (sort) {
-    query.orderBy('receipt.generatedAt', sort);
-  }
-
-  // Pagination
-  const [items, total] = await query
-    .skip((page - 1) * limit)
-    .take(limit)
-    .getManyAndCount();
-
-  return {
-    total,
-    page,
-    limit,
-    items,
-  };
-}
+  
 
 }
