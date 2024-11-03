@@ -40,8 +40,15 @@ export class EmployeeController {
   constructor(private readonly employeeService: EmployeeService) {}
 
   @Get('top/artists')
-  async getTopArtists(): Promise<EmployeeEntity[]> {
-    return this.employeeService.getTopArtistsWithCompletedOrders();
+  async getTopArtists(
+    @Query('fromDate') fromDate?: string,
+    @Query('toDate') toDate?: string
+  ): Promise<EmployeeEntity[]> {
+    // Parse the date strings to Date objects if they are provided
+    const from = fromDate ? new Date(fromDate) : undefined;
+    const to = toDate ? new Date(toDate) : undefined;
+
+    return this.employeeService.getTopArtistsWithCompletedOrders(from, to);
   }
   @Put("working/:id")  
   async updateWorkingHoursEmployee( 

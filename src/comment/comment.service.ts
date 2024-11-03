@@ -8,6 +8,7 @@ import { Between, Repository } from "typeorm";
 import { CommentEntity } from "./entities/comment.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { GetCommentsDto } from "./dto/get.comments.dto";
+import { CommentResponseDto, ReviewResponseDto } from "./dto/get.comment.response.dto";
 
 @Injectable()
 export class CommentService {
@@ -23,23 +24,26 @@ export class CommentService {
     // @InjectRepository(EmployeeEntity)
     // private readonly employeeRepository: Repository<EmployeeEntity>
   ) {}
-  async getCommentByOrderId(orderId: string): Promise<CommentEntity | null> {
+  async getCommentByOrderId(orderId: string): Promise<CommentResponseDto | null> {
     try {
-      // Find the comment by orderId
+      // Find the comment with relations
       const comment = await this.commentRepository.findOne({
-        where: {
-          order: { id: orderId },
-        },
-        relations: ["order", "employee"], // Include relations
+        where: { order: { id: orderId } },
+        relations: [
+          "order",
+          "employee",         // Commenting employee
+          "order.reviews",    // Reviews associated with the order
+          "order.reviews.employee", // Employee who made the review
+          "order.reviews.artist"    // Artist who is being reviewed
+        ],
       });
-
-      // Return null if no comment exists for this order
+  
       if (!comment) {
         return null;
       }
-
-      // Manually map the employee fields to include only what you need
-      const employee = comment.employee
+  
+      // Map only necessary fields for the commenting employee
+      const commentingEmployee = comment.employee
         ? {
             id: comment.employee.id,
             username: comment.employee.username,
@@ -47,7 +51,7 @@ export class CommentService {
             role: comment.employee.role,
             english_Name: comment.employee.english_Name,
             arabic_Name: comment.employee.arabic_Name,
-            workingHours: comment.employee.workingHours,
+            workingHours: comment.employee.workingHours.toString(),  // Convert to string
             phoneNumber: comment.employee.phoneNumber,
             image: comment.employee.image,
             available: comment.employee.available,
@@ -57,19 +61,54 @@ export class CommentService {
             newestAvgRating: comment.employee.newestAvgRating,
           }
         : null;
+  
+      // Map review details, including reviewer and artist information
+      const reviewDetails: ReviewResponseDto[] = comment.order.reviews.map((review) => ({
+        id: review.id,
+        rating: review.rating,
+        createdAt: review.createdAt,
+        imageOrder: review.imageOrder,
+        commentBefore: review.comment_Before,
+        commentAfter: review.comment_After,
+        reviewer: review.employee
+          ? {
+              id: review.employee.id,
+              username: review.employee.username,
+              image:review.employee.image,
 
-      // Return the comment with the mapped employee
+              english_Name: review.employee.english_Name,
+              role: review.employee.role,
+              phoneNumber: review.employee.phoneNumber,
+            }
+          : null,
+        artist: review.artist
+          ? {
+              id: review.artist.id,
+              image:review.artist.image,
+
+              username: review.artist.username,
+              english_Name: review.artist.english_Name,
+              role: review.artist.role,
+              phoneNumber: review.artist.phoneNumber,
+            }
+          : null,
+      }));
+  
+      // Construct and return the response using the CommentResponseDto structure
       return {
-        ...comment,
-        employee, // Use the mapped employee here
+        id: comment.id,
+        content: comment.content,
+        imageBeforeUrl: comment.imageBeforeUrl,
+        imageAfterUrl: comment.imageAfterUrl,
+        createdAt: comment.createdAt,
+        employee: commentingEmployee,
+        reviews: reviewDetails,
       };
     } catch (error) {
-      throw new InternalServerErrorException(
-        "Failed to retrieve comment",
-        error.stack,
-      );
+      throw new InternalServerErrorException("Failed to retrieve comment", error.stack);
     }
   }
+  
 
 
 

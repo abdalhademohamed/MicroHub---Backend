@@ -232,18 +232,11 @@ export class OrdersController {
   @UseGuards(AccessTokenGuard, RolesGuard)
   @Roles(Role.SUPERADMIN, Role.RECEPTIONIST, Role.ARTISTMANAGER)
   async getOrderById(@Param("orderId") orderId: string) {
-    try {
+  
       const order = await this.ordersService.findOrderById(orderId);
-      if (!order) {
-        throw new NotFoundException(`Order with ID ${orderId} not found`);
-      }
+   
       return order;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        "Failed to retrieve the order",
-        error.stack,
-      );
-    }
+  
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

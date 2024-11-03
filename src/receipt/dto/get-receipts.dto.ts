@@ -30,4 +30,9 @@ export class GetReceiptsDto {
   @IsOptional()
   @IsEnum(SortOrder)
   sort: SortOrder = SortOrder.ASC;
+
+  @IsOptional()
+  @IsString()
+  branchId?: string; // Optional branch ID for filtering
+
 }
