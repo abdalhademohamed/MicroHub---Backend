@@ -1696,7 +1696,7 @@ export class OrdersService {
     try {
       return await this.orderRepository.findOne({
         where: { id: orderId },
-        relations: ["receipts", "reservation", "createdBy", "artist"], // Add relations if needed
+        relations: ["receipts", "reservation", "reservation.branch","createdBy", "artist","payment","customer","reservation.services","reservation.rootoshes"], // Add relations if needed
       });
     } catch (error) {
       throw new InternalServerErrorException(
