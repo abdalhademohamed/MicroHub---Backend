@@ -503,6 +503,7 @@ export class ReservationService {
       // }
       if (body.rootosh) {
         const orderId = await this.OrdersService.createOrderForRootosh(reservation.id, userId);
+        
         if (!orderId) {
           throw new InternalServerErrorException("Failed to create order for rootosh.");
         }

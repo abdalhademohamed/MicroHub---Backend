@@ -37,8 +37,12 @@ import { ReservationService } from "../reservation/reservation.service";
 import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
 import { GetCommentsDto } from "./dto/get-comments.dto";
 import { CommentEntity } from "../comment/entities/comment.entity";
-import { CommentResponseDto, ReviewResponseDto } from "src/comment/dto/get.comment.response.dto";
+import {
+  CommentResponseDto,
+  ReviewResponseDto,
+} from "../comment/dto/get.comment.response.dto";
 import { PaginatedCommentResponseDto } from "./dto/paginated.comments.response.dto";
+import { ReceiptEntity } from "../receipt/entities/receipt.entity";
 
 @Injectable()
 export class OrdersService {
@@ -220,7 +224,7 @@ export class OrdersService {
             OrderEntity,
             newOrder
           );
-          
+
           // Update customer's last services list and last rootoshes
           const customer = await transactionalEntityManager.findOne(
             CustomerEntity,
@@ -671,12 +675,14 @@ export class OrdersService {
           "An image is required when updating the payment status to 'paid'."
         );
       }
+
       // Update the paymentStatus
       order.paymentStatus =
         newPaymentStatus === "paid"
           ? PaymentStatus.Paid
           : PaymentStatus.PartiallyPaid;
 
+      
       // Update image URL if provided
       if (image) {
         const folderName = "orders-payment-status"; // or any other dynamic name based on context
@@ -712,6 +718,14 @@ export class OrdersService {
             order
           );
 
+           // Update remaining balance in receipts to 0 if payment status is Paid
+        if (newPaymentStatus === PaymentStatus.Paid) {
+          for (const receipt of savedOrder.receipts) {
+              receipt.remaining = 0; // Set remaining balance to 0
+              // Save the updated receipt
+              await transactionalEntityManager.save(ReceiptEntity, receipt);
+          }
+      }
           // Create an audit log entry
           const auditLog = new AuditLogEntity();
           auditLog.tableName = "order";
@@ -870,7 +884,6 @@ export class OrdersService {
       let paymentAmount: number;
       order.status = OrderStatus.Abscent;
       await this.orderRepository.save(order);
-
     }
     // Restrict changes once the status is 'Completed'
     if (
@@ -1698,7 +1711,17 @@ export class OrdersService {
     try {
       return await this.orderRepository.findOne({
         where: { id: orderId },
-        relations: ["receipts", "reservation", "reservation.branch","createdBy", "artist","payment","customer","reservation.services","reservation.rootoshes"], // Add relations if needed
+        relations: [
+          "receipts",
+          "reservation",
+          "reservation.branch",
+          "createdBy",
+          "artist",
+          "payment",
+          "customer",
+          "reservation.services",
+          "reservation.rootoshes",
+        ], // Add relations if needed
       });
     } catch (error) {
       throw new InternalServerErrorException(
@@ -1880,31 +1903,31 @@ export class OrdersService {
     getCommentsDto: GetCommentsDto
   ): Promise<PaginatedCommentResponseDto> {
     const { page, limit, fromDate, toDate, sort } = getCommentsDto;
-  
+
     try {
-      const query = this.CommentRepository.createQueryBuilder('comment')
-        .leftJoinAndSelect('comment.order', 'order')
-        .leftJoinAndSelect('comment.employee', 'employee')
-        .leftJoinAndSelect('order.customer', 'customer')
-        .leftJoinAndSelect('order.reviews', 'review')
-        .leftJoinAndSelect('review.employee', 'reviewEmployee')
-        .leftJoinAndSelect('review.artist', 'artist')
-        .where('customer.id = :customerId', { customerId });
-  
+      const query = this.CommentRepository.createQueryBuilder("comment")
+        .leftJoinAndSelect("comment.order", "order")
+        .leftJoinAndSelect("comment.employee", "employee")
+        .leftJoinAndSelect("order.customer", "customer")
+        .leftJoinAndSelect("order.reviews", "review")
+        .leftJoinAndSelect("review.employee", "reviewEmployee")
+        .leftJoinAndSelect("review.artist", "artist")
+        .where("customer.id = :customerId", { customerId });
+
       if (fromDate) {
-        query.andWhere('comment.createdAt >= :fromDate', { fromDate });
+        query.andWhere("comment.createdAt >= :fromDate", { fromDate });
       }
       if (toDate) {
-        query.andWhere('comment.createdAt <= :toDate', { toDate });
+        query.andWhere("comment.createdAt <= :toDate", { toDate });
       }
-  
+
       query
-        .orderBy('comment.createdAt', sort)
+        .orderBy("comment.createdAt", sort)
         .skip((page - 1) * limit)
         .take(limit);
-  
+
       const [comments, total] = await query.getManyAndCount();
-  
+
       const detailedComments = comments.map((comment) => {
         const commentingEmployee = comment.employee
           ? {
@@ -1924,36 +1947,38 @@ export class OrdersService {
               newestAvgRating: comment.employee.newestAvgRating,
             }
           : null;
-  
-        const reviewDetails: ReviewResponseDto[] = comment.order.reviews.map((review) => ({
-          id: review.id,
-          rating: review.rating,
-          createdAt: review.createdAt,
-          imageOrder: review.imageOrder,
-          commentBefore: review.comment_Before,
-          commentAfter: review.comment_After,
-          reviewer: review.employee
-            ? {
-                id: review.employee.id,
-                username: review.employee.username,
-                image: review.employee.image,
-                english_Name: review.employee.english_Name,
-                role: review.employee.role,
-                phoneNumber: review.employee.phoneNumber,
-              }
-            : null,
-          artist: review.artist
-            ? {
-                id: review.artist.id,
-                image: review.artist.image,
-                username: review.artist.username,
-                english_Name: review.artist.english_Name,
-                role: review.artist.role,
-                phoneNumber: review.artist.phoneNumber,
-              }
-            : null,
-        }));
-  
+
+        const reviewDetails: ReviewResponseDto[] = comment.order.reviews.map(
+          (review) => ({
+            id: review.id,
+            rating: review.rating,
+            createdAt: review.createdAt,
+            imageOrder: review.imageOrder,
+            commentBefore: review.comment_Before,
+            commentAfter: review.comment_After,
+            reviewer: review.employee
+              ? {
+                  id: review.employee.id,
+                  username: review.employee.username,
+                  image: review.employee.image,
+                  english_Name: review.employee.english_Name,
+                  role: review.employee.role,
+                  phoneNumber: review.employee.phoneNumber,
+                }
+              : null,
+            artist: review.artist
+              ? {
+                  id: review.artist.id,
+                  image: review.artist.image,
+                  username: review.artist.username,
+                  english_Name: review.artist.english_Name,
+                  role: review.artist.role,
+                  phoneNumber: review.artist.phoneNumber,
+                }
+              : null,
+          })
+        );
+
         return {
           id: comment.id,
           content: comment.content,
@@ -1964,7 +1989,7 @@ export class OrdersService {
           reviews: reviewDetails,
         };
       });
-  
+
       return {
         items: detailedComments,
         total,
@@ -1973,11 +1998,10 @@ export class OrdersService {
         totalPages: Math.ceil(total / limit),
       };
     } catch (error) {
-      throw new InternalServerErrorException("Failed to retrieve customer comments", error.stack);
+      throw new InternalServerErrorException(
+        "Failed to retrieve customer comments",
+        error.stack
+      );
     }
   }
-  
-  
-
-
 }

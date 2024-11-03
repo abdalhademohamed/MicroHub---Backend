@@ -108,7 +108,7 @@ export class ReservationController {
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN,Role.RECEPTIONIST,Role.COORDINATOR)
+  @Roles(Role.SUPERADMIN,Role.RECEPTIONIST,Role.COORDINATOR,Role.ARTISTMANAGER)
   // Update a reservation by ID
   @Post("customer")
   async createCustomer(@Body() body: CreateCustomerDto) {

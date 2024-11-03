@@ -27,7 +27,7 @@ import { Roles } from "../auth/Roles.decorator";
 export class CustomerController {
   constructor(private readonly customerService: CustomerService) {}
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ACCOUNTANT)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ACCOUNTANT,Role.ARTISTMANAGER)
   @Get('sorted')
    async getCustomers(@Query() filters: GetCustomerPaginatedsDto) {
     return this.customerService.getAllCustomers(filters);
@@ -39,7 +39,7 @@ export class CustomerController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ACCOUNTANT)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ACCOUNTANT,Role.ARTISTMANAGER)
   @Get(":phoneNumber")
   async getCustomerByPhoneNumber(
     @Param("phoneNumber") phoneNumber: string,

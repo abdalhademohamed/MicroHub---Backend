@@ -696,7 +696,7 @@ export class ReceiptService {
     reservationId: string
   ): Promise<ReceiptEntity> {
     const order = await this.orderRepository.findOne({
-      where: { reservation: { id: reservationId } },
+      where: { reservation: { id: reservationId } }, 
       relations: ["reservation", "reservation.services","reservation.rootoshes"],
     });
 
