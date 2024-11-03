@@ -269,6 +269,7 @@ export class AuthService {
         resetToken: token,
       };
     } catch (error) {
+      console.log(error)
       throw new InternalServerErrorException(
         this.i18nService.translate("test.RESET_EMAIL_FAILED"),
       );
