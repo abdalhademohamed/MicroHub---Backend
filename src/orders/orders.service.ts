@@ -81,7 +81,10 @@ export class OrdersService {
     @InjectRepository(CustomerEntity)
     private readonly CustomerRepository: Repository<CustomerEntity>,
     @InjectRepository(CommentEntity)
-    private readonly CommentRepository: Repository<CommentEntity>
+    private readonly CommentRepository: Repository<CommentEntity>,
+
+    @InjectRepository(ReceiptEntity)
+    private readonly ReceiptRepository: Repository<ReceiptEntity>
   ) {}
   // Method to generate a unique incremental invoice number
   private async generateUniqueInvoiceNumber(): Promise<number> {
@@ -676,13 +679,24 @@ export class OrdersService {
         );
       }
 
+        //  // Check if the order date matches today's date
+        //  const today = new Date();
+        //  today.setHours(0, 0, 0, 0); // Reset time part to compare only date
+   
+        //  const orderDate = new Date(order.date); // Assuming 'order.date' contains the order date
+        //  orderDate.setHours(0, 0, 0, 0); // Reset time part to compare only date
+   
+        //  if (orderDate.getTime() !== today.getTime()) {
+        //    throw new BadRequestException(
+        //      `Order date ${orderDate.toDateString()} does not match today's date`
+        //    );
+        //  }
       // Update the paymentStatus
       order.paymentStatus =
         newPaymentStatus === "paid"
           ? PaymentStatus.Paid
           : PaymentStatus.PartiallyPaid;
 
-      
       // Update image URL if provided
       if (image) {
         const folderName = "orders-payment-status"; // or any other dynamic name based on context
@@ -718,14 +732,23 @@ export class OrdersService {
             order
           );
 
-           // Update remaining balance in receipts to 0 if payment status is Paid
-        if (newPaymentStatus === PaymentStatus.Paid) {
-          for (const receipt of savedOrder.receipts) {
-              receipt.remaining = 0; // Set remaining balance to 0
-              // Save the updated receipt
-              await transactionalEntityManager.save(ReceiptEntity, receipt);
+          // Update remaining balance in receipts to 0 if payment status is Paid
+          if (newPaymentStatus === PaymentStatus.Paid) {
+            const order = await this.orderRepository.findOne({
+              where: { id: orderId },
+              relations: ["receipts"],
+            });
+
+            if (!order) {
+              throw new Error("Order not found");
+            }
+
+            // Iterate over each receipt and set the remaining balance to zero
+            for (const receipt of order.receipts) {
+              receipt.remaining = 0;
+              await this.ReceiptRepository.save(receipt);
+            }
           }
-      }
           // Create an audit log entry
           const auditLog = new AuditLogEntity();
           auditLog.tableName = "order";
@@ -779,6 +802,7 @@ export class OrdersService {
         }
       );
     } catch (error) {
+      console.error("Error updating payment status:", error);
       if (error instanceof NotFoundException) {
         throw error; // Re-throw specific not found exception
       } else {
