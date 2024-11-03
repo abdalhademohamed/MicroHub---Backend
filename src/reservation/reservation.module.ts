@@ -23,7 +23,7 @@ import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
 import { NotificationModule } from "../notification/notification.module";
 import { GiftCouponModule } from "../gift-coupon/gift-coupon.module";
 import { CommentEntity } from "../comment/entities/comment.entity";
-import { ReceiptEntity } from "src/receipt/entities/receipt.entity";
+import { ReceiptEntity } from "../receipt/entities/receipt.entity";
 
 
 @Module({
