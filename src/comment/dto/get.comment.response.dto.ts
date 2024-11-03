@@ -8,6 +8,7 @@ export class ReviewResponseDto {
     commentAfter?: string;
     reviewer: {
       id: string;
+      image:string,
       username: string;
       english_Name: string;
       role: string;
@@ -15,6 +16,7 @@ export class ReviewResponseDto {
     } | null;
     artist: {
       id: string;
+      image:string,
       username: string;
       english_Name: string;
       role: string;

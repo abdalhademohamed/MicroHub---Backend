@@ -74,6 +74,8 @@ export class CommentService {
           ? {
               id: review.employee.id,
               username: review.employee.username,
+              image:review.employee.image,
+
               english_Name: review.employee.english_Name,
               role: review.employee.role,
               phoneNumber: review.employee.phoneNumber,
@@ -82,6 +84,8 @@ export class CommentService {
         artist: review.artist
           ? {
               id: review.artist.id,
+              image:review.artist.image,
+
               username: review.artist.username,
               english_Name: review.artist.english_Name,
               role: review.artist.role,
