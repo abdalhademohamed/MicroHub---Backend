@@ -679,18 +679,18 @@ export class OrdersService {
         );
       }
 
-        //  // Check if the order date matches today's date
-        //  const today = new Date();
-        //  today.setHours(0, 0, 0, 0); // Reset time part to compare only date
+         // Check if the order date matches today's date
+         const today = new Date();
+         today.setHours(0, 0, 0, 0); // Reset time part to compare only date
    
-        //  const orderDate = new Date(order.date); // Assuming 'order.date' contains the order date
-        //  orderDate.setHours(0, 0, 0, 0); // Reset time part to compare only date
+         const orderDate = new Date(order.date); // Assuming 'order.date' contains the order date
+         orderDate.setHours(0, 0, 0, 0); // Reset time part to compare only date
    
-        //  if (orderDate.getTime() !== today.getTime()) {
-        //    throw new BadRequestException(
-        //      `Order date ${orderDate.toDateString()} does not match today's date`
-        //    );
-        //  }
+         if (orderDate.getTime() !== today.getTime()) {
+           throw new BadRequestException(
+             `Order date ${orderDate.toDateString()} does not match today's date`
+           );
+         }
       // Update the paymentStatus
       order.paymentStatus =
         newPaymentStatus === "paid"
