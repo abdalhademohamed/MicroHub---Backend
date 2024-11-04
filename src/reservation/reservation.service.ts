@@ -96,7 +96,7 @@ export class ReservationService {
 
     if (!branch) {
       throw new NotFoundException(
-        this.i18n.translate('RESERVATION.BRANCH_NOT_FOUND')
+        this.i18n.translate("RESERVATION.BRANCH_NOT_FOUND")
       );
     }
 
@@ -137,7 +137,7 @@ export class ReservationService {
 
     if (services.length !== ids.length) {
       throw new HttpException(
-        this.i18n.translate('RESERVATION.INVALID_SERVICE_IDS'),
+        this.i18n.translate("RESERVATION.INVALID_SERVICE_IDS"),
         400
       );
     }
@@ -239,12 +239,360 @@ export class ReservationService {
     });
     if (!slot) {
       throw new NotFoundException(
-        this.i18n.translate('RESERVATION.SLOT_NOT_FOUND')
+        this.i18n.translate("RESERVATION.SLOT_NOT_FOUND")
       );
     }
     return slot;
   }
 
+  // async createReservation(
+  //   body: CreateReservationDto,
+  //   image: Express.Multer.File,
+  //   userId: string
+  // ) {
+  //   try {
+  //     // Validate branch existence
+  //     const branch = await this.BranchRepository.findOne({
+  //       where: { id: body.branch },
+  //     });
+  //     if (!branch) {
+  //       throw new NotFoundException(
+  //         this.i18n.translate('RESERVATION.BRANCH_NOT_FOUND')
+  //       );
+  //     }
+
+  //     let serviceIds: string[] = [];
+  //     let services: ServiceEntity[] = [];
+  //     let rootoshIds: string[] = []; // Initialize rootoshIds array
+  //     let rootoshes: RootoshEntity[] = []; // Initialize rootoshes array
+  //     // Initialize duration and price variables
+  //     let duration = 0;
+  //     let price = 0;
+  //     let result;
+  //     // Check if at least one of services, offerId, sharableOfferId, or couponCode is provided
+  //     if (!body.services || body.services.length === 0) {
+  //       if (
+  //         !body.offerId &&
+  //         !body.sharableOfferId &&
+  //         !body.couponCode &&
+  //         !body.rootosh
+  //       ) {
+  //         throw new BadRequestException(
+  //           "At least one of services, offerId, rootosh , sharableOfferId, or couponCode must be provided"
+  //         );
+  //       }
+  //     }
+
+  //     // Check if services are provided
+  //     if (body.services && body.services.length > 0) {
+  //       serviceIds = body.services;
+
+  //       // Fetch services based on provided IDs
+  //       services = await this.ServiceRepository.find({
+  //         where: { id: In(serviceIds) },
+  //       });
+  //       if (services.length !== serviceIds.length) {
+  //         throw new BadRequestException("Some services were not found");
+  //       }
+  //     }
+
+  //     // Check if offerId is provided
+  //     if (body.offerId) {
+  //       const offer = await this.OfferRepository.findOne({
+  //         where: { id: body.offerId },
+  //         relations: ["services"],
+  //       });
+  //       if (!offer) {
+  //         throw new NotFoundException("Offer not found");
+  //       }
+  //       serviceIds = offer.services.map((service) => service.id); // Extract service IDs from the offer
+  //       services = offer.services; // Use services from the offer
+
+  //       const serviceTotals = await this.calculateTotalDuration(serviceIds);
+  //       duration += serviceTotals.duration;
+  //       price += serviceTotals.price;
+
+  //       // Ensure image is provided
+  //       if (!image) {
+  //         throw new BadRequestException(
+  //           this.i18n.translate('RESERVATION.PHOTO_REQUIRED')
+  //         );
+  //       }
+
+  //       // Upload image to Cloudinary
+  //       const folderName = "reservation";
+  //       result = await this.CloudinaryService.uploadImage(image, folderName);
+  //       body.deposit_Content = result.url;
+  //     }
+
+  //     // Check for sharable offer and add its services if applicable
+  //     if (body.sharableOfferId) {
+  //       const sharableOffer = await this.SharableOfferRepository.findOne({
+  //         where: { id: body.sharableOfferId },
+  //         relations: ["services"],
+  //       });
+  //       if (!sharableOffer) {
+  //         throw new NotFoundException("Sharable offer not found");
+  //       }
+  //       if (Array.isArray(sharableOffer.services)) {
+  //         services = [...services, ...sharableOffer.services]; // Include sharable offer services
+  //       } else {
+  //         throw new BadRequestException("Sharable offer has no valid services");
+  //       }
+  //       const serviceTotals = await this.calculateTotalDuration(serviceIds);
+  //       duration += serviceTotals.duration;
+  //       price += serviceTotals.price;
+
+  //       // Ensure image is provided
+  //       if (!image) {
+  //         throw new BadRequestException(
+  //           this.i18n.translate('RESERVATION.PHOTO_REQUIRED')
+  //         );
+  //       }
+
+  //       // Upload image to Cloudinary
+  //       const folderName = "reservation";
+  //       result = await this.CloudinaryService.uploadImage(image, folderName);
+  //       body.deposit_Content = result.url;
+  //     }
+
+  //     // Check for coupon code and add its services if applicable
+  //     if (body.couponCode && body.services && body.services.length > 0) {
+
+  //       const coupon = await this.GiftCouponRepository.findOne({
+  //         where: { couponCode: body.couponCode },
+  //       });
+
+  //       if (!coupon) {
+  //         throw new NotFoundException("Coupon code not found");
+  //       }
+
+  //       // Check if the coupon is already redeemed
+  //       if (coupon.isRedeemed) {
+  //         throw new ConflictException("Coupon has already been redeemed");
+  //       }
+
+  //       // Transform the coupon services into ServiceEntity type
+  //       const transformedServices: ServiceEntity[] = coupon.services.map(
+  //         (service) => this.mapCouponServiceToServiceEntity(service)
+  //       );
+
+  //       // Merge the transformed services
+  //       services = [...services, ...transformedServices];
+  //       body.deposit = 0;
+  //       body.deposit_Content = null;
+  //       const serviceTotals = await this.calculateTotalDuration(serviceIds);
+  //       duration += serviceTotals.duration;
+  //     }
+
+  //     // Check if rootoshIds are provided
+  //     if (body.rootosh && body.rootosh.length > 0) {
+  //       rootoshIds = body.rootosh;
+
+  //       // Fetch rootosh entities based on provided IDs
+  //       rootoshes = await this.RootoshRepository.find({
+  //         where: { id: In(rootoshIds) },
+  //       });
+  //       if (rootoshes.length !== rootoshIds.length) {
+  //         throw new BadRequestException("Some rootosh IDs were not found");
+  //       }
+
+  //       const rootoshTotals =
+  //         await this.calculateRootoshTotalDuration(rootoshIds);
+
+  //       duration += rootoshTotals.duration;
+  //       price += rootoshTotals.price;
+  //       body.deposit = 0;
+  //       body.deposit_Content = null;
+  //     }
+
+  //     if (
+  //       body.services &&
+  //       body.services.length > 0 &&
+  //       !body.offerId &&
+  //       !body.sharableOfferId &&
+  //       !body.couponCode &&
+  //       !body.rootosh
+  //     ) {
+  //       // Ensure image is provided
+  //       if (!image) {
+  //         throw new BadRequestException(
+  //           this.i18n.translate('RESERVATION.PHOTO_REQUIRED')
+  //         );
+  //       }
+  //       const serviceTotals = await this.calculateTotalDuration(serviceIds);
+  //       duration += serviceTotals.duration;
+  //       price += serviceTotals.price;
+
+  //       // Upload image to Cloudinary
+  //       const folderName = "reservation";
+  //       result = await this.CloudinaryService.uploadImage(image, folderName);
+  //       body.deposit_Content = result.url;
+  //     }
+  //     if (body.sharableOfferId || body.offerId) {
+
+  //     }
+
+  //     // Handle custom time
+  //     const startTime = new Date(body.customStartTime);
+  //     const endTime = new Date(startTime.getTime() + duration * 1000 * 60);
+
+  //     // Get working hours for the branch on the specific date
+  //     const workingHours = await this.getWorkingHoursAtSpecificDate(
+  //       body.branch,
+  //       startTime
+  //     );
+
+  //     // Check if the working hours allow the reservation
+  //     const index = workingHours.findIndex(
+  //       (w) => w.from <= startTime && w.to >= endTime
+  //     );
+  //     if (index === -1) {
+  //       throw new BadRequestException(
+  //         this.i18n.translate('RESERVATION.SCHEDULE_CONFLICT')
+  //       );
+  //     }
+
+  //     // Validate customer existence
+  //     const customer = await this.CustomerRepository.findOneBy({
+  //       phoneNumber: body.phone_Number,
+  //     });
+  //     if (!customer) {
+  //       throw new BadRequestException(
+  //         this.i18n.translate('RESERVATION.CUSTOMER_NOT_FOUND')
+  //       );
+  //     }
+  //     if (body.deposit && body.deposit > Math.ceil(price)) {
+  //       throw new BadRequestException(
+  //         "The deposit can't be more than the total price"
+  //       );
+  //     }
+  //     // Validate employee existence
+  //     const employee = await this.UserRepository.findOne({
+  //       where: { id: userId },
+  //     });
+  //     if (!employee) {
+  //       throw new NotFoundException("Employee not found");
+  //     }
+  //     // Create and save reservation
+  //     const reservation = this.ReservationRepository.create({
+  //       customer,
+  //       totalPrice: Math.ceil(price),
+  //       deposit: body.deposit,
+  //       start_Time: startTime,
+  //       end_Time: endTime,
+  //       reservationDay: startTime.getDate(),
+  //       reservationMonth: startTime.getMonth() + 1,
+  //       reservationYear: startTime.getFullYear(),
+  //       branch,
+  //       deposit_Content: body.deposit_Content,
+  //       services,
+  //       rootoshes,
+  //       createdBy: userId,
+  //     });
+  //     await this.ReservationRepository.save(reservation);
+  //     // New code to check for existing reservations for the week
+  //     // const startOfWeek = new Date(startTime);
+  //     // startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay()); // Get the first day of the week (Sunday)
+
+  //     // const endOfWeek = new Date(startOfWeek);
+  //     // endOfWeek.setDate(endOfWeek.getDate() + 6); // Get the last day of the week (Saturday)
+
+  //     // // Fetch reservations for the branch in the upcoming week
+  //     // const existingReservations = await this.ReservationRepository.find({
+  //     //   where: {
+  //     //     branch: { id: branch.id },
+  //     //     start_Time: Between(startOfWeek, endOfWeek),
+  //     //   },
+  //     // });
+
+  //     // if (existingReservations.length >= 7) {
+  //     //   // Create a notification if there are reservations for every day of the week
+  //     //   this.notificationService.createNotification(
+  //     //     userId,
+  //     //     "full week branch reservation",
+  //     //     `Reservations exist for the entire week at branch ${branch.name}.`
+  //     //   );
+  //     // }
+  //     if (body.rootosh) {
+  //       const orderId = await this.OrdersService.createOrderForRootosh(reservation.id, userId);
+
+  //       if (!orderId) {
+  //         throw new InternalServerErrorException("Failed to create order for rootosh.");
+  //       }
+  //     } else {
+  //       const orderId = await this.OrdersService.createOrder(
+  //         reservation.id,
+  //         userId,
+  //         body.paymentId,
+  //         body.offerId,
+  //         body.sharableOfferId,
+  //         body.couponCode
+  //       );
+  //       if (!orderId) {
+  //         throw new InternalServerErrorException("Failed to create order.");
+  //       }
+  //     }
+
+  //     // Adjust working hours based on the new reservation
+  //     const newWorkingHours = this.newAddedWorkingHours(
+  //       {
+  //         fromOriginal: workingHours[index].from,
+  //         toOriginal: workingHours[index].to,
+  //         fromUser: startTime,
+  //         toUser: endTime,
+  //       },
+  //       workingHours[index].slot
+  //     );
+
+  //     await this.WorkingHourEntity.save(newWorkingHours);
+  //     await this.WorkingHourEntity.delete({ id: workingHours[index].id });
+
+  //     // Create an audit log for the reservation creation
+  //     const log = new AuditLogEntity();
+  //     log.tableName = "reservation";
+  //     log.action = "INSERT";
+  //     log.entityId = reservation.id;
+  //     log.performedBy = userId;
+
+  //     const user = await this.UserRepository.findOne({
+  //       where: { id: userId },
+  //       select: ["id", "username", "email", "role"],
+  //     });
+
+  //     if (user) {
+  //       log.userDetails = user;
+  //     }
+
+  //     await this.entityManager.save(AuditLogEntity, log);
+
+  //     return { reservation };
+  //   } catch (error) {
+  //     console.log(error)
+  //     // Granular error handling and categorization
+  //     if (error instanceof NotFoundException) {
+  //       throw new NotFoundException({
+  //         message: error.message,
+  //         category: "EntityNotFound", // Custom error category
+  //       });
+  //     } else if (error instanceof BadRequestException) {
+  //       throw new BadRequestException({
+  //         message: error.message,
+  //         category: "ValidationError", // Custom error category
+  //       });
+  //     } else if (error instanceof ConflictException) {
+  //       throw new ConflictException({
+  //         message: error.message,
+  //         category: "ConflictError", // Custom error category
+  //       });
+  //     } else {
+  //       throw new InternalServerErrorException({
+  //         message: error.message || "Unexpected error occurred",
+  //         category: "InternalServerError", // Custom error category for unexpected errors
+  //       });
+  //     }
+  //   }
+  // }
   async createReservation(
     body: CreateReservationDto,
     image: Express.Multer.File,
@@ -257,10 +605,9 @@ export class ReservationService {
       });
       if (!branch) {
         throw new NotFoundException(
-          this.i18n.translate('RESERVATION.BRANCH_NOT_FOUND')
+          this.i18n.translate("RESERVATION.BRANCH_NOT_FOUND")
         );
       }
-   
 
       let serviceIds: string[] = [];
       let services: ServiceEntity[] = [];
@@ -316,7 +663,7 @@ export class ReservationService {
         // Ensure image is provided
         if (!image) {
           throw new BadRequestException(
-            this.i18n.translate('RESERVATION.PHOTO_REQUIRED')
+            this.i18n.translate("RESERVATION.PHOTO_REQUIRED")
           );
         }
 
@@ -327,7 +674,9 @@ export class ReservationService {
       }
 
       // Check for sharable offer and add its services if applicable
-      if (body.sharableOfferId) {
+      if (body.sharableOfferId && body.services && body.services.length > 0) {
+        serviceIds = body.services 
+
         const sharableOffer = await this.SharableOfferRepository.findOne({
           where: { id: body.sharableOfferId },
           relations: ["services"],
@@ -335,19 +684,28 @@ export class ReservationService {
         if (!sharableOffer) {
           throw new NotFoundException("Sharable offer not found");
         }
-        if (Array.isArray(sharableOffer.services)) {
-          services = [...services, ...sharableOffer.services]; // Include sharable offer services
-        } else {
-          throw new BadRequestException("Sharable offer has no valid services");
+        // Validate selected services are part of the offer
+        const offerServiceIds = sharableOffer.services.map((s) => s.id);
+        const invalidServices = body.services.filter(
+          (id) => !offerServiceIds.includes(id)
+        );
+        if (invalidServices.length > 0) {
+          throw new BadRequestException(
+            this.i18n.translate("RESERVATION.INVALID_OFFER_SERVICES")
+          );
         }
+        
+        
         const serviceTotals = await this.calculateTotalDuration(serviceIds);
+        services = serviceTotals.services;
+
         duration += serviceTotals.duration;
         price += serviceTotals.price;
 
         // Ensure image is provided
         if (!image) {
           throw new BadRequestException(
-            this.i18n.translate('RESERVATION.PHOTO_REQUIRED')
+            this.i18n.translate("RESERVATION.PHOTO_REQUIRED")
           );
         }
 
@@ -359,7 +717,6 @@ export class ReservationService {
 
       // Check for coupon code and add its services if applicable
       if (body.couponCode && body.services && body.services.length > 0) {
-        
         const coupon = await this.GiftCouponRepository.findOne({
           where: { couponCode: body.couponCode },
         });
@@ -407,9 +764,6 @@ export class ReservationService {
         body.deposit_Content = null;
       }
 
-
-
-     
       if (
         body.services &&
         body.services.length > 0 &&
@@ -421,14 +775,12 @@ export class ReservationService {
         // Ensure image is provided
         if (!image) {
           throw new BadRequestException(
-            this.i18n.translate('RESERVATION.PHOTO_REQUIRED')
+            this.i18n.translate("RESERVATION.PHOTO_REQUIRED")
           );
         }
         const serviceTotals = await this.calculateTotalDuration(serviceIds);
         duration += serviceTotals.duration;
         price += serviceTotals.price;
-
-        
 
         // Upload image to Cloudinary
         const folderName = "reservation";
@@ -436,7 +788,6 @@ export class ReservationService {
         body.deposit_Content = result.url;
       }
       if (body.sharableOfferId || body.offerId) {
-      
       }
 
       // Handle custom time
@@ -455,7 +806,7 @@ export class ReservationService {
       );
       if (index === -1) {
         throw new BadRequestException(
-          this.i18n.translate('RESERVATION.SCHEDULE_CONFLICT')
+          this.i18n.translate("RESERVATION.SCHEDULE_CONFLICT")
         );
       }
 
@@ -465,7 +816,7 @@ export class ReservationService {
       });
       if (!customer) {
         throw new BadRequestException(
-          this.i18n.translate('RESERVATION.CUSTOMER_NOT_FOUND')
+          this.i18n.translate("RESERVATION.CUSTOMER_NOT_FOUND")
         );
       }
       if (body.deposit && body.deposit > Math.ceil(price)) {
@@ -521,10 +872,15 @@ export class ReservationService {
       //   );
       // }
       if (body.rootosh) {
-        const orderId = await this.OrdersService.createOrderForRootosh(reservation.id, userId);
-        
+        const orderId = await this.OrdersService.createOrderForRootosh(
+          reservation.id,
+          userId
+        );
+
         if (!orderId) {
-          throw new InternalServerErrorException("Failed to create order for rootosh.");
+          throw new InternalServerErrorException(
+            "Failed to create order for rootosh."
+          );
         }
       } else {
         const orderId = await this.OrdersService.createOrder(
@@ -574,6 +930,7 @@ export class ReservationService {
 
       return { reservation };
     } catch (error) {
+      console.log(error);
       console.log(error)
       // Granular error handling and categorization
       if (error instanceof NotFoundException) {
@@ -599,7 +956,6 @@ export class ReservationService {
       }
     }
   }
-
   private mapCouponServiceToServiceEntity(couponService: any): ServiceEntity {
     const serviceEntity = new ServiceEntity();
     serviceEntity.id = couponService.id; // or whatever mapping is needed
@@ -712,7 +1068,7 @@ export class ReservationService {
 
     if (!reservation) {
       throw new NotFoundException(
-        this.i18n.translate('RESERVATION.NOT_FOUND', { args: { id } })
+        this.i18n.translate("RESERVATION.NOT_FOUND", { args: { id } })
       );
     }
 
@@ -731,7 +1087,7 @@ export class ReservationService {
     );
     if (index === -1) {
       throw new BadRequestException(
-        this.i18n.translate('RESERVATION.SCHEDULE_CONFLICT')
+        this.i18n.translate("RESERVATION.SCHEDULE_CONFLICT")
       );
     }
 
@@ -815,7 +1171,7 @@ export class ReservationService {
 
       if (!reservation) {
         throw new NotFoundException(
-          this.i18n.translate('RESERVATION.NOT_FOUND', { args: { id } })
+          this.i18n.translate("RESERVATION.NOT_FOUND", { args: { id } })
         );
       }
       const acc = { price: 0, duration: 0 };
@@ -836,7 +1192,7 @@ export class ReservationService {
       );
       if (index === -1) {
         throw new BadRequestException(
-          this.i18n.translate('RESERVATION.SCHEDULE_CONFLICT')
+          this.i18n.translate("RESERVATION.SCHEDULE_CONFLICT")
         );
       }
       // Update the reservation with new times
@@ -1060,7 +1416,7 @@ export class ReservationService {
     });
     if (!reservation) {
       throw new NotFoundException(
-        this.i18n.translate('RESERVATION.NOT_FOUND', { args: { id } })
+        this.i18n.translate("RESERVATION.NOT_FOUND", { args: { id } })
       );
     }
     reservation.isDeleted = true;
@@ -1089,7 +1445,7 @@ export class ReservationService {
     });
     if (!slot) {
       throw new HttpException(
-        this.i18n.translate('RESERVATION.SLOT_NOT_FOUND'),
+        this.i18n.translate("RESERVATION.SLOT_NOT_FOUND"),
         400
       );
     }
@@ -1129,15 +1485,12 @@ export class ReservationService {
     });
     await this.WorkingHourEntity.save(workingSlot);
   }
-  async getTop5Reservations(
-    fromDate: string,
-    toDate: string
-  ): Promise<any[]> {
+  async getTop5Reservations(fromDate: string, toDate: string): Promise<any[]> {
     // Parse the start and end dates
     const start = new Date(fromDate);
     const end = new Date(toDate);
     end.setDate(end.getDate() + 1); // Include the end date in the query
-  
+
     const topReservations = await this.ReservationRepository.createQueryBuilder(
       "reservation"
     )
@@ -1147,7 +1500,7 @@ export class ReservationService {
       .orderBy("reservation.totalPrice", "DESC")
       .take(5) // Limit to top 5 reservations
       .getMany();
-  
+
     // Map the results to the desired structure, including orderId with a null check
     return topReservations.map((reservation) => ({
       id: reservation.id,
@@ -1166,8 +1519,7 @@ export class ReservationService {
       },
     }));
   }
-  
-  
+
   async getReservationsTimes(dto: GetReservationsTimesDto): Promise<{
     items: {
       id: string;
@@ -1186,21 +1538,21 @@ export class ReservationService {
     total: number;
   }> {
     const { branchId, fromDate, toDate, page = "1", limit = "10" } = dto;
-  
+
     // Set the fromDate to the start of the day (00:00:00)
     let startOfDay: Date | undefined;
     if (fromDate) {
       startOfDay = new Date(fromDate);
       startOfDay.setHours(0, 0, 0, 0);
     }
-  
+
     // Set the toDate to the end of the day (23:59:59)
     let endOfDay: Date | undefined;
     if (toDate) {
       endOfDay = new Date(toDate);
       endOfDay.setHours(23, 59, 59, 999);
     }
-  
+
     const query = this.ReservationRepository.createQueryBuilder("reservation")
       .leftJoinAndSelect("reservation.customer", "customer") // Include customer details
       .leftJoin("reservation.branch", "branch") // Join branch
@@ -1215,27 +1567,29 @@ export class ReservationService {
         "order.id", // Select order ID
         "order.status", // Select order status
       ]);
-  
+
     // Filter by branchId
     if (branchId) {
       query.andWhere("branch.id = :branchId", { branchId });
     }
-  
+
     // Filter by date range using adjusted start and end times
     if (startOfDay) {
-      query.andWhere("reservation.start_Time >= :fromDate", { fromDate: startOfDay });
+      query.andWhere("reservation.start_Time >= :fromDate", {
+        fromDate: startOfDay,
+      });
     }
     if (endOfDay) {
       query.andWhere("reservation.end_Time <= :toDate", { toDate: endOfDay });
     }
-  
+
     // Pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
     query.skip(skip).take(parseInt(limit));
-  
+
     // Execute the query
     const [reservations, total] = await query.getManyAndCount();
-  
+
     // Map the results to flatten the response
     const items = reservations.map((reservation) => ({
       id: reservation.id,
@@ -1246,15 +1600,15 @@ export class ReservationService {
         phoneNumber: reservation.customer.phoneNumber,
         fullName: reservation.customer.fullName,
       },
-      order: reservation.order ? { // Check if order exists
-        id: reservation.order.id,
-        status: reservation.order.status,
-      } : null, // Set to null if no order is associated
+      order: reservation.order
+        ? {
+            // Check if order exists
+            id: reservation.order.id,
+            status: reservation.order.status,
+          }
+        : null, // Set to null if no order is associated
     }));
-  
+
     return { items, total };
   }
-  
-  
-  
 }
