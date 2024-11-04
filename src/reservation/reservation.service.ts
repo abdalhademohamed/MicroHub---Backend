@@ -33,6 +33,7 @@ import { GiftCouponEntity } from "../gift-coupon/entities/gift-coupon.entity";
 import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
 import { NotificationService } from "../notification/notification.service";
 import { EmployeeEntity } from "../employee/entities/employee.entity";
+import { CustomI18nService } from "../common/custom.18n.service";
 
 @Injectable()
 export class ReservationService {
@@ -67,7 +68,8 @@ export class ReservationService {
     private RootoshRepository: Repository<RootoshEntity>,
     @InjectRepository(EmployeeEntity)
     private EmployeeRepository: Repository<EmployeeEntity>,
-    private readonly notificationService: NotificationService
+    private readonly notificationService: NotificationService,
+    private readonly i18n: CustomI18nService
 
     // private readonly ReceiptService: ReceiptService, // Inject the new service
   ) {}
@@ -93,7 +95,9 @@ export class ReservationService {
     });
 
     if (!branch) {
-      throw new NotFoundException("Branch not found");
+      throw new NotFoundException(
+        this.i18n.translate('RESERVATION.BRANCH_NOT_FOUND')
+      );
     }
 
     return branch;
@@ -132,7 +136,10 @@ export class ReservationService {
     const services = await this.ServiceRepository.findByIds(ids);
 
     if (services.length !== ids.length) {
-      throw new HttpException("Invalid Service IDs", 400);
+      throw new HttpException(
+        this.i18n.translate('RESERVATION.INVALID_SERVICE_IDS'),
+        400
+      );
     }
 
     // Use array reduction to sum the price and duration
@@ -231,7 +238,9 @@ export class ReservationService {
       },
     });
     if (!slot) {
-      throw new NotFoundException("Slot not found");
+      throw new NotFoundException(
+        this.i18n.translate('RESERVATION.SLOT_NOT_FOUND')
+      );
     }
     return slot;
   }
@@ -247,7 +256,9 @@ export class ReservationService {
         where: { id: body.branch },
       });
       if (!branch) {
-        throw new NotFoundException("Branch not found");
+        throw new NotFoundException(
+          this.i18n.translate('RESERVATION.BRANCH_NOT_FOUND')
+        );
       }
    
 
@@ -304,7 +315,9 @@ export class ReservationService {
 
         // Ensure image is provided
         if (!image) {
-          throw new BadRequestException("Photo is required");
+          throw new BadRequestException(
+            this.i18n.translate('RESERVATION.PHOTO_REQUIRED')
+          );
         }
 
         // Upload image to Cloudinary
@@ -333,7 +346,9 @@ export class ReservationService {
 
         // Ensure image is provided
         if (!image) {
-          throw new BadRequestException("Photo is required");
+          throw new BadRequestException(
+            this.i18n.translate('RESERVATION.PHOTO_REQUIRED')
+          );
         }
 
         // Upload image to Cloudinary
@@ -405,7 +420,9 @@ export class ReservationService {
       ) {
         // Ensure image is provided
         if (!image) {
-          throw new BadRequestException("Photo is required");
+          throw new BadRequestException(
+            this.i18n.translate('RESERVATION.PHOTO_REQUIRED')
+          );
         }
         const serviceTotals = await this.calculateTotalDuration(serviceIds);
         duration += serviceTotals.duration;
@@ -438,7 +455,7 @@ export class ReservationService {
       );
       if (index === -1) {
         throw new BadRequestException(
-          "The custom schedule conflicts with an existing reservation."
+          this.i18n.translate('RESERVATION.SCHEDULE_CONFLICT')
         );
       }
 
@@ -447,7 +464,9 @@ export class ReservationService {
         phoneNumber: body.phone_Number,
       });
       if (!customer) {
-        throw new NotFoundException("Customer not found");
+        throw new BadRequestException(
+          this.i18n.translate('RESERVATION.CUSTOMER_NOT_FOUND')
+        );
       }
       if (body.deposit && body.deposit > Math.ceil(price)) {
         throw new BadRequestException(
@@ -692,7 +711,9 @@ export class ReservationService {
     });
 
     if (!reservation) {
-      throw new NotFoundException(`Reservation with ID ${id} not found`);
+      throw new NotFoundException(
+        this.i18n.translate('RESERVATION.NOT_FOUND', { args: { id } })
+      );
     }
 
     const { duration, services, price } = await this.calculateTotalDuration(
@@ -710,7 +731,7 @@ export class ReservationService {
     );
     if (index === -1) {
       throw new BadRequestException(
-        "The custom schedule conflicts with an existing reservation."
+        this.i18n.translate('RESERVATION.SCHEDULE_CONFLICT')
       );
     }
 
@@ -793,7 +814,9 @@ export class ReservationService {
       const oldReservation = { ...reservation }; // Clone the old reservation for comparison
 
       if (!reservation) {
-        throw new NotFoundException(`Reservation with ID ${id} not found`);
+        throw new NotFoundException(
+          this.i18n.translate('RESERVATION.NOT_FOUND', { args: { id } })
+        );
       }
       const acc = { price: 0, duration: 0 };
       for (const service of reservation.services) {
@@ -813,7 +836,7 @@ export class ReservationService {
       );
       if (index === -1) {
         throw new BadRequestException(
-          "The custom schedule conflicts with an existing reservation."
+          this.i18n.translate('RESERVATION.SCHEDULE_CONFLICT')
         );
       }
       // Update the reservation with new times
@@ -1036,7 +1059,9 @@ export class ReservationService {
       },
     });
     if (!reservation) {
-      throw new NotFoundException(`Reservation with ID ${id} not found`);
+      throw new NotFoundException(
+        this.i18n.translate('RESERVATION.NOT_FOUND', { args: { id } })
+      );
     }
     reservation.isDeleted = true;
     // Delete the reservation
@@ -1063,7 +1088,10 @@ export class ReservationService {
       },
     });
     if (!slot) {
-      throw new HttpException("slot not found", 400);
+      throw new HttpException(
+        this.i18n.translate('RESERVATION.SLOT_NOT_FOUND'),
+        400
+      );
     }
     const startWorkingHour = await this.WorkingHourEntity.findOne({
       where: {

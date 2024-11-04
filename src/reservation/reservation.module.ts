@@ -24,6 +24,7 @@ import { NotificationModule } from "../notification/notification.module";
 import { GiftCouponModule } from "../gift-coupon/gift-coupon.module";
 import { CommentEntity } from "../comment/entities/comment.entity";
 import { ReceiptEntity } from "../receipt/entities/receipt.entity";
+import { CustomI18nService } from "../common/custom.18n.service";
 
 
 @Module({
@@ -55,6 +56,8 @@ import { ReceiptEntity } from "../receipt/entities/receipt.entity";
     ReservationService,
     OrdersService,
     CloudinaryService, // Add OrdersService here
+    CustomI18nService
+
   ],
   exports: [ReservationService],  // Export ReservationService here
 })

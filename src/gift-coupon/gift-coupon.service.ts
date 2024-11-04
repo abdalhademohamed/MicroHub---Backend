@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  InternalServerErrorException,
 } from "@nestjs/common";
 import { CreateGiftCouponDto } from "./dto/create-gift-coupon.dto";
 import { UpdateGiftCouponDto } from "./dto/update-gift-coupon.dto";
@@ -12,6 +13,7 @@ import { Repository } from "typeorm";
 import { CustomerEntity } from "../customer/entities/customer.entity";
 import { v4 as uuidv4 } from "uuid";
 import { OrderEntity } from "../orders/entities/order.entity";
+import { CustomI18nService } from "../common/custom.18n.service";
 
 @Injectable()
 export class GiftCouponService {
@@ -25,7 +27,8 @@ export class GiftCouponService {
     @InjectRepository(CustomerEntity)
     private readonly customerRepository: Repository<CustomerEntity>,
     @InjectRepository(OrderEntity)
-    private readonly OrderRepository: Repository<OrderEntity>
+    private readonly OrderRepository: Repository<OrderEntity>,
+    private readonly i18n: CustomI18nService,
   ) {}
 
   async createGiftCoupon(
@@ -33,170 +36,154 @@ export class GiftCouponService {
   ): Promise<GiftCouponEntity> {
     const { orderId, customerId } = createGiftCouponDto;
 
-    // Find the sharable offer and customer
-    // Find the sharable offer with its services
-    const Order = await this.OrderRepository.findOne({
-      where: { id: orderId },
-    });
-    // Find the sharable offer with its services
-    const sharableOffer = await this.sharableOfferRepository.findOne({
-      where: { id: Order.sharableOfferId },
-      relations: ["services"], // Load the related services
-    });
-    const customer = await this.customerRepository.findOne({
-      where: { id: customerId },
-    });
+    try {
+      const Order = await this.OrderRepository.findOne({
+        where: { id: orderId },
+      });
 
-    if (!sharableOffer) {
-      throw new Error("Sharable offer not found");
+      const sharableOffer = await this.sharableOfferRepository.findOne({
+        where: { id: Order.sharableOfferId },
+        relations: ["services"],
+      });
+
+      if (!sharableOffer) {
+        throw new NotFoundException(
+          this.i18n.translate('GIFT_COUPON.SHARABLE_OFFER_NOT_FOUND')
+        );
+      }
+
+      const customer = await this.customerRepository.findOne({
+        where: { id: customerId },
+      });
+
+      if (!customer) {
+        throw new NotFoundException(
+          this.i18n.translate('GIFT_COUPON.CUSTOMER_NOT_FOUND')
+        );
+      }
+
+      const giftCoupon = this.giftCouponRepository.create({
+        sharableOffer,
+        ownedBy: customer,
+        totalServices: sharableOffer.services.length,
+        services: sharableOffer.services,
+        couponCode: uuidv4(),
+        startDateTime: sharableOffer.startDateTime,
+        endDateTime: sharableOffer.endDateTime,
+      });
+
+      const createdGiftCoupon = await this.giftCouponRepository.save(giftCoupon);
+      Order.couponId = giftCoupon.id;
+      await this.OrderRepository.save(Order);
+      return createdGiftCoupon;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        this.i18n.translate('GIFT_COUPON.CREATE_FAILED')
+      );
     }
-
-    if (!customer) {
-      throw new Error("Customer not found");
-    }
-
-    // Create a new gift coupon
-    const giftCoupon = this.giftCouponRepository.create({
-      sharableOffer,
-      ownedBy: customer,
-      totalServices: sharableOffer.services.length, // Set totalServices to the length of the services array
-      services: sharableOffer.services, // Copy the services from the sharable offer
-      couponCode: uuidv4(), // Generate a unique coupon code
-      startDateTime: sharableOffer.startDateTime,
-      endDateTime: sharableOffer.endDateTime,
-    });
-
-    const createdGiftCoupon= await this.giftCouponRepository.save(giftCoupon);
-    Order.couponId=giftCoupon.id
-    await this.OrderRepository.save(Order);
-    return createdGiftCoupon
-
-
   }
 
   async getGiftCoupon(couponId: string): Promise<GiftCouponEntity> {
-    // Find the gift coupon by coupon code
     const giftCoupon = await this.giftCouponRepository.findOne({
-      where: { id:couponId },
+      where: { id: couponId },
     });
 
-    // If the coupon is not found, throw a NotFoundException
     if (!giftCoupon) {
-      throw new NotFoundException("Gift coupon not found");
+      throw new NotFoundException(
+        this.i18n.translate('GIFT_COUPON.NOT_FOUND')
+      );
     }
+
     const now = new Date();
 
-    // Check if the coupon is redeemed
     if (giftCoupon.isRedeemed) {
       throw new ConflictException(
-        "This coupon has already been redeemed and cannot be used."
+        this.i18n.translate('GIFT_COUPON.ALREADY_REDEEMED')
       );
     }
-    // // Check if the coupon is not valid yet (before the start date)
-    // if (giftCoupon.startDateTime && giftCoupon.startDateTime > now) {
-    //   throw new ConflictException(
-    //     `This coupon is not valid until ${giftCoupon.startDateTime.toISOString()}`
-    //   );
-    // }
 
-    // Check if the coupon is expired (after the end date)
     if (giftCoupon.endDateTime && giftCoupon.endDateTime < now) {
       throw new ConflictException(
-        "This coupon has expired and cannot be used."
+        this.i18n.translate('GIFT_COUPON.EXPIRED')
       );
     }
 
-    // Return the coupon and its redeemed status
     return giftCoupon;
   }
-
 
   async getGiftCouponByCouponCode(couponCode: string): Promise<GiftCouponEntity> {
-    // Find the gift coupon by coupon code
     const giftCoupon = await this.giftCouponRepository.findOne({
-      where: {couponCode },
+      where: { couponCode },
     });
 
-    // If the coupon is not found, throw a NotFoundException
     if (!giftCoupon) {
-      throw new NotFoundException("Gift coupon not found");
+      throw new NotFoundException(
+        this.i18n.translate('GIFT_COUPON.NOT_FOUND')
+      );
     }
+
     const now = new Date();
 
-    // Check if the coupon is redeemed
     if (giftCoupon.isRedeemed) {
       throw new ConflictException(
-        "This coupon has already been redeemed and cannot be used."
+        this.i18n.translate('GIFT_COUPON.ALREADY_REDEEMED')
       );
     }
-    // // Check if the coupon is not valid yet (before the start date)
-    // if (giftCoupon.startDateTime && giftCoupon.startDateTime > now) {
-    //   throw new ConflictException(
-    //     `This coupon is not valid until ${giftCoupon.startDateTime.toISOString()}`
-    //   );
-    // }
 
-    // Check if the coupon is expired (after the end date)
     if (giftCoupon.endDateTime && giftCoupon.endDateTime < now) {
       throw new ConflictException(
-        "This coupon has expired and cannot be used."
+        this.i18n.translate('GIFT_COUPON.EXPIRED')
       );
     }
 
-    // Return the coupon and its redeemed status
     return giftCoupon;
   }
-  // Method to update the gift coupon by removing specified services
-  // Method to update the gift coupon by removing specified services
-  async updateGiftCouponServices(
-    couponId: string,
-    serviceIdsToRemove: string[]
-  ): Promise<GiftCouponEntity> {
-    // Find the gift coupon by coupon code
+
+  async updateGiftCouponServices(couponId: string, serviceIdsToRemove: string[]): Promise<GiftCouponEntity> {
     const giftCoupon = await this.giftCouponRepository.findOne({
-      where: { id:couponId },
+      where: { id: couponId },
     });
 
-    // If the coupon is not found, throw a NotFoundException
     if (!giftCoupon) {
-      throw new NotFoundException("Gift coupon not found");
+      throw new NotFoundException(
+        this.i18n.translate('GIFT_COUPON.NOT_FOUND')
+      );
     }
+
     const now = new Date();
 
-    // Check if the coupon has already been redeemed
     if (giftCoupon.isRedeemed) {
       throw new ConflictException(
-        "This coupon has already been redeemed and cannot be updated."
+        this.i18n.translate('GIFT_COUPON.CANNOT_UPDATE_REDEEMED')
       );
     }
-    // // Check if the coupon is not valid yet (before the start date)
-    // if (giftCoupon.startDateTime && giftCoupon.startDateTime > now) {
-    //   throw new ConflictException(
-    //     `This coupon is not valid until ${giftCoupon.startDateTime.toISOString()}`
-    //   );
-    // }
 
-    // Check if the coupon is expired (after the end date)
     if (giftCoupon.endDateTime && giftCoupon.endDateTime < now) {
       throw new ConflictException(
-        "This coupon has expired and cannot be used."
+        this.i18n.translate('GIFT_COUPON.EXPIRED')
       );
     }
-    // Filter the services, keeping only those not in the serviceIdsToRemove array
-    giftCoupon.services = giftCoupon.services.filter(
-      (service) => !serviceIdsToRemove.includes(service.id)
-    );
 
-    // Update the usedServices count based on the removed services
-    const servicesRemovedCount = serviceIdsToRemove.length;
-    giftCoupon.usedServices += servicesRemovedCount;
+    try {
+      giftCoupon.services = giftCoupon.services.filter(
+        (service) => !serviceIdsToRemove.includes(service.id)
+      );
 
-    // Check if usedServices equals totalServices and update isRedeemed if true
-    if (giftCoupon.usedServices >= giftCoupon.totalServices) {
-      giftCoupon.isRedeemed = true;
+      const servicesRemovedCount = serviceIdsToRemove.length;
+      giftCoupon.usedServices += servicesRemovedCount;
+
+      if (giftCoupon.usedServices >= giftCoupon.totalServices) {
+        giftCoupon.isRedeemed = true;
+      }
+
+      return await this.giftCouponRepository.save(giftCoupon);
+    } catch (error) {
+      throw new InternalServerErrorException(
+        this.i18n.translate('GIFT_COUPON.UPDATE_FAILED')
+      );
     }
-
-    // Save the updated gift coupon
-    return await this.giftCouponRepository.save(giftCoupon);
   }
 }

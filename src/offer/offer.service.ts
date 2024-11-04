@@ -14,6 +14,7 @@ import { EntityManager, In, MoreThan, Repository } from "typeorm";
 import { UpdateIsActiveDto } from "./dto/update.active.dto";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { UserEntity } from "../user/entities/user.entity";
+import { CustomI18nService } from "../common/custom.18n.service";
 
 @Injectable()
 export class OfferService {
@@ -30,7 +31,8 @@ export class OfferService {
     @InjectRepository(UserEntity)
     private UserRepository: Repository<UserEntity>,
 
-    @InjectEntityManager() private readonly entityManager: EntityManager
+    @InjectEntityManager() private readonly entityManager: EntityManager,
+    private readonly i18n: CustomI18nService,
   ) {}
   async create(
     createOfferDto: CreateOfferDto,
@@ -48,7 +50,9 @@ export class OfferService {
 
     // Handle cases where no branches were found
     if (!branches || branches.length === 0) {
-      throw new NotFoundException(`Branch with ID(s) "${branchIds}" not found`);
+      throw new NotFoundException(
+        this.i18n.translate('OFFER.BRANCH_NOT_FOUND', { args: { branchIds } })
+      );
     }
     const currentday = new Date();
     currentday.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
@@ -56,10 +60,14 @@ export class OfferService {
     const offerEndDay = new Date(offerData.endDateTime);
 
     if (offerStartDay < currentday) {
-      throw new BadRequestException("Start date cannot be before today");
+      throw new BadRequestException(
+        this.i18n.translate('OFFER.INVALID_START_DATE')
+      );
     }
     if (offerStartDay >= offerEndDay) {
-      throw new BadRequestException("End date must be after the start date");
+      throw new BadRequestException(
+        this.i18n.translate('OFFER.INVALID_END_DATE')
+      );
     }
 
     // Determine if the offer should be active based on the start date
@@ -107,7 +115,9 @@ export class OfferService {
         await transactionalEntityManager.save(AuditLogEntity, auditLog);
       } catch (error) {
         console.error("Error creating offer and audit log:", error);
-        throw new InternalServerErrorException("Failed to create offer");
+        throw new InternalServerErrorException(
+          this.i18n.translate('OFFER.CREATE_FAILED')
+        );
       }
     });
 
@@ -123,7 +133,7 @@ export class OfferService {
       // Validate pagination parameters
       if (page < 1 || limit < 1) {
         throw new BadRequestException(
-          "Pagination parameters must be positive integers"
+          this.i18n.translate('OFFER.INVALID_PAGINATION')
         );
       }
 
@@ -144,7 +154,7 @@ export class OfferService {
         throw error;
       } else {
         throw new InternalServerErrorException(
-          "An error occurred while retrieving offers"
+          this.i18n.translate('OFFER.RETRIEVE_FAILED')
         );
       }
     }
@@ -187,7 +197,9 @@ export class OfferService {
     });
 
     if (!offer) {
-      throw new NotFoundException(`Offer with ID "${id}" not found`);
+      throw new NotFoundException(
+        this.i18n.translate('OFFER.NOT_FOUND', { args: { id } })
+      );
     }
 
     return offer;
@@ -203,7 +215,9 @@ export class OfferService {
     }); // Ensure this method is used correctly
 
     if (!offer) {
-      throw new NotFoundException(`Offer with ID "${offerId}" not found`);
+      throw new NotFoundException(
+        this.i18n.translate('OFFER.NOT_FOUND', { args: { id: offerId } })
+      );
     }
 
     const { serviceIds, branchIds, ...offerData } = updateOfferDto;
@@ -270,7 +284,9 @@ export class OfferService {
         await transactionalEntityManager.save(AuditLogEntity, auditLog);
       } catch (error) {
         console.error("Error updating offer and audit log:", error);
-        throw new InternalServerErrorException("Failed to update offer");
+        throw new InternalServerErrorException(
+          this.i18n.translate('OFFER.UPDATE_FAILED')
+        );
       }
     });
 
@@ -307,7 +323,9 @@ export class OfferService {
     }); // Ensure this method is used correctly
 
     if (!offer) {
-      throw new NotFoundException(`Offer with ID "${offerId}" not found`);
+      throw new NotFoundException(
+        this.i18n.translate('OFFER.NOT_FOUND', { args: { id: offerId } })
+      );
     }
 
     offer.deletedAt = new Date();
@@ -345,7 +363,9 @@ export class OfferService {
           "Error performing soft delete and creating audit log:",
           error
         );
-        throw new InternalServerErrorException("Failed to soft delete offer");
+        throw new InternalServerErrorException(
+          this.i18n.translate('OFFER.DELETE_FAILED')
+        );
       }
     });
   }

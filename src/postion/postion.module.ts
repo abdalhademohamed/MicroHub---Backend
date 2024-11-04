@@ -6,6 +6,7 @@ import { PositionEntity } from "./entities/postion.entity";
 import { EmployeeEntity } from "../employee/entities/employee.entity";
 import { UserEntity } from "../user/entities/user.entity";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
+import { CustomI18nService } from "../common/custom.18n.service";
 
 @Module({
   imports: [
@@ -17,6 +18,10 @@ import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
     ]),
   ],
   controllers: [PostionController],
-  providers: [PostionService],
+  providers: [
+    PostionService,
+    CustomI18nService,
+  ],
+  exports: [PostionService],
 })
 export class PostionModule {}

@@ -19,6 +19,7 @@ import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { OfferEntity } from "../offer/entities/offer.entity";
 import { CreateReceiptFromReservationIdDto } from "./dto/create.receipt.from.reservationId.dto";
 import { GetReceiptsDto } from "./dto/get-receipts.dto";
+import { CustomI18nService } from "../common/custom.18n.service";
 
 @Injectable()
 export class ReceiptService {
@@ -36,7 +37,9 @@ export class ReceiptService {
     private readonly AuditLogRepository: Repository<AuditLogEntity>,
 
     @InjectRepository(OfferEntity)
-    private readonly OfferRepository: Repository<OfferEntity>
+    private readonly OfferRepository: Repository<OfferEntity>,
+
+    private readonly i18n: CustomI18nService
   ) {}
 
   async createReceipt(
@@ -54,7 +57,9 @@ export class ReceiptService {
         select: ["id", "username", "email", "role"], // Select only required fields
       });
       if (!createdBy) {
-        throw new NotFoundException(`User with ID ${userId} not found`);
+        throw new NotFoundException(
+          this.i18n.translate('RECEIPT.USER_NOT_FOUND', { args: { userId } })
+        );
       }
 
       // Fetch the order and related reservation and services
@@ -64,7 +69,9 @@ export class ReceiptService {
       });
 
       if (!order) {
-        throw new NotFoundException(`Order with ID ${order.id} not found`);
+        throw new NotFoundException(
+          this.i18n.translate('RECEIPT.ORDER_NOT_FOUND')
+        );
       }
 
       const reservation = order.reservation;
@@ -196,9 +203,11 @@ export class ReceiptService {
       return savedReceipt;
     } catch (error) {
       console.error("Error creating receipt:", error); // Log the error
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       throw new InternalServerErrorException(
-        "Failed to create receipt",
-        error.stack
+        this.i18n.translate('RECEIPT.CREATE_FAILED')
       );
     }
   }
@@ -355,7 +364,9 @@ export class ReceiptService {
         select: ["id", "username", "email", "role"],
       });
       if (!createdBy) {
-        throw new NotFoundException(`User with ID ${userId} not found`);
+        throw new NotFoundException(
+          this.i18n.translate('RECEIPT.USER_NOT_FOUND', { args: { userId } })
+        );
       }
   
       // Fetch the order and related reservation and services
@@ -365,12 +376,16 @@ export class ReceiptService {
       });
   
       if (!order) {
-        throw new NotFoundException(`Order with ID ${order.id} not found`);
+        throw new NotFoundException(
+          this.i18n.translate('RECEIPT.ORDER_NOT_FOUND')
+        );
       }
   
       const reservation = order.reservation;
       if (!reservation) {
-        throw new NotFoundException(`Reservation not found for Order ID ${order.id}`);
+        throw new NotFoundException(
+          this.i18n.translate('RECEIPT.RESERVATION_NOT_FOUND', { args: { reservationId } })
+        );
       }
   
       const services = reservation.services;
@@ -478,7 +493,12 @@ export class ReceiptService {
       return savedReceipt;
     } catch (error) {
       console.error("Error creating receipt:", error);
-      throw new InternalServerErrorException("Failed to create receipt", error.stack);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        this.i18n.translate('RECEIPT.CREATE_FAILED')
+      );
     }
   }
   
@@ -686,7 +706,9 @@ export class ReceiptService {
     });
 
     if (!receipt) {
-      throw new NotFoundException(`Receipt not found for Order ID: ${orderId}`);
+      throw new NotFoundException(
+        this.i18n.translate('RECEIPT.NOT_FOUND_FOR_ORDER', { args: { orderId } })
+      );
     }
 
     return receipt;
@@ -702,7 +724,7 @@ export class ReceiptService {
 
     if (!order) {
       throw new NotFoundException(
-        `Order not found for Reservation ID: ${reservationId}`
+        this.i18n.translate('RECEIPT.ORDER_NOT_FOUND_FOR_RESERVATION', { args: { reservationId } })
       );
     }
 
@@ -712,7 +734,7 @@ export class ReceiptService {
 
     if (!receipt) {
       throw new NotFoundException(
-        `Receipt not found for Order ID: ${order.id}`
+        this.i18n.translate('RECEIPT.NOT_FOUND_FOR_ORDER', { args: { orderId: order.id } })
       );
     }
 

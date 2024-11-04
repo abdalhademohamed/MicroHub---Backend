@@ -8,6 +8,7 @@ import { ServiceEntity } from "../service/entities/service.entity";
 import { BranchEntity } from "../branch/entities/branch.entity";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { UserEntity } from "../user/entities/user.entity";
+import { CustomI18nService } from "../common/custom.18n.service";
 
 @Injectable()
 export class SharableOfferService {
@@ -20,8 +21,8 @@ export class SharableOfferService {
     private readonly branchRepository: Repository<BranchEntity>,
     @InjectEntityManager() private readonly entityManager: EntityManager,
     @InjectRepository(UserEntity)
-    private readonly UserRepository: Repository<UserEntity>
-
+    private readonly UserRepository: Repository<UserEntity>,
+    private readonly i18n: CustomI18nService,
   ) {}
 
   async createSharableOffer(
@@ -29,60 +30,60 @@ export class SharableOfferService {
   ): Promise<SharableOfferEntity> {
     const { serviceIds, branchIds, ...offerData } = createSharableOfferDto;
 
-    //  // Parse and format the date strings using date-fns
-    //  const formattedStartDateTime = formatISO(parseISO(startDateTime));
-    //  const formattedEndDateTime = formatISO(parseISO(endDateTime));
-    // Find services by IDs using In operator
     const services = await this.serviceRepository.findBy({
       id: In(serviceIds),
     });
 
-    // Ensure that services were found
     if (services.length === 0) {
-      throw new Error("No services found with the provided IDs.");
+      throw new NotFoundException(
+        this.i18n.translate('SHARABLE_OFFER.SERVICES_NOT_FOUND')
+      );
     }
 
     const branches = await this.branchRepository.find({
       where: { id: In(branchIds) },
     });
 
-    // Ensure that the branch exists
     if (!branches || branches.length === 0) {
-      throw new NotFoundException(`Branch with ID(s) "${branchIds}" not found`);
+      throw new NotFoundException(
+        this.i18n.translate('SHARABLE_OFFER.BRANCHES_NOT_FOUND', { args: { branchIds } })
+      );
     }
-    //  // Validate date range
-    //  if (new Date(offerData.startDateTime) >= new Date(offerData.endDateTime)) {
-    //   throw new BadRequestException("End date must be after the start date");
-    // }
+
     const currentday = new Date();
-    currentday.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
+    currentday.setHours(0, 0, 0, 0);
     const offerStartDay = new Date(offerData.startDateTime);
     const offerEndDay = new Date(offerData.endDateTime);
 
     if (offerStartDay < currentday) {
-      throw new BadRequestException("Start date cannot be before today");
+      throw new BadRequestException(
+        this.i18n.translate('SHARABLE_OFFER.INVALID_START_DATE')
+      );
     }
     if (offerStartDay >= offerEndDay) {
-      throw new BadRequestException("End date must be after the start date");
+      throw new BadRequestException(
+        this.i18n.translate('SHARABLE_OFFER.INVALID_DATE_RANGE')
+      );
     }
-    // Determine if the offer should be active based on the start date
+
     const today = new Date();
     const startDateTime = new Date(offerData.startDateTime);
     const isActive = today.toDateString() === startDateTime.toDateString();
-    // Create the new offer
+
     const sharableOffer = this.sharableOfferRepository.create({
       ...offerData,
       services,
-      branches, // Assign the single branch
+      branches,
       isActive,
     });
 
-
-    // Save to the database 
-    return await this.sharableOfferRepository.save(sharableOffer);
-
-    
-
+    try {
+      return await this.sharableOfferRepository.save(sharableOffer);
+    } catch (error) {
+      throw new InternalServerErrorException(
+        this.i18n.translate('SHARABLE_OFFER.CREATE_FAILED')
+      );
+    }
   }
 
   async findActiveSharableOffer(): Promise<SharableOfferEntity[]> { 
@@ -120,14 +121,21 @@ export class SharableOfferService {
 
     // Handle cases where the offer is not found
     if (!offer) {
-      throw new NotFoundException(`Offer with ID "${id}" not found`);
+      throw new NotFoundException(
+        this.i18n.translate('SHARABLE_OFFER.NOT_FOUND', { args: { id } })
+      );
     }
 
     // Extract isActive from DTO and update the attribute
     offer.isActive = isActive;
 
-    // Save the updated offer
-    return await this.sharableOfferRepository.save(offer);
+    try {
+      return await this.sharableOfferRepository.save(offer);
+    } catch (error) {
+      throw new InternalServerErrorException(
+        this.i18n.translate('SHARABLE_OFFER.UPDATE_FAILED')
+      );
+    }
   }
 
 
@@ -143,7 +151,9 @@ export class SharableOfferService {
     }); // Ensure this method is used correctly
 
     if (!sharableOffer) {
-      throw new NotFoundException(`Offer with ID "${sharableOfferId}" not found`);
+      throw new NotFoundException(
+        this.i18n.translate('SHARABLE_OFFER.NOT_FOUND', { args: { id: sharableOfferId } })
+      );
     }
 
     const { serviceIds, branchIds, ...sharableOfferData } = UpdateSharableOfferDto;
@@ -210,7 +220,9 @@ export class SharableOfferService {
         await transactionalEntityManager.save(AuditLogEntity, auditLog);
       } catch (error) {
         console.error("Error updating offer and audit log:", error);
-        throw new InternalServerErrorException("Failed to update offer");
+        throw new InternalServerErrorException(
+          this.i18n.translate('SHARABLE_OFFER.UPDATE_FAILED')
+        );
       }
     });
 

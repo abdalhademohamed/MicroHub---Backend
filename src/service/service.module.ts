@@ -6,12 +6,13 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { CloudinaryService } from "../cloudinary/cloudinary.service";
 import { UserEntity } from "../user/entities/user.entity";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
+import { CustomI18nService } from "../common/custom.18n.service";
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([ServiceEntity, UserEntity, AuditLogEntity]),
   ],
   controllers: [ServiceController],
-  providers: [ServiceService, CloudinaryService],
+  providers: [ServiceService, CloudinaryService,CustomI18nService],
 })
 export class ServiceModule {}

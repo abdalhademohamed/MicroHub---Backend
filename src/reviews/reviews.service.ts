@@ -17,6 +17,7 @@ import { UserEntity } from "../user/entities/user.entity";
 import { UserService } from "../user/user.service";
 import { NotificationService } from "../notification/notification.service";
 import { OrderStatus } from "../orders/utils/order.status.enum";
+import { CustomI18nService } from "src/common/custom.18n.service";
 
 @Injectable()
 export class ReviewsService {
@@ -35,7 +36,8 @@ export class ReviewsService {
     @InjectRepository(AuditLogEntity)
     private readonly AuditLogRepository: Repository<AuditLogEntity>,
     private eventEmitter: EventEmitter2,
-    private readonly notificationService: NotificationService // Inject NotificationService
+    private readonly notificationService: NotificationService,
+    private readonly i18n: CustomI18nService
   ) {}
   @OnEvent("review:changed")
   async onHandleReviewChanged({ ids }: { ids: string[] }) {
@@ -79,19 +81,15 @@ export class ReviewsService {
 
       // Check if the order exists
       if (!newestOrder) {
-        throw new NotFoundException({
-          message: `Order not found`,
-          error: `Order with ID ${order} not found`,
-        });
+        throw new NotFoundException(
+          this.i18n.translate('REVIEW.ORDER_NOT_FOUND', { args: { orderId: order } })
+        );
       }
 
       // Check if the order is already reviewed
       if (newestOrder.isReviewed) {
         throw new HttpException(
-          {
-            message: `Order already reviewed`,
-            error: `Order with ID ${order} has already been reviewed`,
-          },
+          this.i18n.translate('REVIEW.ORDER_ALREADY_REVIEWED', { args: { orderId: order } }),
           400
         );
       }
@@ -99,10 +97,7 @@ export class ReviewsService {
       // Check if the order is associated with an artist
       if (!newestOrder.artist?.id) {
         throw new HttpException(
-          {
-            message: `Order not associated with an artist`,
-            error: `Order with ID ${order} is not associated with any artist`,
-          },
+          this.i18n.translate('REVIEW.ORDER_NO_ARTIST', { args: { orderId: order } }),
           400
         );
       }
@@ -112,10 +107,9 @@ export class ReviewsService {
       });
 
       if (!employee) {
-        throw new NotFoundException({
-          message: `Employee not found`,
-          error: `Employee with ID ${body.employee} not found`,
-        });
+        throw new NotFoundException(
+          this.i18n.translate('REVIEW.EMPLOYEE_NOT_FOUND', { args: { employeeId: body.employee } })
+        );
       }
 
       const [orders, count] = await this.orderRepository.findAndCount({
@@ -196,11 +190,8 @@ export class ReviewsService {
     } catch (error) {
       // Catching unexpected errors and rethrowing them with additional details
       throw new HttpException(
-        {
-          message: `Failed to create review`,
-          error: error.message || error,
-        },
-        error.status || 500 // Preserve the original error status if it exists
+        this.i18n.translate('REVIEW.CREATE_FAILED', { args: { error: error.message || error } }),
+        error.status || 500
       );
     }
   }
@@ -248,8 +239,7 @@ export class ReviewsService {
       return { reviews, total };
     } catch (error) {
       throw new InternalServerErrorException(
-        "Failed to get reviews",
-        error.stack
+        this.i18n.translate('REVIEW.FETCH_FAILED')
       );
     }
   }
@@ -266,7 +256,7 @@ export class ReviewsService {
         employee.employeeType.typeEnglish !== "ARTIST"
       ) {
         throw new NotFoundException(
-          `Employee with ID ${employeeId} is not an artist or not found`
+          this.i18n.translate('REVIEW.INVALID_ARTIST', { args: { employeeId } })
         );
       }
 
@@ -279,8 +269,7 @@ export class ReviewsService {
       return reviews;
     } catch (error) {
       throw new InternalServerErrorException(
-        "Failed to get reviews for artist",
-        error.stack
+        this.i18n.translate('REVIEW.FETCH_ARTIST_REVIEWS_FAILED')
       );
     }
   }
@@ -291,7 +280,9 @@ export class ReviewsService {
       where: { id: orderId },
     });
     if (!order) {
-      throw new NotFoundException(`Order with ID ${orderId} not found`);
+      throw new NotFoundException(
+        this.i18n.translate('REVIEW.ORDER_NOT_FOUND', { args: { orderId } })
+      );
     }
 
     // Retrieve reviews associated with the order

@@ -11,5 +11,170 @@
   "CONFIRMATION_EMAIL_FAILED": "Failed to send confirmation email",
   "LOGOUT_FAILED": "Failed to logout. Please try again later.",
   "ACCESS_DENIED": "Access Denied",
-  "LOGOUT_SUCCESS": "Logout successful"
+  "LOGOUT_SUCCESS": "Logout successful",
+  "BRANCH": {
+    "NAME_LOCATION_EXISTS": "A branch with the given name or location already exists.",
+    "INVALID_URL": "Invalid URL format for location",
+    "NOT_FOUND": "Branch not found",
+    "UPDATE_FAILED": "An unexpected error occurred while updating the branch.",
+    "DELETE_FAILED": "An unexpected error occurred while deleting the branch.",
+    "CREATE_FAILED": "An unexpected error occurred while creating the branch.",
+    "INVALID_PAGINATION": "Page and limit must be greater than 0",
+    "INVALID_ORDER": "Invalid order value. Must be \"ASC\" or \"DESC\""
+  },
+  "COMMENT": {
+    "NOT_FOUND": "Comment not found",
+    "RETRIEVE_FAILED": "Failed to retrieve comment",
+    "INVALID_PAGINATION": "Page and limit must be greater than 0",
+    "INVALID_DATES": "Invalid date range provided"
+  },
+  "CUSTOMER": {
+    "NOT_FOUND": "Customer with phone number {phoneNumber} not found.",
+    "RETRIEVE_FAILED": "An unexpected error occurred while retrieving customer details.",
+    "INVALID_PAGINATION": "Page and limit must be greater than 0",
+    "COUNT_FAILED": "Failed to count customers"
+  },
+  "EMPLOYEE": {
+    "NOT_FOUND": "Employee with ID {id} not found",
+    "BRANCH_NOT_FOUND": "Branch with ID {branchId} not found",
+    "POSITION_NOT_FOUND": "Position with ID {id} not found",
+    "INVALID_ROLE": "Invalid role: {role}",
+    "CREATE_FAILED": "Failed to create employee",
+    "UPDATE_FAILED": "Failed to update employee",
+    "DELETE_FAILED": "Failed to soft delete employee",
+    "USER_NOT_FOUND": "User not found",
+    "INVALID_WORKING_HOURS": "Invalid working hours",
+    "INVALID_WORKING_ENTITY": "Invalid working entity",
+    "ONLY_ARTIST": "Cannot change position/branch as this employee is the only artist in the branch",
+    "CURRENT_EMAIL": "This is your current email",
+    "IMAGE_UPLOAD_FAILED": "Failed to upload image",
+    "FETCH_ERROR": "Error fetching employees: {message}"
+  },
+  "EMPLOYEE_TYPE": {
+    "NOT_FOUND": "Employee Type not found",
+    "CREATE_FAILED": "Failed to create employee type",
+    "UPDATE_FAILED": "Failed to update employee type",
+    "DELETE_FAILED": "Failed to delete employee type",
+    "RETRIEVE_FAILED": "Failed to retrieve employee types"
+  },
+  "GIFT_COUPON": {
+    "NOT_FOUND": "Gift coupon not found",
+    "SHARABLE_OFFER_NOT_FOUND": "Sharable offer not found",
+    "CUSTOMER_NOT_FOUND": "Customer not found",
+    "ALREADY_REDEEMED": "This coupon has already been redeemed and cannot be used",
+    "EXPIRED": "This coupon has expired and cannot be used",
+    "CANNOT_UPDATE_REDEEMED": "This coupon has already been redeemed and cannot be updated",
+    "NOT_VALID_YET": "This coupon is not valid until {startDateTime}",
+    "CREATE_FAILED": "Failed to create gift coupon",
+    "UPDATE_FAILED": "Failed to update gift coupon"
+  },
+  "OFFER": {
+    "NOT_FOUND": "Offer with ID '{id}' not found",
+    "BRANCH_NOT_FOUND": "Branch with ID(s) '{branchIds}' not found",
+    "CREATE_FAILED": "Failed to create offer",
+    "UPDATE_FAILED": "Failed to update offer",
+    "DELETE_FAILED": "Failed to soft delete offer",
+    "RETRIEVE_FAILED": "An error occurred while retrieving offers",
+    "INVALID_PAGINATION": "Pagination parameters must be positive integers",
+    "INVALID_START_DATE": "Start date cannot be before today",
+    "INVALID_END_DATE": "End date must be after the start date"
+  },
+  "ORDER": {
+    "NOT_FOUND": "Order not found for this reservation",
+    "RESERVATION_NOT_FOUND": "Reservation not found",
+    "USER_NOT_FOUND": "User with ID {userId} not found",
+    "ARTIST_NOT_FOUND": "Artist with ID {artistId} not found",
+    "EMPLOYEE_NOT_FOUND": "Employee not found",
+    "CUSTOMER_NOT_FOUND": "Customer not found",
+    "ASSIGN_FAILED": "Failed to assign order to artist",
+    "UPDATE_STATUS_FAILED": "Failed to update order status",
+    "FETCH_FAILED": "Failed to fetch orders",
+    "COMMENTS_FETCH_FAILED": "Failed to retrieve customer comments",
+    "NOTIFICATION": {
+      "NEW_ORDER": "New order created",
+      "NEW_ORDER_MESSAGE": "A new order has been created: {orderId}",
+      "ORDER_COMPLETED": "Order completed",
+      "ORDER_COMPLETED_MESSAGE": "Order {orderId} has been completed by: {userId}"
+    }
+  },
+  "PAYMENT": {
+    "NOT_FOUND": "Payment method not found",
+    "CREATE_FAILED": "Failed to create payment method",
+    "UPDATE_FAILED": "Failed to update payment method",
+    "DELETE_FAILED": "Failed to delete payment method",
+    "UPLOAD_FAILED": "Failed to upload payment method image",
+    "RETRIEVE_FAILED": "Failed to retrieve payment methods"
+  },
+  "POSITION": {
+    "NOT_FOUND": "Position not found",
+    "CREATE_FAILED": "An error occurred while creating the position",
+    "UPDATE_FAILED": "Failed to update position",
+    "DELETE_FAILED": "Failed to delete position",
+    "RETRIEVE_FAILED": "Failed to retrieve positions"
+  },
+  "RECEIPT": {
+    "NOT_FOUND": "Receipt not found",
+    "NOT_FOUND_FOR_ORDER": "Receipt not found for Order ID: {orderId}",
+    "ORDER_NOT_FOUND": "Order not found",
+    "ORDER_NOT_FOUND_FOR_RESERVATION": "Order not found for Reservation ID: {reservationId}",
+    "USER_NOT_FOUND": "User with ID {userId} not found",
+    "CREATE_FAILED": "Failed to create receipt",
+    "RETRIEVE_FAILED": "Failed to retrieve receipts",
+    "NO_SERVICES": "No services found for the reservation",
+    "INVALID_OFFER": "Invalid offer for this receipt"
+  },
+  "RESERVATION": {
+    "NOT_FOUND": "Reservation with ID {id} not found",
+    "BRANCH_NOT_FOUND": "Branch not found",
+    "SLOT_NOT_FOUND": "Slot not found",
+    "CUSTOMER_NOT_FOUND": "Customer not found",
+    "INVALID_SERVICE_IDS": "Invalid Service IDs",
+    "SCHEDULE_CONFLICT": "The custom schedule conflicts with an existing reservation",
+    "PHOTO_REQUIRED": "Photo is required",
+    "INVALID_TIME": "Invalid time slot",
+    "UPDATE_FAILED": "Failed to update reservation",
+    "DELETE_FAILED": "Failed to delete reservation"
+  },
+  "REVIEW": {
+    "ORDER_NOT_FOUND": "Order with ID {orderId} not found",
+    "ORDER_ALREADY_REVIEWED": "Order with ID {orderId} has already been reviewed",
+    "ORDER_NO_ARTIST": "Order with ID {orderId} is not associated with any artist",
+    "EMPLOYEE_NOT_FOUND": "Employee with ID {employeeId} not found",
+    "CREATE_FAILED": "Failed to create review: {error}",
+    "FETCH_FAILED": "Failed to fetch reviews",
+    "FETCH_ARTIST_REVIEWS_FAILED": "Failed to get reviews for artist",
+    "INVALID_ARTIST": "Employee with ID {employeeId} is not an artist or not found",
+    "ORDER_OR_CUSTOMER_NOT_FOUND": "Order or customer not found for order ID {orderId}",
+    "NOTIFICATION": {
+      "REVIEW_ADDED": "Order reviewed",
+      "REVIEW_ADDED_MESSAGE": "Your order with ID {orderId} has been reviewed"
+    }
+  },
+  "ROOTOSH": {
+    "NOT_FOUND": "Rootosh with ID {id} not found",
+    "SERVICE_NOT_FOUND": "Service with ID {serviceId} not found",
+    "CREATE_FAILED": "Failed to create rootosh",
+    "UPDATE_FAILED": "Failed to update rootosh",
+    "DELETE_FAILED": "Failed to delete rootosh",
+    "FETCH_FAILED": "Failed to fetch rootosh data"
+  },
+  "SERVICE": {
+    "NAME_EXISTS": "A service with the given name already exists",
+    "NOT_FOUND": "Service with ID {id} not found",
+    "CREATE_FAILED": "Failed to create service",
+    "UPDATE_FAILED": "Failed to update service",
+    "DELETE_FAILED": "Failed to delete service",
+    "FETCH_FAILED": "Failed to fetch services",
+    "IMAGE_UPLOAD_FAILED": "Failed to upload service image"
+  },
+  "SHARABLE_OFFER": {
+    "SERVICES_NOT_FOUND": "No services found with the provided IDs",
+    "BRANCHES_NOT_FOUND": "Branch with ID(s) {branchIds} not found",
+    "INVALID_START_DATE": "Start date cannot be before today",
+    "INVALID_DATE_RANGE": "End date must be after the start date",
+    "NOT_FOUND": "Offer with ID {id} not found",
+    "CREATE_FAILED": "Failed to create sharable offer",
+    "UPDATE_FAILED": "Failed to update sharable offer",
+    "FETCH_FAILED": "Failed to fetch sharable offers"
+  }
 }

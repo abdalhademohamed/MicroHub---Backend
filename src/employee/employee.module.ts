@@ -16,6 +16,7 @@ import { SlotModule } from "../slots/slot.module";
 import { WorkingEntity } from "../slots/entities/working.entity";
 import { SlotsEntity } from "../slots/entities/slots.entity";
 import { ReservationEntity } from "../reservation/entities/reservation.entity";
+import { CustomI18nService } from "../common/custom.18n.service";
 
 @Module({
   imports: [
@@ -35,7 +36,7 @@ import { ReservationEntity } from "../reservation/entities/reservation.entity";
     AuthModule, // Import AuthModule to make AuthService available
   ],
   controllers: [EmployeeController],
-  providers: [EmployeeService, CloudinaryService],
+  providers: [EmployeeService, CloudinaryService, CustomI18nService],
   exports: [EmployeeService],
 })
 export class EmployeeModule {}

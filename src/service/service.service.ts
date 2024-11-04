@@ -13,6 +13,7 @@ import { PaginateResultDto } from "../branch/dto/paginate.result.dto";
 import { CloudinaryService } from "../cloudinary/cloudinary.service";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { UserEntity } from "../user/entities/user.entity";
+import { CustomI18nService } from "../common/custom.18n.service";
 
 @Injectable()
 export class ServiceService {
@@ -24,6 +25,7 @@ export class ServiceService {
     private readonly UserRepository: Repository<UserEntity>,
     @InjectRepository(AuditLogEntity)
     private readonly AuditLogRepository: Repository<AuditLogEntity>,
+    private readonly i18n: CustomI18nService,
   ) {}
   async createService(
     createServiceDto: CreateServiceDto,
@@ -40,7 +42,7 @@ export class ServiceService {
   
     if (existingService) {
       throw new ConflictException(
-        "A service with the given name already exists.",
+        this.i18n.translate('SERVICE.NAME_EXISTS')
       );
     }
   
@@ -67,7 +69,7 @@ export class ServiceService {
     } catch (error) {
       // Handle unexpected errors
       throw new InternalServerErrorException(
-        "An unexpected error occurred while creating the service.",
+        this.i18n.translate('SERVICE.CREATE_FAILED')
       );
     }
   }
@@ -124,7 +126,7 @@ export class ServiceService {
       // Handle unexpected errors
       // 500 Internal Server Error
       throw new InternalServerErrorException(
-        "An unexpected error occurred while retrieving services.",
+        this.i18n.translate('SERVICE.FETCH_FAILED')
       );
     }
   }
@@ -139,7 +141,9 @@ export class ServiceService {
     const service = await this.ServiceRepository.findOne({ where: { id } });
   
     if (!service) {
-      throw new NotFoundException(`Service with ID ${id} not found.`);
+      throw new NotFoundException(
+        this.i18n.translate('SERVICE.NOT_FOUND', { args: { id } })
+      );
     }
   
     // Store original values before updating for auditing
@@ -162,7 +166,9 @@ export class ServiceService {
         );
         service.imageUrl = uploadedImage.url;
       } catch (error) {
-        throw new InternalServerErrorException("Failed to upload image");
+        throw new InternalServerErrorException(
+          this.i18n.translate('SERVICE.IMAGE_UPLOAD_FAILED')
+        );
       }
     }
   
@@ -177,7 +183,7 @@ export class ServiceService {
     } catch (error) {
       console.error("Error updating service:", error);
       throw new InternalServerErrorException(
-        "An unexpected error occurred while updating the service.",
+        this.i18n.translate('SERVICE.UPDATE_FAILED')
       );
     }
   }
@@ -238,7 +244,9 @@ export class ServiceService {
       // If no rows are affected, it means the service with the given ID does not exist
       if (result.affected === 0) {
         // Status Code: 404 Not Found
-        throw new NotFoundException(`Service with ID ${id} not found.`);
+        throw new NotFoundException(
+          this.i18n.translate('SERVICE.NOT_FOUND', { args: { id } })
+        );
       }
 
       // Status Code: 204 No Content
@@ -246,8 +254,11 @@ export class ServiceService {
     } catch (error) {
       // Handle unexpected errors and throw an InternalServerErrorException
       // Status Code: 500 Internal Server Error
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       throw new InternalServerErrorException(
-        "An unexpected error occurred while deleting the service.",
+        this.i18n.translate('SERVICE.DELETE_FAILED')
       );
     }
   }
