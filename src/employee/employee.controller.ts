@@ -40,6 +40,8 @@ export class EmployeeController {
   constructor(private readonly employeeService: EmployeeService) {}
 
   @Get('top/artists')
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST,Role.ACCOUNTANT,Role.ARTIST)
   async getTopArtists(
     @Query('fromDate') fromDate?: string,
     @Query('toDate') toDate?: string
