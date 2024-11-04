@@ -19,6 +19,7 @@ export class AuditLogService {
       username,
       email,
       day,
+      tableName,
       sortBy = "timestamp",
       sortOrder = "DESC",
       page = 1,
@@ -53,6 +54,11 @@ export class AuditLogService {
         parameters.push(day);
       }
 
+      if (tableName) {
+        sql += ` AND "table_name" = $${paramIndex++}`;
+        parameters.push(tableName);
+      }
+
       sql += ` ORDER BY "timestamp" ${sortOrder}
               LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
       parameters.push(limit, (page - 1) * limit);
@@ -81,6 +87,11 @@ export class AuditLogService {
       if (day) {
         countSql += ` AND DATE("timestamp") = $${countParamIndex++}`;
         countParameters.push(day);
+      }
+
+      if (tableName) {
+        countSql += ` AND "table_name" = $${countParamIndex++}`;
+        countParameters.push(tableName);
       }
 
       const [totalResult] = await this.AuditLogRepository.query(

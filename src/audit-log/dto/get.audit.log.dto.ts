@@ -31,6 +31,15 @@ export class GetAuditLogsDto {
   day?: string;
 
   @ApiProperty({
+    description: "Filter by table name",
+    required: false,
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  tableName?: string;
+
+  @ApiProperty({
     description: "Sort by field",
     required: false,
     default: "timestamp",
