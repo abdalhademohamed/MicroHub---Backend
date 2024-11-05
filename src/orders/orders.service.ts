@@ -35,7 +35,6 @@ import { CreateGiftCouponDto } from "../gift-coupon/dto/create-gift-coupon.dto";
 import { PaymentStatus } from "./utils/payment.status.enum";
 import { ReservationService } from "../reservation/reservation.service";
 import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
-import { GetCommentsDto } from "./dto/get-comments.dto";
 import { CommentEntity } from "../comment/entities/comment.entity";
 import {
   CommentResponseDto,
@@ -43,12 +42,16 @@ import {
 } from "../comment/dto/get.comment.response.dto";
 import { PaginatedCommentResponseDto } from "./dto/paginated.comments.response.dto";
 import { ReceiptEntity } from "../receipt/entities/receipt.entity";
+import { GetCommentsbycustomerDto } from "./dto/get-comments.dto";
 
 @Injectable()
 export class OrdersService {
   constructor(
     @InjectRepository(OrderEntity)
     private readonly orderRepository: Repository<OrderEntity>,
+
+    @InjectRepository(CommentEntity)
+    private readonly commentRepository: Repository<CommentEntity>,
 
     private readonly CloudinaryService: CloudinaryService,
 
@@ -80,9 +83,6 @@ export class OrdersService {
     private readonly reservationService: ReservationService,
     @InjectRepository(CustomerEntity)
     private readonly CustomerRepository: Repository<CustomerEntity>,
-    @InjectRepository(CommentEntity)
-    private readonly CommentRepository: Repository<CommentEntity>,
-
     @InjectRepository(ReceiptEntity)
     private readonly ReceiptRepository: Repository<ReceiptEntity>
   ) {}
@@ -1924,12 +1924,12 @@ export class OrdersService {
 
   async getCustomerComments(
     customerId: string,
-    getCommentsDto: GetCommentsDto
+    getCommentsDto: GetCommentsbycustomerDto
   ): Promise<PaginatedCommentResponseDto> {
     const { page, limit, fromDate, toDate, sort } = getCommentsDto;
-
+    console.log(this.commentRepository)
     try {
-      const query = this.CommentRepository.createQueryBuilder("comment")
+      const query = this.commentRepository.createQueryBuilder("comment")
         .leftJoinAndSelect("comment.order", "order")
         .leftJoinAndSelect("comment.employee", "employee")
         .leftJoinAndSelect("order.customer", "customer")
@@ -2022,6 +2022,7 @@ export class OrdersService {
         totalPages: Math.ceil(total / limit),
       };
     } catch (error) {
+      console.log(error)
       throw new InternalServerErrorException(
         "Failed to retrieve customer comments",
         error.stack

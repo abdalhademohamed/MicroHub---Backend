@@ -14,6 +14,8 @@ import {
   ReviewResponseDto,
 } from "./dto/get.comment.response.dto";
 import { CustomI18nService } from "../common/custom.18n.service";
+import { PaginatedCommentResponseDto } from "../orders/dto/paginated.comments.response.dto";
+import { GetCommentsbycustomerDto } from "../orders/dto/get-comments.dto";
 
 @Injectable()
 export class CommentService {
@@ -151,5 +153,104 @@ export class CommentService {
       limit,
       totalPages: Math.ceil(total / limit),
     };
+  }
+
+  async getCustomerComments(
+    customerId: string,
+    getCommentsDto:GetCommentsbycustomerDto
+  ): Promise<PaginatedCommentResponseDto> {
+    const { page = 1, limit = 10, fromDate, toDate, sort } = getCommentsDto;
+
+    try {
+      const query = this.commentRepository.createQueryBuilder("comment")
+        .leftJoinAndSelect("comment.order", "order")
+        .leftJoinAndSelect("comment.employee", "employee")
+        .leftJoinAndSelect("order.customer", "customer")
+        .leftJoinAndSelect("order.reviews", "review")
+        .leftJoinAndSelect("review.employee", "reviewEmployee")
+        .leftJoinAndSelect("review.artist", "artist")
+        .where("customer.id = :customerId", { customerId });
+
+      if (fromDate) {
+        const startOfDay = new Date(fromDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        query.andWhere("comment.createdAt >= :fromDate", { fromDate: startOfDay });
+      }
+
+      if (toDate) {
+        const endOfDay = new Date(toDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        query.andWhere("comment.createdAt <= :toDate", { toDate: endOfDay });
+      }
+
+      query
+        .orderBy("comment.createdAt", sort)
+        .skip((page - 1) * limit)
+        .take(limit);
+
+      const [comments, total] = await query.getManyAndCount();
+
+      const detailedComments = comments.map((comment) => ({
+        id: comment.id,
+        content: comment.content,
+        imageBeforeUrl: comment.imageBeforeUrl,
+        imageAfterUrl: comment.imageAfterUrl,
+        createdAt: comment.createdAt,
+        employee: comment.employee ? {
+          id: comment.employee.id,
+          username: comment.employee.username,
+          email: comment.employee.email,
+          role: comment.employee.role,
+          english_Name: comment.employee.english_Name,
+          arabic_Name: comment.employee.arabic_Name,
+          workingHours: comment.employee.workingHours?.toString(),
+          phoneNumber: comment.employee.phoneNumber,
+          image: comment.employee.image,
+          available: comment.employee.available,
+          totalReviews: comment.employee.totalReviews,
+          status: comment.employee.status,
+          oldestAvgRating: comment.employee.oldestAvgRating,
+          newestAvgRating: comment.employee.newestAvgRating,
+        } : null,
+        reviews: comment.order?.reviews?.map((review): ReviewResponseDto => ({
+          id: review.id,
+          rating: review.rating,
+          createdAt: review.createdAt,
+          imageOrder: review.imageOrder,
+          commentBefore: review.comment_Before,
+          commentAfter: review.comment_After,
+          reviewer: review.employee ? {
+            id: review.employee.id,
+            username: review.employee.username,
+            image: review.employee.image,
+            english_Name: review.employee.english_Name,
+            role: review.employee.role,
+            phoneNumber: review.employee.phoneNumber,
+          } : null,
+          artist: review.artist ? {
+            id: review.artist.id,
+            image: review.artist.image,
+            username: review.artist.username,
+            english_Name: review.artist.english_Name,
+            role: review.artist.role,
+            phoneNumber: review.artist.phoneNumber,
+          } : null,
+        })) || [],
+      }));
+
+      return {
+        items: detailedComments,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    } catch (error) {
+      console.error('Error in getCustomerComments:', error);
+      throw new InternalServerErrorException(
+        "Failed to retrieve customer comments",
+        error.stack
+      );
+    }
   }
 }

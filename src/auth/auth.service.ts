@@ -34,7 +34,7 @@ import { Postion } from "../postion/utils/postion.enum";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { SlotService } from "../slots/slots.service";
 import { EventEmitter2 } from "@nestjs/event-emitter";
-import { CustomI18nService } from "src/common/custom.18n.service";
+import { CustomI18nService } from "../common/custom.18n.service";
 
 @Injectable()
 export class AuthService {

@@ -37,20 +37,20 @@ import { FindOrdersDto } from "./dto/find.all.orders.dto";
 import { OrderStatus } from "./utils/order.status.enum";
 import { FindOrdersByDayDto } from "./dto/find.orders.dto.for.artist";
 import { PaymentStatus } from "./utils/payment.status.enum";
-import { GetCommentsDto } from "./dto/get-comments.dto";
+import { GetCommentsbycustomerDto } from "./dto/get-comments.dto";
 
 @ApiTags("orders")
 @Controller("order")
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
-  @Get('comments/:customerId')
-  async getCustomerComments(
-    @Param('customerId') customerId: string,
-    @Query() getCommentsDto: GetCommentsDto,
-  ) {
-    return await this.ordersService.getCustomerComments(customerId, getCommentsDto);
-  }
+  // @Get('comments/:customerId')
+  // async getCustomerComments(
+  //   @Param('customerId') customerId: string,
+  //   @Query() getCommentsDto: GetCommentsbycustomerDto,
+  // ) {
+  //   return await this.ordersService.getCustomerComments(customerId, getCommentsDto);
+  // }
   @Get("count")
   async getOrderCount(
     @Query("branchId") branchId?: string,
