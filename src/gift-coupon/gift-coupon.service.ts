@@ -28,7 +28,7 @@ export class GiftCouponService {
     private readonly customerRepository: Repository<CustomerEntity>,
     @InjectRepository(OrderEntity)
     private readonly OrderRepository: Repository<OrderEntity>,
-    private readonly i18n: CustomI18nService,
+    private readonly i18n: CustomI18nService
   ) {}
 
   async createGiftCoupon(
@@ -48,7 +48,7 @@ export class GiftCouponService {
 
       if (!sharableOffer) {
         throw new NotFoundException(
-          this.i18n.translate('test.GIFT_COUPON.SHARABLE_OFFER_NOT_FOUND')
+          this.i18n.translate("test.GIFT_COUPON.SHARABLE_OFFER_NOT_FOUND")
         );
       }
 
@@ -58,7 +58,7 @@ export class GiftCouponService {
 
       if (!customer) {
         throw new NotFoundException(
-          this.i18n.translate('test.GIFT_COUPON.CUSTOMER_NOT_FOUND')
+          this.i18n.translate("test.GIFT_COUPON.CUSTOMER_NOT_FOUND")
         );
       }
 
@@ -72,7 +72,8 @@ export class GiftCouponService {
         endDateTime: sharableOffer.endDateTime,
       });
 
-      const createdGiftCoupon = await this.giftCouponRepository.save(giftCoupon);
+      const createdGiftCoupon =
+        await this.giftCouponRepository.save(giftCoupon);
       Order.couponId = giftCoupon.id;
       await this.OrderRepository.save(Order);
       return createdGiftCoupon;
@@ -81,7 +82,7 @@ export class GiftCouponService {
         throw error;
       }
       throw new InternalServerErrorException(
-        this.i18n.translate('test.GIFT_COUPON.CREATE_FAILED')
+        this.i18n.translate("test.GIFT_COUPON.CREATE_FAILED")
       );
     }
   }
@@ -93,7 +94,7 @@ export class GiftCouponService {
 
     if (!giftCoupon) {
       throw new NotFoundException(
-        this.i18n.translate('test.GIFT_COUPON.NOT_FOUND')
+        this.i18n.translate("test.GIFT_COUPON.NOT_FOUND")
       );
     }
 
@@ -101,27 +102,29 @@ export class GiftCouponService {
 
     if (giftCoupon.isRedeemed) {
       throw new ConflictException(
-        this.i18n.translate('test.GIFT_COUPON.ALREADY_REDEEMED')
+        this.i18n.translate("test.GIFT_COUPON.ALREADY_REDEEMED")
       );
     }
 
     if (giftCoupon.endDateTime && giftCoupon.endDateTime < now) {
       throw new ConflictException(
-        this.i18n.translate('test.GIFT_COUPON.EXPIRED')
+        this.i18n.translate("test.GIFT_COUPON.EXPIRED")
       );
     }
 
     return giftCoupon;
   }
 
-  async getGiftCouponByCouponCode(couponCode: string): Promise<GiftCouponEntity> {
+  async getGiftCouponByCouponCode(
+    couponCode: string
+  ): Promise<GiftCouponEntity> {
     const giftCoupon = await this.giftCouponRepository.findOne({
       where: { couponCode },
     });
 
     if (!giftCoupon) {
       throw new NotFoundException(
-        this.i18n.translate('test.GIFT_COUPON.NOT_FOUND')
+        this.i18n.translate("test.GIFT_COUPON.NOT_FOUND")
       );
     }
 
@@ -129,27 +132,30 @@ export class GiftCouponService {
 
     if (giftCoupon.isRedeemed) {
       throw new ConflictException(
-        this.i18n.translate('test.GIFT_COUPON.ALREADY_REDEEMED')
+        this.i18n.translate("test.GIFT_COUPON.ALREADY_REDEEMED")
       );
     }
 
     if (giftCoupon.endDateTime && giftCoupon.endDateTime < now) {
       throw new ConflictException(
-        this.i18n.translate('test.GIFT_COUPON.EXPIRED')
+        this.i18n.translate("test.GIFT_COUPON.EXPIRED")
       );
     }
 
     return giftCoupon;
   }
 
-  async updateGiftCouponServices(couponId: string, serviceIdsToRemove: string[]): Promise<GiftCouponEntity> {
+  async updateGiftCouponServices(
+    couponId: string,
+    serviceIdsToRemove: string[]
+  ): Promise<GiftCouponEntity> {
     const giftCoupon = await this.giftCouponRepository.findOne({
       where: { id: couponId },
     });
 
     if (!giftCoupon) {
       throw new NotFoundException(
-        this.i18n.translate('test.GIFT_COUPON.NOT_FOUND')
+        this.i18n.translate("test.GIFT_COUPON.NOT_FOUND")
       );
     }
 
@@ -157,13 +163,13 @@ export class GiftCouponService {
 
     if (giftCoupon.isRedeemed) {
       throw new ConflictException(
-        this.i18n.translate('test.GIFT_COUPON.CANNOT_UPDATE_REDEEMED')
+        this.i18n.translate("test.GIFT_COUPON.CANNOT_UPDATE_REDEEMED")
       );
     }
 
     if (giftCoupon.endDateTime && giftCoupon.endDateTime < now) {
       throw new ConflictException(
-        this.i18n.translate('test.GIFT_COUPON.EXPIRED')
+        this.i18n.translate("test.GIFT_COUPON.EXPIRED")
       );
     }
 
@@ -182,7 +188,63 @@ export class GiftCouponService {
       return await this.giftCouponRepository.save(giftCoupon);
     } catch (error) {
       throw new InternalServerErrorException(
-        this.i18n.translate('test.GIFT_COUPON.UPDATE_FAILED')
+        this.i18n.translate("test.GIFT_COUPON.UPDATE_FAILED")
+      );
+    }
+  }
+
+  async getAllGiftCoupons(
+    page: number = 1,
+    limit: number = 10,
+    fromDate?: string,
+    toDate?: string
+  ) {
+    try {
+      const take = Math.max(1, Number(limit));
+      const skip = (Math.max(1, Number(page)) - 1) * take;
+
+      // Build query with date filtering
+      const queryBuilder = this.giftCouponRepository
+        .createQueryBuilder("giftCoupon")
+        .leftJoinAndSelect("giftCoupon.ownedBy", "ownedBy")
+        .leftJoinAndSelect("giftCoupon.sharableOffer", "sharableOffer");
+
+      // Add date range filtering if dates are provided
+      if (fromDate) {
+        const startOfDay = new Date(fromDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        queryBuilder.andWhere("giftCoupon.createdAt >= :startDate", {
+          startDate: startOfDay,
+        });
+      }
+
+      if (toDate) {
+        const endOfDay = new Date(toDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        queryBuilder.andWhere("giftCoupon.createdAt <= :endDate", {
+          endDate: endOfDay,
+        });
+      }
+
+      // Add pagination and ordering
+      queryBuilder
+        .orderBy("giftCoupon.createdAt", "DESC")
+        .skip(skip)
+        .take(take);
+
+      const [coupons, total] = await queryBuilder.getManyAndCount();
+
+      return {
+        items: coupons,
+
+        total,
+        page: Math.max(1, Number(page)),
+        limit: take,
+        totalPages: Math.ceil(total / take),
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(
+        this.i18n.translate("test.GIFT_COUPON.FETCH_FAILED")
       );
     }
   }
