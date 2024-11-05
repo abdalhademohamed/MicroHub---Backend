@@ -51,7 +51,7 @@ export class OfferService {
     // Handle cases where no branches were found
     if (!branches || branches.length === 0) {
       throw new NotFoundException(
-        this.i18n.translate('OFFER.BRANCH_NOT_FOUND', { args: { branchIds } })
+        this.i18n.translate('test.OFFER.BRANCH_NOT_FOUND', { args: { branchIds } })
       );
     }
     const currentday = new Date();
@@ -61,12 +61,12 @@ export class OfferService {
 
     if (offerStartDay < currentday) {
       throw new BadRequestException(
-        this.i18n.translate('OFFER.INVALID_START_DATE')
+        this.i18n.translate('test.OFFER.INVALID_START_DATE')
       );
     }
     if (offerStartDay >= offerEndDay) {
       throw new BadRequestException(
-        this.i18n.translate('OFFER.INVALID_END_DATE')
+        this.i18n.translate('test.OFFER.INVALID_END_DATE')
       );
     }
 
@@ -116,7 +116,7 @@ export class OfferService {
       } catch (error) {
         console.error("Error creating offer and audit log:", error);
         throw new InternalServerErrorException(
-          this.i18n.translate('OFFER.CREATE_FAILED')
+          this.i18n.translate('test.OFFER.CREATE_FAILED')
         );
       }
     });
@@ -133,7 +133,7 @@ export class OfferService {
       // Validate pagination parameters
       if (page < 1 || limit < 1) {
         throw new BadRequestException(
-          this.i18n.translate('OFFER.INVALID_PAGINATION')
+          this.i18n.translate('test.OFFER.INVALID_PAGINATION')
         );
       }
 
@@ -154,7 +154,7 @@ export class OfferService {
         throw error;
       } else {
         throw new InternalServerErrorException(
-          this.i18n.translate('OFFER.RETRIEVE_FAILED')
+          this.i18n.translate('test.OFFER.RETRIEVE_FAILED')
         );
       }
     }
@@ -198,7 +198,7 @@ export class OfferService {
 
     if (!offer) {
       throw new NotFoundException(
-        this.i18n.translate('OFFER.NOT_FOUND', { args: { id } })
+        this.i18n.translate('test.OFFER.NOT_FOUND', { args: { id } })
       );
     }
 
@@ -216,7 +216,7 @@ export class OfferService {
 
     if (!offer) {
       throw new NotFoundException(
-        this.i18n.translate('OFFER.NOT_FOUND', { args: { id: offerId } })
+        this.i18n.translate('test.OFFER.NOT_FOUND', { args: { id: offerId } })
       );
     }
 
@@ -285,7 +285,7 @@ export class OfferService {
       } catch (error) {
         console.error("Error updating offer and audit log:", error);
         throw new InternalServerErrorException(
-          this.i18n.translate('OFFER.UPDATE_FAILED')
+          this.i18n.translate('test.OFFER.UPDATE_FAILED')
         );
       }
     });
@@ -324,7 +324,7 @@ export class OfferService {
 
     if (!offer) {
       throw new NotFoundException(
-        this.i18n.translate('OFFER.NOT_FOUND', { args: { id: offerId } })
+        this.i18n.translate('test.OFFER.NOT_FOUND', { args: { id: offerId } })
       );
     }
 
@@ -364,7 +364,7 @@ export class OfferService {
           error
         );
         throw new InternalServerErrorException(
-          this.i18n.translate('OFFER.DELETE_FAILED')
+          this.i18n.translate('test.OFFER.DELETE_FAILED')
         );
       }
     });

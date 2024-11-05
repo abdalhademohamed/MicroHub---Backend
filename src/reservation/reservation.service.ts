@@ -96,7 +96,7 @@ export class ReservationService {
 
     if (!branch) {
       throw new NotFoundException(
-        this.i18n.translate("RESERVATION.BRANCH_NOT_FOUND")
+        this.i18n.translate("test.RESERVATION.BRANCH_NOT_FOUND")
       );
     }
 
@@ -137,7 +137,7 @@ export class ReservationService {
 
     if (services.length !== ids.length) {
       throw new HttpException(
-        this.i18n.translate("RESERVATION.INVALID_SERVICE_IDS"),
+        this.i18n.translate("test.RESERVATION.INVALID_SERVICE_IDS"),
         400
       );
     }
@@ -239,7 +239,7 @@ export class ReservationService {
     });
     if (!slot) {
       throw new NotFoundException(
-        this.i18n.translate("RESERVATION.SLOT_NOT_FOUND")
+        this.i18n.translate("test.RESERVATION.SLOT_NOT_FOUND")
       );
     }
     return slot;
@@ -605,7 +605,7 @@ export class ReservationService {
       });
       if (!branch) {
         throw new NotFoundException(
-          this.i18n.translate("RESERVATION.BRANCH_NOT_FOUND")
+          this.i18n.translate("test.RESERVATION.BRANCH_NOT_FOUND")
         );
       }
 
@@ -663,7 +663,7 @@ export class ReservationService {
         // Ensure image is provided
         if (!image) {
           throw new BadRequestException(
-            this.i18n.translate("RESERVATION.PHOTO_REQUIRED")
+            this.i18n.translate("test.RESERVATION.PHOTO_REQUIRED")
           );
         }
 
@@ -691,7 +691,7 @@ export class ReservationService {
         );
         if (invalidServices.length > 0) {
           throw new BadRequestException(
-            this.i18n.translate("RESERVATION.INVALID_OFFER_SERVICES")
+            this.i18n.translate("test.RESERVATION.INVALID_OFFER_SERVICES")
           );
         }
         
@@ -704,7 +704,7 @@ export class ReservationService {
         // Ensure image is provided
         if (!image) {
           throw new BadRequestException(
-            this.i18n.translate("RESERVATION.PHOTO_REQUIRED")
+            this.i18n.translate("test.RESERVATION.PHOTO_REQUIRED")
           );
         }
 
@@ -774,7 +774,7 @@ export class ReservationService {
         // Ensure image is provided
         if (!image) {
           throw new BadRequestException(
-            this.i18n.translate("RESERVATION.PHOTO_REQUIRED")
+            this.i18n.translate("test.RESERVATION.PHOTO_REQUIRED")
           );
         }
         const serviceTotals = await this.calculateTotalDuration(serviceIds);
@@ -805,7 +805,7 @@ export class ReservationService {
       );
       if (index === -1) {
         throw new BadRequestException(
-          this.i18n.translate("RESERVATION.SCHEDULE_CONFLICT")
+          this.i18n.translate("test.RESERVATION.SCHEDULE_CONFLICT")
         );
       }
 
@@ -815,7 +815,7 @@ export class ReservationService {
       });
       if (!customer) {
         throw new BadRequestException(
-          this.i18n.translate("RESERVATION.CUSTOMER_NOT_FOUND")
+          this.i18n.translate("test.RESERVATION.CUSTOMER_NOT_FOUND")
         );
       }
       if (body.deposit && body.deposit > Math.ceil(price)) {
@@ -1067,7 +1067,7 @@ export class ReservationService {
 
     if (!reservation) {
       throw new NotFoundException(
-        this.i18n.translate("RESERVATION.NOT_FOUND", { args: { id } })
+        this.i18n.translate("test.RESERVATION.NOT_FOUND", { args: { id } })
       );
     }
 
@@ -1086,7 +1086,7 @@ export class ReservationService {
     );
     if (index === -1) {
       throw new BadRequestException(
-        this.i18n.translate("RESERVATION.SCHEDULE_CONFLICT")
+        this.i18n.translate("test.RESERVATION.SCHEDULE_CONFLICT")
       );
     }
 
@@ -1170,7 +1170,7 @@ export class ReservationService {
 
       if (!reservation) {
         throw new NotFoundException(
-          this.i18n.translate("RESERVATION.NOT_FOUND", { args: { id } })
+          this.i18n.translate("test.RESERVATION.NOT_FOUND", { args: { id } })
         );
       }
       const acc = { price: 0, duration: 0 };
@@ -1191,7 +1191,7 @@ export class ReservationService {
       );
       if (index === -1) {
         throw new BadRequestException(
-          this.i18n.translate("RESERVATION.SCHEDULE_CONFLICT")
+          this.i18n.translate("test.RESERVATION.SCHEDULE_CONFLICT")
         );
       }
       // Update the reservation with new times
@@ -1415,7 +1415,7 @@ export class ReservationService {
     });
     if (!reservation) {
       throw new NotFoundException(
-        this.i18n.translate("RESERVATION.NOT_FOUND", { args: { id } })
+        this.i18n.translate("test.RESERVATION.NOT_FOUND", { args: { id } })
       );
     }
     reservation.isDeleted = true;
@@ -1444,7 +1444,7 @@ export class ReservationService {
     });
     if (!slot) {
       throw new HttpException(
-        this.i18n.translate("RESERVATION.SLOT_NOT_FOUND"),
+        this.i18n.translate("test.RESERVATION.SLOT_NOT_FOUND"),
         400
       );
     }

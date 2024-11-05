@@ -20,6 +20,7 @@ import { OfferEntity } from "../offer/entities/offer.entity";
 import { CreateReceiptFromReservationIdDto } from "./dto/create.receipt.from.reservationId.dto";
 import { GetReceiptsDto } from "./dto/get-receipts.dto";
 import { CustomI18nService } from "../common/custom.18n.service";
+import { I18nService } from "nestjs-i18n";
 
 @Injectable()
 export class ReceiptService {
@@ -58,7 +59,7 @@ export class ReceiptService {
       });
       if (!createdBy) {
         throw new NotFoundException(
-          this.i18n.translate('RECEIPT.USER_NOT_FOUND', { args: { userId } })
+          this.i18n.translate('test.RECEIPT.USER_NOT_FOUND', { args: { userId } })
         );
       }
 
@@ -70,7 +71,7 @@ export class ReceiptService {
 
       if (!order) {
         throw new NotFoundException(
-          this.i18n.translate('RECEIPT.ORDER_NOT_FOUND')
+          this.i18n.translate('test.RECEIPT.ORDER_NOT_FOUND')
         );
       }
 
@@ -207,7 +208,7 @@ export class ReceiptService {
         throw error;
       }
       throw new InternalServerErrorException(
-        this.i18n.translate('RECEIPT.CREATE_FAILED')
+        this.i18n.translate('test.RECEIPT.CREATE_FAILED')
       );
     }
   }
@@ -365,7 +366,7 @@ export class ReceiptService {
       });
       if (!createdBy) {
         throw new NotFoundException(
-          this.i18n.translate('RECEIPT.USER_NOT_FOUND', { args: { userId } })
+          this.i18n.translate('test.RECEIPT.USER_NOT_FOUND', { args: { userId } })
         );
       }
   
@@ -377,14 +378,14 @@ export class ReceiptService {
   
       if (!order) {
         throw new NotFoundException(
-          this.i18n.translate('RECEIPT.ORDER_NOT_FOUND')
+          this.i18n.translate('test.RECEIPT.ORDER_NOT_FOUND')
         );
       }
   
       const reservation = order.reservation;
       if (!reservation) {
         throw new NotFoundException(
-          this.i18n.translate('RECEIPT.RESERVATION_NOT_FOUND', { args: { reservationId } })
+          this.i18n.translate('test.RECEIPT.RESERVATION_NOT_FOUND', { args: { reservationId } })
         );
       }
   
@@ -497,7 +498,7 @@ export class ReceiptService {
         throw error;
       }
       throw new InternalServerErrorException(
-        this.i18n.translate('RECEIPT.CREATE_FAILED')
+        this.i18n.translate('test.RECEIPT.CREATE_FAILED')
       );
     }
   }
@@ -707,7 +708,7 @@ export class ReceiptService {
 
     if (!receipt) {
       throw new NotFoundException(
-        this.i18n.translate('RECEIPT.NOT_FOUND_FOR_ORDER', { args: { orderId } })
+        this.i18n.translate('test.RECEIPT.NOT_FOUND_FOR_ORDER', { args: { orderId } })
       );
     }
 
@@ -724,7 +725,7 @@ export class ReceiptService {
 
     if (!order) {
       throw new NotFoundException(
-        this.i18n.translate('RECEIPT.ORDER_NOT_FOUND_FOR_RESERVATION', { args: { reservationId } })
+        this.i18n.translate('test.RECEIPT.ORDER_NOT_FOUND_FOR_RESERVATION', { args: { reservationId } })
       );
     }
 
@@ -734,7 +735,7 @@ export class ReceiptService {
 
     if (!receipt) {
       throw new NotFoundException(
-        this.i18n.translate('RECEIPT.NOT_FOUND_FOR_ORDER', { args: { orderId: order.id } })
+        this.i18n.translate('test.RECEIPT.NOT_FOUND_FOR_ORDER', { args: { orderId: order.id } })
       );
     }
 

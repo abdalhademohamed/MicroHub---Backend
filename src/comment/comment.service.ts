@@ -117,7 +117,7 @@ export class CommentService {
       };
     } catch (error) {
       throw new InternalServerErrorException(
-        this.i18n.translate("COMMENT.RETRIEVE_FAILED"),
+        this.i18n.translate("test.COMMENT.RETRIEVE_FAILED"),
         error.stack
       );
     }

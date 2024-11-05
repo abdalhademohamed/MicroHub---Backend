@@ -61,13 +61,13 @@ export class BranchService {
 
       if (existingBranch) {
         throw new ConflictException(
-          this.i18n.translate('BRANCH.NAME_LOCATION_EXISTS')
+          this.i18n.translate('test.BRANCH.NAME_LOCATION_EXISTS')
         );
       }
       // Validate URL
       if (!this.isValidUrl(location)) {
         throw new BadRequestException(
-          this.i18n.translate('BRANCH.INVALID_URL')
+          this.i18n.translate('test.BRANCH.INVALID_URL')
         );
       }
       // Create and save the new branch
@@ -122,7 +122,7 @@ export class BranchService {
 
       // Handle unexpected errors
       throw new InternalServerErrorException(
-        this.i18n.translate('BRANCH.CREATE_FAILED')
+        this.i18n.translate('test.BRANCH.CREATE_FAILED')
       );
     }
   }
@@ -232,14 +232,14 @@ export class BranchService {
     // Validate pagination values
     if (page < 1 || limit < 1) {
       throw new BadRequestException(
-        this.i18n.translate('BRANCH.INVALID_PAGINATION')
+        this.i18n.translate('test.BRANCH.INVALID_PAGINATION')
       );
     }
 
     // Validate order value
     if (!["ASC", "DESC"].includes(order)) {
       throw new BadRequestException(
-        this.i18n.translate('BRANCH.INVALID_ORDER')
+        this.i18n.translate('test.BRANCH.INVALID_ORDER')
       );
     }
 
@@ -327,7 +327,7 @@ export class BranchService {
 
     if (!branch) {
       throw new NotFoundException(
-        this.i18n.translate('BRANCH.NOT_FOUND')
+        this.i18n.translate('test.BRANCH.NOT_FOUND')
       );
     }
 
@@ -376,7 +376,7 @@ export class BranchService {
 
     if (!branch) {
       throw new NotFoundException(
-        this.i18n.translate('BRANCH.NOT_FOUND')
+        this.i18n.translate('test.BRANCH.NOT_FOUND')
       );
     }
 
@@ -477,7 +477,7 @@ export class BranchService {
 
       if (!branch) {
         throw new NotFoundException(
-          this.i18n.translate('BRANCH.NOT_FOUND')
+          this.i18n.translate('test.BRANCH.NOT_FOUND')
         );
       }
 
@@ -558,7 +558,7 @@ export class BranchService {
     } catch (error) {
       console.error("Update Branch Error:", error); // Debug statement
       throw new InternalServerErrorException(
-        this.i18n.translate('BRANCH.UPDATE_FAILED')
+        this.i18n.translate('test.BRANCH.UPDATE_FAILED')
       );
     }
   }
@@ -572,7 +572,7 @@ export class BranchService {
 
       if (!branch) {
         throw new NotFoundException(
-          this.i18n.translate('BRANCH.NOT_FOUND')
+          this.i18n.translate('test.BRANCH.NOT_FOUND')
         );
       }
       // Update the branch entity to record who deleted it
@@ -601,7 +601,7 @@ export class BranchService {
       }
 
       throw new InternalServerErrorException(
-        this.i18n.translate('BRANCH.DELETE_FAILED')
+        this.i18n.translate('test.BRANCH.DELETE_FAILED')
       );
     }
   }

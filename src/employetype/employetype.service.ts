@@ -32,7 +32,7 @@ export class EmployetypeService {
       return await this.employeeTypeRepository.save(newEmployeeType);
     } catch (error) {
       throw new InternalServerErrorException(
-        this.i18n.translate('EMPLOYEE_TYPE.CREATE_FAILED')
+        this.i18n.translate('test.EMPLOYEE_TYPE.CREATE_FAILED')
       );
     }
   }
@@ -42,7 +42,7 @@ export class EmployetypeService {
       return await this.employeeTypeRepository.find();
     } catch (error) {
       throw new InternalServerErrorException(
-        this.i18n.translate('EMPLOYEE_TYPE.RETRIEVE_FAILED')
+        this.i18n.translate('test.EMPLOYEE_TYPE.RETRIEVE_FAILED')
       );
     }
   }
@@ -54,7 +54,7 @@ export class EmployetypeService {
     
     if (!employeeType) {
       throw new NotFoundException(
-        this.i18n.translate('EMPLOYEE_TYPE.NOT_FOUND')
+        this.i18n.translate('test.EMPLOYEE_TYPE.NOT_FOUND')
       );
     }
     
@@ -73,7 +73,7 @@ export class EmployetypeService {
       return await this.employeeTypeRepository.save(employeeType);
     } catch (error) {
       throw new InternalServerErrorException(
-        this.i18n.translate('EMPLOYEE_TYPE.UPDATE_FAILED')
+        this.i18n.translate('test.EMPLOYEE_TYPE.UPDATE_FAILED')
       );
     }
   }
@@ -92,7 +92,7 @@ export class EmployetypeService {
 
       if (result.affected === 0) {
         throw new NotFoundException(
-          this.i18n.translate('EMPLOYEE_TYPE.NOT_FOUND')
+          this.i18n.translate('test.EMPLOYEE_TYPE.NOT_FOUND')
         );
       }
     } catch (error) {
@@ -100,7 +100,7 @@ export class EmployetypeService {
         throw error;
       }
       throw new InternalServerErrorException(
-        this.i18n.translate('EMPLOYEE_TYPE.DELETE_FAILED')
+        this.i18n.translate('test.EMPLOYEE_TYPE.DELETE_FAILED')
       );
     }
   }

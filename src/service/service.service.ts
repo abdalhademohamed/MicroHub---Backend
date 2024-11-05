@@ -14,6 +14,7 @@ import { CloudinaryService } from "../cloudinary/cloudinary.service";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { UserEntity } from "../user/entities/user.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
+import { I18nService } from "nestjs-i18n";
 
 @Injectable()
 export class ServiceService {
@@ -42,7 +43,7 @@ export class ServiceService {
   
     if (existingService) {
       throw new ConflictException(
-        this.i18n.translate('SERVICE.NAME_EXISTS')
+        this.i18n.translate('test.SERVICE.NAME_EXISTS')
       );
     }
   
@@ -69,7 +70,7 @@ export class ServiceService {
     } catch (error) {
       // Handle unexpected errors
       throw new InternalServerErrorException(
-        this.i18n.translate('SERVICE.CREATE_FAILED')
+        this.i18n.translate('test.SERVICE.CREATE_FAILED')
       );
     }
   }
@@ -126,7 +127,7 @@ export class ServiceService {
       // Handle unexpected errors
       // 500 Internal Server Error
       throw new InternalServerErrorException(
-        this.i18n.translate('SERVICE.FETCH_FAILED')
+        this.i18n.translate('test.SERVICE.FETCH_FAILED')
       );
     }
   }
@@ -142,7 +143,7 @@ export class ServiceService {
   
     if (!service) {
       throw new NotFoundException(
-        this.i18n.translate('SERVICE.NOT_FOUND', { args: { id } })
+        this.i18n.translate('test.SERVICE.NOT_FOUND', { args: { id } })
       );
     }
   
@@ -167,7 +168,7 @@ export class ServiceService {
         service.imageUrl = uploadedImage.url;
       } catch (error) {
         throw new InternalServerErrorException(
-          this.i18n.translate('SERVICE.IMAGE_UPLOAD_FAILED')
+          this.i18n.translate('test.SERVICE.IMAGE_UPLOAD_FAILED')
         );
       }
     }
@@ -183,7 +184,7 @@ export class ServiceService {
     } catch (error) {
       console.error("Error updating service:", error);
       throw new InternalServerErrorException(
-        this.i18n.translate('SERVICE.UPDATE_FAILED')
+        this.i18n.translate('test.SERVICE.UPDATE_FAILED')
       );
     }
   }
@@ -245,7 +246,7 @@ export class ServiceService {
       if (result.affected === 0) {
         // Status Code: 404 Not Found
         throw new NotFoundException(
-          this.i18n.translate('SERVICE.NOT_FOUND', { args: { id } })
+          this.i18n.translate('test.SERVICE.NOT_FOUND', { args: { id } })
         );
       }
 
@@ -258,7 +259,7 @@ export class ServiceService {
         throw error;
       }
       throw new InternalServerErrorException(
-        this.i18n.translate('SERVICE.DELETE_FAILED')
+        this.i18n.translate('test.SERVICE.DELETE_FAILED')
       );
     }
   }

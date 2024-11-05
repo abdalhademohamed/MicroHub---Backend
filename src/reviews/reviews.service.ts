@@ -18,6 +18,7 @@ import { UserService } from "../user/user.service";
 import { NotificationService } from "../notification/notification.service";
 import { OrderStatus } from "../orders/utils/order.status.enum";
 import { CustomI18nService } from "src/common/custom.18n.service";
+import { I18nService } from "nestjs-i18n";
 
 @Injectable()
 export class ReviewsService {
@@ -82,14 +83,14 @@ export class ReviewsService {
       // Check if the order exists
       if (!newestOrder) {
         throw new NotFoundException(
-          this.i18n.translate('REVIEW.ORDER_NOT_FOUND', { args: { orderId: order } })
+          this.i18n.translate('test.REVIEW.ORDER_NOT_FOUND', { args: { orderId: order } })
         );
       }
 
       // Check if the order is already reviewed
       if (newestOrder.isReviewed) {
         throw new HttpException(
-          this.i18n.translate('REVIEW.ORDER_ALREADY_REVIEWED', { args: { orderId: order } }),
+          this.i18n.translate('test.REVIEW.ORDER_ALREADY_REVIEWED', { args: { orderId: order } }),
           400
         );
       }
@@ -97,7 +98,7 @@ export class ReviewsService {
       // Check if the order is associated with an artist
       if (!newestOrder.artist?.id) {
         throw new HttpException(
-          this.i18n.translate('REVIEW.ORDER_NO_ARTIST', { args: { orderId: order } }),
+          this.i18n.translate('test.REVIEW.ORDER_NO_ARTIST', { args: { orderId: order } }),
           400
         );
       }
@@ -108,7 +109,7 @@ export class ReviewsService {
 
       if (!employee) {
         throw new NotFoundException(
-          this.i18n.translate('REVIEW.EMPLOYEE_NOT_FOUND', { args: { employeeId: body.employee } })
+          this.i18n.translate('test.REVIEW.EMPLOYEE_NOT_FOUND', { args: { employeeId: body.employee } })
         );
       }
 
@@ -190,7 +191,7 @@ export class ReviewsService {
     } catch (error) {
       // Catching unexpected errors and rethrowing them with additional details
       throw new HttpException(
-        this.i18n.translate('REVIEW.CREATE_FAILED', { args: { error: error.message || error } }),
+        this.i18n.translate('test.REVIEW.CREATE_FAILED', { args: { error: error.message || error } }),
         error.status || 500
       );
     }
@@ -239,7 +240,7 @@ export class ReviewsService {
       return { reviews, total };
     } catch (error) {
       throw new InternalServerErrorException(
-        this.i18n.translate('REVIEW.FETCH_FAILED')
+        this.i18n.translate('test.REVIEW.FETCH_FAILED')
       );
     }
   }
@@ -256,7 +257,7 @@ export class ReviewsService {
         employee.employeeType.typeEnglish !== "ARTIST"
       ) {
         throw new NotFoundException(
-          this.i18n.translate('REVIEW.INVALID_ARTIST', { args: { employeeId } })
+          this.i18n.translate('test.REVIEW.INVALID_ARTIST', { args: { employeeId } })
         );
       }
 
@@ -269,7 +270,7 @@ export class ReviewsService {
       return reviews;
     } catch (error) {
       throw new InternalServerErrorException(
-        this.i18n.translate('REVIEW.FETCH_ARTIST_REVIEWS_FAILED')
+        this.i18n.translate('test.REVIEW.FETCH_ARTIST_REVIEWS_FAILED')
       );
     }
   }
@@ -281,7 +282,7 @@ export class ReviewsService {
     });
     if (!order) {
       throw new NotFoundException(
-        this.i18n.translate('REVIEW.ORDER_NOT_FOUND', { args: { orderId } })
+        this.i18n.translate('test.REVIEW.ORDER_NOT_FOUND', { args: { orderId } })
       );
     }
 

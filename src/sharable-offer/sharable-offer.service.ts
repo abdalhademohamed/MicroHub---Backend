@@ -9,6 +9,7 @@ import { BranchEntity } from "../branch/entities/branch.entity";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { UserEntity } from "../user/entities/user.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
+import { I18nService } from "nestjs-i18n";
 
 @Injectable()
 export class SharableOfferService {
@@ -36,7 +37,7 @@ export class SharableOfferService {
 
     if (services.length === 0) {
       throw new NotFoundException(
-        this.i18n.translate('SHARABLE_OFFER.SERVICES_NOT_FOUND')
+        this.i18n.translate('test.SHARABLE_OFFER.SERVICES_NOT_FOUND')
       );
     }
 
@@ -46,7 +47,7 @@ export class SharableOfferService {
 
     if (!branches || branches.length === 0) {
       throw new NotFoundException(
-        this.i18n.translate('SHARABLE_OFFER.BRANCHES_NOT_FOUND', { args: { branchIds } })
+        this.i18n.translate('test.SHARABLE_OFFER.BRANCHES_NOT_FOUND', { args: { branchIds } })
       );
     }
 
@@ -57,12 +58,12 @@ export class SharableOfferService {
 
     if (offerStartDay < currentday) {
       throw new BadRequestException(
-        this.i18n.translate('SHARABLE_OFFER.INVALID_START_DATE')
+        this.i18n.translate('test.SHARABLE_OFFER.INVALID_START_DATE')
       );
     }
     if (offerStartDay >= offerEndDay) {
       throw new BadRequestException(
-        this.i18n.translate('SHARABLE_OFFER.INVALID_DATE_RANGE')
+        this.i18n.translate('test.SHARABLE_OFFER.INVALID_DATE_RANGE')
       );
     }
 
@@ -81,7 +82,7 @@ export class SharableOfferService {
       return await this.sharableOfferRepository.save(sharableOffer);
     } catch (error) {
       throw new InternalServerErrorException(
-        this.i18n.translate('SHARABLE_OFFER.CREATE_FAILED')
+        this.i18n.translate('test.SHARABLE_OFFER.CREATE_FAILED')
       );
     }
   }
@@ -122,7 +123,7 @@ export class SharableOfferService {
     // Handle cases where the offer is not found
     if (!offer) {
       throw new NotFoundException(
-        this.i18n.translate('SHARABLE_OFFER.NOT_FOUND', { args: { id } })
+        this.i18n.translate('test.SHARABLE_OFFER.NOT_FOUND', { args: { id } })
       );
     }
 
@@ -133,7 +134,7 @@ export class SharableOfferService {
       return await this.sharableOfferRepository.save(offer);
     } catch (error) {
       throw new InternalServerErrorException(
-        this.i18n.translate('SHARABLE_OFFER.UPDATE_FAILED')
+        this.i18n.translate('test.SHARABLE_OFFER.UPDATE_FAILED')
       );
     }
   }
@@ -152,7 +153,7 @@ export class SharableOfferService {
 
     if (!sharableOffer) {
       throw new NotFoundException(
-        this.i18n.translate('SHARABLE_OFFER.NOT_FOUND', { args: { id: sharableOfferId } })
+        this.i18n.translate('test.SHARABLE_OFFER.NOT_FOUND', { args: { id: sharableOfferId } })
       );
     }
 
@@ -221,7 +222,7 @@ export class SharableOfferService {
       } catch (error) {
         console.error("Error updating offer and audit log:", error);
         throw new InternalServerErrorException(
-          this.i18n.translate('SHARABLE_OFFER.UPDATE_FAILED')
+          this.i18n.translate('test.SHARABLE_OFFER.UPDATE_FAILED')
         );
       }
     });

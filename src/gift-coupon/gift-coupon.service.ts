@@ -48,7 +48,7 @@ export class GiftCouponService {
 
       if (!sharableOffer) {
         throw new NotFoundException(
-          this.i18n.translate('GIFT_COUPON.SHARABLE_OFFER_NOT_FOUND')
+          this.i18n.translate('test.GIFT_COUPON.SHARABLE_OFFER_NOT_FOUND')
         );
       }
 
@@ -58,7 +58,7 @@ export class GiftCouponService {
 
       if (!customer) {
         throw new NotFoundException(
-          this.i18n.translate('GIFT_COUPON.CUSTOMER_NOT_FOUND')
+          this.i18n.translate('test.GIFT_COUPON.CUSTOMER_NOT_FOUND')
         );
       }
 
@@ -81,7 +81,7 @@ export class GiftCouponService {
         throw error;
       }
       throw new InternalServerErrorException(
-        this.i18n.translate('GIFT_COUPON.CREATE_FAILED')
+        this.i18n.translate('test.GIFT_COUPON.CREATE_FAILED')
       );
     }
   }
@@ -93,7 +93,7 @@ export class GiftCouponService {
 
     if (!giftCoupon) {
       throw new NotFoundException(
-        this.i18n.translate('GIFT_COUPON.NOT_FOUND')
+        this.i18n.translate('test.GIFT_COUPON.NOT_FOUND')
       );
     }
 
@@ -101,13 +101,13 @@ export class GiftCouponService {
 
     if (giftCoupon.isRedeemed) {
       throw new ConflictException(
-        this.i18n.translate('GIFT_COUPON.ALREADY_REDEEMED')
+        this.i18n.translate('test.GIFT_COUPON.ALREADY_REDEEMED')
       );
     }
 
     if (giftCoupon.endDateTime && giftCoupon.endDateTime < now) {
       throw new ConflictException(
-        this.i18n.translate('GIFT_COUPON.EXPIRED')
+        this.i18n.translate('test.GIFT_COUPON.EXPIRED')
       );
     }
 
@@ -121,7 +121,7 @@ export class GiftCouponService {
 
     if (!giftCoupon) {
       throw new NotFoundException(
-        this.i18n.translate('GIFT_COUPON.NOT_FOUND')
+        this.i18n.translate('test.GIFT_COUPON.NOT_FOUND')
       );
     }
 
@@ -129,13 +129,13 @@ export class GiftCouponService {
 
     if (giftCoupon.isRedeemed) {
       throw new ConflictException(
-        this.i18n.translate('GIFT_COUPON.ALREADY_REDEEMED')
+        this.i18n.translate('test.GIFT_COUPON.ALREADY_REDEEMED')
       );
     }
 
     if (giftCoupon.endDateTime && giftCoupon.endDateTime < now) {
       throw new ConflictException(
-        this.i18n.translate('GIFT_COUPON.EXPIRED')
+        this.i18n.translate('test.GIFT_COUPON.EXPIRED')
       );
     }
 
@@ -149,7 +149,7 @@ export class GiftCouponService {
 
     if (!giftCoupon) {
       throw new NotFoundException(
-        this.i18n.translate('GIFT_COUPON.NOT_FOUND')
+        this.i18n.translate('test.GIFT_COUPON.NOT_FOUND')
       );
     }
 
@@ -157,13 +157,13 @@ export class GiftCouponService {
 
     if (giftCoupon.isRedeemed) {
       throw new ConflictException(
-        this.i18n.translate('GIFT_COUPON.CANNOT_UPDATE_REDEEMED')
+        this.i18n.translate('test.GIFT_COUPON.CANNOT_UPDATE_REDEEMED')
       );
     }
 
     if (giftCoupon.endDateTime && giftCoupon.endDateTime < now) {
       throw new ConflictException(
-        this.i18n.translate('GIFT_COUPON.EXPIRED')
+        this.i18n.translate('test.GIFT_COUPON.EXPIRED')
       );
     }
 
@@ -182,7 +182,7 @@ export class GiftCouponService {
       return await this.giftCouponRepository.save(giftCoupon);
     } catch (error) {
       throw new InternalServerErrorException(
-        this.i18n.translate('GIFT_COUPON.UPDATE_FAILED')
+        this.i18n.translate('test.GIFT_COUPON.UPDATE_FAILED')
       );
     }
   }

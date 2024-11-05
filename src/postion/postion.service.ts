@@ -48,7 +48,7 @@ export class PostionService {
     } catch (error) {
       console.error("Error creating position:", error);
       throw new InternalServerErrorException(
-        this.i18n.translate('POSITION.CREATE_FAILED')
+        this.i18n.translate('test.POSITION.CREATE_FAILED')
       );
     }
   }
@@ -82,7 +82,7 @@ export class PostionService {
       return await this.PositionRepository.find();
     } catch (error) {
       throw new InternalServerErrorException(
-        this.i18n.translate('POSITION.RETRIEVE_FAILED')
+        this.i18n.translate('test.POSITION.RETRIEVE_FAILED')
       );
     }
   }
@@ -100,7 +100,7 @@ export class PostionService {
 
     if (!existingPosition) {
       throw new NotFoundException(
-        this.i18n.translate('POSITION.NOT_FOUND')
+        this.i18n.translate('test.POSITION.NOT_FOUND')
       );
     }
 
@@ -119,7 +119,7 @@ export class PostionService {
       return updatedPosition;
     } catch (error) {
       throw new InternalServerErrorException(
-        this.i18n.translate('POSITION.UPDATE_FAILED')
+        this.i18n.translate('test.POSITION.UPDATE_FAILED')
       );
     }
   }
@@ -153,7 +153,7 @@ export class PostionService {
 
     if (!position) {
       throw new NotFoundException(
-        this.i18n.translate('POSITION.NOT_FOUND')
+        this.i18n.translate('test.POSITION.NOT_FOUND')
       );
     }
 
@@ -167,7 +167,7 @@ export class PostionService {
 
     if (result.affected === 0) {
       throw new NotFoundException(
-        this.i18n.translate('POSITION.NOT_FOUND')
+        this.i18n.translate('test.POSITION.NOT_FOUND')
       );
     }
   }

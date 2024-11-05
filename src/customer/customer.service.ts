@@ -42,7 +42,7 @@ export class CustomerService {
       // Handle case where customer is not found
       if (!customer) {
         throw new NotFoundException(
-          this.i18n.translate('CUSTOMER.NOT_FOUND', { args: { phoneNumber } })
+          this.i18n.translate('test.CUSTOMER.NOT_FOUND', { args: { phoneNumber } })
         );
       }
 
@@ -128,7 +128,7 @@ export class CustomerService {
 
       // Handle unexpected errors
       throw new InternalServerErrorException(
-        this.i18n.translate('CUSTOMER.RETRIEVE_FAILED')
+        this.i18n.translate('test.CUSTOMER.RETRIEVE_FAILED')
       );
     }
   }
