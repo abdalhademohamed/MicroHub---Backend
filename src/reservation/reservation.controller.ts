@@ -37,6 +37,8 @@ export class ReservationController {
 
  
   @Get('top5')  
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST,Role.ACCOUNTANT,)
   async getTop5Reservations(
     @Query('fromDate') fromDate: string,
     @Query('toDate') toDate: string,

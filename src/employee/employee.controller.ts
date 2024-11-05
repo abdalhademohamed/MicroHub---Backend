@@ -41,7 +41,7 @@ export class EmployeeController {
 
   @Get('top/artists')
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST,Role.ACCOUNTANT,Role.ARTIST)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST,Role.ACCOUNTANT,Role.ARTIST,Role.ARTISTMANAGER)
   async getTopArtists(
     @Query('fromDate') fromDate?: string,
     @Query('toDate') toDate?: string
