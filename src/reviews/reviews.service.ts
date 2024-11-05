@@ -104,12 +104,12 @@ export class ReviewsService {
       }
 
       const employee = await this.employeeRepository.findOneBy({
-        id: body.employee,
+        id: userId,
       });
 
       if (!employee) {
         throw new NotFoundException(
-          this.i18n.translate('test.REVIEW.EMPLOYEE_NOT_FOUND', { args: { employeeId: body.employee } })
+          this.i18n.translate('test.REVIEW.EMPLOYEE_NOT_FOUND', { args: { employeeId: userId } })
         );
       }
 
