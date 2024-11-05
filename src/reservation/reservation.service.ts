@@ -697,7 +697,6 @@ export class ReservationService {
         
         
         const serviceTotals = await this.calculateTotalDuration(serviceIds);
-        services = serviceTotals.services;
 
         duration += serviceTotals.duration;
         price += serviceTotals.price;
