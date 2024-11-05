@@ -17,7 +17,7 @@ import { UserEntity } from "../user/entities/user.entity";
 import { UserService } from "../user/user.service";
 import { NotificationService } from "../notification/notification.service";
 import { OrderStatus } from "../orders/utils/order.status.enum";
-import { CustomI18nService } from "src/common/custom.18n.service";
+import { CustomI18nService } from "../common/custom.18n.service";
 import { I18nService } from "nestjs-i18n";
 
 @Injectable()
