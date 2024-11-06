@@ -195,7 +195,7 @@ export class OrdersController {
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST,Role.ARTISTMANAGER,Role.ACCOUNTANT)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST,Role.ARTISTMANAGER,Role.ACCOUNTANT,Role.ARTIST,Role.BRANCHMANAGER)
   @Get('status/count')
   async getOrderStatusCount(
     @Query('branchId') branchId?: string,
