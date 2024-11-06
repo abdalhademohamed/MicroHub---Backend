@@ -17,10 +17,10 @@ import { WorkingEntity } from "../slots/entities/working.entity";
 import { SlotsEntity } from "../slots/entities/slots.entity";
 import { ReservationEntity } from "../reservation/entities/reservation.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
+import { ReviewEntity } from "src/reviews/entities/review.entity";
 
 @Module({
   imports: [
-    SlotModule,
     TypeOrmModule.forFeature([
       EmployeeEntity,
       BranchEntity,
@@ -31,12 +31,18 @@ import { CustomI18nService } from "../common/custom.18n.service";
       WorkingEntity,
       SlotsEntity,
       ReservationEntity,
+      ReviewEntity
     ]),
+    AuthModule,
+    SlotModule,
     ArtistModule,
-    AuthModule, // Import AuthModule to make AuthService available
   ],
   controllers: [EmployeeController],
-  providers: [EmployeeService, CloudinaryService, CustomI18nService],
+  providers: [
+    EmployeeService,
+    CloudinaryService,
+    CustomI18nService,
+  ],
   exports: [EmployeeService],
 })
 export class EmployeeModule {}

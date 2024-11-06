@@ -26,7 +26,7 @@ import * as bcrypt from "bcrypt";
 import { AuthService } from "../auth/auth.service";
 import { UserEntity } from "../user/entities/user.entity";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
-import { UserProfileDto } from "./dto/get.profile.dto";
+import { GetUserProfileDto } from "./dto/get.profile.dto";
 import { SlotService } from "../slots/slots.service";
 import { Role } from "../user/utils/user.enum";
 import { response } from "express";
@@ -682,40 +682,79 @@ export class EmployeeService {
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  async getProfile(userId: string): Promise<UserProfileDto> {
-    // Retrieve the user from UserEntity repository
-    const user = await this.UserRepository.findOne({
-      where: { id: userId },
-    });
+  async getProfile(userId: string): Promise<GetUserProfileDto> {
+    try {
+      const employeeProfile = await this.employeeRepository
+        .createQueryBuilder('employee')
+        .leftJoinAndSelect('employee.position', 'position')
+        .leftJoinAndSelect('employee.reviews', 'reviews')
+        .leftJoinAndSelect('employee.branch', 'branch')
+        .where('employee.id = :userId', { userId })
+        .andWhere('employee.deletedAt IS NULL')
+        .select([
+          'employee.id',
+          'employee.english_Name',
+          'employee.arabic_Name',
+          'employee.phoneNumber',
+          'employee.image',
+          'employee.available',
+          'employee.status',
+          'employee.workingHours',
+          'position',
+          'branch.id',
+          'branch.name',
+          'branch.location',
+          'branch.image',
+          'reviews.id',
+          'reviews.rating',
+          'reviews.comment_Before',
+          'reviews.comment_After',
+          'reviews.orderFirstTime',
+          'reviews.createdAt'
+        ])
+        .getOne();
 
-    // Handle case where user is not found
-    if (!user) {
-      throw new NotFoundException("User not found");
+      if (!employeeProfile) {
+        throw new NotFoundException('Employee profile not found');
+      }
+
+      // Calculate average ratings and total reviews
+      const reviews = employeeProfile.reviews || [];
+      const totalReviews = reviews.length;
+      const ratings = reviews.map(review => review.rating);
+      const oldestAvgRating = ratings.length > 0 ? ratings[0] : 0;
+      const newestAvgRating = ratings.length > 0 ? ratings[ratings.length - 1] : 0;
+
+      // Get user data
+      const userData = await this.UserRepository.findOne({
+        where: { id: userId },
+        select: ['username', 'email', 'role']
+      });
+
+      if (!userData) {
+        throw new NotFoundException('User data not found');
+      }
+
+      return {
+        id: employeeProfile.id,
+        username: userData.username,
+        email: userData.email,
+        phoneNumber: employeeProfile.phoneNumber,
+        image: employeeProfile.image,
+        position: employeeProfile.position,
+        branch: employeeProfile.branch,
+        workingHours: employeeProfile.workingHours,
+        totalReviews,
+        oldestAvgRating,
+        newestAvgRating,
+      };
+    } catch (error) {
+      console.error('Error in getProfile:', error);
+      throw new InternalServerErrorException(
+        'Failed to retrieve profile data',
+        error.message
+      );
     }
-
-    // Initialize profile data
-    const profileData: UserProfileDto = {
-      username: user.username,
-      email: user.email,
-      phoneNumber: null,
-      image: null,
-      position: null,
-    };
-
-    // Retrieve additional employee data if user is an employee
-    const employee = await this.employeeRepository.findOne({
-      where: { id: userId },
-      relations: ["position"],
-    });
-
-    // If employee record is found, enrich profile data
-    if (employee) {
-      profileData.phoneNumber = employee.phoneNumber || null;
-      profileData.image = employee.image || null;
-      profileData.position = employee.position || null; // Correctly assign PositionEntity
-    }
-
-    return profileData;
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
