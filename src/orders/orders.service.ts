@@ -135,8 +135,8 @@ export class OrdersService {
 
     if (couponCode) {
       payment = null;
-      coupon =
-        await this.GiftCouponService.getGiftCouponByCouponCode(couponCode);
+      coupon =await this.GiftCouponService.getGiftCouponByCouponCode(couponCode);
+      console
     } else {
       // Find the payment method with 'Visa'
       payment = await this.PaymentRepository.findOne({
@@ -194,7 +194,7 @@ export class OrdersService {
       payStatus = PaymentStatus.Paid;
     }
     const invoiceNumber = await this.generateUniqueInvoiceNumber();
-
+    console.log(coupon);
     // Create new order
     const newOrder = this.orderRepository.create({
       customer: reservation.customer,
@@ -219,7 +219,7 @@ export class OrdersService {
       payment, // Assign the Visa payment method to the order
       offerId,
       sharableOfferId,
-      couponId: coupon.id,
+      couponId: coupon ? coupon.id : null,
     });
 
     try {
