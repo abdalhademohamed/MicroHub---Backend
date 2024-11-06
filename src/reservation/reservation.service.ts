@@ -728,10 +728,22 @@ export class ReservationService {
         if (coupon.isRedeemed) {
           throw new ConflictException("Coupon has already been redeemed");
         }
-        // Check if the coupon is already redeemed
-        if (coupon.isReserved) {
-          throw new ConflictException("Coupon has already been reserved");
+        // Check if any of the requested services are already reserved
+        const alreadyReservedServices =
+          coupon.servicesReservationStatus?.filter(
+            (status) =>
+              body.services.includes(status.serviceId) && status.isReserved
+          );
+
+        if (alreadyReservedServices && alreadyReservedServices.length > 0) {
+          throw new ConflictException(
+            `Some services are already reserved: ${alreadyReservedServices.map((s) => s.serviceId).join(", ")}`
+          );
         }
+        // Check if the coupon is already redeemed
+        // if (coupon.isReserved) {
+        //   throw new ConflictException("Coupon has already been reserved");
+        // }
         // // Transform the coupon services into ServiceEntity type
         // const transformedServices: ServiceEntity[] = coupon.services.map(
         //   (service) => this.mapCouponServiceToServiceEntity(service)
@@ -743,6 +755,41 @@ export class ReservationService {
         const transformedServices: ServiceEntity[] = coupon.services
           .filter((service) => body.services.includes(service.id)) // Only include services requested in body
           .map((service) => this.mapCouponServiceToServiceEntity(service));
+
+          const servicesToReserve = coupon.services
+          .filter(service => body.services.includes(service.id))
+          .map(service => ({
+            serviceId: service.id,
+            isReserved: true,
+            serviceArabicName: service.arabic_Name,
+            serviceEnglishName: service.english_Name,
+            reservedAt: new Date(),
+          }));
+      
+        // Initialize or update servicesReservationStatus
+        if (!coupon.servicesReservationStatus) {
+          coupon.servicesReservationStatus = [];
+        }
+      
+        // Update or add reservation status for each service
+        servicesToReserve.forEach(serviceToReserve => {
+          const existingStatusIndex = coupon.servicesReservationStatus.findIndex(
+            status => status.serviceId === serviceToReserve.serviceId
+          );
+      
+          if (existingStatusIndex !== -1) {
+            coupon.servicesReservationStatus[existingStatusIndex] = {
+              ...coupon.servicesReservationStatus[existingStatusIndex],
+              ...serviceToReserve
+            };
+          } else {
+            coupon.servicesReservationStatus.push(serviceToReserve);
+          }
+        });
+      
+        // // Update the overall coupon reservation status
+        // coupon.isReserved = true;
+        await this.GiftCouponRepository.save(coupon);
 
         // Set the services to only the transformed ones from the coupon
         services = transformedServices;
@@ -965,6 +1012,7 @@ export class ReservationService {
       }
     }
   }
+  
   private mapCouponServiceToServiceEntity(couponService: any): ServiceEntity {
     const serviceEntity = new ServiceEntity();
     serviceEntity.id = couponService.id; // or whatever mapping is needed
