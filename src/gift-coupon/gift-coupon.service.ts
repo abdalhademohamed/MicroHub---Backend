@@ -263,7 +263,7 @@ export class GiftCouponService {
       );
 
       // Get all used services details
-      const usedServices = serviceIdsToRemove.map(serviceId => {
+      const usedServicesthatisremoved = serviceIdsToRemove.map(serviceId => {
         const service = giftCoupon.services.find(s => s.id === serviceId) || 
                        giftCoupon.sharableOffer.services.find(s => s.id === serviceId);
         
@@ -285,7 +285,7 @@ export class GiftCouponService {
           name: order.customer.fullName,
           phoneNumber: order.customer.phoneNumber,
         },
-        services: usedServices,
+        services: usedServicesthatisremoved,
         usedAt: order.reservation.start_Time || new Date()
       };
 
