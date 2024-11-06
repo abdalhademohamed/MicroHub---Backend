@@ -862,17 +862,17 @@ export class OrdersService {
             `No reservation found for order with ID ${orderId}`
           );
         }
-        // Update coupon isReserved status if couponId exists
-        if (order.couponId) {
-          const giftCoupon = await this.GiftCouponRepository.findOne({
-            where: { id: order.couponId },
-          });
+        // // Update coupon isReserved status if couponId exists
+        // if (order.couponId) {
+        //   const giftCoupon = await this.GiftCouponRepository.findOne({
+        //     where: { id: order.couponId },
+        //   });
 
-          if (giftCoupon) {
-            giftCoupon.isReserved = false;
-            await this.GiftCouponRepository.save(giftCoupon);
-          }
-        }
+        //   if (giftCoupon) {
+        //     giftCoupon.isReserved = false;
+        //     await this.GiftCouponRepository.save(giftCoupon);
+        //   }
+        // }
         console.log(order.reservation.id);
         await this.reservationService.deleteReservation(order.reservation.id);
         const deposit = order.reservation.deposit; // Get deposit from the reservation
