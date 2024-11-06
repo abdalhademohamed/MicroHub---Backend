@@ -14,6 +14,8 @@ import { CustomerEntity } from "../customer/entities/customer.entity";
 import { v4 as uuidv4 } from "uuid";
 import { OrderEntity } from "../orders/entities/order.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
+import { In } from 'typeorm';
+import { OrderStatus } from "src/orders/utils/order.status.enum";
 
 @Injectable()
 export class GiftCouponService {
@@ -27,7 +29,7 @@ export class GiftCouponService {
     @InjectRepository(CustomerEntity)
     private readonly customerRepository: Repository<CustomerEntity>,
     @InjectRepository(OrderEntity)
-    private readonly OrderRepository: Repository<OrderEntity>,
+    private readonly orderRepository: Repository<OrderEntity>,
     private readonly i18n: CustomI18nService
   ) {}
 
@@ -37,7 +39,7 @@ export class GiftCouponService {
     const { orderId, customerId } = createGiftCouponDto;
 
     try {
-      const Order = await this.OrderRepository.findOne({
+      const Order = await this.orderRepository.findOne({
         where: { id: orderId },
       });
 
@@ -75,7 +77,7 @@ export class GiftCouponService {
       const createdGiftCoupon =
         await this.giftCouponRepository.save(giftCoupon);
       Order.couponId = giftCoupon.id;
-      await this.OrderRepository.save(Order);
+      await this.orderRepository.save(Order);
       return createdGiftCoupon;
     } catch (error) {
       if (error instanceof NotFoundException) {
@@ -219,6 +221,7 @@ export class GiftCouponService {
   ): Promise<GiftCouponEntity> {
     const giftCoupon = await this.giftCouponRepository.findOne({
       where: { id: couponId },
+      relations: ['sharableOffer', 'sharableOffer.services']
     });
 
     if (!giftCoupon) {
@@ -242,19 +245,69 @@ export class GiftCouponService {
     }
 
     try {
+      // Find the single order that used this coupon
+      const order = await this.orderRepository.findOne({
+        where: { 
+          couponId: couponId,
+        },
+        relations: ['customer', 'reservation']
+      });
+
+      if (!order) {
+        throw new NotFoundException('Order not found for this coupon');
+      }
+
+      // Update services list
       giftCoupon.services = giftCoupon.services.filter(
         (service) => !serviceIdsToRemove.includes(service.id)
       );
 
+      // Get all used services details
+      const usedServices = serviceIdsToRemove.map(serviceId => {
+        const service = giftCoupon.services.find(s => s.id === serviceId) || 
+                       giftCoupon.sharableOffer.services.find(s => s.id === serviceId);
+        
+        if (!service) {
+          throw new NotFoundException(`Service with ID ${serviceId} not found`);
+        }
+
+        return {
+          id: service.id,
+          arabic_Name: service.arabic_Name,
+          english_Name: service.english_Name
+        };
+      });
+
+      // Create usage history entry
+      const usageHistoryEntry = {
+        customer: {
+          id: order.customer.id,
+          name: order.customer.fullName,
+          phoneNumber: order.customer.phoneNumber,
+        },
+        services: usedServices,
+        usedAt: order.reservation.start_Time || new Date()
+      };
+
+      // Update usage history
+      if (!giftCoupon.usageHistory) {
+        giftCoupon.usageHistory = [];
+      }
+      giftCoupon.usageHistory.push(usageHistoryEntry);
+
+      // Update counters
       const servicesRemovedCount = serviceIdsToRemove.length;
       giftCoupon.usedServices += servicesRemovedCount;
 
       if (giftCoupon.usedServices >= giftCoupon.totalServices) {
         giftCoupon.isRedeemed = true;
+        giftCoupon.redeemedAt = now;
+        giftCoupon.isReserved = true;
       }
 
       return await this.giftCouponRepository.save(giftCoupon);
     } catch (error) {
+      console.error('Error updating gift coupon:', error);
       throw new InternalServerErrorException(
         this.i18n.translate("test.GIFT_COUPON.UPDATE_FAILED")
       );

@@ -75,16 +75,17 @@ export class GiftCouponEntity {
     customer: {
       id: string;
       name: string;
-      email: string;
       phoneNumber: string;
-      image?: string;
+   
     };
     services: {
       id: string;
-      name: string;
       arabic_Name: string;
       english_Name: string;
     }[];
     usedAt: Date;
   }[];
+
+  @Column({ type: "boolean", default: false })
+  isReserved: boolean; // Indicates whether the coupon is currently reserved
 }
