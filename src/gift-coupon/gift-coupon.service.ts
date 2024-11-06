@@ -302,7 +302,7 @@ export class GiftCouponService {
       if (giftCoupon.usedServices >= giftCoupon.totalServices) {
         giftCoupon.isRedeemed = true;
         giftCoupon.redeemedAt = now;
-        giftCoupon.isReserved = true;
+        // giftCoupon.isReserved = true;
       }
 
       return await this.giftCouponRepository.save(giftCoupon);

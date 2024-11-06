@@ -86,6 +86,15 @@ export class GiftCouponEntity {
     usedAt: Date;
   }[];
 
-  @Column({ type: "boolean", default: false })
-  isReserved: boolean; // Indicates whether the coupon is currently reserved
+
+
+  @Column('jsonb', { nullable: true, default: [] })
+  servicesReservationStatus: {
+    serviceId: string;
+    serviceArabicName: string,
+    serviceEnglishName: string,
+    isReserved: boolean;
+    reservedAt: Date
+
+  }[];
 }
