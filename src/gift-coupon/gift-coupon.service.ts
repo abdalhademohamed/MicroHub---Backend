@@ -261,6 +261,8 @@ export class GiftCouponService {
       giftCoupon.services = giftCoupon.services.filter(
         (service) => !serviceIdsToRemove.includes(service.id)
       );
+      console.log(giftCoupon.services);
+      console.log(serviceIdsToRemove.length);
 
       // Get all used services details
       const usedServicesthatisremoved = serviceIdsToRemove.map(serviceId => {
