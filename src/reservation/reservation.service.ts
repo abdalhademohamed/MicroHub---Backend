@@ -675,7 +675,7 @@ export class ReservationService {
 
       // Check for sharable offer and add its services if applicable
       if (body.sharableOfferId && body.services && body.services.length > 0) {
-        serviceIds = body.services 
+        serviceIds = body.services;
 
         const sharableOffer = await this.SharableOfferRepository.findOne({
           where: { id: body.sharableOfferId },
@@ -694,8 +694,7 @@ export class ReservationService {
             this.i18n.translate("test.RESERVATION.INVALID_OFFER_SERVICES")
           );
         }
-        
-        
+
         const serviceTotals = await this.calculateTotalDuration(serviceIds);
 
         duration += serviceTotals.duration;
@@ -716,6 +715,7 @@ export class ReservationService {
 
       // Check for coupon code and add its services if applicable
       if (body.couponCode && body.services && body.services.length > 0) {
+        serviceIds = body.services;
         const coupon = await this.GiftCouponRepository.findOne({
           where: { couponCode: body.couponCode },
         });
@@ -729,13 +729,20 @@ export class ReservationService {
           throw new ConflictException("Coupon has already been redeemed");
         }
 
-        // Transform the coupon services into ServiceEntity type
-        const transformedServices: ServiceEntity[] = coupon.services.map(
-          (service) => this.mapCouponServiceToServiceEntity(service)
-        );
+        // // Transform the coupon services into ServiceEntity type
+        // const transformedServices: ServiceEntity[] = coupon.services.map(
+        //   (service) => this.mapCouponServiceToServiceEntity(service)
+        // );
 
-        // Merge the transformed services
-        services = [...services, ...transformedServices];
+        // // Merge the transformed services
+        // services = [...services, ...transformedServices];
+        // Transform the coupon services into ServiceEntity type
+        const transformedServices: ServiceEntity[] = coupon.services
+          .filter((service) => body.services.includes(service.id)) // Only include services requested in body
+          .map((service) => this.mapCouponServiceToServiceEntity(service));
+
+        // Set the services to only the transformed ones from the coupon
+        services = transformedServices;
         body.deposit = 0;
         body.deposit_Content = null;
         const serviceTotals = await this.calculateTotalDuration(serviceIds);
@@ -930,7 +937,7 @@ export class ReservationService {
       return { reservation };
     } catch (error) {
       console.log(error);
-      console.log(error)
+      console.log(error);
       // Granular error handling and categorization
       if (error instanceof NotFoundException) {
         throw new NotFoundException({
