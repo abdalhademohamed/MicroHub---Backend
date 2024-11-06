@@ -69,4 +69,22 @@ export class GiftCouponEntity {
 
   @Column({ type: "timestamp", nullable: true })
   endDateTime: Date; // End date and time for the coupon validity
+
+  @Column('jsonb', { nullable: true, default: [] })
+  usageHistory: {
+    customer: {
+      id: string;
+      name: string;
+      email: string;
+      phoneNumber: string;
+      image?: string;
+    };
+    services: {
+      id: string;
+      name: string;
+      arabic_Name: string;
+      english_Name: string;
+    }[];
+    usedAt: Date;
+  }[];
 }

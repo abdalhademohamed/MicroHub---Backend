@@ -87,9 +87,14 @@ export class GiftCouponService {
     }
   }
 
-  async getGiftCoupon(couponId: string): Promise<GiftCouponEntity> {
+  async getGiftCoupon(couponId: string): Promise<any> {
     const giftCoupon = await this.giftCouponRepository.findOne({
       where: { id: couponId },
+      relations: [
+        "ownedBy", 
+        "sharableOffer", 
+        "sharableOffer.services"
+      ],
     });
 
     if (!giftCoupon) {
@@ -112,14 +117,47 @@ export class GiftCouponService {
       );
     }
 
-    return giftCoupon;
+    // Get all services from sharable offer
+    const allServices = giftCoupon.sharableOffer.services;
+
+    // Get remaining services from coupon
+    const leftServices = giftCoupon.services || [];
+
+    // Calculate used services by finding services that are in allServices but not in leftServices
+    const usedServices = allServices.filter(
+      (service) =>
+        !leftServices.some((leftService) => leftService.id === service.id)
+    );
+
+    // Sort usage history by date
+    const sortedUsageHistory = [...(giftCoupon.usageHistory || [])].sort(
+      (a, b) => new Date(b.usedAt).getTime() - new Date(a.usedAt).getTime()
+    );
+
+    return {
+      id: couponId,
+      couponCode: giftCoupon.couponCode,
+      isredeemed: giftCoupon.isRedeemed,
+      redeemdAt: giftCoupon.redeemedAt,
+      ownedBy: giftCoupon.ownedBy,
+      allServices,
+      leftServices,
+      usedServices,
+      totalServicesCount: allServices.length,
+      remainingServicesCount: leftServices.length,
+      usedServicesCount: usedServices.length,
+      usageHistory: sortedUsageHistory,
+    };
   }
 
-  async getGiftCouponByCouponCode(
-    couponCode: string
-  ): Promise<GiftCouponEntity> {
+  async getGiftCouponByCouponCode(couponCode: string): Promise<any> {
     const giftCoupon = await this.giftCouponRepository.findOne({
       where: { couponCode },
+      relations: [
+        "ownedBy", 
+        "sharableOffer", 
+        "sharableOffer.services"
+      ],
     });
 
     if (!giftCoupon) {
@@ -142,7 +180,37 @@ export class GiftCouponService {
       );
     }
 
-    return giftCoupon;
+    // Get all services from sharable offer
+    const allServices = giftCoupon.sharableOffer.services;
+
+    // Get remaining services from coupon
+    const leftServices = giftCoupon.services || [];
+
+    // Calculate used services by finding services that are in allServices but not in leftServices
+    const usedServices = allServices.filter(
+      (service) =>
+        !leftServices.some((leftService) => leftService.id === service.id)
+    );
+
+    // Sort usage history by date
+    const sortedUsageHistory = [...(giftCoupon.usageHistory || [])].sort(
+      (a, b) => new Date(b.usedAt).getTime() - new Date(a.usedAt).getTime()
+    );
+
+    return {
+      id: giftCoupon.id,
+      couponCode: giftCoupon.couponCode,
+      isredeemed: giftCoupon.isRedeemed,
+      redeemdAt: giftCoupon.redeemedAt,
+      ownedBy: giftCoupon.ownedBy,
+      allServices,
+      leftServices,
+      usedServices,
+      totalServicesCount: allServices.length,
+      remainingServicesCount: leftServices.length,
+      usedServicesCount: usedServices.length,
+      usageHistory: sortedUsageHistory,
+    };
   }
 
   async updateGiftCouponServices(
