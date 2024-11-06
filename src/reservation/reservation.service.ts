@@ -987,7 +987,6 @@ export class ReservationService {
       return { reservation };
     } catch (error) {
       console.log(error);
-      console.log(error);
       // Granular error handling and categorization
       if (error instanceof NotFoundException) {
         throw new NotFoundException({
