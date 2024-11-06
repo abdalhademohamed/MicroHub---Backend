@@ -728,7 +728,10 @@ export class ReservationService {
         if (coupon.isRedeemed) {
           throw new ConflictException("Coupon has already been redeemed");
         }
-
+        // Check if the coupon is already redeemed
+        if (coupon.isReserved) {
+          throw new ConflictException("Coupon has already been reserved");
+        }
         // // Transform the coupon services into ServiceEntity type
         // const transformedServices: ServiceEntity[] = coupon.services.map(
         //   (service) => this.mapCouponServiceToServiceEntity(service)
