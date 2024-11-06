@@ -697,8 +697,11 @@ export class ReservationService {
 
         const serviceTotals = await this.calculateTotalDuration(serviceIds);
 
+        const fullServiceIds = sharableOffer.services.map((service) => service.id); // Extract service IDs from the sharable offer
+        const fullServiceTotals = await this.calculateTotalDuration(fullServiceIds);
+        
         duration += serviceTotals.duration;
-        price += serviceTotals.price;
+        price += fullServiceTotals.price;
 
         // Ensure image is provided
         if (!image) {
