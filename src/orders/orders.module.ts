@@ -20,6 +20,7 @@ import { GiftCouponModule } from "../gift-coupon/gift-coupon.module";
 import { ReservationModule } from "../reservation/reservation.module";
 import { CustomerEntity } from "../customer/entities/customer.entity";
 import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
+import { GiftCouponEntity } from "src/gift-coupon/entities/gift-coupon.entity";
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -35,6 +36,7 @@ import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
       CustomerEntity,
       RootoshEntity,
       CommentEntity,
+      GiftCouponEntity
 
     ]),
     NotificationModule,

@@ -111,7 +111,7 @@ export class OrdersService {
     couponCode?: string
   ): Promise<OrderEntity> {
     let payment;
-    let couponId;
+    let coupon;
     // Fetch reservation with related services
     const reservation = await this.reservationRepository.findOne({
       where: { id: reservationId },
@@ -132,7 +132,7 @@ export class OrdersService {
 
     if (couponCode) {
       payment = null;
-      couponId =
+      coupon =
         await this.GiftCouponService.getGiftCouponByCouponCode(couponCode);
     } else {
       // Find the payment method with 'Visa'
@@ -216,7 +216,7 @@ export class OrdersService {
       payment, // Assign the Visa payment method to the order
       offerId,
       sharableOfferId,
-      couponId,
+      couponId: coupon.id,
     });
 
     try {
