@@ -43,6 +43,7 @@ import {
 import { PaginatedCommentResponseDto } from "./dto/paginated.comments.response.dto";
 import { ReceiptEntity } from "../receipt/entities/receipt.entity";
 import { GetCommentsbycustomerDto } from "./dto/get-comments.dto";
+import { GiftCouponEntity } from "src/gift-coupon/entities/gift-coupon.entity";
 
 @Injectable()
 export class OrdersService {
@@ -84,7 +85,9 @@ export class OrdersService {
     @InjectRepository(CustomerEntity)
     private readonly CustomerRepository: Repository<CustomerEntity>,
     @InjectRepository(ReceiptEntity)
-    private readonly ReceiptRepository: Repository<ReceiptEntity>
+    private readonly ReceiptRepository: Repository<ReceiptEntity>,
+    @InjectRepository(GiftCouponEntity)
+    private readonly GiftCouponRepository: Repository<GiftCouponEntity>
   ) {}
   // Method to generate a unique incremental invoice number
   private async generateUniqueInvoiceNumber(): Promise<number> {
@@ -679,18 +682,18 @@ export class OrdersService {
         );
       }
 
-         // Check if the order date matches today's date
-         const today = new Date();
-         today.setHours(0, 0, 0, 0); // Reset time part to compare only date
-   
-         const orderDate = new Date(order.date); // Assuming 'order.date' contains the order date
-         orderDate.setHours(0, 0, 0, 0); // Reset time part to compare only date
-   
-         if (orderDate.getTime() !== today.getTime()) {
-           throw new BadRequestException(
-             `Order date ${orderDate.toDateString()} does not match today's date`
-           );
-         }
+      // Check if the order date matches today's date
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Reset time part to compare only date
+
+      const orderDate = new Date(order.date); // Assuming 'order.date' contains the order date
+      orderDate.setHours(0, 0, 0, 0); // Reset time part to compare only date
+
+      if (orderDate.getTime() !== today.getTime()) {
+        throw new BadRequestException(
+          `Order date ${orderDate.toDateString()} does not match today's date`
+        );
+      }
       // Update the paymentStatus
       order.paymentStatus =
         newPaymentStatus === "paid"
@@ -858,6 +861,17 @@ export class OrdersService {
           throw new NotFoundException(
             `No reservation found for order with ID ${orderId}`
           );
+        }
+        // Update coupon isReserved status if couponId exists
+        if (order.couponId) {
+          const giftCoupon = await this.GiftCouponRepository.findOne({
+            where: { id: order.couponId },
+          });
+
+          if (giftCoupon) {
+            giftCoupon.isReserved = false;
+            await this.GiftCouponRepository.save(giftCoupon);
+          }
         }
         console.log(order.reservation.id);
         await this.reservationService.deleteReservation(order.reservation.id);
@@ -1927,7 +1941,7 @@ export class OrdersService {
     getCommentsDto: GetCommentsbycustomerDto
   ): Promise<PaginatedCommentResponseDto> {
     const { page, limit, fromDate, toDate, sort } = getCommentsDto;
-    console.log(this.commentRepository)
+    console.log(this.commentRepository);
     try {
       const query = this.commentRepository.createQueryBuilder("comment")
         .leftJoinAndSelect("comment.order", "order")
