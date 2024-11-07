@@ -11,7 +11,7 @@ export class CustomI18nService {
   ) {}
 
   translate(key: string, options?: any) {
-    const lang = this.request.headers['lang'] as string || 'en';
+    const lang = this.request.headers['language'] as string || 'en';
     return this.i18nService.t(key, { lang, ...options });
   }
 }
