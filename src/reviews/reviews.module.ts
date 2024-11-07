@@ -11,6 +11,7 @@ import { UserModule } from "../user/user.module";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { NotificationModule } from "../notification/notification.module";
 import { CustomI18nService } from "../common/custom.18n.service";
+import { CommentEntity } from "src/comment/entities/comment.entity";
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { CustomI18nService } from "../common/custom.18n.service";
       OrderEntity,
       UserEntity,
       AuditLogEntity,
+      CommentEntity,
     ]), // Add OrderEntity here
     NotificationModule
   ],
