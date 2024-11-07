@@ -45,7 +45,7 @@ import { PaginatedCommentResponseDto } from "./dto/paginated.comments.response.d
 import { ReceiptEntity } from "../receipt/entities/receipt.entity";
 import { GetCommentsbycustomerDto } from "./dto/get-comments.dto";
 import { GiftCouponEntity } from "../gift-coupon/entities/gift-coupon.entity";
-import { CustomI18nService } from "src/common/custom.18n.service";
+import { CustomI18nService } from "../common/custom.18n.service";
 
 @Injectable()
 export class OrdersService {

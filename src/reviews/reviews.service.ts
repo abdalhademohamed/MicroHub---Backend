@@ -19,7 +19,7 @@ import { NotificationService } from "../notification/notification.service";
 import { OrderStatus } from "../orders/utils/order.status.enum";
 import { CustomI18nService } from "../common/custom.18n.service";
 import { I18nService } from "nestjs-i18n";
-import { CommentEntity } from "src/comment/entities/comment.entity";
+import { CommentEntity } from "../comment/entities/comment.entity";
 import { GetEmployeeReviewsCommentsDto, SortOrder } from "./dto/get-employee-reviews-comments.dto";
 
 @Injectable()

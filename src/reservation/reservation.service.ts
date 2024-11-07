@@ -34,7 +34,7 @@ import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
 import { NotificationService } from "../notification/notification.service";
 import { EmployeeEntity } from "../employee/entities/employee.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
-import { GiftCouponService } from "src/gift-coupon/gift-coupon.service";
+import { GiftCouponService } from "../gift-coupon/gift-coupon.service";
 
 @Injectable()
 export class ReservationService {

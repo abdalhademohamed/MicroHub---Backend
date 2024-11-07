@@ -25,8 +25,8 @@ import { GiftCouponModule } from "../gift-coupon/gift-coupon.module";
 import { CommentEntity } from "../comment/entities/comment.entity";
 import { ReceiptEntity } from "../receipt/entities/receipt.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
-import { GiftCouponService } from "src/gift-coupon/gift-coupon.service";
-import { OrdersModule } from "src/orders/orders.module";
+import { GiftCouponService } from "../gift-coupon/gift-coupon.service";
+import { OrdersModule } from "../orders/orders.module";
 
 
 @Module({
