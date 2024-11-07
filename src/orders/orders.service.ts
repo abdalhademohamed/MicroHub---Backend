@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   forwardRef,
   Inject,
@@ -44,6 +45,7 @@ import { PaginatedCommentResponseDto } from "./dto/paginated.comments.response.d
 import { ReceiptEntity } from "../receipt/entities/receipt.entity";
 import { GetCommentsbycustomerDto } from "./dto/get-comments.dto";
 import { GiftCouponEntity } from "../gift-coupon/entities/gift-coupon.entity";
+import { CustomI18nService } from "src/common/custom.18n.service";
 
 @Injectable()
 export class OrdersService {
@@ -79,13 +81,14 @@ export class OrdersService {
 
     @InjectRepository(SharableOfferEntity)
     private readonly SharableOfferRepository: Repository<SharableOfferEntity>,
-    private readonly GiftCouponService: GiftCouponService,
+    // private readonly GiftCouponService: GiftCouponService,
     @Inject(forwardRef(() => ReservationService)) // Inject ReservationService
     private readonly reservationService: ReservationService,
     @InjectRepository(CustomerEntity)
     private readonly CustomerRepository: Repository<CustomerEntity>,
     @InjectRepository(ReceiptEntity)
     private readonly ReceiptRepository: Repository<ReceiptEntity>,
+    private readonly i18n: CustomI18nService,
     @InjectRepository(GiftCouponEntity)
     private readonly GiftCouponRepository: Repository<GiftCouponEntity>
   ) {}
@@ -135,8 +138,10 @@ export class OrdersService {
 
     if (couponCode) {
       payment = null;
-      coupon =await this.GiftCouponService.getGiftCouponByCouponCode(couponCode);
-      console
+      // coupon =
+      //   await this.GiftCouponService.getGiftCouponByCouponCode(couponCode);
+      // console;
+      coupon = await this.getGiftCouponByCouponCode(couponCode);
     } else {
       // Find the payment method with 'Visa'
       payment = await this.PaymentRepository.findOne({
@@ -340,6 +345,81 @@ export class OrdersService {
     }
   }
 
+ private async getGiftCouponByCouponCode(couponCode: string): Promise<any> {
+    const giftCoupon = await this.GiftCouponRepository.findOne({
+      where: { couponCode },
+      relations: ["ownedBy", "sharableOffer", "sharableOffer.services"],
+    });
+
+    if (!giftCoupon) {
+      throw new NotFoundException(
+        this.i18n.translate("test.GIFT_COUPON.NOT_FOUND")
+      );
+    }
+
+    const now = new Date();
+
+    if (giftCoupon.isRedeemed) {
+      throw new ConflictException(
+        this.i18n.translate("test.GIFT_COUPON.ALREADY_REDEEMED")
+      );
+    }
+
+    if (giftCoupon.endDateTime && giftCoupon.endDateTime < now) {
+      throw new ConflictException(
+        this.i18n.translate("test.GIFT_COUPON.EXPIRED")
+      );
+    }
+
+    // // Get all services from sharable offer
+    // const allServices = giftCoupon.services;
+
+    // // Get remaining services from coupon
+    // const leftServices = giftCoupon.services || [];
+
+    // // Filter out reserved services
+    // const availableServices = leftServices.filter((service) => {
+    //   const reservationStatus = giftCoupon.servicesReservationStatus?.find(
+    //     (status) => status.serviceId === service.id
+    //   );
+    //   return !reservationStatus || !reservationStatus.isReserved;
+    // });
+
+    // // Calculate used services
+    // const usedServices = allServices.filter(
+    //   (service) =>
+    //     !leftServices.some((leftService) => leftService.id === service.id)
+    // );
+
+    // // Sort usage history by date
+    // const sortedUsageHistory = [...(giftCoupon.usageHistory || [])].sort(
+    //   (a, b) => new Date(b.usedAt).getTime() - new Date(a.usedAt).getTime()
+    // );
+
+    // // Get reserved services
+    // const reservedServices = leftServices.filter((service) => {
+    //   const reservationStatus = giftCoupon.servicesReservationStatus?.find(
+    //     (status) => status.serviceId === service.id
+    //   );
+    //   return reservationStatus && reservationStatus.isReserved;
+    // });
+
+    return {
+      id: giftCoupon.id,
+      couponCode: giftCoupon.couponCode,
+      isredeemed: giftCoupon.isRedeemed,
+      redeemdAt: giftCoupon.redeemedAt,
+      ownedBy: giftCoupon.ownedBy,
+      services: giftCoupon.services,
+      leftServices: giftCoupon.Leftservices, // Now only returns unreserved services
+      // reservedServices, // Add reserved services to response
+      usedServices:giftCoupon.Usedservices,
+      totalServicesCount: giftCoupon.totalServicesCount,
+      remainingServicesCount: giftCoupon.remainingServicesCount,
+      usedServicesCount: giftCoupon.usedServicesCount,
+      usageHistory: giftCoupon.usageHistory,
+    };
+  }
   /* -------------------------------------------------------------------------- */
   /*                            CreateOrderForRootosh                           */
   /* -------------------------------------------------------------------------- */
@@ -1445,6 +1525,11 @@ export class OrdersService {
     toDate?: string,
     employeeId?: string // Add employeeId as a parameter
   ): Promise<any> {
+    // Fetch the order
+    // const order = await this.orderRepository.findOne({
+    //   where: { id: "00f143d9-3b83-4516-91ad-4eff2a6a78ac" },
+    // });
+    // console.log(order)
     const queryBuilder = this.orderRepository
       .createQueryBuilder("order")
       .innerJoin("order.reservation", "reservation")
@@ -1943,7 +2028,8 @@ export class OrdersService {
     const { page, limit, fromDate, toDate, sort } = getCommentsDto;
     console.log(this.commentRepository);
     try {
-      const query = this.commentRepository.createQueryBuilder("comment")
+      const query = this.commentRepository
+        .createQueryBuilder("comment")
         .leftJoinAndSelect("comment.order", "order")
         .leftJoinAndSelect("comment.employee", "employee")
         .leftJoinAndSelect("order.customer", "customer")
@@ -2036,7 +2122,7 @@ export class OrdersService {
         totalPages: Math.ceil(total / limit),
       };
     } catch (error) {
-      console.log(error)
+      console.log(error);
       throw new InternalServerErrorException(
         "Failed to retrieve customer comments",
         error.stack

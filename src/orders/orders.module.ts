@@ -21,6 +21,8 @@ import { ReservationModule } from "../reservation/reservation.module";
 import { CustomerEntity } from "../customer/entities/customer.entity";
 import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
 import { GiftCouponEntity } from "../gift-coupon/entities/gift-coupon.entity";
+import { GiftCouponService } from "src/gift-coupon/gift-coupon.service";
+import { CustomI18nService } from "src/common/custom.18n.service";
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -39,12 +41,12 @@ import { GiftCouponEntity } from "../gift-coupon/entities/gift-coupon.entity";
       GiftCouponEntity
 
     ]),
+    
     NotificationModule,
-    GiftCouponModule,
     forwardRef(() => ReservationModule), // Use forwardRef for ReservationModule
   ],
   controllers: [OrdersController],
-  providers: [OrdersService, CloudinaryService],
+  providers: [OrdersService, CloudinaryService,CustomI18nService],
   exports: [OrdersService],
 })
 export class OrdersModule {}
