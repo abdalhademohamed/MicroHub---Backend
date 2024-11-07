@@ -21,7 +21,7 @@ import { CreateReceiptFromReservationIdDto } from "./dto/create.receipt.from.res
 import { GetReceiptsDto } from "./dto/get-receipts.dto";
 import { CustomI18nService } from "../common/custom.18n.service";
 import { I18nService } from "nestjs-i18n";
-import { SharableOfferEntity } from "src/sharable-offer/entities/sharable-offer.entity";
+import { SharableOfferEntity } from "../sharable-offer/entities/sharable-offer.entity";
 
 @Injectable()
 export class ReceiptService {

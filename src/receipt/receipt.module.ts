@@ -9,7 +9,7 @@ import { ServiceEntity } from "../service/entities/service.entity";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { OfferEntity } from "../offer/entities/offer.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
-import { SharableOfferEntity } from "src/sharable-offer/entities/sharable-offer.entity";
+import { SharableOfferEntity } from "../sharable-offer/entities/sharable-offer.entity";
 
 @Module({
   imports: [

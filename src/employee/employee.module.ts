@@ -17,7 +17,7 @@ import { WorkingEntity } from "../slots/entities/working.entity";
 import { SlotsEntity } from "../slots/entities/slots.entity";
 import { ReservationEntity } from "../reservation/entities/reservation.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
-import { ReviewEntity } from "src/reviews/entities/review.entity";
+import { ReviewEntity } from "../reviews/entities/review.entity";
 
 @Module({
   imports: [

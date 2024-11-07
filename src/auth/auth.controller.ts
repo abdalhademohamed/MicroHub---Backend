@@ -22,6 +22,7 @@ import { LoginAuthDto } from "./dto/login.auth.dto";
 import { AccessTokenGuard } from "./guards/accessToken.guard";
 import { RefreshTokenGuard } from "./guards/refreshToken.guard";
 import {
+  ApiBearerAuth,
   ApiBody,
   ApiOperation,
   ApiQuery,
@@ -34,6 +35,7 @@ import {
 } from "./dto/reset.pw.auth.dto";
 import { RefreshTokenDto } from "./dto/refresh.token.dto";
 @ApiTags("auth")
+
 @Controller("auth")
 export class AuthController {
   constructor(private readonly authService: AuthService) {}

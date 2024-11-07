@@ -15,7 +15,7 @@ import { v4 as uuidv4 } from "uuid";
 import { OrderEntity } from "../orders/entities/order.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
 import { In } from 'typeorm';
-import { OrderStatus } from "src/orders/utils/order.status.enum";
+import { OrderStatus } from "../orders/utils/order.status.enum";
 
 @Injectable()
 export class GiftCouponService {

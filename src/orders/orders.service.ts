@@ -43,7 +43,7 @@ import {
 import { PaginatedCommentResponseDto } from "./dto/paginated.comments.response.dto";
 import { ReceiptEntity } from "../receipt/entities/receipt.entity";
 import { GetCommentsbycustomerDto } from "./dto/get-comments.dto";
-import { GiftCouponEntity } from "src/gift-coupon/entities/gift-coupon.entity";
+import { GiftCouponEntity } from "../gift-coupon/entities/gift-coupon.entity";
 
 @Injectable()
 export class OrdersService {
