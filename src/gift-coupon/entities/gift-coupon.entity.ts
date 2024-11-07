@@ -37,18 +37,46 @@ export class GiftCouponEntity {
   ownedBy: CustomerEntity;
 
   @Column({ type: "int", default: 0 })
-  totalServices: number; // Total number of services in the package
+  totalServicesCount: number; // Total number of services in the package
 
   @Column({ type: "int", default: 0 })
-  usedServices: number; // Number of services already used by the customer
+  usedServicesCount: number; // Number of services already used by the customer
 
   @Column({ type: "int", default: 0 })
-  giftedServices: number; // Number of services given away as gift coupons
+  remainingServicesCount: number; // Number of services given away as gift coupons
 
   // List of services from the sharable offer
   // List of services from the sharable offer
   @Column("jsonb", { nullable: true })
   services: {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    imageUrl: string; // Add additional fields from your JSON as necessary
+    arabic_Name: string;
+    english_Name: string;
+    duration_Mins: number;
+    rootosh_Number: number;
+    months_To_Expire: number;
+  }[]; // List of services associated with this coupon
+
+  @Column("jsonb", { nullable: true ,default:[]})
+  Leftservices: {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    imageUrl: string; // Add additional fields from your JSON as necessary
+    arabic_Name: string;
+    english_Name: string;
+    duration_Mins: number;
+    rootosh_Number: number;
+    months_To_Expire: number;
+  }[]; // List of services associated with this coupon
+
+  @Column("jsonb", { nullable: true ,default:[]})
+  Usedservices: {
     id: string;
     name: string;
     description: string;
@@ -88,13 +116,13 @@ export class GiftCouponEntity {
 
 
 
-  @Column('jsonb', { nullable: true, default: [] })
-  servicesReservationStatus: {
-    serviceId: string;
-    serviceArabicName: string,
-    serviceEnglishName: string,
-    isReserved: boolean;
-    reservedAt: Date
+  // @Column('jsonb', { nullable: true, default: [] })
+  // servicesReservationStatus: {
+  //   serviceId: string;
+  //   serviceArabicName: string,
+  //   serviceEnglishName: string,
+  //   isReserved: boolean;
+  //   reservedAt: Date
 
-  }[];
+  // }[];
 }
