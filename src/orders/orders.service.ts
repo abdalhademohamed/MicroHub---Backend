@@ -1523,29 +1523,45 @@ export class OrdersService {
     branchId?: string,
     fromDate?: string,
     toDate?: string,
-    employeeId?: string // Add employeeId as a parameter
+    employeeId?: string
   ): Promise<any> {
-    // Fetch the order
-    // const order = await this.orderRepository.findOne({
-    //   where: { id: "00f143d9-3b83-4516-91ad-4eff2a6a78ac" },
-    // });
-    // console.log(order)
+    const employee = await this.employeeRepository.findOne({
+      where: { id: employeeId },
+      relations: ['position']
+    });
+
+    if (!employee) {
+      throw new NotFoundException('Employee not found');
+    }
+
     const queryBuilder = this.orderRepository
       .createQueryBuilder("order")
       .innerJoin("order.reservation", "reservation")
-      .leftJoin("order.artist", "employee") // Ensure you're using the correct relation name
       .select("order.status", "status")
       .addSelect("COUNT(order.id)", "count")
       .groupBy("order.status");
 
-    // Conditionally add the where clause based on branchId, fromDate, toDate, and employeeId
+    // Different join logic based on employee role
+    if (employee.position.postion === Postion.ARTIST) {
+      // For artists - check orders they worked on
+      queryBuilder.leftJoin("order.artist", "employee")
+        .andWhere("employee.id = :employeeId", { employeeId });
+    } else if (employee.position.postion === Postion.ARTISTMANAGER) {
+      // For artist managers - check orders they reviewed
+      queryBuilder
+        .leftJoin("order.reviews", "review")
+        .leftJoin("review.employee", "reviewer")
+        .andWhere("reviewer.id = :employeeId", { employeeId });
+    }
+
+    // Add other conditions
     if (branchId) {
       queryBuilder.andWhere("reservation.branchId = :branchId", { branchId });
     }
 
     if (fromDate) {
       const startOfDay = new Date(fromDate);
-      startOfDay.setHours(0, 0, 0, 0); // Set time to 00:00:00
+      startOfDay.setHours(0, 0, 0, 0);
       queryBuilder.andWhere("reservation.start_Time >= :fromDate", {
         fromDate: startOfDay,
       });
@@ -1553,19 +1569,15 @@ export class OrdersService {
 
     if (toDate) {
       const endOfDay = new Date(toDate);
-      endOfDay.setHours(23, 59, 59, 999); // Set time to 23:59:59
+      endOfDay.setHours(23, 59, 59, 999);
       queryBuilder.andWhere("reservation.start_Time <= :toDate", {
         toDate: endOfDay,
       });
     }
 
-    if (employeeId) {
-      queryBuilder.andWhere("employee.id = :employeeId", { employeeId }); // Filter by employee ID
-    }
-
     const orders = await queryBuilder.getRawMany();
 
-    // Initialize the status count object with all possible statuses
+    // Initialize the status count object
     const orderStatusCounts: { [key in OrderStatus]: number } = {
       [OrderStatus.Pending]: 0,
       [OrderStatus.InQueue]: 0,
@@ -1576,13 +1588,14 @@ export class OrdersService {
       [OrderStatus.Abscent]: 0,
     };
 
-    // Populate the orderStatusCounts object with the results from the query
+    // Populate counts
     orders.forEach((order) => {
       orderStatusCounts[order.status] = parseInt(order.count, 10);
     });
 
     return orderStatusCounts;
   }
+
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Method to get the count of each order status
   async getOrderStatusCountByArtist(
