@@ -55,6 +55,7 @@ export class ReceiptService {
 
     try {
       let offer = null;
+      let services = [];
       let discountPercentage = 0;
       // Fetch the user who created the receipt
       const createdBy = await this.userRepository.findOne({
@@ -92,7 +93,15 @@ export class ReceiptService {
         );
       }
 
-      const services = reservation.services;
+      if(order.sharableOfferId){
+        const sharableOffer = await this.sharableOfferRepository.findOne({
+          where: { id: order.sharableOfferId },
+          relations: ['services']
+        });
+        services=sharableOffer.services
+      }else{
+        services=reservation.services
+      }
       const rootoshes = reservation.rootoshes;
       // if (!services || services.length === 0) {
       //   throw new NotFoundException("No services found for the reservation");
@@ -112,46 +121,28 @@ export class ReceiptService {
       let formattedPaymentForRootoshes = [];
       // Declare the offer variable outside the if block
       if (services && services.length > 0) {
-        if (order.sharableOfferId) {
-          // Fetch the sharable offer with its services
-          const sharableOffer = await this.sharableOfferRepository.findOne({
-            where: { id: order.sharableOfferId },
-            relations: ["services"],
-          });
-
-          if (!sharableOffer) {
-            throw new NotFoundException("Sharable offer not found");
-          }
-          // Map the services from the sharable offer
-          formattedPaymentForServices = sharableOffer.services.map(
-            (service) => ({
-              name: service.english_Name,
-              duration: service.duration_Mins,
-              price: service.price.toString(), // Ensure price is a string
-            })
-          );
-        }
-        else if (order.couponId) {
-          formattedPaymentForServices = services.map((services) => ({
-            name: services.english_Name,
-            duration: services.duration_Mins,
-            price: 0, // Assuming the price for services is 0, as per your original logic
-          }));
-        }else{
+        if (order.couponId) {
+          // For coupon services, price is 0
           formattedPaymentForServices = services.map((service) => ({
             name: service.english_Name,
             duration: service.duration_Mins,
-            price: service.price.toString(), // Ensure price is a string
+            price: "0", // Price is 0 for coupon services
+          }));
+        } else {
+          // For regular services and sharable offer services
+          formattedPaymentForServices = services.map((service) => ({
+            name: service.english_Name,
+            duration: service.duration_Mins,
+            price: service.price.toString(),
           }));
         }
-       
       } else if (rootoshes && rootoshes.length > 0) {
         formattedPaymentForRootoshes = rootoshes.map((rootosh) => ({
           name: rootosh.english_Name,
           duration: rootosh.duration_Mins,
-          price: 0, // Assuming the price for rootoshes is 0, as per your original logic
+          price: 0,
         }));
-      }  else {
+      } else {
         throw new NotFoundException(
           "No services or rootoshes found for the reservation"
         );
@@ -397,7 +388,7 @@ export class ReceiptService {
     try {
       let offer = null;
       let discountPercentage = 0;
-
+      let services = [];
       // Fetch the user who created the receipt
       const createdBy = await this.userRepository.findOne({
         where: { id: userId },
@@ -436,18 +427,37 @@ export class ReceiptService {
         );
       }
 
-      const services = reservation.services;
+     
+      if(order.sharableOfferId){
+        const sharableOffer = await this.sharableOfferRepository.findOne({
+          where: { id: order.sharableOfferId },
+          relations: ['services']
+        });
+        services=sharableOffer.services
+      }else{
+        services=reservation.services
+      }
       const rootoshes = reservation.rootoshes;
 
       let formattedPaymentForServices = [];
       let formattedPaymentForRootoshes = [];
 
       if (services && services.length > 0) {
-        formattedPaymentForServices = services.map((service) => ({
-          name: service.english_Name,
-          duration: service.duration_Mins,
-          price: service.price.toString(),
-        }));
+        if (order.couponId) {
+          // For coupon services, price is 0
+          formattedPaymentForServices = services.map((service) => ({
+            name: service.english_Name,
+            duration: service.duration_Mins,
+            price: "0", // Price is 0 for coupon services
+          }));
+        } else {
+          // For regular services and sharable offer services
+          formattedPaymentForServices = services.map((service) => ({
+            name: service.english_Name,
+            duration: service.duration_Mins,
+            price: service.price.toString(),
+          }));
+        }
       } else if (rootoshes && rootoshes.length > 0) {
         formattedPaymentForRootoshes = rootoshes.map((rootosh) => ({
           name: rootosh.english_Name,
