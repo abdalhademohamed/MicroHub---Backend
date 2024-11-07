@@ -188,7 +188,15 @@ export class GiftCouponService {
     // Get remaining services from coupon
     const leftServices = giftCoupon.services || [];
 
-    // Calculate used services by finding services that are in allServices but not in leftServices
+    // Filter out reserved services
+    const availableServices = leftServices.filter(service => {
+      const reservationStatus = giftCoupon.servicesReservationStatus?.find(
+        status => status.serviceId === service.id
+      );
+      return !reservationStatus || !reservationStatus.isReserved;
+    });
+
+    // Calculate used services
     const usedServices = allServices.filter(
       (service) =>
         !leftServices.some((leftService) => leftService.id === service.id)
@@ -199,6 +207,14 @@ export class GiftCouponService {
       (a, b) => new Date(b.usedAt).getTime() - new Date(a.usedAt).getTime()
     );
 
+    // Get reserved services
+    const reservedServices = leftServices.filter(service => {
+      const reservationStatus = giftCoupon.servicesReservationStatus?.find(
+        status => status.serviceId === service.id
+      );
+      return reservationStatus && reservationStatus.isReserved;
+    });
+
     return {
       id: giftCoupon.id,
       couponCode: giftCoupon.couponCode,
@@ -206,7 +222,8 @@ export class GiftCouponService {
       redeemdAt: giftCoupon.redeemedAt,
       ownedBy: giftCoupon.ownedBy,
       allServices,
-      leftServices,
+      leftServices: availableServices, // Now only returns unreserved services
+      reservedServices, // Add reserved services to response
       usedServices,
       totalServicesCount: allServices.length,
       remainingServicesCount: leftServices.length,
