@@ -25,6 +25,7 @@ import { GiftCouponModule } from "../gift-coupon/gift-coupon.module";
 import { CommentEntity } from "../comment/entities/comment.entity";
 import { ReceiptEntity } from "../receipt/entities/receipt.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
+import { GiftCouponService } from "src/gift-coupon/gift-coupon.service";
 
 
 @Module({
@@ -50,14 +51,14 @@ import { CustomI18nService } from "../common/custom.18n.service";
     ]),
     NotificationModule,
     GiftCouponModule,
+
   ],
   controllers: [ReservationController],
   providers: [
     ReservationService,
     OrdersService,
     CloudinaryService, // Add OrdersService here
-    CustomI18nService
-
+    CustomI18nService,
   ],
   exports: [ReservationService],  // Export ReservationService here
 })

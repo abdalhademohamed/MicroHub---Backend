@@ -34,6 +34,7 @@ import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
 import { NotificationService } from "../notification/notification.service";
 import { EmployeeEntity } from "../employee/entities/employee.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
+import { GiftCouponService } from "src/gift-coupon/gift-coupon.service";
 
 @Injectable()
 export class ReservationService {
@@ -69,7 +70,8 @@ export class ReservationService {
     @InjectRepository(EmployeeEntity)
     private EmployeeRepository: Repository<EmployeeEntity>,
     private readonly notificationService: NotificationService,
-    private readonly i18n: CustomI18nService
+    private readonly i18n: CustomI18nService,
+    private readonly GiftCouponService: GiftCouponService,
 
     // private readonly ReceiptService: ReceiptService, // Inject the new service
   ) {}
@@ -697,9 +699,12 @@ export class ReservationService {
 
         const serviceTotals = await this.calculateTotalDuration(serviceIds);
 
-        const fullServiceIds = sharableOffer.services.map((service) => service.id); // Extract service IDs from the sharable offer
-        const fullServiceTotals = await this.calculateTotalDuration(fullServiceIds);
-        
+        const fullServiceIds = sharableOffer.services.map(
+          (service) => service.id
+        ); // Extract service IDs from the sharable offer
+        const fullServiceTotals =
+          await this.calculateTotalDuration(fullServiceIds);
+
         duration += serviceTotals.duration;
         price += fullServiceTotals.price;
 
@@ -731,18 +736,19 @@ export class ReservationService {
         if (coupon.isRedeemed) {
           throw new ConflictException("Coupon has already been redeemed");
         }
-        // Check if any of the requested services are already reserved
-        const alreadyReservedServices =
-          coupon.servicesReservationStatus?.filter(
-            (status) =>
-              body.services.includes(status.serviceId) && status.isReserved
-          );
+        // // Check if any of the requested services are already reserved
+        // const alreadyReservedServices =
+        //   coupon.servicesReservationStatus?.filter(
+        //     (status) =>
+        //       body.services.includes(status.serviceId) && status.isReserved
+        //   );
 
-        if (alreadyReservedServices && alreadyReservedServices.length > 0) {
-          throw new ConflictException(
-            `Some services are already reserved: ${alreadyReservedServices.map((s) => s.serviceId).join(", ")}`
-          );
-        }
+        // if (alreadyReservedServices && alreadyReservedServices.length > 0) {
+        //   throw new ConflictException(
+        //     `Some services are already reserved: ${alreadyReservedServices.map((s) => s.serviceId).join(", ")}`
+        //   );
+        // }
+
         // Check if the coupon is already redeemed
         // if (coupon.isReserved) {
         //   throw new ConflictException("Coupon has already been reserved");
@@ -758,48 +764,50 @@ export class ReservationService {
         const transformedServices: ServiceEntity[] = coupon.services
           .filter((service) => body.services.includes(service.id)) // Only include services requested in body
           .map((service) => this.mapCouponServiceToServiceEntity(service));
+        //////////////////////////////////////////////
+        //   const servicesToReserve = coupon.services
+        //   .filter(service => body.services.includes(service.id))
+        //   .map(service => ({
+        //     serviceId: service.id,
+        //     isReserved: true,
+        //     serviceArabicName: service.arabic_Name,
+        //     serviceEnglishName: service.english_Name,
+        //     reservedAt: new Date(),
+        //   }));
 
-          const servicesToReserve = coupon.services
-          .filter(service => body.services.includes(service.id))
-          .map(service => ({
-            serviceId: service.id,
-            isReserved: true,
-            serviceArabicName: service.arabic_Name,
-            serviceEnglishName: service.english_Name,
-            reservedAt: new Date(),
-          }));
-      
-        // Initialize or update servicesReservationStatus
-        if (!coupon.servicesReservationStatus) {
-          coupon.servicesReservationStatus = [];
-        }
-      
-        // Update or add reservation status for each service
-        servicesToReserve.forEach(serviceToReserve => {
-          const existingStatusIndex = coupon.servicesReservationStatus.findIndex(
-            status => status.serviceId === serviceToReserve.serviceId
-          );
-      
-          if (existingStatusIndex !== -1) {
-            coupon.servicesReservationStatus[existingStatusIndex] = {
-              ...coupon.servicesReservationStatus[existingStatusIndex],
-              ...serviceToReserve
-            };
-          } else {
-            coupon.servicesReservationStatus.push(serviceToReserve);
-          }
-        });
-      
-        // // Update the overall coupon reservation status
-        // coupon.isReserved = true;
-        await this.GiftCouponRepository.save(coupon);
+        // // Initialize or update servicesReservationStatus
+        // if (!coupon.servicesReservationStatus) {
+        //   coupon.servicesReservationStatus = [];
+        // }
 
+        // // Update or add reservation status for each service
+        // servicesToReserve.forEach(serviceToReserve => {
+        //   const existingStatusIndex = coupon.servicesReservationStatus.findIndex(
+        //     status => status.serviceId === serviceToReserve.serviceId
+        //   );
+
+        //   if (existingStatusIndex !== -1) {
+        //     coupon.servicesReservationStatus[existingStatusIndex] = {
+        //       ...coupon.servicesReservationStatus[existingStatusIndex],
+        //       ...serviceToReserve
+        //     };
+        //   } else {
+        //     coupon.servicesReservationStatus.push(serviceToReserve);
+        //   }
+        // });
+
+        // // // Update the overall coupon reservation status
+        // // coupon.isReserved = true;
+        // await this.GiftCouponRepository.save(coupon);
+        //////////////////////////////////////////////////////////////
         // Set the services to only the transformed ones from the coupon
+
         services = transformedServices;
         body.deposit = 0;
         body.deposit_Content = null;
         const serviceTotals = await this.calculateTotalDuration(serviceIds);
         duration += serviceTotals.duration;
+      
       }
 
       // Check if rootoshIds are provided
@@ -907,6 +915,28 @@ export class ReservationService {
         createdBy: userId,
       });
       await this.ReservationRepository.save(reservation);
+      if (body.couponCode && body.services && body.services.length > 0) {
+      
+        const coupon = await this.GiftCouponRepository.findOne({
+          where: { couponCode: body.couponCode },
+        });
+       // After reservation is created successfully, update the gift coupon
+       try {
+        await this.GiftCouponService.updateGiftCouponServices(
+          coupon.id,
+          body.services // serviceIdsToRemove are the services being used in this reservation
+        );
+      } catch (error) {
+        // If updating gift coupon fails, we should rollback the reservation
+        if (reservation) {
+          await this.ReservationRepository.remove(reservation);
+        }
+        throw new InternalServerErrorException(
+          "Failed to update gift coupon services"
+        );
+      }
+      }
+       
       // New code to check for existing reservations for the week
       // const startOfWeek = new Date(startTime);
       // startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay()); // Get the first day of the week (Sunday)
@@ -1014,7 +1044,7 @@ export class ReservationService {
       }
     }
   }
-  
+
   private mapCouponServiceToServiceEntity(couponService: any): ServiceEntity {
     const serviceEntity = new ServiceEntity();
     serviceEntity.id = couponService.id; // or whatever mapping is needed
