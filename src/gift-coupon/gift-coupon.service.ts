@@ -79,6 +79,7 @@ export class GiftCouponService {
         ownedBy: customer,
         totalServicesCount: services.length,
         services,
+        Leftservices: services,
         couponCode: uuidv4(),
         startDateTime: sharableOffer.startDateTime,
         endDateTime: sharableOffer.endDateTime,
