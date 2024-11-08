@@ -32,6 +32,7 @@ import { RolesGuard } from "../auth/guards/role.guards";
 import { Role } from "../user/utils/user.enum";
 import { Roles } from "../auth/Roles.decorator";
 import { GetReviewsDto } from "./dto/get.reviews.dto";
+import { GetEmployeeReviewsCommentsDto } from "./dto/get-employee-reviews-comments.dto";
 
 @ApiTags("reviews")
 @Controller("review")
@@ -51,7 +52,7 @@ export class ReviewsController {
   @ApiInternalServerErrorResponse({ description: "Failed to create review" })
   async createReview(
     @Req() req: any, // Request object to access the user
-    @Body() createReviewDto: CreateReviewDto,
+    @Body() createReviewDto: CreateReviewDto
   ) {
     const userId = req.user.sub; // Hardcoded user ID for now
 
@@ -60,10 +61,27 @@ export class ReviewsController {
     }
     return this.reviewsService.createReview(createReviewDto, userId);
   }
-  @Get('IsFirstOrder/:orderId')
-  async isFirstTimeOrder(@Param('orderId') orderId: string): Promise<{ isFirstTime: boolean }> {
+  @Get("IsFirstOrder/:orderId")
+  async isFirstTimeOrder(
+    @Param("orderId") orderId: string
+  ): Promise<{ isFirstTime: boolean }> {
     const isFirstTime = await this.reviewsService.isFirstTimeOrder(orderId);
     return { isFirstTime };
+  }
+
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  // @Roles(Role.ARTIST)
+  @Get("mine")
+  async getEmployeeReviewsAndComments(
+    @Request() req: any, // Request object to access the user
+
+    @Query() query: GetEmployeeReviewsCommentsDto
+  ) {
+    const userId = "4bd4559c-7c87-4b62-9e2a-90626e4b11ca"; // Extract user ID from request
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
+    return this.reviewsService.getEmployeeReviewsAndComments(userId, query);
   }
   @Get("sorted")
   @UseGuards(AccessTokenGuard, RolesGuard)
@@ -96,7 +114,7 @@ export class ReviewsController {
   })
   @ApiResponse({ status: 500, description: "Failed to retrieve reviews" })
   async getReviewsForArtist(
-    @Param("employeeId") employeeId: string,
+    @Param("employeeId") employeeId: string
   ): Promise<ReviewEntity[]> {
     try {
       return await this.reviewsService.getReviewsForArtist(employeeId);
@@ -106,14 +124,14 @@ export class ReviewsController {
       }
       throw new InternalServerErrorException(
         "Failed to get reviews for artist",
-        error.stack,
+        error.stack
       );
     }
   }
 
   @Get("order/:orderId")
   async getReviewsByOrderId(
-    @Param("orderId") orderId: string,
+    @Param("orderId") orderId: string
   ): Promise<ReviewEntity[]> {
     return this.reviewsService.getReviewsByOrderId(orderId);
   }

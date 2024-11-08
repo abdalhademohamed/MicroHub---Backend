@@ -17,6 +17,10 @@ import { UserEntity } from "../user/entities/user.entity";
 import { UserService } from "../user/user.service";
 import { NotificationService } from "../notification/notification.service";
 import { OrderStatus } from "../orders/utils/order.status.enum";
+import { CustomI18nService } from "../common/custom.18n.service";
+import { I18nService } from "nestjs-i18n";
+import { CommentEntity } from "../comment/entities/comment.entity";
+import { GetEmployeeReviewsCommentsDto, SortOrder } from "./dto/get-employee-reviews-comments.dto";
 
 @Injectable()
 export class ReviewsService {
@@ -35,7 +39,10 @@ export class ReviewsService {
     @InjectRepository(AuditLogEntity)
     private readonly AuditLogRepository: Repository<AuditLogEntity>,
     private eventEmitter: EventEmitter2,
-    private readonly notificationService: NotificationService // Inject NotificationService
+    private readonly notificationService: NotificationService,
+    private readonly i18n: CustomI18nService,
+    @InjectRepository(CommentEntity)
+    private readonly commentRepository: Repository<CommentEntity>,
   ) {}
   @OnEvent("review:changed")
   async onHandleReviewChanged({ ids }: { ids: string[] }) {
@@ -79,19 +86,15 @@ export class ReviewsService {
 
       // Check if the order exists
       if (!newestOrder) {
-        throw new NotFoundException({
-          message: `Order not found`,
-          error: `Order with ID ${order} not found`,
-        });
+        throw new NotFoundException(
+          this.i18n.translate('test.REVIEW.ORDER_NOT_FOUND', { args: { orderId: order } })
+        );
       }
 
       // Check if the order is already reviewed
       if (newestOrder.isReviewed) {
         throw new HttpException(
-          {
-            message: `Order already reviewed`,
-            error: `Order with ID ${order} has already been reviewed`,
-          },
+          this.i18n.translate('test.REVIEW.ORDER_ALREADY_REVIEWED', { args: { orderId: order } }),
           400
         );
       }
@@ -99,23 +102,19 @@ export class ReviewsService {
       // Check if the order is associated with an artist
       if (!newestOrder.artist?.id) {
         throw new HttpException(
-          {
-            message: `Order not associated with an artist`,
-            error: `Order with ID ${order} is not associated with any artist`,
-          },
+          this.i18n.translate('test.REVIEW.ORDER_NO_ARTIST', { args: { orderId: order } }),
           400
         );
       }
 
       const employee = await this.employeeRepository.findOneBy({
-        id: body.employee,
+        id: userId,
       });
 
       if (!employee) {
-        throw new NotFoundException({
-          message: `Employee not found`,
-          error: `Employee with ID ${body.employee} not found`,
-        });
+        throw new NotFoundException(
+          this.i18n.translate('test.REVIEW.EMPLOYEE_NOT_FOUND', { args: { employeeId: userId } })
+        );
       }
 
       const [orders, count] = await this.orderRepository.findAndCount({
@@ -196,11 +195,8 @@ export class ReviewsService {
     } catch (error) {
       // Catching unexpected errors and rethrowing them with additional details
       throw new HttpException(
-        {
-          message: `Failed to create review`,
-          error: error.message || error,
-        },
-        error.status || 500 // Preserve the original error status if it exists
+        this.i18n.translate('test.REVIEW.CREATE_FAILED', { args: { error: error.message || error } }),
+        error.status || 500
       );
     }
   }
@@ -248,8 +244,7 @@ export class ReviewsService {
       return { reviews, total };
     } catch (error) {
       throw new InternalServerErrorException(
-        "Failed to get reviews",
-        error.stack
+        this.i18n.translate('test.REVIEW.FETCH_FAILED')
       );
     }
   }
@@ -266,7 +261,7 @@ export class ReviewsService {
         employee.employeeType.typeEnglish !== "ARTIST"
       ) {
         throw new NotFoundException(
-          `Employee with ID ${employeeId} is not an artist or not found`
+          this.i18n.translate('test.REVIEW.INVALID_ARTIST', { args: { employeeId } })
         );
       }
 
@@ -278,9 +273,9 @@ export class ReviewsService {
 
       return reviews;
     } catch (error) {
+      console.log(error);
       throw new InternalServerErrorException(
-        "Failed to get reviews for artist",
-        error.stack
+        this.i18n.translate('test.REVIEW.FETCH_ARTIST_REVIEWS_FAILED')
       );
     }
   }
@@ -291,7 +286,9 @@ export class ReviewsService {
       where: { id: orderId },
     });
     if (!order) {
-      throw new NotFoundException(`Order with ID ${orderId} not found`);
+      throw new NotFoundException(
+        this.i18n.translate('test.REVIEW.ORDER_NOT_FOUND', { args: { orderId } })
+      );
     }
 
     // Retrieve reviews associated with the order
@@ -321,5 +318,114 @@ export class ReviewsService {
 
     // If this is the only order, it's the first time
     return customerOrdersCount === 1;
+  }
+
+
+  async getEmployeeReviewsAndComments(
+    employeeId: string,
+    {
+      page = 1,
+      limit = 10,
+      sort,
+      fromDate,
+      toDate,
+    }: GetEmployeeReviewsCommentsDto
+  ): Promise<any> {
+    try {
+      // Validate employee exists
+      const employee = await this.employeeRepository.findOne({
+        where: { id: employeeId },
+      });
+  
+      if (!employee) {
+        throw new NotFoundException(
+          this.i18n.translate('test.REVIEW.EMPLOYEE_NOT_FOUND', { args: { employeeId } })
+        );
+      }
+  
+      // Create query builder for reviews
+      const reviewsQuery = this.reviewRepository
+        .createQueryBuilder('review')
+        .leftJoinAndSelect('review.order', 'order')
+        .leftJoinAndSelect('review.employee', 'employee')
+        .leftJoinAndSelect('review.artist', 'artist')
+        .where('review.artist = :employeeId', { employeeId });
+  
+      // Create query builder for comments
+      const commentsQuery = this.commentRepository
+        .createQueryBuilder('comment')
+        .leftJoinAndSelect('comment.order', 'order')
+        .leftJoinAndSelect('comment.employee', 'employee')
+        .where('comment.employeeId = :employeeId', { employeeId });
+  
+      // Add date filters if provided
+      if (fromDate) {
+        const startOfDay = new Date(fromDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        reviewsQuery.andWhere('review.createdAt >= :startDate', { startDate: startOfDay });
+        commentsQuery.andWhere('comment.createdAt >= :startDate', { startDate: startOfDay });
+      }
+  
+      if (toDate) {
+        const endOfDay = new Date(toDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        reviewsQuery.andWhere('review.createdAt <= :endDate', { endDate: endOfDay });
+        commentsQuery.andWhere('comment.createdAt <= :endDate', { endDate: endOfDay });
+      }
+  
+     
+    // Add sorting (only if sort is provided)
+    if (sort) {
+      const sortOrder = sort === SortOrder.ASC ? 'ASC' : 'DESC';
+      reviewsQuery.orderBy('review.createdAt', sortOrder);
+      commentsQuery.orderBy('comment.createdAt', sortOrder);
+    }
+      // Get total count before pagination
+      const [reviewsCount, commentsCount] = await Promise.all([
+        reviewsQuery.getCount(),
+        commentsQuery.getCount(),
+      ]);
+  
+      const total = reviewsCount + commentsCount;
+  
+      // Add pagination
+      const skip = (page - 1) * limit;
+      reviewsQuery.skip(skip).take(limit);
+      commentsQuery.skip(skip).take(limit);
+  
+      // Get results
+      const [reviews, comments] = await Promise.all([
+        reviewsQuery.getMany(),
+        commentsQuery.getMany(),
+      ]);
+  
+      // Combine and sort results
+      const combined = [...reviews, ...comments].sort((a, b) => {
+        const dateA = a instanceof ReviewEntity ? a.createdAt : a.createdAt;
+        const dateB = b instanceof ReviewEntity ? b.createdAt : b.createdAt;
+        return sort === SortOrder.DESC
+          ? dateB.getTime() - dateA.getTime()
+          : dateA.getTime() - dateB.getTime();
+      });
+  
+      // Apply final pagination to combined results
+      const paginatedItems = combined.slice(skip, skip + limit);
+  
+      return {
+        items: paginatedItems,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    } catch (error) {
+      console.log(error)
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        this.i18n.translate('test.REVIEW.FETCH_FAILED')
+      );
+    }
   }
 }

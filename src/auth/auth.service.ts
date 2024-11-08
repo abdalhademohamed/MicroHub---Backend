@@ -34,6 +34,7 @@ import { Postion } from "../postion/utils/postion.enum";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { SlotService } from "../slots/slots.service";
 import { EventEmitter2 } from "@nestjs/event-emitter";
+import { CustomI18nService } from "../common/custom.18n.service";
 
 @Injectable()
 export class AuthService {
@@ -54,7 +55,7 @@ export class AuthService {
     private JwtService: JwtService,
     private MailService: MailService,
     private configService: ConfigService,
-    private readonly i18nService: I18nService,
+    private readonly i18nService: CustomI18nService,
     private readonly entityManager: EntityManager,
     private readonly slotService: SlotService,
     private readonly eventEmitter: EventEmitter2,
@@ -72,12 +73,12 @@ export class AuthService {
       if (existingUser) {
         if (existingUser.email === email) {
           throw new ConflictException(
-            this.i18nService.translate("test.EMAIL_EXISTS"),
+            this.i18nService.translate("test.auth.EMAIL_EXISTS")
           );
         }
         if (existingUser.username === username) {
           throw new ConflictException(
-            this.i18nService.translate("test.USERNAME_EXISTS"),
+            this.i18nService.translate("test.auth.USERNAME_EXISTS")
           );
         }
       }
@@ -105,12 +106,12 @@ export class AuthService {
       if (error.code === "23505") {
         // Unique violation error code for PostgreSQL
         throw new ConflictException(
-          this.i18nService.translate("test.EMAIL_EXISTS"),
+          this.i18nService.translate("test.auth.EMAIL_EXISTS")
         );
       }
 
       throw new InternalServerErrorException(
-        this.i18nService.translate("test.SIGNUP_FAILED"),
+        this.i18nService.translate("test.auth.SIGNUP_FAILED")
       );
     }
   }
@@ -182,7 +183,7 @@ export class AuthService {
     } catch (validateUserError) {
       console.error("Error validating user:", validateUserError.message);
       throw new UnauthorizedException(
-        "Invalid email or password. Please check your credentials and try again.",
+        this.i18nService.translate("test.auth.INVALID_CREDENTIALS"),
         validateUserError.stack,
       );
     }
@@ -213,7 +214,7 @@ export class AuthService {
       return user;
     }
     throw new UnauthorizedException(
-      this.i18nService.translate("test.INVALID_CREDENTIALS"),
+      this.i18nService.translate("test.auth.INVALID_CREDENTIALS")
     );
 
     // throw new UnauthorizedException("Please check your login credentials");
@@ -231,7 +232,7 @@ export class AuthService {
       await this.MailService.transporter.sendMail(mailOptions);
     } catch (error) {
       throw new InternalServerErrorException(
-        this.i18nService.translate("test.OTP_EMAIL_FAILED"),
+        this.i18nService.translate("test.auth.OTP_EMAIL_FAILED")
       );
 
       //  throw new InternalServerErrorException("Failed to send OTP email");
@@ -264,14 +265,13 @@ export class AuthService {
     try {
       await this.MailService.transporter.sendMail(mailOptions);
       return {
-        message:
-          "If your email is valid, you will receive a password reset link.",
+        message: this.i18nService.translate("test.auth.RESET_EMAIL_SENT"),
         resetToken: token,
       };
     } catch (error) {
       console.log(error)
       throw new InternalServerErrorException(
-        this.i18nService.translate("test.RESET_EMAIL_FAILED"),
+        this.i18nService.translate("test.auth.RESET_EMAIL_FAILED")
       );
 
       //  throw new InternalServerErrorException("Failed to send Password Reset Request email");
@@ -293,7 +293,9 @@ export class AuthService {
         secret: process.env.JWT_RESET_SECRET,
       });
     } catch (error) {
-      throw new BadRequestException("Invalid or expired token");
+      throw new BadRequestException(
+        this.i18nService.translate("test.auth.INVALID_TOKEN")
+      );
     }
 
     // Retrieve user by checking if the reset token is valid and not expired
@@ -308,7 +310,7 @@ export class AuthService {
     // Check if the user exists and the provided OTP matches
     if (!user) {
       throw new NotFoundException(
-        this.i18nService.translate("test.USER_NOT_FOUND"),
+        this.i18nService.translate("test.auth.USER_NOT_FOUND")
       );
 
       // throw new NotFoundException('User not found or token has expired');
@@ -318,7 +320,7 @@ export class AuthService {
     const isTokenValid = await bcrypt.compare(token, user.resetPasswordToken);
     if (!isTokenValid || decoded.otp !== otp) {
       throw new BadRequestException(
-        this.i18nService.translate("test.INVALID_TOKEN_OR_OTP"),
+        this.i18nService.translate("test.auth.INVALID_TOKEN_OR_OTP")
       );
 
       // throw new BadRequestException('Invalid token or OTP');
@@ -337,7 +339,7 @@ export class AuthService {
       });
     } catch (error) {
       throw new BadRequestException(
-        this.i18nService.translate("test.INVALID_TOKEN"),
+        this.i18nService.translate("test.auth.INVALID_TOKEN")
       );
 
       // throw new BadRequestException('Invalid or expired token');
@@ -355,7 +357,7 @@ export class AuthService {
     // Check if the user exists and the provided OTP matches
     if (!user) {
       throw new NotFoundException(
-        this.i18nService.translate("test.USER_NOT_FOUND"),
+        this.i18nService.translate("test.auth.USER_NOT_FOUND")
       );
 
       // throw new NotFoundException('User not found or token has expired');
@@ -365,7 +367,7 @@ export class AuthService {
     const isTokenValid = await bcrypt.compare(token, user.resetPasswordToken);
     if (!isTokenValid) {
       throw new BadRequestException(
-        this.i18nService.translate("test.INVALID_TOKEN_OR_OTP"),
+        this.i18nService.translate("test.auth.INVALID_TOKEN_OR_OTP")
       );
 
       // throw new BadRequestException('Invalid token or OTP');
@@ -396,7 +398,7 @@ export class AuthService {
       await this.MailService.transporter.sendMail(mailOptions);
     } catch (error) {
       throw new InternalServerErrorException(
-        this.i18nService.translate("test.CONFIRMATION_EMAIL_FAILED"),
+        this.i18nService.translate("test.auth.CONFIRMATION_EMAIL_FAILED")
       );
 
       //  throw new InternalServerErrorException("Failed to send confirmation email");
@@ -415,16 +417,17 @@ export class AuthService {
         // throw new NotFoundException('User not found');
         // throw new NotFoundException( this.i18nService.translate('test.USER_NOT_FOUND'));
         throw new NotFoundException(
-          this.i18nService.translate("test.USER_NOT_FOUND"),
+          this.i18nService.translate("test.auth.USER_NOT_FOUND")
         );
       }
 
       // Return a success message
-      return { message: this.i18nService.translate("test.LOGOUT_SUCCESS") };
+      return { message: "lOGOUT SUCCESSFULLY"};
     } catch (error) {
       // Return a user-friendly message without exposing internal details
       throw new InternalServerErrorException(
         "Failed to logout. Please try again later.",
+        this.i18nService.translate("test.auth.LOGOUT_FAILED")
       );
     }
   }
@@ -433,7 +436,9 @@ export class AuthService {
     const user = await this.UserRepository.findOne({ where: { id: userId } });
 
     if (!user || !user.refreshToken) {
-      throw new ForbiddenException("Access Denied");
+      throw new ForbiddenException(
+        this.i18nService.translate("test.auth.ACCESS_DENIED")
+      );
     }
 
     // Compare provided refresh token with the stored hash
@@ -443,7 +448,9 @@ export class AuthService {
     );
 
     if (!refreshTokenMatches) {
-      throw new ForbiddenException("Access Denied");
+      throw new ForbiddenException(
+        this.i18nService.translate("test.auth.ACCESS_DENIED")
+      );
     }
 
     // Generate new tokens
@@ -619,8 +626,7 @@ export class AuthService {
         } catch (error) {
           console.error("Failed to create employee:", error);
           throw new InternalServerErrorException(
-            "Failed to create employee",
-            error.message,
+            this.i18nService.translate("test.auth.EMPLOYEE_CREATE_FAILED")
           );
         }
       },
@@ -635,7 +641,9 @@ export class AuthService {
       where: { email },
     });
     if (existingUser) {
-      throw new ConflictException("A user with this email already exists.");
+      throw new ConflictException(
+        this.i18nService.translate("test.auth.EMAIL_EXISTS")
+      );
     }
   }
 
@@ -647,7 +655,9 @@ export class AuthService {
       where: { id: branchId },
     });
     if (!branch) {
-      throw new NotFoundException("Branch not found");
+      throw new NotFoundException(
+        this.i18nService.translate("test.auth.BRANCH_NOT_FOUND")
+      );
     }
     return branch;
   }
@@ -660,7 +670,9 @@ export class AuthService {
       where: { id: positionId },
     });
     if (!position) {
-      throw new NotFoundException("Position not found");
+      throw new NotFoundException(
+        this.i18nService.translate("test.auth.POSITION_NOT_FOUND")
+      );
     }
     return position;
   }
@@ -673,7 +685,9 @@ export class AuthService {
       where: { id: employeeTypeId },
     });
     if (!employeeType) {
-      throw new NotFoundException("Employee Type not found");
+      throw new NotFoundException(
+        this.i18nService.translate("test.auth.EMPLOYEE_TYPE_NOT_FOUND")
+      );
     }
     return employeeType;
   }

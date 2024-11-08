@@ -8,12 +8,13 @@ import {
   Request,
   UseGuards,
   BadRequestException,
+  Query,
 } from "@nestjs/common";
 import { GiftCouponService } from "./gift-coupon.service";
 import { CreateGiftCouponDto } from "./dto/create-gift-coupon.dto";
 
 import { GiftCouponEntity } from "./entities/gift-coupon.entity";
-import { ApiTags } from "@nestjs/swagger";
+import { ApiTags, ApiQuery } from "@nestjs/swagger";
 import { RolesGuard } from "../auth/guards/role.guards";
 import { AccessTokenGuard } from "../auth/guards/accessToken.guard";
 import { Roles } from "../auth/Roles.decorator";
@@ -52,13 +53,29 @@ export class GiftCouponController {
     return await this.giftCouponService.getGiftCoupon(couponId);
   }
 
-@UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.ARTIST,Role.SUPERADMIN)
-  @Patch('update/services/:couponId')
-  async updateGiftCouponServices(
-    @Param('couponId') couponId: string,
-    @Body('serviceIds') serviceIdsToRemove: string[],
+// @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+//   @Roles(Role.ARTIST,Role.SUPERADMIN)
+//   @Patch('update/services/:couponId')
+//   async updateGiftCouponServices(
+//     @Param('couponId') couponId: string,
+//     @Body('serviceIds') serviceIdsToRemove: string[],
+//   ) {
+//     return this.giftCouponService.updateGiftCouponServices(couponId, serviceIdsToRemove);
+//   }
+
+  // @UseGuards(AccessTokenGuard, RolesGuard)
+  // @Roles(Role.SUPERADMIN)
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'fromDate', required: false, type: String, description: 'Format: YYYY-MM-DD' })
+  @ApiQuery({ name: 'toDate', required: false, type: String, description: 'Format: YYYY-MM-DD' })
+  @Get()
+  async getAllGiftCoupons(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @Query('fromDate') fromDate?: string,
+    @Query('toDate') toDate?: string,
   ) {
-    return this.giftCouponService.updateGiftCouponServices(couponId, serviceIdsToRemove);
+    return await this.giftCouponService.getAllGiftCoupons(page, limit, fromDate, toDate);
   }
 }

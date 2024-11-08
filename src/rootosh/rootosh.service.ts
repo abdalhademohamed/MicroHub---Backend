@@ -11,6 +11,8 @@ import { ServiceEntity } from "../service/entities/service.entity";
 import { Repository } from "typeorm";
 import { UserEntity } from "../user/entities/user.entity";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
+import { CustomI18nService } from "../common/custom.18n.service";
+import { I18nService } from "nestjs-i18n";
 
 @Injectable()
 export class RootoshService {
@@ -24,6 +26,7 @@ export class RootoshService {
     private readonly UserRepository: Repository<UserEntity>,
     @InjectRepository(AuditLogEntity)
     private readonly AuditLogRepository: Repository<AuditLogEntity>,
+    private readonly i18n: CustomI18nService,
   ) {}
 
   async createRootosh(
@@ -38,7 +41,9 @@ export class RootoshService {
     });
 
     if (!service) {
-      throw new NotFoundException(`Service with ID ${serviceId} not found.`);
+      throw new NotFoundException(
+        this.i18n.translate('test.ROOTOSH.SERVICE_NOT_FOUND', { args: { serviceId } })
+      );
     }
 
     // Create the rootosh entity
@@ -55,7 +60,9 @@ export class RootoshService {
       return savedRootosh;
     } catch (error) {
       // Handle unexpected errors
-      throw new InternalServerErrorException("Failed to create rootosh.");
+      throw new InternalServerErrorException(
+        this.i18n.translate('test.ROOTOSH.CREATE_FAILED')
+      );
     }
   }
   
@@ -106,7 +113,9 @@ export class RootoshService {
       relations: ["service"],
     });
     if (!rootosh) {
-      throw new NotFoundException(`Rootosh with ID ${id} not found.`);
+      throw new NotFoundException(
+        this.i18n.translate('test.ROOTOSH.NOT_FOUND', { args: { id } })
+      );
     }
     return rootosh;
   }
@@ -117,7 +126,9 @@ export class RootoshService {
     const service = await this.serviceRepository.findOne({ where: { id: serviceId } });
     
     if (!service) {
-      throw new NotFoundException(`Service with ID ${serviceId} not found`);
+      throw new NotFoundException(
+        this.i18n.translate('test.ROOTOSH.SERVICE_NOT_FOUND', { args: { serviceId } })
+      );
     }
 
     // Find and return all rootoshes associated with the given service
@@ -138,7 +149,9 @@ export class RootoshService {
   
     // Throw an exception if the rootosh does not exist
     if (!rootosh) {
-      throw new NotFoundException(`Rootosh with ID ${id} not found.`);
+      throw new NotFoundException(
+        this.i18n.translate('test.ROOTOSH.NOT_FOUND', { args: { id } })
+      );
     }
   
     // Check if serviceId is provided and update the service relation if needed
@@ -148,7 +161,7 @@ export class RootoshService {
       });
       if (!service) {
         throw new NotFoundException(
-          `Service with ID ${updateRootoshDto.serviceId} not found.`,
+          this.i18n.translate('test.ROOTOSH.SERVICE_NOT_FOUND', { args: { serviceId: updateRootoshDto.serviceId } })
         );
       }
       rootosh.service = service;
@@ -164,7 +177,9 @@ export class RootoshService {
       return updatedRootosh;
     } catch (error) {
       // Handle unexpected errors
-      throw new InternalServerErrorException("Failed to update rootosh.");
+      throw new InternalServerErrorException(
+        this.i18n.translate('test.ROOTOSH.UPDATE_FAILED')
+      );
     }
   }
   
@@ -188,7 +203,9 @@ export class RootoshService {
   async removeRootosh(id: string): Promise<void> {
     const result = await this.rootoshRepository.delete(id);
     if (result.affected === 0) {
-      throw new NotFoundException(`Rootosh with ID ${id} not found.`);
+      throw new NotFoundException(
+        this.i18n.translate('test.ROOTOSH.NOT_FOUND', { args: { id } })
+      );
     }
   }
 }

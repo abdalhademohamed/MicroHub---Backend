@@ -27,9 +27,15 @@ import { Roles } from "../auth/Roles.decorator";
 export class CustomerController {
   constructor(private readonly customerService: CustomerService) {}
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ACCOUNTANT,Role.ARTISTMANAGER)
-  @Get('sorted')
-   async getCustomers(@Query() filters: GetCustomerPaginatedsDto) {
+  @Roles(
+    Role.SUPERADMIN,
+    Role.COORDINATOR,
+    Role.RECEPTIONIST,
+    Role.ACCOUNTANT,
+    Role.ARTISTMANAGER
+  )
+  @Get("sorted")
+  async getCustomers(@Query() filters: GetCustomerPaginatedsDto) {
     return this.customerService.getAllCustomers(filters);
   }
   @Get("count")
@@ -39,27 +45,24 @@ export class CustomerController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ACCOUNTANT,Role.ARTISTMANAGER)
+  @Roles(
+    Role.SUPERADMIN,
+    Role.COORDINATOR,
+    Role.RECEPTIONIST,
+    Role.ACCOUNTANT,
+    Role.ARTISTMANAGER
+  )
   @Get(":phoneNumber")
   async getCustomerByPhoneNumber(
-    @Param("phoneNumber") phoneNumber: string,
+    @Param("phoneNumber") phoneNumber: string
   ): Promise<GetCustomerDto> {
-    try {
-      const customer =
-        await this.customerService.getCustomerByPhoneNumber(phoneNumber);
-      if (!customer) {
-        throw new NotFoundException(
-          `Customer with phone number ${phoneNumber} not found.`,
-        );
-      }
-      return customer;
-    } catch (error) {
-      console.error("Error in getCustomerByPhoneNumber:", {
-        message: error.message,
-        stack: error.stack,
-        phoneNumber,
-      });
-      throw new InternalServerErrorException("An unexpected error occurred");
+    const customer =
+      await this.customerService.getCustomerByPhoneNumber(phoneNumber);
+    if (!customer) {
+      throw new NotFoundException(
+        `Customer with phone number ${phoneNumber} not found.`
+      );
     }
+    return customer;
   }
 }

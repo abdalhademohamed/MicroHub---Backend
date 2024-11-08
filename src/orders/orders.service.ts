@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   forwardRef,
   Inject,
@@ -35,7 +36,6 @@ import { CreateGiftCouponDto } from "../gift-coupon/dto/create-gift-coupon.dto";
 import { PaymentStatus } from "./utils/payment.status.enum";
 import { ReservationService } from "../reservation/reservation.service";
 import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
-import { GetCommentsDto } from "./dto/get-comments.dto";
 import { CommentEntity } from "../comment/entities/comment.entity";
 import {
   CommentResponseDto,
@@ -43,12 +43,18 @@ import {
 } from "../comment/dto/get.comment.response.dto";
 import { PaginatedCommentResponseDto } from "./dto/paginated.comments.response.dto";
 import { ReceiptEntity } from "../receipt/entities/receipt.entity";
+import { GetCommentsbycustomerDto } from "./dto/get-comments.dto";
+import { GiftCouponEntity } from "../gift-coupon/entities/gift-coupon.entity";
+import { CustomI18nService } from "../common/custom.18n.service";
 
 @Injectable()
 export class OrdersService {
   constructor(
     @InjectRepository(OrderEntity)
     private readonly orderRepository: Repository<OrderEntity>,
+
+    @InjectRepository(CommentEntity)
+    private readonly commentRepository: Repository<CommentEntity>,
 
     private readonly CloudinaryService: CloudinaryService,
 
@@ -75,13 +81,16 @@ export class OrdersService {
 
     @InjectRepository(SharableOfferEntity)
     private readonly SharableOfferRepository: Repository<SharableOfferEntity>,
-    private readonly GiftCouponService: GiftCouponService,
+    // private readonly GiftCouponService: GiftCouponService,
     @Inject(forwardRef(() => ReservationService)) // Inject ReservationService
     private readonly reservationService: ReservationService,
     @InjectRepository(CustomerEntity)
     private readonly CustomerRepository: Repository<CustomerEntity>,
-    @InjectRepository(CommentEntity)
-    private readonly CommentRepository: Repository<CommentEntity>
+    @InjectRepository(ReceiptEntity)
+    private readonly ReceiptRepository: Repository<ReceiptEntity>,
+    private readonly i18n: CustomI18nService,
+    @InjectRepository(GiftCouponEntity)
+    private readonly GiftCouponRepository: Repository<GiftCouponEntity>
   ) {}
   // Method to generate a unique incremental invoice number
   private async generateUniqueInvoiceNumber(): Promise<number> {
@@ -108,7 +117,7 @@ export class OrdersService {
     couponCode?: string
   ): Promise<OrderEntity> {
     let payment;
-    let couponId;
+    let coupon;
     // Fetch reservation with related services
     const reservation = await this.reservationRepository.findOne({
       where: { id: reservationId },
@@ -129,8 +138,10 @@ export class OrdersService {
 
     if (couponCode) {
       payment = null;
-      couponId =
-        await this.GiftCouponService.getGiftCouponByCouponCode(couponCode);
+      // coupon =
+      //   await this.GiftCouponService.getGiftCouponByCouponCode(couponCode);
+      // console;
+      coupon = await this.getGiftCouponByCouponCode(couponCode);
     } else {
       // Find the payment method with 'Visa'
       payment = await this.PaymentRepository.findOne({
@@ -188,7 +199,7 @@ export class OrdersService {
       payStatus = PaymentStatus.Paid;
     }
     const invoiceNumber = await this.generateUniqueInvoiceNumber();
-
+    console.log(coupon);
     // Create new order
     const newOrder = this.orderRepository.create({
       customer: reservation.customer,
@@ -213,7 +224,7 @@ export class OrdersService {
       payment, // Assign the Visa payment method to the order
       offerId,
       sharableOfferId,
-      couponId,
+      couponId: coupon ? coupon.id : null,
     });
 
     try {
@@ -334,6 +345,81 @@ export class OrdersService {
     }
   }
 
+ private async getGiftCouponByCouponCode(couponCode: string): Promise<any> {
+    const giftCoupon = await this.GiftCouponRepository.findOne({
+      where: { couponCode },
+      relations: ["ownedBy", "sharableOffer", "sharableOffer.services"],
+    });
+
+    if (!giftCoupon) {
+      throw new NotFoundException(
+        this.i18n.translate("test.GIFT_COUPON.NOT_FOUND")
+      );
+    }
+
+    const now = new Date();
+
+    if (giftCoupon.isRedeemed) {
+      throw new ConflictException(
+        this.i18n.translate("test.GIFT_COUPON.ALREADY_REDEEMED")
+      );
+    }
+
+    if (giftCoupon.endDateTime && giftCoupon.endDateTime < now) {
+      throw new ConflictException(
+        this.i18n.translate("test.GIFT_COUPON.EXPIRED")
+      );
+    }
+
+    // // Get all services from sharable offer
+    // const allServices = giftCoupon.services;
+
+    // // Get remaining services from coupon
+    // const leftServices = giftCoupon.services || [];
+
+    // // Filter out reserved services
+    // const availableServices = leftServices.filter((service) => {
+    //   const reservationStatus = giftCoupon.servicesReservationStatus?.find(
+    //     (status) => status.serviceId === service.id
+    //   );
+    //   return !reservationStatus || !reservationStatus.isReserved;
+    // });
+
+    // // Calculate used services
+    // const usedServices = allServices.filter(
+    //   (service) =>
+    //     !leftServices.some((leftService) => leftService.id === service.id)
+    // );
+
+    // // Sort usage history by date
+    // const sortedUsageHistory = [...(giftCoupon.usageHistory || [])].sort(
+    //   (a, b) => new Date(b.usedAt).getTime() - new Date(a.usedAt).getTime()
+    // );
+
+    // // Get reserved services
+    // const reservedServices = leftServices.filter((service) => {
+    //   const reservationStatus = giftCoupon.servicesReservationStatus?.find(
+    //     (status) => status.serviceId === service.id
+    //   );
+    //   return reservationStatus && reservationStatus.isReserved;
+    // });
+
+    return {
+      id: giftCoupon.id,
+      couponCode: giftCoupon.couponCode,
+      isredeemed: giftCoupon.isRedeemed,
+      redeemdAt: giftCoupon.redeemedAt,
+      ownedBy: giftCoupon.ownedBy,
+      services: giftCoupon.services,
+      leftServices: giftCoupon.Leftservices, // Now only returns unreserved services
+      // reservedServices, // Add reserved services to response
+      usedServices:giftCoupon.Usedservices,
+      totalServicesCount: giftCoupon.totalServicesCount,
+      remainingServicesCount: giftCoupon.remainingServicesCount,
+      usedServicesCount: giftCoupon.usedServicesCount,
+      usageHistory: giftCoupon.usageHistory,
+    };
+  }
   /* -------------------------------------------------------------------------- */
   /*                            CreateOrderForRootosh                           */
   /* -------------------------------------------------------------------------- */
@@ -676,13 +762,24 @@ export class OrdersService {
         );
       }
 
+      // Check if the order date matches today's date
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Reset time part to compare only date
+
+      const orderDate = new Date(order.date); // Assuming 'order.date' contains the order date
+      orderDate.setHours(0, 0, 0, 0); // Reset time part to compare only date
+
+      if (orderDate.getTime() !== today.getTime()) {
+        throw new BadRequestException(
+          `Order date ${orderDate.toDateString()} does not match today's date`
+        );
+      }
       // Update the paymentStatus
       order.paymentStatus =
         newPaymentStatus === "paid"
           ? PaymentStatus.Paid
           : PaymentStatus.PartiallyPaid;
 
-      
       // Update image URL if provided
       if (image) {
         const folderName = "orders-payment-status"; // or any other dynamic name based on context
@@ -718,14 +815,23 @@ export class OrdersService {
             order
           );
 
-           // Update remaining balance in receipts to 0 if payment status is Paid
-        if (newPaymentStatus === PaymentStatus.Paid) {
-          for (const receipt of savedOrder.receipts) {
-              receipt.remaining = 0; // Set remaining balance to 0
-              // Save the updated receipt
-              await transactionalEntityManager.save(ReceiptEntity, receipt);
+          // Update remaining balance in receipts to 0 if payment status is Paid
+          if (newPaymentStatus === PaymentStatus.Paid) {
+            const order = await this.orderRepository.findOne({
+              where: { id: orderId },
+              relations: ["receipts"],
+            });
+
+            if (!order) {
+              throw new Error("Order not found");
+            }
+
+            // Iterate over each receipt and set the remaining balance to zero
+            for (const receipt of order.receipts) {
+              receipt.remaining = 0;
+              await this.ReceiptRepository.save(receipt);
+            }
           }
-      }
           // Create an audit log entry
           const auditLog = new AuditLogEntity();
           auditLog.tableName = "order";
@@ -779,6 +885,7 @@ export class OrdersService {
         }
       );
     } catch (error) {
+      console.error("Error updating payment status:", error);
       if (error instanceof NotFoundException) {
         throw error; // Re-throw specific not found exception
       } else {
@@ -835,6 +942,17 @@ export class OrdersService {
             `No reservation found for order with ID ${orderId}`
           );
         }
+        // // Update coupon isReserved status if couponId exists
+        // if (order.couponId) {
+        //   const giftCoupon = await this.GiftCouponRepository.findOne({
+        //     where: { id: order.couponId },
+        //   });
+
+        //   if (giftCoupon) {
+        //     giftCoupon.isReserved = false;
+        //     await this.GiftCouponRepository.save(giftCoupon);
+        //   }
+        // }
         console.log(order.reservation.id);
         await this.reservationService.deleteReservation(order.reservation.id);
         const deposit = order.reservation.deposit; // Get deposit from the reservation
@@ -1405,24 +1523,45 @@ export class OrdersService {
     branchId?: string,
     fromDate?: string,
     toDate?: string,
-    employeeId?: string // Add employeeId as a parameter
+    employeeId?: string
   ): Promise<any> {
+    const employee = await this.employeeRepository.findOne({
+      where: { id: employeeId },
+      relations: ['position']
+    });
+
+    if (!employee) {
+      throw new NotFoundException('Employee not found');
+    }
+
     const queryBuilder = this.orderRepository
       .createQueryBuilder("order")
       .innerJoin("order.reservation", "reservation")
-      .leftJoin("order.artist", "employee") // Ensure you're using the correct relation name
       .select("order.status", "status")
       .addSelect("COUNT(order.id)", "count")
       .groupBy("order.status");
 
-    // Conditionally add the where clause based on branchId, fromDate, toDate, and employeeId
+    // Different join logic based on employee role
+    if (employee.position.postion === Postion.ARTIST) {
+      // For artists - check orders they worked on
+      queryBuilder.leftJoin("order.artist", "employee")
+        .andWhere("employee.id = :employeeId", { employeeId });
+    } else if (employee.position.postion === Postion.ARTISTMANAGER) {
+      // For artist managers - check orders they reviewed
+      queryBuilder
+        .leftJoin("order.reviews", "review")
+        .leftJoin("review.employee", "reviewer")
+        .andWhere("reviewer.id = :employeeId", { employeeId });
+    }
+
+    // Add other conditions
     if (branchId) {
       queryBuilder.andWhere("reservation.branchId = :branchId", { branchId });
     }
 
     if (fromDate) {
       const startOfDay = new Date(fromDate);
-      startOfDay.setHours(0, 0, 0, 0); // Set time to 00:00:00
+      startOfDay.setHours(0, 0, 0, 0);
       queryBuilder.andWhere("reservation.start_Time >= :fromDate", {
         fromDate: startOfDay,
       });
@@ -1430,19 +1569,15 @@ export class OrdersService {
 
     if (toDate) {
       const endOfDay = new Date(toDate);
-      endOfDay.setHours(23, 59, 59, 999); // Set time to 23:59:59
+      endOfDay.setHours(23, 59, 59, 999);
       queryBuilder.andWhere("reservation.start_Time <= :toDate", {
         toDate: endOfDay,
       });
     }
 
-    if (employeeId) {
-      queryBuilder.andWhere("employee.id = :employeeId", { employeeId }); // Filter by employee ID
-    }
-
     const orders = await queryBuilder.getRawMany();
 
-    // Initialize the status count object with all possible statuses
+    // Initialize the status count object
     const orderStatusCounts: { [key in OrderStatus]: number } = {
       [OrderStatus.Pending]: 0,
       [OrderStatus.InQueue]: 0,
@@ -1453,13 +1588,14 @@ export class OrdersService {
       [OrderStatus.Abscent]: 0,
     };
 
-    // Populate the orderStatusCounts object with the results from the query
+    // Populate counts
     orders.forEach((order) => {
       orderStatusCounts[order.status] = parseInt(order.count, 10);
     });
 
     return orderStatusCounts;
   }
+
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Method to get the count of each order status
   async getOrderStatusCountByArtist(
@@ -1900,12 +2036,13 @@ export class OrdersService {
 
   async getCustomerComments(
     customerId: string,
-    getCommentsDto: GetCommentsDto
+    getCommentsDto: GetCommentsbycustomerDto
   ): Promise<PaginatedCommentResponseDto> {
     const { page, limit, fromDate, toDate, sort } = getCommentsDto;
-
+    console.log(this.commentRepository);
     try {
-      const query = this.CommentRepository.createQueryBuilder("comment")
+      const query = this.commentRepository
+        .createQueryBuilder("comment")
         .leftJoinAndSelect("comment.order", "order")
         .leftJoinAndSelect("comment.employee", "employee")
         .leftJoinAndSelect("order.customer", "customer")
@@ -1998,6 +2135,7 @@ export class OrdersService {
         totalPages: Math.ceil(total / limit),
       };
     } catch (error) {
+      console.log(error);
       throw new InternalServerErrorException(
         "Failed to retrieve customer comments",
         error.stack

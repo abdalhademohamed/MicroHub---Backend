@@ -1,7 +1,31 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { PositionEntity } from "../../postion/entities/postion.entity";
+import { BranchEntity } from "../../branch/entities/branch.entity";
 
-export class UserProfileDto {
+export class ReviewDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  rating: number;
+
+  @ApiProperty()
+  comment_Before: string;
+
+  @ApiProperty()
+  comment_After: string;
+
+  @ApiProperty()
+  orderFirstTime: boolean;
+
+  @ApiProperty()
+  createdAt: Date;
+}
+
+export class GetUserProfileDto {
+  @ApiProperty()
+  id: string;
+
   @ApiProperty()
   username: string;
 
@@ -14,6 +38,24 @@ export class UserProfileDto {
   @ApiProperty({ nullable: true })
   image: string | null;
 
-  @ApiProperty({ type: () => PositionEntity, nullable: true })
-  position: PositionEntity | null; // Use PositionEntity and handle nullability
+  @ApiProperty({ type: () => PositionEntity })
+  position: PositionEntity;
+
+  @ApiProperty({ type: () => BranchEntity })
+  branch: BranchEntity;
+
+  @ApiProperty()
+  workingHours: number;
+
+  @ApiProperty()
+  totalReviews: number;
+
+  @ApiProperty()
+  oldestAvgRating: number;
+
+  @ApiProperty()
+  newestAvgRating: number;
+
+  // @ApiProperty({ type: [ReviewDto] })
+  // reviews: ReviewDto[];
 }

@@ -7,7 +7,7 @@ enum SortOrder {
   DESC = 'DESC',
 }
 
-export class GetCommentsDto {
+export class GetCommentsbycustomerDto {
   @IsInt()
   @Min(1)
   @Type(() => Number)

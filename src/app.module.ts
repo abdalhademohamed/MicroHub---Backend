@@ -120,9 +120,7 @@ import { SharableOfferEntity } from "./sharable-offer/entities/sharable-offer.en
         watch: true,
       },
       resolvers: [
-        { use: QueryResolver, options: ["lang"] },
-        AcceptLanguageResolver,
-        // new HeaderResolver(['x-lang']),
+        new HeaderResolver(['language']),
       ],
     }),
     AuthModule,

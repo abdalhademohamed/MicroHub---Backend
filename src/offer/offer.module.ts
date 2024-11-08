@@ -6,6 +6,9 @@ import { ServiceEntity } from "../service/entities/service.entity";
 import { OfferEntity } from "./entities/offer.entity";
 import { BranchEntity } from "../branch/entities/branch.entity";
 import { UserEntity } from "../user/entities/user.entity";
+import { CustomI18nService } from "../common/custom.18n.service";
+import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
+
 
 @Module({
   imports: [
@@ -14,9 +17,14 @@ import { UserEntity } from "../user/entities/user.entity";
       ServiceEntity,
       BranchEntity,
       UserEntity,
+      AuditLogEntity
     ]),
   ],
   controllers: [OfferController],
-  providers: [OfferService],
+  providers: [
+    OfferService,
+    CustomI18nService,
+  ],
+  exports: [OfferService],
 })
 export class OfferModule {}

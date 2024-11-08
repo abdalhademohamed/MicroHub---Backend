@@ -23,6 +23,10 @@ import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
 import { NotificationModule } from "../notification/notification.module";
 import { GiftCouponModule } from "../gift-coupon/gift-coupon.module";
 import { CommentEntity } from "../comment/entities/comment.entity";
+import { ReceiptEntity } from "../receipt/entities/receipt.entity";
+import { CustomI18nService } from "../common/custom.18n.service";
+import { GiftCouponService } from "../gift-coupon/gift-coupon.service";
+import { OrdersModule } from "../orders/orders.module";
 
 
 @Module({
@@ -43,16 +47,18 @@ import { CommentEntity } from "../comment/entities/comment.entity";
       SharableOfferEntity,
       GiftCouponEntity,
       RootoshEntity,
-      CommentEntity
+      CommentEntity,
+      ReceiptEntity,
     ]),
     NotificationModule,
-    GiftCouponModule,
+
   ],
   controllers: [ReservationController],
   providers: [
     ReservationService,
     OrdersService,
     CloudinaryService, // Add OrdersService here
+    CustomI18nService,
   ],
   exports: [ReservationService],  // Export ReservationService here
 })

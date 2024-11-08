@@ -11,6 +11,7 @@ import { CreatePositionDto } from "./dto/create.postion.dto";
 import { EmployeeEntity } from "../employee/entities/employee.entity";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { UserEntity } from "../user/entities/user.entity";
+import { CustomI18nService } from "../common/custom.18n.service";
 
 @Injectable()
 export class PostionService {
@@ -25,6 +26,7 @@ export class PostionService {
     private readonly UserRepository: Repository<UserEntity>,
     @InjectRepository(AuditLogEntity)
     private readonly AuditLogRepository: Repository<AuditLogEntity>,
+    private readonly i18n: CustomI18nService,
   ) {}
 
   // Create a new position
@@ -46,7 +48,7 @@ export class PostionService {
     } catch (error) {
       console.error("Error creating position:", error);
       throw new InternalServerErrorException(
-        "An error occurred while creating the position.",
+        this.i18n.translate('test.POSITION.CREATE_FAILED')
       );
     }
   }
@@ -76,7 +78,13 @@ export class PostionService {
 
   // Get all positions
   async getAllPositions(): Promise<PositionEntity[]> {
-    return await this.PositionRepository.find();
+    try {
+      return await this.PositionRepository.find();
+    } catch (error) {
+      throw new InternalServerErrorException(
+        this.i18n.translate('test.POSITION.RETRIEVE_FAILED')
+      );
+    }
   }
 
   // Update a position
@@ -91,21 +99,29 @@ export class PostionService {
     });
 
     if (!existingPosition) {
-      throw new NotFoundException("Position not found");
+      throw new NotFoundException(
+        this.i18n.translate('test.POSITION.NOT_FOUND')
+      );
     }
 
-    // Update the position
-    await this.PositionRepository.update(id, updatePositionDto);
+    try {
+      // Update the position
+      await this.PositionRepository.update(id, updatePositionDto);
 
-    // Retrieve the updated position
-    const updatedPosition = await this.PositionRepository.findOne({
-      where: { id },
-    });
+      // Retrieve the updated position
+      const updatedPosition = await this.PositionRepository.findOne({
+        where: { id },
+      });
 
-    // Log the update action in the audit log
-    await this.saveAuditLogForUpdate(updatedPosition, userId);
+      // Log the update action in the audit log
+      await this.saveAuditLogForUpdate(updatedPosition, userId);
 
-    return updatedPosition;
+      return updatedPosition;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        this.i18n.translate('test.POSITION.UPDATE_FAILED')
+      );
+    }
   }
 
   // Save the audit log for the update action
@@ -136,7 +152,9 @@ export class PostionService {
     const position = await this.PositionRepository.findOne({ where: { id } });
 
     if (!position) {
-      throw new NotFoundException("Position not found");
+      throw new NotFoundException(
+        this.i18n.translate('test.POSITION.NOT_FOUND')
+      );
     }
 
     // Update related employees to remove their reference to the position
@@ -148,7 +166,9 @@ export class PostionService {
     const result = await this.PositionRepository.delete(id);
 
     if (result.affected === 0) {
-      throw new NotFoundException("Position not found");
+      throw new NotFoundException(
+        this.i18n.translate('test.POSITION.NOT_FOUND')
+      );
     }
   }
 }

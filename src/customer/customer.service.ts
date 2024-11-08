@@ -2,6 +2,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  BadRequestException,
 } from "@nestjs/common";
 import { CreateCustomerDto } from "./dto/create.customer.dto";
 import { UpdateCustomerDto } from "./dto/update.customer.dto";
@@ -12,6 +13,7 @@ import { differenceInMilliseconds, formatDistanceToNow } from "date-fns";
 import { GetCustomerDto } from "./dto/get.customer.dto";
 import { GetCustomerPaginatedsDto } from "./dto/get.customers.paginated.dto";
 import { ReservationEntity } from "../reservation/entities/reservation.entity";
+import { CustomI18nService } from "../common/custom.18n.service";
 
 @Injectable()
 export class CustomerService {
@@ -20,8 +22,9 @@ export class CustomerService {
     private readonly customerRepository: Repository<CustomerEntity>,
     @InjectRepository(ReservationEntity)
     private readonly ReservationRepository: Repository<ReservationEntity>,
-
+    private readonly i18n: CustomI18nService,
   ) {}
+
   async getCustomerByPhoneNumber(phoneNumber: string): Promise<GetCustomerDto> {
     try {
       // Find the customer by phone number, including relations
@@ -39,7 +42,7 @@ export class CustomerService {
       // Handle case where customer is not found
       if (!customer) {
         throw new NotFoundException(
-          `Customer with phone number ${phoneNumber} not found.`,
+          this.i18n.translate('test.CUSTOMER.NOT_FOUND', { args: { phoneNumber } })
         );
       }
 
@@ -125,7 +128,7 @@ export class CustomerService {
 
       // Handle unexpected errors
       throw new InternalServerErrorException(
-        "An unexpected error occurred while retrieving customer details.",
+        this.i18n.translate('test.CUSTOMER.RETRIEVE_FAILED')
       );
     }
   }
@@ -158,8 +161,10 @@ export class CustomerService {
 
   async countCustomers(): Promise<number> {
     return await this.customerRepository.count();
+
   }
-  async getAllCustomers(
+
+   async getAllCustomers(
     filters: GetCustomerPaginatedsDto,
   ): Promise<{ items: CustomerEntity[]; total: number }> {
     const { branchId, fromDate, toDate, page = 1, limit = 10 } = filters;
@@ -196,4 +201,5 @@ export class CustomerService {
   
   
 }
+
 

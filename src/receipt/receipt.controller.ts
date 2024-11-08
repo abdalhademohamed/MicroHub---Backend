@@ -49,24 +49,16 @@ export class ReceiptController {
  
      @Body() CreateReceiptFromReservationIdDto: CreateReceiptFromReservationIdDto,
    ) {
-     try {
-       const userId = Req.user.sub; // Extract user ID from request
+    const userId = Req.user.sub; // Extract user ID from request
  
-       if (!userId) {
-         throw new BadRequestException("User not authenticated");
-       }
-       const receipt = await this.receiptService.createReceiptFromReservationId(
-         CreateReceiptFromReservationIdDto,
-         userId,
-       );
-       return { receipt };
-     } catch (error) {
-       // Handle errors and return appropriate response
-       return {
-         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-         message: "Failed to create receipt",
-       };
-     }
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
+    const receipt = await this.receiptService.createReceiptFromReservationId(
+      CreateReceiptFromReservationIdDto,
+      userId,
+    );
+    return { receipt };
    }
 
    @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
@@ -78,24 +70,16 @@ export class ReceiptController {
 
     @Body() createReceiptDto: CreateReceiptDto,
   ) {
-    try {
-      const userId = Req.user.sub; // Extract user ID from request
+    const userId = Req.user.sub; // Extract user ID from request
 
-      if (!userId) {
-        throw new BadRequestException("User not authenticated");
-      }
-      const receipt = await this.receiptService.createReceipt(
-        createReceiptDto,
-        userId,
-      );
-      return { receipt };
-    } catch (error) {
-      // Handle errors and return appropriate response
-      return {
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: "Failed to create receipt",
-      };
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
     }
+    const receipt = await this.receiptService.createReceipt(
+      createReceiptDto,
+      userId,
+    );
+    return { receipt };
   }
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ARTISTMANAGER)

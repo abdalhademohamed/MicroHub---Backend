@@ -8,6 +8,8 @@ import { UserEntity } from "../user/entities/user.entity";
 import { ServiceEntity } from "../service/entities/service.entity";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { OfferEntity } from "../offer/entities/offer.entity";
+import { CustomI18nService } from "../common/custom.18n.service";
+import { SharableOfferEntity } from "../sharable-offer/entities/sharable-offer.entity";
 
 @Module({
   imports: [
@@ -17,10 +19,11 @@ import { OfferEntity } from "../offer/entities/offer.entity";
       UserEntity,
       ServiceEntity,
       AuditLogEntity,
-      OfferEntity
+      OfferEntity,
+      SharableOfferEntity,
     ]),
   ],
   controllers: [ReceiptController],
-  providers: [ReceiptService],
+  providers: [ReceiptService, CustomI18nService],
 })
 export class ReceiptModule {}

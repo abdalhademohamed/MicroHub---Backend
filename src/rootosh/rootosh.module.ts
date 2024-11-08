@@ -6,6 +6,7 @@ import { RootoshEntity } from "./entities/rootosh.entity";
 import { ServiceEntity } from "../service/entities/service.entity";
 import { UserEntity } from "../user/entities/user.entity";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
+import { CustomI18nService } from "../common/custom.18n.service";
 
 @Module({
   imports: [
@@ -18,6 +19,6 @@ import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
   ],
 
   controllers: [RootoshController],
-  providers: [RootoshService],
+  providers: [RootoshService,CustomI18nService],
 })
 export class RootoshModule {}

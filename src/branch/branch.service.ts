@@ -13,7 +13,6 @@ import { BranchEntity } from "./entities/branch.entity";
 import { PaginateResultDto } from "./dto/paginate.result.dto";
 import { create } from "domain";
 import { CloudinaryService } from "../cloudinary/cloudinary.service";
-import { I18nService } from "nestjs-i18n";
 import { ReservationEntity } from "../reservation/entities/reservation.entity";
 import { WorkingBranchEntity } from "../working-branch/entities/working.branch.entity";
 import { WeekDays } from "./utils/days.enum";
@@ -26,6 +25,7 @@ import { BranchDto } from "./dto/branch.employee.dto";
 import { Role } from "../user/utils/user.enum";
 import { Postion } from "../postion/utils/postion.enum";
 import { EmployeeEntity } from "../employee/entities/employee.entity";
+import { CustomI18nService } from "../common/custom.18n.service";
 
 @Injectable()
 export class BranchService {
@@ -43,7 +43,8 @@ export class BranchService {
 
     @InjectRepository(EmployeeEntity)
     private readonly EmployeeRepository: Repository<EmployeeEntity>,
-    private readonly UserService: UserService
+    private readonly UserService: UserService,
+    private readonly i18n: CustomI18nService
   ) {}
 
   async createBranch(
@@ -60,12 +61,14 @@ export class BranchService {
 
       if (existingBranch) {
         throw new ConflictException(
-          "A branch with the given name or location already exists."
+          this.i18n.translate('test.BRANCH.NAME_LOCATION_EXISTS')
         );
       }
       // Validate URL
       if (!this.isValidUrl(location)) {
-        throw new BadRequestException("Invalid URL format for location");
+        throw new BadRequestException(
+          this.i18n.translate('test.BRANCH.INVALID_URL')
+        );
       }
       // Create and save the new branch
       const branch = this.BranchRepository.create({
@@ -113,13 +116,13 @@ export class BranchService {
       return savedBranch;
     } catch (error) {
       // Handle specific errors
-      if (error instanceof ConflictException) {
+      if (error instanceof ConflictException || error instanceof BadRequestException) {
         throw error;
       }
 
       // Handle unexpected errors
       throw new InternalServerErrorException(
-        "An unexpected error occurred while creating the branch."
+        this.i18n.translate('test.BRANCH.CREATE_FAILED')
       );
     }
   }
@@ -228,13 +231,15 @@ export class BranchService {
 
     // Validate pagination values
     if (page < 1 || limit < 1) {
-      throw new BadRequestException("Page and limit must be greater than 0");
+      throw new BadRequestException(
+        this.i18n.translate('test.BRANCH.INVALID_PAGINATION')
+      );
     }
 
     // Validate order value
     if (!["ASC", "DESC"].includes(order)) {
       throw new BadRequestException(
-        'Invalid order value. Must be "ASC" or "DESC"'
+        this.i18n.translate('test.BRANCH.INVALID_ORDER')
       );
     }
 
@@ -321,7 +326,9 @@ export class BranchService {
     });
 
     if (!branch) {
-      throw new NotFoundException("Branch not found");
+      throw new NotFoundException(
+        this.i18n.translate('test.BRANCH.NOT_FOUND')
+      );
     }
 
     // Fetch working hours for the specified branch
@@ -368,7 +375,9 @@ export class BranchService {
     });
 
     if (!branch) {
-      throw new NotFoundException("Branch not found");
+      throw new NotFoundException(
+        this.i18n.translate('test.BRANCH.NOT_FOUND')
+      );
     }
 
     // Prepare working hours response
@@ -467,7 +476,9 @@ export class BranchService {
       });
 
       if (!branch) {
-        throw new NotFoundException(`Branch with ID ${branchId} not found.`);
+        throw new NotFoundException(
+          this.i18n.translate('test.BRANCH.NOT_FOUND')
+        );
       }
 
       // Track original values
@@ -547,7 +558,7 @@ export class BranchService {
     } catch (error) {
       console.error("Update Branch Error:", error); // Debug statement
       throw new InternalServerErrorException(
-        "An unexpected error occurred while updating the branch."
+        this.i18n.translate('test.BRANCH.UPDATE_FAILED')
       );
     }
   }
@@ -560,7 +571,9 @@ export class BranchService {
       });
 
       if (!branch) {
-        throw new NotFoundException(`Branch with ID ${branchId} not found.`);
+        throw new NotFoundException(
+          this.i18n.translate('test.BRANCH.NOT_FOUND')
+        );
       }
       // Update the branch entity to record who deleted it
       branch.deletedBy = userId;
@@ -588,7 +601,7 @@ export class BranchService {
       }
 
       throw new InternalServerErrorException(
-        "An unexpected error occurred while deleting the branch."
+        this.i18n.translate('test.BRANCH.DELETE_FAILED')
       );
     }
   }

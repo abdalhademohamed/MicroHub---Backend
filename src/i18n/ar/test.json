@@ -1,4 +1,26 @@
 {
+  "auth": {
+    "EMAIL_EXISTS": "البريد الإلكتروني موجود بالفعل",
+    "USERNAME_EXISTS": "اسم المستخدم موجود بالفعل",
+    "SIGNUP_FAILED": "فشل في تسجيل المستخدم",
+    "INVALID_CREDENTIALS": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
+    "OTP_EMAIL_FAILED": "فشل في إرسال رمز التحقق",
+    "RESET_EMAIL_SENT": "إذا كان بريدك الإلكتروني صالحًا، ستتلقى رابط إعادة تعيين كلمة المرور",
+    "RESET_EMAIL_FAILED": "فشل في إرسال بريد إعادة تعيين كلمة المرور",
+    "INVALID_TOKEN": "رمز غير صالح أو منتهي الصلاحية",
+    "USER_NOT_FOUND": "المستخدم غير موجود",
+    "INVALID_TOKEN_OR_OTP": "رمز أو رمز تحقق غير صالح",
+    "PASSWORD_RESET_FAILED": "فشل في إعادة تعيين كلمة المرور",
+    "LOGOUT_SUCCESS": "تم تسجيل الخروج بنجاح",
+    "LOGOUT_FAILED": "فشل في تسجيل الخروج",
+    "ACCESS_DENIED": "تم رفض الوصول",
+    "CONFIRMATION_EMAIL_FAILED": "فشل في إرسال البريد الإلكتروني للتأكيد",
+    "REFRESH_TOKEN_INVALIDATE_FAILED": "فشل في إبطال رمز التحديث",
+    "EMPLOYEE_CREATE_FAILED": "فشل في إنشاء الموظف",
+    "BRANCH_NOT_FOUND": "الفرع غير موجود",
+    "POSITION_NOT_FOUND": "المنصب غير موجود",
+    "EMPLOYEE_TYPE_NOT_FOUND": "نوع الموظف غير موجود"
+  },
   "EMAIL_EXISTS": "Email already exists",
   "USERNAME_EXISTS": "Username already exists",
   "SIGNUP_FAILED": "Failed to sign up user",
@@ -11,5 +33,170 @@
   "CONFIRMATION_EMAIL_FAILED": "Failed to send confirmation email",
   "LOGOUT_FAILED": "Failed to logout. Please try again later.",
   "ACCESS_DENIED": "Access Denied",
-  "LOGOUT_SUCCESS": "Logout successful"
+  "LOGOUT_SUCCESS": "Logout successful",
+  "BRANCH": {
+    "NAME_LOCATION_EXISTS": "يوجد فرع بنفس الاسم أو الموقع.",
+    "INVALID_URL": "تنسيق URL غير صالح للموقع",
+    "NOT_FOUND": "الفرع غير موجود",
+    "UPDATE_FAILED": "حدث خطأ غير متوقع أثناء تحديث الفرع.",
+    "DELETE_FAILED": "حدث خطأ غير متوقع أثناء حذف الفرع.",
+    "CREATE_FAILED": "حدث خطأ غير متوقع أثناء إنشاء الفرع.",
+    "INVALID_PAGINATION": "يجب أن تكون الصفحة والحد أكبر من 0",
+    "INVALID_ORDER": "قيمة الترتيب غير صالحة. يجب أن تكون \"ASC\" أو \"DESC\""
+  },
+  "COMMENT": {
+    "NOT_FOUND": "التعليق غير موجود",
+    "RETRIEVE_FAILED": "فشل في استرجاع التعليق",
+    "INVALID_PAGINATION": "يجب أن تكون الصفحة والحد أكبر من 0",
+    "INVALID_DATES": "نطاق التاريخ المقدم غير صالح"
+  },
+  "CUSTOMER": {
+    "NOT_FOUND": "العميل برقم الهاتف {phoneNumber} غير موجود.",
+    "RETRIEVE_FAILED": "حدث خطأ غير متوقع أثناء استرجاع تفاصيل العميل.",
+    "INVALID_PAGINATION": "يجب أن تكون الصفحة والحد أكبر من 0",
+    "COUNT_FAILED": "فشل في عد العملاء"
+  },
+  "EMPLOYEE": {
+    "NOT_FOUND": "الموظف برقم {id} غير موجود",
+    "BRANCH_NOT_FOUND": "الفرع برقم {branchId} غير موجود",
+    "POSITION_NOT_FOUND": "المنصب برقم {id} غير موجود",
+    "INVALID_ROLE": "دور غير صالح: {role}",
+    "CREATE_FAILED": "فشل في إنشاء الموظف",
+    "UPDATE_FAILED": "فشل في تحديث الموظف",
+    "DELETE_FAILED": "فشل في حذف الموظف",
+    "USER_NOT_FOUND": "المستخدم غير موجود",
+    "INVALID_WORKING_HOURS": "ساعات العمل غير صالحة",
+    "INVALID_WORKING_ENTITY": "كيان العمل غير صالح",
+    "ONLY_ARTIST": "لا يمكن تغيير المنصب/الفرع لأن هذا الموظف هو الفنان الوحيد في الفرع",
+    "CURRENT_EMAIL": "هذا هو بريدك الإلكتروني الحالي",
+    "IMAGE_UPLOAD_FAILED": "فشل في تحميل الصورة",
+    "FETCH_ERROR": "خطأ في جلب الموظفين: {message}"
+  },
+  "EMPLOYEE_TYPE": {
+    "NOT_FOUND": "نوع الموظف غير موجود",
+    "CREATE_FAILED": "فشل في إنشاء نوع الموظف",
+    "UPDATE_FAILED": "فشل في تحديث نوع الموظف",
+    "DELETE_FAILED": "فشل في حذف نوع الموظف",
+    "RETRIEVE_FAILED": "فشل في استرجاع أنواع الموظفين"
+  },
+  "GIFT_COUPON": {
+    "NOT_FOUND": "كوبون الهدية غير موجود",
+    "SHARABLE_OFFER_NOT_FOUND": "العرض المشترك غير موجود",
+    "CUSTOMER_NOT_FOUND": "العميل غير موجود",
+    "ALREADY_REDEEMED": "تم استخدام هذا الكوبون بالفعل ولا يمكن استخدامه",
+    "EXPIRED": "انتهت صلاحية هذا الكوبون ولا يمكن استخدامه",
+    "CANNOT_UPDATE_REDEEMED": "تم استخدام هذا الكوبون بالفعل ولا يمكن تحديثه",
+    "NOT_VALID_YET": "هذا الكوبون غير صالح حتى {startDateTime}",
+    "CREATE_FAILED": "فشل في إنشاء كوبون الهدية",
+    "UPDATE_FAILED": "فشل في تحديث كوبون الهدية"
+  },
+  "OFFER": {
+    "NOT_FOUND": "العرض برقم '{id}' غير موجود",
+    "BRANCH_NOT_FOUND": "الفرع/الفروع برقم '{branchIds}' غير موجود",
+    "CREATE_FAILED": "فشل في إنشاء العرض",
+    "UPDATE_FAILED": "فشل في تحديث العرض",
+    "DELETE_FAILED": "فشل في حذف العرض",
+    "RETRIEVE_FAILED": "حدث خطأ أثناء استرجاع العروض",
+    "INVALID_PAGINATION": "يجب أن تكون معلمات الصفحات أعداداً صحيحة موجبة",
+    "INVALID_START_DATE": "لا يمكن أن يكون تاريخ البدء قبل اليوم",
+    "INVALID_END_DATE": "يجب أن يكون تاريخ الانتهاء بعد تاريخ البدء"
+  },
+  "ORDER": {
+    "NOT_FOUND": "لم يتم العثور على الطلب لهذا الحجز",
+    "RESERVATION_NOT_FOUND": "لم يتم العثور على الحجز",
+    "USER_NOT_FOUND": "لم يتم العثور على المستخدم برقم {userId}",
+    "ARTIST_NOT_FOUND": "لم يتم العثور على الفنان برقم {artistId}",
+    "EMPLOYEE_NOT_FOUND": "لم يتم العثور على الموظف",
+    "CUSTOMER_NOT_FOUND": "لم يتم العثور على العميل",
+    "ASSIGN_FAILED": "فشل في تعيين الطلب للفنان",
+    "UPDATE_STATUS_FAILED": "فشل في تحديث حالة الطلب",
+    "FETCH_FAILED": "فشل في جلب الطلبات",
+    "COMMENTS_FETCH_FAILED": "فشل في استرجاع تعليقات العميل",
+    "NOTIFICATION": {
+      "NEW_ORDER": "تم إنشاء طلب جديد",
+      "NEW_ORDER_MESSAGE": "تم إنشاء طلب جديد: {orderId}",
+      "ORDER_COMPLETED": "تم إكمال الطلب",
+      "ORDER_COMPLETED_MESSAGE": "تم إكمال الطلب {orderId} بواسطة: {userId}"
+    }
+  },
+  "PAYMENT": {
+    "NOT_FOUND": "طريقة الدفع غير موجودة",
+    "CREATE_FAILED": "فشل في إنشاء طريقة الدفع",
+    "UPDATE_FAILED": "فشل في تحديث طريقة الدفع",
+    "DELETE_FAILED": "فشل في حذف طريقة الدفع",
+    "UPLOAD_FAILED": "فشل في تحميل صورة طريقة الدفع",
+    "RETRIEVE_FAILED": "فشل في استرجاع طرق الدفع"
+  },
+  "POSITION": {
+    "NOT_FOUND": "المنصب غير موجود",
+    "CREATE_FAILED": "حدث خطأ أثناء إنشاء المنصب",
+    "UPDATE_FAILED": "فشل في تحديث المنصب",
+    "DELETE_FAILED": "فشل في حذف المنصب",
+    "RETRIEVE_FAILED": "فشل في استرجاع المناصب"
+  },
+  "RECEIPT": {
+    "NOT_FOUND": "الإيصال غير موجود",
+    "NOT_FOUND_FOR_ORDER": "لم يتم العثور على إيصال للطلب رقم: {{orderId}}",
+    "ORDER_NOT_FOUND": "الطلب غير موجود",
+    "ORDER_NOT_FOUND_FOR_RESERVATION": "لم يتم العثور على طلب للحجز رقم: {{reservationId}}",
+    "USER_NOT_FOUND": "المستخدم برقم {{userId}} غير موجود",
+    "CREATE_FAILED": "فشل في إنشاء الإيصال",
+    "RETRIEVE_FAILED": "فشل في استرجاع الإيصالات",
+    "NO_SERVICES": "لا توجد خدمات للحجز",
+    "INVALID_OFFER": "العرض غير صالح لهذا الإيصال"
+  },
+  "RESERVATION": {
+    "NOT_FOUND": "لم يتم العثور على الحجز برقم {id}",
+    "BRANCH_NOT_FOUND": "لم يتم العثور على الفرع",
+    "SLOT_NOT_FOUND": "لم يتم العثور على الموعد",
+    "CUSTOMER_NOT_FOUND": "لم يتم العثور على العميل",
+    "INVALID_SERVICE_IDS": "معرفات الخدمات غير صالحة",
+    "SCHEDULE_CONFLICT": "يتعارض الجدول المخصص مع حجز موجود",
+    "PHOTO_REQUIRED": "الصورة مطلوبة",
+    "INVALID_TIME": "وقت الحجز غير صالح",
+    "UPDATE_FAILED": "فشل تحديث الحجز",
+    "DELETE_FAILED": "فشل حذف الحجز"
+  },
+  "REVIEW": {
+    "ORDER_NOT_FOUND": "لم يتم العثور على الطلب برقم {orderId}",
+    "ORDER_ALREADY_REVIEWED": "تم تقييم الطلب برقم {orderId} مسبقاً",
+    "ORDER_NO_ARTIST": "الطلب برقم {orderId} غير مرتبط بأي فنان",
+    "EMPLOYEE_NOT_FOUND": "لم يتم العثور على الموظف برقم {employeeId}",
+    "CREATE_FAILED": "فشل في إنشاء التقييم: {error}",
+    "FETCH_FAILED": "فشل في جلب التقييمات",
+    "FETCH_ARTIST_REVIEWS_FAILED": "فشل في جلب تقييمات الفنان",
+    "INVALID_ARTIST": "الموظف برقم {employeeId} ليس فناناً أو غير موجود",
+    "ORDER_OR_CUSTOMER_NOT_FOUND": "لم يتم العثور على الطلب أو العميل للطلب رقم {orderId}",
+    "NOTIFICATION": {
+      "REVIEW_ADDED": "تم تقييم الطلب",
+      "REVIEW_ADDED_MESSAGE": "تم تقييم طلبك برقم {orderId}"
+    }
+  },
+  "ROOTOSH": {
+    "NOT_FOUND": "لم يتم العثور على روتوش برقم {id}",
+    "SERVICE_NOT_FOUND": "لم يتم العثور على الخدمة برقم {serviceId}",
+    "CREATE_FAILED": "فشل في إنشاء الروتوش",
+    "UPDATE_FAILED": "فشل في تحديث الروتوش",
+    "DELETE_FAILED": "فشل في حذف الروتوش",
+    "FETCH_FAILED": "فشل في جلب بيانات الروتوش"
+  },
+  "SERVICE": {
+    "NAME_EXISTS": "يوجد خدمة بهذا الاسم بالفعل",
+    "NOT_FOUND": "لم يتم العثور على الخدمة برقم {id}",
+    "CREATE_FAILED": "فشل في إنشاء الخدمة",
+    "UPDATE_FAILED": "فشل في تحديث الخدمة",
+    "DELETE_FAILED": "فشل في حذف الخدمة",
+    "FETCH_FAILED": "فشل في جلب الخدمات",
+    "IMAGE_UPLOAD_FAILED": "فشل في رفع صورة الخدمة"
+  },
+  "SHARABLE_OFFER": {
+    "SERVICES_NOT_FOUND": "لم يتم العثور على خدمات بالمعرفات المقدمة",
+    "BRANCHES_NOT_FOUND": "لم يتم العثور على فرع (فروع) بالمعرف {branchIds}",
+    "INVALID_START_DATE": "لا يمكن أن يكون تاريخ البدء قبل اليوم",
+    "INVALID_DATE_RANGE": "يجب أن يكون تاريخ الانتهاء بعد تاريخ البدء",
+    "NOT_FOUND": "لم يتم العثور على العرض برقم {id}",
+    "CREATE_FAILED": "فشل في إنشاء العرض القابل للمشاركة",
+    "UPDATE_FAILED": "فشل في تحديث العرض القابل للمشاركة",
+    "FETCH_FAILED": "فشل في جلب العروض القابلة للمشاركة"
+  }
 }

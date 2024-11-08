@@ -10,6 +10,8 @@ import { UserService } from "../user/user.service";
 import { UserModule } from "../user/user.module";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { NotificationModule } from "../notification/notification.module";
+import { CustomI18nService } from "../common/custom.18n.service";
+import { CommentEntity } from "../comment/entities/comment.entity";
 
 @Module({
   imports: [
@@ -19,10 +21,11 @@ import { NotificationModule } from "../notification/notification.module";
       OrderEntity,
       UserEntity,
       AuditLogEntity,
+      CommentEntity,
     ]), // Add OrderEntity here
     NotificationModule
   ],
   controllers: [ReviewsController],
-  providers: [ReviewsService],
+  providers: [ReviewsService,CustomI18nService],
 })
 export class ReviewsModule {}
