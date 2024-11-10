@@ -85,6 +85,7 @@
     "SHARABLE_OFFER_NOT_FOUND": "Sharable offer not found",
     "CUSTOMER_NOT_FOUND": "Customer not found",
     "ALREADY_REDEEMED": "This coupon has already been redeemed and cannot be used",
+    "ALREADY_CANCELED": "This coupon has already been canceled and cannot be used",
     "EXPIRED": "This coupon has expired and cannot be used",
     "CANNOT_UPDATE_REDEEMED": "This coupon has already been redeemed and cannot be updated",
     "NOT_VALID_YET": "This coupon is not valid until {startDateTime}",
