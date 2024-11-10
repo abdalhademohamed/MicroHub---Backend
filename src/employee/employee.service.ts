@@ -793,7 +793,9 @@ export class EmployeeService {
       .leftJoinAndSelect("employee.branch", "branch") // Join branch
       .leftJoinAndSelect("employee.employeeType", "employeeType") // Join employeeType
       .where("position.postion = :position", { position: Postion.ARTIST }) // Filter by position
-      .andWhere("order.status = :status", { status: OrderStatus.Completed }) // Filter by order status
+      .andWhere("order.status IN (:...statuses)", { 
+        statuses: [OrderStatus.Completed, OrderStatus.Reviewed] 
+      }) // Filter by multiple order statuses
       .select([
         "employee",
         "branch",
@@ -808,17 +810,34 @@ export class EmployeeService {
       .orderBy('"completedOrdersCount"', 'DESC') // Order by the count of completed orders
       .limit(5); // Limit to the top 5 employees
   
-    // Add date filtering only if fromDate or toDate are provided
-    if (fromDate) {
-      queryBuilder.andWhere("order.createdAt >= :fromDate", { 
-        fromDate: fromDate.toISOString(),
-      });
-    }
-    if (toDate) {
-      queryBuilder.andWhere("order.createdAt <= :toDate", { 
-        toDate: toDate.toISOString(),
-      });
-    }
+    // // Add date filtering only if fromDate or toDate are provided
+    // if (fromDate) {
+    //   queryBuilder.andWhere("order.createdAt >= :fromDate", { 
+    //     fromDate: fromDate.toISOString(),
+    //   });
+    // }
+    // if (toDate) {
+    //   queryBuilder.andWhere("order.createdAt <= :toDate", { 
+    //     toDate: toDate.toISOString(),
+    //   });
+    // }
+   // Set time to start of day for fromDate
+   if (fromDate) {
+    const startOfDay = new Date(fromDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    queryBuilder.andWhere('order.createdAt >= :fromDate', { 
+      fromDate: startOfDay 
+    });
+  }
+
+  // Set time to end of day for toDate
+  if (toDate) {
+    const endOfDay = new Date(toDate);
+    endOfDay.setHours(23, 59, 59, 999);
+    queryBuilder.andWhere('order.createdAt <= :toDate', { 
+      toDate: endOfDay 
+    });
+  }
   
     const topArtists = await queryBuilder.getRawMany(); // Use getRawMany to get raw results
   
