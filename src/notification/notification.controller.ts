@@ -23,6 +23,9 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
+import { RolesGuard } from "../auth/guards/role.guards";
+import { Roles } from "../auth/Roles.decorator";
+import { Role } from "../user/utils/user.enum";
 @ApiTags("notification")
 @Controller("notification")
 export class NotificationController {
@@ -81,7 +84,9 @@ export class NotificationController {
   }
 
   @Post("save")
-  @UseGuards(AccessTokenGuard)
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER, Role.ARTISTMANAGER, Role.RECEPTIONIST,Role.ARTIST,Role.ACCOUNTANT,Role.ADMIN,Role.COORDINATOR)
+
   @ApiOperation({ summary: "Save FCM token for a user" })
   @ApiBody({
     description: "FCM token to be saved",
