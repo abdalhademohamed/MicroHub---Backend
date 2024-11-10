@@ -77,7 +77,7 @@ export class ReviewsController {
 
     @Query() query: GetEmployeeReviewsCommentsDto
   ) {
-    const userId = "4bd4559c-7c87-4b62-9e2a-90626e4b11ca"; // Extract user ID from request
+    const userId = req.user.sub; // Extract user ID from request
     if (!userId) {
       throw new BadRequestException("User not authenticated");
     }
