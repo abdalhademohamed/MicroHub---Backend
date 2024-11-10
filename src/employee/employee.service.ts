@@ -120,7 +120,10 @@ export class EmployeeService {
     limit: number = 10,
     employeeTypeName?: string,
     branchId?: string,
-    role?: Role // Change type to Role enum
+    role?: Role,
+    englishName?: string,
+    arabicName?: string,
+    userId?: string
   ): Promise<{
     items: EmployeeEntity[];
     total: number;
@@ -131,7 +134,40 @@ export class EmployeeService {
     page = Math.max(page, 1);
     limit = Math.max(limit, 1);
 
-    const filter: any = { deletedAt: null }; // Ensure soft-deleted employees are excluded
+    const filter: any = { deletedAt: null };
+
+    // Get the requesting user's details
+    const requestingUser = await this.employeeRepository.findOne({
+      where: { id: userId },
+      relations: ['branch'],
+    });
+
+    if (!requestingUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    // If user is a receptionist, force filter by their branch
+    if (requestingUser.role === Role.RECEPTIONIST) {
+      filter.branch = { id: requestingUser.branch.id };
+    } else if (branchId) {
+      // For other roles, apply branchId filter if provided
+      const branch = await this.branchRepository.findOne({
+        where: { id: branchId },
+      });
+      if (!branch) {
+        throw new NotFoundException(`Branch with id ${branchId} not found`);
+      }
+      filter.branch = { id: branchId };
+    }
+
+    // Add specific name filters
+    if (englishName) {
+      filter.english_Name = Like(`%${englishName}%`);
+    }
+    
+    if (arabicName) {
+      filter.arabic_Name = Like(`%${arabicName}%`);
+    }
 
     // Handle employeeTypeName filter
     if (employeeTypeName) {
@@ -145,7 +181,6 @@ export class EmployeeService {
       if (employeeTypeIds.length > 0) {
         filter.employeeType = In(employeeTypeIds);
       } else {
-        // No matching employee types
         return {
           items: [],
           total: 0,
@@ -153,18 +188,6 @@ export class EmployeeService {
           limit,
         };
       }
-    }
-
-    // Branch existence check
-    if (branchId) {
-      const branch = await this.branchRepository.findOne({
-        where: { id: branchId },
-      });
-      if (!branch) {
-        // Throw a custom 404 error if the branch is not found
-        throw new NotFoundException(`Branch with id ${branchId} not found`);
-      }
-      filter.branch = { id: branchId };
     }
 
     // Add role filter if provided and valid

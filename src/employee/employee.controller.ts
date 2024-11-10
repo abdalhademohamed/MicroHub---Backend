@@ -106,23 +106,34 @@ export class EmployeeController {
   @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST,Role.ARTISTMANAGER,Role.ACCOUNTANT)
   @Get()
   async getAllEmployees(
+    @Request() req: any, // Request object to access the user
     @Query("page") page: number = 1,
     @Query("limit") limit: number = 10,
     @Query("employeeType") employeeType?: string, // Optional query parameter for filtering
     @Query("branchId") branchId?: string, // Optional query parameter for filtering
-    @Query("role") role?: Role // Optional query parameter for filtering by role
+    @Query("role") role?: Role, // Optional query parameter for filtering by role
+    @Query("englishName") englishName?: string, // Optional query parameter for filtering by English name
+    @Query("arabicName") arabicName?: string, // Optional query parameter for filtering by Arabic name
   ): Promise<{
     items: EmployeeEntity[];
     total: number;
     page: number;
     limit: number;
   }> {
+    const userId = req.user.sub; // Extract user ID from request
+
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
     return await this.employeeService.getAllEmployees(
       page,
       limit,
       employeeType,
       branchId,
-      role // Pass the role to the service
+      role,
+      englishName,
+      arabicName,
+      userId
     );
   }
 
