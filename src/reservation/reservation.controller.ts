@@ -40,9 +40,15 @@ export class ReservationController {
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST,Role.ACCOUNTANT,)
   async getTop5Reservations(
+    @Request() req: any, // Request object to access the user
     @Query('fromDate') fromDate: string,
     @Query('toDate') toDate: string,
   ): Promise<ReservationEntity[]> {
+    // const userId = "a919b4c2-9e42-4709-b576-a6ff4c8cdfbd"; // Extract user ID from request
+
+    // if (!userId) {
+    //   throw new BadRequestException("User not authenticated");
+    // }
     return this.reservationService.getTop5Reservations(fromDate, toDate);
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
