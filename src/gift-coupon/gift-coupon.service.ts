@@ -120,6 +120,11 @@ export class GiftCouponService {
       );
     }
 
+    if (giftCoupon.isCanceled) {
+      throw new ConflictException(
+        this.i18n.translate("test.GIFT_COUPON.ALREADY_CANCELED")
+      );
+    }
     if (giftCoupon.endDateTime && giftCoupon.endDateTime < now) {
       throw new ConflictException(
         this.i18n.translate("test.GIFT_COUPON.EXPIRED")
@@ -176,6 +181,11 @@ export class GiftCouponService {
     if (giftCoupon.isRedeemed) {
       throw new ConflictException(
         this.i18n.translate("test.GIFT_COUPON.ALREADY_REDEEMED")
+      );
+    }
+    if (giftCoupon.isCanceled) {
+      throw new ConflictException(
+        this.i18n.translate("test.GIFT_COUPON.ALREADY_CANCELED")
       );
     }
 
