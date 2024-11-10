@@ -139,18 +139,13 @@ export class EmployeeService {
     // Get the requesting user's details
     const requestingUser = await this.employeeRepository.findOne({
       where: { id: userId },
-      relations: ['branch'],
+      relations: ['branch', 'position'],
     });
 
-    if (!requestingUser) {
-      throw new NotFoundException('User not found');
-    }
-
-    // If user is a receptionist, force filter by their branch
-    if (requestingUser.role === Role.RECEPTIONIST) {
+    // Only apply branch filter if requestingUser exists and is a receptionist
+    if (requestingUser?.position?.postion === Postion.RECEPTIONIST) {
       filter.branch = { id: requestingUser.branch.id };
     } else if (branchId) {
-      // For other roles, apply branchId filter if provided
       const branch = await this.branchRepository.findOne({
         where: { id: branchId },
       });
