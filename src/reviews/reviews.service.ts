@@ -21,6 +21,7 @@ import { CustomI18nService } from "../common/custom.18n.service";
 import { I18nService } from "nestjs-i18n";
 import { CommentEntity } from "../comment/entities/comment.entity";
 import { GetEmployeeReviewsCommentsDto, SortOrder } from "./dto/get-employee-reviews-comments.dto";
+import { Postion } from "../postion/utils/postion.enum";
 
 @Injectable()
 export class ReviewsService {
@@ -253,12 +254,12 @@ export class ReviewsService {
       // Check if the employee exists and is an artist
       const employee = await this.employeeRepository.findOne({
         where: { id: employeeId },
+        relations: ["position"],
       });
 
       if (
         !employee ||
-        !employee.employeeType ||
-        employee.employeeType.typeEnglish !== "ARTIST"
+        employee.position.postion !== Postion.ARTIST
       ) {
         throw new NotFoundException(
           this.i18n.translate('test.REVIEW.INVALID_ARTIST', { args: { employeeId } })
