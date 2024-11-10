@@ -580,14 +580,25 @@ async getPaymentMethodUsageReport(fromDate?: Date, toDate?: Date, branchId?: str
 /*                                   Orders                                   */
 /* -------------------------------------------------------------------------- */
 
-async generateOrderReport(dto: GenerateOrderReportDto): Promise<any> {
-  const { fromDate, toDate, page = 1, limit = 10 } = dto; // Default pagination values
+async generateOrderReport(dto: GenerateOrderReportDto, userId: string): Promise<any> {
+  const { fromDate, toDate, page = 1, limit = 10 } = dto;
+
+  // Get the requesting user's details
+  const requestingUser = await this.EmployeeRepository.findOne({
+    where: { id: userId },
+    relations: ['branch', 'position'],
+  });
 
   // Prepare the query options
   const queryBuilder = this.OrderRepository.createQueryBuilder('order')
-    .leftJoinAndSelect('order.reservation', 'reservation') // Include related reservation
+    .leftJoinAndSelect('order.reservation', 'reservation')
     .skip((page - 1) * limit)
     .take(limit);
+
+  // If user is a receptionist, filter by their branch ID
+  if (requestingUser?.position?.postion === Postion.RECEPTIONIST && requestingUser.branch) {
+    queryBuilder.andWhere('reservation.branchId = :branchId', { branchId: requestingUser.branch.id });
+  }
 
   // Apply date filtering if provided
   if (fromDate) {

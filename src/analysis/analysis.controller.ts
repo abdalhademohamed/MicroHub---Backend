@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, UseGuards } from "@nestjs/common";
+import { Controller, Get, Param, Query, UseGuards ,Request, BadRequestException} from "@nestjs/common";
 import { AnalysisService } from "./analysis.service";
 import { AnalysisDto } from "./dto/deposit.dto";
 import { ApiOperation, ApiQuery, ApiResponse } from "@nestjs/swagger";
@@ -23,7 +23,7 @@ export class AnalysisController {
   /*                                   offers                                   */
   /* -------------------------------------------------------------------------- */
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ACCOUNTANT)
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ACCOUNTANT,Role.RECEPTIONIST)
   @Get('offer')
   @ApiResponse({ status: 200, description: 'Retrieve offers report' })
   async getOfferReport(@Query() filterDto: OfferReportDto) {
@@ -35,7 +35,7 @@ export class AnalysisController {
 /*                                  services                                  */
 /* -------------------------------------------------------------------------- */
 @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ACCOUNTANT)
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ACCOUNTANT,Role.RECEPTIONIST)
 @Get('service')
 async getServiceReport(@Query() GetServiceReportDto: GetServiceReportDto) {
   return this.analysisService.getServiceReport(GetServiceReportDto);
@@ -112,11 +112,19 @@ async getPaymentMethodUsageReport(
 @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ACCOUNTANT,Role.COORDINATOR)
 @Get('order')
-async getOrderReport(    @Query() query: GenerateOrderReportDto,
+async getOrderReport( @Request() req: any, // Request object to access the user
+@Query() query: GenerateOrderReportDto,
 ) {
-  return await this.analysisService.generateOrderReport(query);
+  const userId = req.user.sub; // Extract user ID from request
+
+if (!userId) {
+  throw new BadRequestException("User not authenticated");
+}
+  return await this.analysisService.generateOrderReport(query,userId);
 
 }
+
+
 
 /* -------------------------------------------------------------------------- */
 /*                                  Employee                                  */
