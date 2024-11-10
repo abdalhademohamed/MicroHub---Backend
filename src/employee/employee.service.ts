@@ -122,7 +122,6 @@ export class EmployeeService {
     branchId?: string,
     role?: Role,
     englishName?: string,
-    arabicName?: string,
     userId?: string
   ): Promise<{
     items: EmployeeEntity[];
@@ -159,10 +158,7 @@ export class EmployeeService {
     if (englishName) {
       filter.english_Name = Like(`%${englishName}%`);
     }
-    
-    if (arabicName) {
-      filter.arabic_Name = Like(`%${arabicName}%`);
-    }
+   
 
     // Handle employeeTypeName filter
     if (employeeTypeName) {
