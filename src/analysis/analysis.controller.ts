@@ -110,7 +110,7 @@ async getPaymentMethodUsageReport(
 
 
 @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ACCOUNTANT,Role.COORDINATOR)
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ACCOUNTANT,Role.COORDINATOR,Role.RECEPTIONIST)
 @Get('order')
 async getOrderReport( @Request() req: any, // Request object to access the user
 @Query() query: GenerateOrderReportDto,
