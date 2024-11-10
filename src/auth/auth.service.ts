@@ -118,7 +118,7 @@ export class AuthService {
 
   async signIn(
     LoginAuthDto: LoginAuthDto,
-  ): Promise<{ accessToken: string; refreshToken: string ;userName: string}> {
+  ): Promise<{ accessToken: string; refreshToken: string ;userName: string;role:string}> {
     const { email, password } = LoginAuthDto;
     const startTime = Date.now();
 
@@ -146,12 +146,13 @@ export class AuthService {
             // Update the user's record with the new refresh token
             await this.updateRefreshToken(user.id, tokens.refreshToken);
             console.log(`updateRefreshToken: ${Date.now() - startTime}ms`);
-
+            console.log(user.role)
             // Return the generated tokens
             return {
               accessToken: tokens.accessToken,
               refreshToken: tokens.refreshToken,
-              userName:user.username
+              userName:user.username,
+              role:user.role
             }; 
           } catch (updateError) {
             console.error("Error updating refresh token:", updateError.message);
