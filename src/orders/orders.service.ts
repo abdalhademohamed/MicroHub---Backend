@@ -929,6 +929,18 @@ export class OrdersService {
         );
       }
     }
+    if (newStatus === OrderStatus.InQueue || 
+      newStatus === OrderStatus.Working || 
+      newStatus === OrderStatus.Completed || 
+      newStatus === OrderStatus.Pending ||
+      newStatus === OrderStatus.Reviewed || 
+      newStatus === OrderStatus.Canceled) {
+
+      if (order.status === OrderStatus.Abscent) {
+        throw new BadRequestException("Order status cannot be changed from 'Abscent' to any other status.");
+      }
+  }
+    
     // Ensure that an image is provided when canceling the order
     if (newStatus === OrderStatus.Canceled && !image) {
       throw new BadRequestException(
@@ -942,17 +954,19 @@ export class OrdersService {
             `No reservation found for order with ID ${orderId}`
           );
         }
-        // // Update coupon isReserved status if couponId exists
-        // if (order.couponId) {
-        //   const giftCoupon = await this.GiftCouponRepository.findOne({
-        //     where: { id: order.couponId },
-        //   });
 
-        //   if (giftCoupon) {
-        //     giftCoupon.isReserved = false;
-        //     await this.GiftCouponRepository.save(giftCoupon);
-        //   }
-        // }
+        // Update coupon isReserved status if couponId exists
+        if (order.couponId) {
+          const giftCoupon = await this.GiftCouponRepository.findOne({
+            where: { id: order.couponId },
+          });
+
+          if (giftCoupon) {
+            giftCoupon.isCanceled = true;
+            giftCoupon.canceledAt = new Date();
+            await this.GiftCouponRepository.save(giftCoupon);
+          }
+        }
         console.log(order.reservation.id);
         await this.reservationService.deleteReservation(order.reservation.id);
         const deposit = order.reservation.deposit; // Get deposit from the reservation
@@ -1003,6 +1017,9 @@ export class OrdersService {
       order.status = OrderStatus.Abscent;
       await this.orderRepository.save(order);
     }
+
+
+
     // Restrict changes once the status is 'Completed'
     if (
       order.status === OrderStatus.Completed &&
