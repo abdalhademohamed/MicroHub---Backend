@@ -117,7 +117,9 @@
       "NEW_ORDER": "تم إنشاء طلب جديد",
       "NEW_ORDER_MESSAGE": "تم إنشاء طلب جديد: {orderId}",
       "ORDER_COMPLETED": "تم إكمال الطلب",
-      "ORDER_COMPLETED_MESSAGE": "تم إكمال الطلب {orderId} بواسطة: {userId}"
+      "ORDER_COMPLETED_MESSAGE": "تم إكمال الطلب {orderId} بواسطة: {userId}",
+      "ORDER_REFUNDED": "تم استرداد الطلب",
+      "ORDER_REFUNDED_MESSAGE": "تم استرداد الطلب {orderId} بمبلغ {amount}"
     }
   },
   "PAYMENT": {
