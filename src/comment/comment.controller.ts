@@ -2,6 +2,8 @@ import { Controller, Get, Param, Query } from "@nestjs/common";
 import { CommentService } from "./comment.service";
 import { GetCommentsDto } from "./dto/get.comments.dto";
 import { GetCommentsbycustomerDto } from "../orders/dto/get-comments.dto";
+import { PaginatedCommentResponseDto } from "../orders/dto/paginated.comments.response.dto";
+import { ApiOperation, ApiResponse } from "@nestjs/swagger";
 
 @Controller("comment")
 export class CommentController {
@@ -25,5 +27,17 @@ export class CommentController {
     return await this.commentService.getCustomerComments(customerId, GetCommentsbycustomerDto);
   }
 
-
+  @Get('artist/:artistId')
+  @ApiOperation({ summary: 'Get comments for a specific artist' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns paginated comments for the specified artist',
+    type: PaginatedCommentResponseDto,
+  })
+  async getArtistComments(
+    @Param('artistId') artistId: string,
+    @Query() getCommentsDto: GetCommentsbycustomerDto,
+  ): Promise<PaginatedCommentResponseDto> {
+    return this.commentService.getArtistComments(artistId, getCommentsDto);
+  }
 }

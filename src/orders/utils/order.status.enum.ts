@@ -7,5 +7,7 @@ export enum OrderStatus {
   Completed = "Completed",
   Canceled = "Canceled",
   Abscent = "Abscent",
+  Refuneded = "Refuneded",
+
 
 }

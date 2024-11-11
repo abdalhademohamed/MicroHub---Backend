@@ -34,6 +34,11 @@ import {
   ResetPasswordDto,
 } from "./dto/reset.pw.auth.dto";
 import { RefreshTokenDto } from "./dto/refresh.token.dto";
+import { RolesGuard } from "./guards/role.guards";
+import { Roles } from "./Roles.decorator";
+import { Role } from "src/user/utils/user.enum";
+import { AuthGuard } from "@nestjs/passport";
+import { CreateAdminDto } from "./guards/create.admin.dto";
 @ApiTags("auth")
 
 @Controller("auth")
@@ -222,5 +227,21 @@ export class AuthController {
           "Failed to refresh tokens. Please try again later.",
       });
     }
+  }
+
+  @Post('create/admin')
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN)
+  async createAdminUser(
+    @Request() req: any, // Request object to access the user
+
+    @Body() createAdminDto: CreateAdminDto,
+  ) {
+    const userId = req.user.sub;
+    
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
+    return this.authService.createAdminUser(createAdminDto, userId);
   }
 }

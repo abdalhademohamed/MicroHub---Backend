@@ -35,6 +35,7 @@ import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { SlotService } from "../slots/slots.service";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { CustomI18nService } from "../common/custom.18n.service";
+import { CreateAdminDto } from "./guards/create.admin.dto";
 
 @Injectable()
 export class AuthService {
@@ -118,7 +119,7 @@ export class AuthService {
 
   async signIn(
     LoginAuthDto: LoginAuthDto,
-  ): Promise<{ accessToken: string; refreshToken: string ;userName: string}> {
+  ): Promise<{ accessToken: string; refreshToken: string ;userName: string;role:string}> {
     const { email, password } = LoginAuthDto;
     const startTime = Date.now();
 
@@ -146,12 +147,13 @@ export class AuthService {
             // Update the user's record with the new refresh token
             await this.updateRefreshToken(user.id, tokens.refreshToken);
             console.log(`updateRefreshToken: ${Date.now() - startTime}ms`);
-
+            console.log(user.role)
             // Return the generated tokens
             return {
               accessToken: tokens.accessToken,
               refreshToken: tokens.refreshToken,
-              userName:user.username
+              userName:user.username,
+              role:user.role
             }; 
           } catch (updateError) {
             console.error("Error updating refresh token:", updateError.message);
@@ -188,6 +190,8 @@ export class AuthService {
       );
     }
   }
+
+  
 
   async invalidateOldRefreshToken(userId: string): Promise<void> {
     const startTime = Date.now();
@@ -721,5 +725,117 @@ export class AuthService {
       case Postion.TABLEMANAGER:
         return Role.TABLEMANAGER;
     }
+  }
+
+  async createAdminUser(CreateAdminDto: CreateAdminDto , userId: string): Promise<any> {
+    const {
+      english_Name,
+      arabic_Name,
+      position: positionId, // This will determine if it's ADMIN or SUPERADMIN
+      workingHours,
+      email,
+      countryCode,
+      phoneNumber,
+      password,
+    } = CreateAdminDto;
+
+    return await this.entityManager.transaction(
+      async (transactionalEntityManager) => {
+        try {
+          // Verify that the creator has SUPERADMIN role
+          const creator = await this.UserRepository.findOne({
+            where: { id: userId },
+          });
+          
+          if (creator?.role !== Role.SUPERADMIN) {
+            throw new ForbiddenException(
+              this.i18nService.translate("test.auth.ADMIN_CREATE_UNAUTHORIZED")
+            );
+          }
+
+          // Hash the password
+          const hashedPassword = await bcrypt.hash(password, 10);
+
+          // Check if email exists
+          await this.checkIfEmailExists(transactionalEntityManager, email);
+
+          
+          // Get the position and validate it's either ADMIN or SUPERADMIN
+          const position = await this.PositionRepository.findOne({
+            where: { id: positionId }
+          });
+
+          if (!position || ![Postion.ADMIN, Postion.SUPERADMIN].includes(position.postion)) {
+            throw new BadRequestException(
+              this.i18nService.translate("test.auth.INVALID_ADMIN_POSITION")
+            );
+          }
+
+          // Determine role based on position
+          const role = this.determineRoleFromPosition(position);
+
+          // Create and save user entity
+          const savedUser = await this.createUser(transactionalEntityManager, {
+            username: english_Name,
+            email,
+            password: hashedPassword,
+            role,
+          });
+
+          // Create and save employee entity
+          const newAdmin = this.EmployeeRepository.create({
+            id: savedUser.id,
+            english_Name,
+            arabic_Name,
+            position,
+            workingHours,
+            countryCode,
+            phoneNumber,
+            username: english_Name,
+            email,
+            password: hashedPassword,
+            role,
+          });
+
+          await transactionalEntityManager.save(EmployeeEntity, newAdmin);
+
+          // Create an audit log entry
+          const log = new AuditLogEntity();
+          log.tableName = "employee";
+          log.action = "INSERT";
+          log.entityId = newAdmin.id;
+          log.performedBy = userId;
+          log.userDetails = {
+            id: creator.id,
+            username: creator.username,
+            email: creator.email,
+            role: creator.role,
+          };
+        
+
+          await transactionalEntityManager.save(AuditLogEntity, log);
+
+          // Remove sensitive information before returning
+          const { password: _, ...adminWithoutPassword } = newAdmin;
+          return {
+            ...adminWithoutPassword,
+            message: this.i18nService.translate(
+              role === Role.ADMIN 
+                ? "test.auth.ADMIN_CREATED_SUCCESS" 
+                : "test.auth.SUPERADMIN_CREATED_SUCCESS"
+            )
+          };
+
+        } catch (error) {
+          console.error("Failed to create admin/superadmin:", error);
+          if (error instanceof ForbiddenException || error instanceof BadRequestException) {
+            throw error;
+          }
+          throw new InternalServerErrorException(
+            this.i18nService.translate("test.auth.ADMIN_CREATE_FAILED")
+          );
+        }
+      },
+    );
   }
 }

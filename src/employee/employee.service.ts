@@ -120,7 +120,9 @@ export class EmployeeService {
     limit: number = 10,
     employeeTypeName?: string,
     branchId?: string,
-    role?: Role // Change type to Role enum
+    role?: Role,
+    englishName?: string,
+    userId?: string
   ): Promise<{
     items: EmployeeEntity[];
     total: number;
@@ -131,7 +133,32 @@ export class EmployeeService {
     page = Math.max(page, 1);
     limit = Math.max(limit, 1);
 
-    const filter: any = { deletedAt: null }; // Ensure soft-deleted employees are excluded
+    const filter: any = { deletedAt: null };
+
+    // Get the requesting user's details
+    const requestingUser = await this.employeeRepository.findOne({
+      where: { id: userId },
+      relations: ['branch', 'position'],
+    });
+
+    // Only apply branch filter if requestingUser exists and is a receptionist
+    if (requestingUser?.position?.postion === Postion.RECEPTIONIST) {
+      filter.branch = { id: requestingUser.branch.id };
+    } else if (branchId) {
+      const branch = await this.branchRepository.findOne({
+        where: { id: branchId },
+      });
+      if (!branch) {
+        throw new NotFoundException(`Branch with id ${branchId} not found`);
+      }
+      filter.branch = { id: branchId };
+    }
+
+    // Add specific name filters
+    if (englishName) {
+      filter.english_Name = Like(`%${englishName}%`);
+    }
+   
 
     // Handle employeeTypeName filter
     if (employeeTypeName) {
@@ -145,7 +172,6 @@ export class EmployeeService {
       if (employeeTypeIds.length > 0) {
         filter.employeeType = In(employeeTypeIds);
       } else {
-        // No matching employee types
         return {
           items: [],
           total: 0,
@@ -153,18 +179,6 @@ export class EmployeeService {
           limit,
         };
       }
-    }
-
-    // Branch existence check
-    if (branchId) {
-      const branch = await this.branchRepository.findOne({
-        where: { id: branchId },
-      });
-      if (!branch) {
-        // Throw a custom 404 error if the branch is not found
-        throw new NotFoundException(`Branch with id ${branchId} not found`);
-      }
-      filter.branch = { id: branchId };
     }
 
     // Add role filter if provided and valid
@@ -779,7 +793,9 @@ export class EmployeeService {
       .leftJoinAndSelect("employee.branch", "branch") // Join branch
       .leftJoinAndSelect("employee.employeeType", "employeeType") // Join employeeType
       .where("position.postion = :position", { position: Postion.ARTIST }) // Filter by position
-      .andWhere("order.status = :status", { status: OrderStatus.Completed }) // Filter by order status
+      .andWhere("order.status IN (:...statuses)", { 
+        statuses: [OrderStatus.Completed, OrderStatus.Reviewed] 
+      }) // Filter by multiple order statuses
       .select([
         "employee",
         "branch",
@@ -794,17 +810,34 @@ export class EmployeeService {
       .orderBy('"completedOrdersCount"', 'DESC') // Order by the count of completed orders
       .limit(5); // Limit to the top 5 employees
   
-    // Add date filtering only if fromDate or toDate are provided
-    if (fromDate) {
-      queryBuilder.andWhere("order.createdAt >= :fromDate", { 
-        fromDate: fromDate.toISOString(),
-      });
-    }
-    if (toDate) {
-      queryBuilder.andWhere("order.createdAt <= :toDate", { 
-        toDate: toDate.toISOString(),
-      });
-    }
+    // // Add date filtering only if fromDate or toDate are provided
+    // if (fromDate) {
+    //   queryBuilder.andWhere("order.createdAt >= :fromDate", { 
+    //     fromDate: fromDate.toISOString(),
+    //   });
+    // }
+    // if (toDate) {
+    //   queryBuilder.andWhere("order.createdAt <= :toDate", { 
+    //     toDate: toDate.toISOString(),
+    //   });
+    // }
+   // Set time to start of day for fromDate
+   if (fromDate) {
+    const startOfDay = new Date(fromDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    queryBuilder.andWhere('order.createdAt >= :fromDate', { 
+      fromDate: startOfDay 
+    });
+  }
+
+  // Set time to end of day for toDate
+  if (toDate) {
+    const endOfDay = new Date(toDate);
+    endOfDay.setHours(23, 59, 59, 999);
+    queryBuilder.andWhere('order.createdAt <= :toDate', { 
+      toDate: endOfDay 
+    });
+  }
   
     const topArtists = await queryBuilder.getRawMany(); // Use getRawMany to get raw results
   

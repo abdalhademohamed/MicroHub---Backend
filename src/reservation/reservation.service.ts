@@ -1707,7 +1707,11 @@ export class ReservationService {
     const start = new Date(fromDate);
     const end = new Date(toDate);
     end.setDate(end.getDate() + 1); // Include the end date in the query
-
+  //   const user = await this.UserRepository.findOne({
+  //     where: { id: userId },
+  //   });
+  //  console.log(user)
+  
     const topReservations = await this.ReservationRepository.createQueryBuilder(
       "reservation"
     )

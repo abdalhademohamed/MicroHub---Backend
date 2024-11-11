@@ -102,6 +102,8 @@ export class OrderEntity {
   @Column({ type: "boolean", default: false })
   isReviewed: boolean; // New boolean column
   
-
-
+  @Column({ nullable: true })
+  image_order_refund: string; // New field for the image URL
+  @Column({ nullable: true })
+  image_order_refund_reason: string; // New field for the image URL
 }

@@ -77,7 +77,7 @@ export class ReviewsController {
 
     @Query() query: GetEmployeeReviewsCommentsDto
   ) {
-    const userId = "4bd4559c-7c87-4b62-9e2a-90626e4b11ca"; // Extract user ID from request
+    const userId = req.user.sub; // Extract user ID from request
     if (!userId) {
       throw new BadRequestException("User not authenticated");
     }
@@ -97,7 +97,7 @@ export class ReviewsController {
 
   @Get("artist/:employeeId")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER, Role.ARTISTMANAGER, Role.ARTIST)
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER, Role.ARTISTMANAGER, Role.RECEPTIONIST)
   @ApiParam({
     name: "employeeId",
     type: String,
@@ -116,18 +116,10 @@ export class ReviewsController {
   async getReviewsForArtist(
     @Param("employeeId") employeeId: string
   ): Promise<ReviewEntity[]> {
-    try {
-      return await this.reviewsService.getReviewsForArtist(employeeId);
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-      throw new InternalServerErrorException(
-        "Failed to get reviews for artist",
-        error.stack
-      );
+    return await this.reviewsService.getReviewsForArtist(employeeId);
+
     }
-  }
+  
 
   @Get("order/:orderId")
   async getReviewsByOrderId(

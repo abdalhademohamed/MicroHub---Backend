@@ -918,6 +918,12 @@ export class OrdersService {
       if (!order) {
         throw new NotFoundException(`Order with ID ${orderId} not found`);
       }
+      // Add check for Refunded status
+    if (order.status === OrderStatus.Refuneded) {
+      throw new BadRequestException(
+        this.i18n.translate("test.ORDER.CANNOT_CHANGE_REFUNDED_STATUS")
+      );
+    }
     } catch (error) {
       console.error("Error fetching the order:", error);
       if (error instanceof NotFoundException) {
@@ -929,6 +935,19 @@ export class OrdersService {
         );
       }
     }
+
+    if (newStatus === OrderStatus.InQueue || 
+      newStatus === OrderStatus.Working || 
+      newStatus === OrderStatus.Completed || 
+      newStatus === OrderStatus.Pending ||
+      newStatus === OrderStatus.Reviewed || 
+      newStatus === OrderStatus.Canceled) {
+
+      if (order.status === OrderStatus.Abscent) {
+        throw new BadRequestException("Order status cannot be changed from 'Abscent' to any other status.");
+      }
+  }
+    
     // Ensure that an image is provided when canceling the order
     if (newStatus === OrderStatus.Canceled && !image) {
       throw new BadRequestException(
@@ -942,17 +961,19 @@ export class OrdersService {
             `No reservation found for order with ID ${orderId}`
           );
         }
-        // // Update coupon isReserved status if couponId exists
-        // if (order.couponId) {
-        //   const giftCoupon = await this.GiftCouponRepository.findOne({
-        //     where: { id: order.couponId },
-        //   });
 
-        //   if (giftCoupon) {
-        //     giftCoupon.isReserved = false;
-        //     await this.GiftCouponRepository.save(giftCoupon);
-        //   }
-        // }
+        // Update coupon isReserved status if couponId exists
+        if (order.couponId) {
+          const giftCoupon = await this.GiftCouponRepository.findOne({
+            where: { id: order.couponId },
+          });
+
+          if (giftCoupon) {
+            giftCoupon.isCanceled = true;
+            giftCoupon.canceledAt = new Date();
+            await this.GiftCouponRepository.save(giftCoupon);
+          }
+        }
         console.log(order.reservation.id);
         await this.reservationService.deleteReservation(order.reservation.id);
         const deposit = order.reservation.deposit; // Get deposit from the reservation
@@ -1003,6 +1024,9 @@ export class OrdersService {
       order.status = OrderStatus.Abscent;
       await this.orderRepository.save(order);
     }
+
+
+
     // Restrict changes once the status is 'Completed'
     if (
       order.status === OrderStatus.Completed &&
@@ -1586,6 +1610,7 @@ export class OrdersService {
       [OrderStatus.Completed]: 0,
       [OrderStatus.Canceled]: 0,
       [OrderStatus.Abscent]: 0,
+      [OrderStatus.Refuneded]: 0,
     };
 
     // Populate counts
@@ -1656,6 +1681,7 @@ export class OrdersService {
       [OrderStatus.Completed]: 0,
       [OrderStatus.Canceled]: 0,
       [OrderStatus.Abscent]: 0,
+      [OrderStatus.Refuneded]: 0,
     };
 
     // Populate the orderStatusCounts object with the results from the query
@@ -1987,6 +2013,7 @@ export class OrdersService {
       [OrderStatus.Completed]: 0,
       [OrderStatus.Canceled]: 0,
       [OrderStatus.Abscent]: 0,
+      [OrderStatus.Refuneded]: 0,
     };
 
     // Retrieve the user based on userId
@@ -2139,6 +2166,148 @@ export class OrdersService {
       throw new InternalServerErrorException(
         "Failed to retrieve customer comments",
         error.stack
+      );
+    }
+  }
+
+  async refundOrder(
+    orderId: string,
+    refundAmount: number,
+    userId: string,
+    image: Express.Multer.File,
+    refundReason?: string,
+  ): Promise<any> {
+    try {
+      // Find order with all necessary relations
+      const order = await this.orderRepository.findOne({
+        where: { id: orderId },
+        relations: [
+          'receipts',
+          'customer',
+          'reservation',
+          'payment',
+          'createdBy',
+        ],
+      });
+
+      if (!order) {
+        throw new NotFoundException(
+          this.i18n.translate("test.ORDER.NOT_FOUND")
+        );
+      }
+
+      // Check if order has receipts
+      if (!order.receipts || order.receipts.length === 0) {
+        throw new NotFoundException(
+          this.i18n.translate("test.ORDER.NO_RECEIPT")
+        );
+      }
+
+      // Get the original receipt
+      const originalReceipt = order.receipts[0];
+      const totalPaid = Number(originalReceipt.totalPayment);
+
+      // Validate refund amount
+      if (refundAmount <= 0) {
+        throw new BadRequestException(
+          this.i18n.translate("test.ORDER.INVALID_REFUND_AMOUNT")
+        );
+      }
+
+      if (refundAmount > totalPaid) {
+        throw new BadRequestException(
+          this.i18n.translate("test.ORDER.REFUND_EXCEEDS_PAYMENT")
+        );
+      }
+
+      // Validate and upload refund image if provided
+      if (image) {
+        try {
+          const folderName = "branch";
+          const uploadResult = await this.CloudinaryService.uploadImage(image,folderName);
+          order.image_order_refund = uploadResult.secure_url;
+        } catch (error) {
+          throw new BadRequestException(
+            this.i18n.translate("test.ORDER.REFUND_IMAGE_UPLOAD_FAILED")
+          );
+        }
+      }
+
+      // Add refund reason
+      order.image_order_refund_reason = refundReason;
+
+      // Create refund receipt
+      const refundReceipt = this.ReceiptRepository.create({
+        order: order,
+        totalPayment: -refundAmount, // Negative amount to indicate refund
+        remaining: totalPaid - refundAmount,
+        discount: originalReceipt.discount,
+        message: refundReason,
+        reservationTimeSlot: originalReceipt.reservationTimeSlot,
+        paymentForServices: originalReceipt.paymentForServices,
+        createdBy: await this.userRepository.findOne({ where: { id: userId } })
+      });
+
+      return await this.entityManager.transaction(async (transactionalEntityManager) => {
+        // Save refund receipt
+        await transactionalEntityManager.save(ReceiptEntity, refundReceipt);
+
+        // Update order status and save
+        order.status = OrderStatus.Refuneded;
+        const updatedOrder = await transactionalEntityManager.save(OrderEntity, order);
+
+        // Create audit log
+        const auditLog = new AuditLogEntity();
+        auditLog.tableName = "order";
+        auditLog.action = "REFUND";
+        auditLog.entityId = order.id;
+        auditLog.performedBy = userId;
+      
+
+        if (userId) {
+          const user = await transactionalEntityManager.findOne(UserEntity, {
+            where: { id: userId },
+          });
+          if (user) {
+            auditLog.userDetails = {
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              role: user.role,
+            };
+          }
+        }
+
+        await transactionalEntityManager.save(AuditLogEntity, auditLog);
+
+        return {
+          orderId: order.id,
+          status: OrderStatus.Refuneded,
+          originalPayment: totalPaid,
+          refundAmount: refundAmount,
+          remainingAmount: totalPaid - refundAmount,
+          refundReason: refundReason,
+          refundImage: order.image_order_refund,
+          refundReceipt: {
+            id: refundReceipt.id,
+            generatedAt: refundReceipt.generatedAt,
+            amount: refundReceipt.totalPayment
+          },
+          customer: {
+            id: order.customer.id,
+            name: order.customer.fullName,
+            phoneNumber: order.customer.phoneNumber
+          }
+        };
+      });
+
+    } catch (error) {
+      console.error("Error processing refund:", error);
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        this.i18n.translate("test.ORDER.REFUND_FAILED")
       );
     }
   }

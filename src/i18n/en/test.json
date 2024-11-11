@@ -85,6 +85,7 @@
     "SHARABLE_OFFER_NOT_FOUND": "Sharable offer not found",
     "CUSTOMER_NOT_FOUND": "Customer not found",
     "ALREADY_REDEEMED": "This coupon has already been redeemed and cannot be used",
+    "ALREADY_CANCELED": "This coupon has already been canceled and cannot be used",
     "EXPIRED": "This coupon has expired and cannot be used",
     "CANNOT_UPDATE_REDEEMED": "This coupon has already been redeemed and cannot be updated",
     "NOT_VALID_YET": "This coupon is not valid until {startDateTime}",
@@ -113,11 +114,18 @@
     "UPDATE_STATUS_FAILED": "Failed to update order status",
     "FETCH_FAILED": "Failed to fetch orders",
     "COMMENTS_FETCH_FAILED": "Failed to retrieve customer comments",
+    "CANNOT_CHANGE_REFUNDED_STATUS": "Cannot change the status of a refunded order",
+    "REFUND_FAILED": "Failed to process refund",
+    "INVALID_REFUND_AMOUNT": "Invalid refund amount",
+    "REFUND_EXCEEDS_PAYMENT": "Refund amount cannot exceed the original payment",
+    "NO_RECEIPT": "No receipt found for this order",
     "NOTIFICATION": {
       "NEW_ORDER": "New order created",
       "NEW_ORDER_MESSAGE": "A new order has been created: {orderId}",
       "ORDER_COMPLETED": "Order completed",
-      "ORDER_COMPLETED_MESSAGE": "Order {orderId} has been completed by: {userId}"
+      "ORDER_COMPLETED_MESSAGE": "Order {orderId} has been completed by: {userId}",
+      "ORDER_REFUNDED": "Order refunded",
+      "ORDER_REFUNDED_MESSAGE": "Order {orderId} has been refunded with amount {amount}"
     }
   },
   "PAYMENT": {

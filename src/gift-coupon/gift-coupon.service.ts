@@ -120,6 +120,11 @@ export class GiftCouponService {
       );
     }
 
+    if (giftCoupon.isCanceled) {
+      throw new ConflictException(
+        this.i18n.translate("test.GIFT_COUPON.ALREADY_CANCELED")
+      );
+    }
     if (giftCoupon.endDateTime && giftCoupon.endDateTime < now) {
       throw new ConflictException(
         this.i18n.translate("test.GIFT_COUPON.EXPIRED")
@@ -176,6 +181,11 @@ export class GiftCouponService {
     if (giftCoupon.isRedeemed) {
       throw new ConflictException(
         this.i18n.translate("test.GIFT_COUPON.ALREADY_REDEEMED")
+      );
+    }
+    if (giftCoupon.isCanceled) {
+      throw new ConflictException(
+        this.i18n.translate("test.GIFT_COUPON.ALREADY_CANCELED")
       );
     }
 
@@ -410,6 +420,110 @@ export class GiftCouponService {
     } catch (error) {
       throw new InternalServerErrorException(
         this.i18n.translate("test.GIFT_COUPON.FETCH_FAILED")
+      );
+    }
+  }
+
+  async cancelGiftCoupon(couponId: string): Promise<any> {
+    const giftCoupon = await this.giftCouponRepository.findOne({
+      where: { id: couponId },
+      relations: [
+        "sharableOffer",
+        "sharableOffer.services",
+        "ownedBy"
+      ],
+    });
+
+    if (!giftCoupon) {
+      throw new NotFoundException(
+        this.i18n.translate("test.GIFT_COUPON.NOT_FOUND")
+      );
+    }
+
+    if (giftCoupon.isCanceled) {
+      throw new ConflictException(
+        this.i18n.translate("test.GIFT_COUPON.ALREADY_CANCELED")
+      );
+    }
+
+    if (giftCoupon.isRedeemed) {
+      throw new ConflictException(
+        this.i18n.translate("test.GIFT_COUPON.CANNOT_CANCEL_REDEEMED")
+      );
+    }
+
+    try {
+      // Get the original services from sharable offer with their prices
+      const sharableOfferServices = giftCoupon.sharableOffer.services;
+      
+      // Get unused services (Leftservices)
+      const unusedServices = giftCoupon.Leftservices || [];
+      
+      // Calculate refund details for each unused service
+      const refundDetails = unusedServices.map(unusedService => {
+        const originalService = sharableOfferServices.find(
+          service => service.id === unusedService.id
+        );
+
+        if (!originalService) {
+          throw new NotFoundException(
+            `Original service not found for ID: ${unusedService.id}`
+          );
+        }
+
+        // Convert price to number and ensure discount percentage is a number
+        const originalPrice = Number(originalService.price);
+        const discountPercentage = Number(giftCoupon.sharableOffer.discountPercentage);
+        
+        // Calculate discounted price (90% of original price)
+        const discountMultiplier = 1 - (discountPercentage / 100);
+        const discountedPrice = Number((originalPrice * discountMultiplier).toFixed(2));
+
+        return {
+          serviceId: unusedService.id,
+          serviceName: {
+            arabic: unusedService.arabic_Name,
+            english: unusedService.english_Name
+          },
+          originalPrice: originalPrice,
+          discountPercentage: discountPercentage,
+          discountedPrice: discountedPrice,
+          refundAmount: discountedPrice, // Return the discounted amount they paid
+        };
+      });
+
+      // Calculate total refund amount
+      const totalRefundAmount = Number(refundDetails.reduce(
+        (sum, service) => sum + service.refundAmount,
+        0
+      ).toFixed(2));
+
+      // Update coupon status
+      giftCoupon.isCanceled = true; 
+      giftCoupon.canceledAt = new Date();
+
+      giftCoupon.totalRefundAmount = Number(totalRefundAmount.toFixed(2));
+      // Save the updated coupon
+      await this.giftCouponRepository.save(giftCoupon);
+
+      return {
+        couponId: giftCoupon.id,
+        couponCode: giftCoupon.couponCode,
+        canceledAt: giftCoupon.canceledAt,
+        customer: {
+          id: giftCoupon.ownedBy.id,
+          name: giftCoupon.ownedBy.fullName,
+          phoneNumber: giftCoupon.ownedBy.phoneNumber
+        },
+        refundDetails: refundDetails,
+        totalRefundAmount: Number(totalRefundAmount.toFixed(2)),
+        status: 'canceled'
+      };
+
+    } catch (error) {
+      console.error("Error canceling gift coupon:", error);
+      throw new InternalServerErrorException(
+        this.i18n.translate("test.GIFT_COUPON.CANCEL_FAILED")
       );
     }
   }

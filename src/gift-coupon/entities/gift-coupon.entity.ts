@@ -114,8 +114,11 @@ export class GiftCouponEntity {
     usedAt: Date;
   }[];
 
+  @Column({ type: "boolean", default: false ,nullable: true})
+  isCanceled: boolean; // Indicates whether the coupon has been canceled
 
-
+  @Column({ type: "timestamp", nullable: true })
+  canceledAt: Date; // When the coupon was canceled
   // @Column('jsonb', { nullable: true, default: [] })
   // servicesReservationStatus: {
   //   serviceId: string;
@@ -125,4 +128,6 @@ export class GiftCouponEntity {
   //   reservedAt: Date
 
   // }[];
+  @Column({default:0})
+  totalRefundAmount: number;
 }
