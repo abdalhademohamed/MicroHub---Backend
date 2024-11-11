@@ -128,4 +128,6 @@ export class GiftCouponEntity {
   //   reservedAt: Date
 
   // }[];
+  @Column({default:0})
+  totalRefundAmount: number;
 }

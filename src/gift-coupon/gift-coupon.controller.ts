@@ -78,4 +78,14 @@ export class GiftCouponController {
   ) {
     return await this.giftCouponService.getAllGiftCoupons(page, limit, fromDate, toDate);
   }
+
+
+  @Patch('cancel/:couponId')
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.ADMIN, Role.SUPERADMIN, Role.BRANCHMANAGER)
+  async cancelGiftCoupon(
+    @Param('couponId') couponId: string
+  ) {
+    return await this.giftCouponService.cancelGiftCoupon(couponId);
+  }
 }
