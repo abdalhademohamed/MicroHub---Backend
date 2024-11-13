@@ -51,6 +51,9 @@ export class OrdersController {
   // ) {
   //   return await this.ordersService.getCustomerComments(customerId, getCommentsDto);
   // }
+
+
+
   @Get("count")
   async getOrderCount(
     @Query("branchId") branchId?: string,
@@ -78,7 +81,30 @@ export class OrdersController {
     return this.ordersService.findAllOrders(findOrdersDto, userId);
   }
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  @Patch(':id/refund')
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.SUPERADMIN, Role.BRANCHMANAGER,Role.RECEPTIONIST)
+  @UseInterceptors(FileInterceptor('image'))
  
+  async refundOrder(
+    @Param('id') orderId: string,
+    @Body('refundAmount') refundAmount: number,
+    @Body('refundReason') refundReason: string,
+    @UploadedFile() image: Express.Multer.File,
+    @Request() req: any,
+  ) {
+    const userId = req.user.sub;
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
+    return await this.ordersService.refundOrder(
+      orderId,
+      refundAmount,
+      userId,
+      image,
+      refundReason
+    );
+  }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Patch("payment/status/:orderId")
   @UseGuards(AccessTokenGuard, RolesGuard)
