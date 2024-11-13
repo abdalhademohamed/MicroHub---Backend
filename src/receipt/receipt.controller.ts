@@ -131,4 +131,12 @@ export class ReceiptController {
   //     }
   //   }
   // }
+
+
+  @Get('refunded/:reservationId')
+  async getRefundedReceiptByReservationId(
+    @Param('reservationId') reservationId: string
+  ): Promise<ReceiptEntity[]> {
+    return this.receiptService.getRefundedReceiptByReservationId(reservationId);
+  }
 }

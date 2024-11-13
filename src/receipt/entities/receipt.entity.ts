@@ -53,4 +53,7 @@ export class ReceiptEntity {
   // Created by user reference
   @ManyToOne(() => UserEntity, { nullable: true })
   createdBy: UserEntity;
+
+  @Column({ default: false })
+  isRefunded: boolean;
 }

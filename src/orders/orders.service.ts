@@ -2245,7 +2245,8 @@ export class OrdersService {
         message: refundReason,
         reservationTimeSlot: originalReceipt.reservationTimeSlot,
         paymentForServices: originalReceipt.paymentForServices,
-        createdBy: await this.userRepository.findOne({ where: { id: userId } })
+        createdBy: await this.userRepository.findOne({ where: { id: userId } }),
+        isRefunded: true
       });
 
       return await this.entityManager.transaction(async (transactionalEntityManager) => {
