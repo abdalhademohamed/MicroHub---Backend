@@ -36,7 +36,7 @@ import {
 import { RefreshTokenDto } from "./dto/refresh.token.dto";
 import { RolesGuard } from "./guards/role.guards";
 import { Roles } from "./Roles.decorator";
-import { Role } from "src/user/utils/user.enum";
+import { Role } from "../user/utils/user.enum";
 import { AuthGuard } from "@nestjs/passport";
 import { CreateAdminDto } from "./guards/create.admin.dto";
 @ApiTags("auth")

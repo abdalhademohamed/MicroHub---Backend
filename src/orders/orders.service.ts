@@ -2214,7 +2214,7 @@ export class OrdersService {
         );
       }
 
-      if (refundAmount > totalPaid) {
+      if (refundAmount >= totalPaid) {
         throw new BadRequestException(
           this.i18n.translate("test.ORDER.REFUND_EXCEEDS_PAYMENT")
         );
@@ -2254,7 +2254,7 @@ export class OrdersService {
 
         // Update order status and save
         order.status = OrderStatus.Refuneded;
-        const updatedOrder = await transactionalEntityManager.save(OrderEntity, order);
+        await transactionalEntityManager.save(OrderEntity, order);
 
         // Create audit log
         const auditLog = new AuditLogEntity();

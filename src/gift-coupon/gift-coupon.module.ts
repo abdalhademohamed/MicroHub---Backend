@@ -7,6 +7,8 @@ import { GiftCouponEntity } from './entities/gift-coupon.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { OrderEntity } from '../orders/entities/order.entity';
 import { CustomI18nService } from '../common/custom.18n.service';
+import { ReceiptEntity } from 'src/receipt/entities/receipt.entity';
+import { UserEntity } from 'src/user/entities/user.entity';
 
 @Module({
   imports: [
@@ -14,7 +16,9 @@ import { CustomI18nService } from '../common/custom.18n.service';
       GiftCouponEntity,
       SharableOfferEntity,
       CustomerEntity,
-      OrderEntity
+      OrderEntity,
+      ReceiptEntity,
+      UserEntity
     ]),
   ],
   controllers: [GiftCouponController],

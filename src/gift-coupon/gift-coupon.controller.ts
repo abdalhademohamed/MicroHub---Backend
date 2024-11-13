@@ -84,8 +84,14 @@ export class GiftCouponController {
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.ADMIN, Role.SUPERADMIN, Role.BRANCHMANAGER)
   async cancelGiftCoupon(
+    @Request() req: any,
+
     @Param('couponId') couponId: string
   ) {
-    return await this.giftCouponService.cancelGiftCoupon(couponId);
+    const userId = req.user.sub;
+    if(!userId){
+      throw new BadRequestException("User not authenticated");
+    }
+    return await this.giftCouponService.cancelGiftCoupon(couponId, userId);
   }
 }
