@@ -16,6 +16,8 @@ import { OrderEntity } from "../orders/entities/order.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
 import { In } from "typeorm";
 import { OrderStatus } from "../orders/utils/order.status.enum";
+import { ReceiptEntity } from "src/receipt/entities/receipt.entity";
+import { UserEntity } from "src/user/entities/user.entity";
 
 @Injectable()
 export class GiftCouponService {
@@ -30,7 +32,11 @@ export class GiftCouponService {
     private readonly customerRepository: Repository<CustomerEntity>,
     @InjectRepository(OrderEntity)
     private readonly orderRepository: Repository<OrderEntity>,
-    private readonly i18n: CustomI18nService
+    private readonly i18n: CustomI18nService,
+    @InjectRepository(ReceiptEntity)
+    private readonly receiptRepository: Repository<ReceiptEntity>,
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,  
   ) {}
 
   async createGiftCoupon(
@@ -424,42 +430,39 @@ export class GiftCouponService {
     }
   }
 
-  async cancelGiftCoupon(couponId: string): Promise<any> {
-    const giftCoupon = await this.giftCouponRepository.findOne({
-      where: { id: couponId },
-      relations: [
-        "sharableOffer",
-        "sharableOffer.services",
-        "ownedBy"
-      ],
-    });
-
-    if (!giftCoupon) {
-      throw new NotFoundException(
-        this.i18n.translate("test.GIFT_COUPON.NOT_FOUND")
-      );
-    }
-
-    if (giftCoupon.isCanceled) {
-      throw new ConflictException(
-        this.i18n.translate("test.GIFT_COUPON.ALREADY_CANCELED")
-      );
-    }
-
-    if (giftCoupon.isRedeemed) {
-      throw new ConflictException(
-        this.i18n.translate("test.GIFT_COUPON.CANNOT_CANCEL_REDEEMED")
-      );
-    }
-
+  async cancelGiftCoupon(couponId: string, userId: string): Promise<any> {
     try {
-      // Get the original services from sharable offer with their prices
+      const giftCoupon = await this.giftCouponRepository.findOne({
+        where: { id: couponId },
+        relations: [
+          "sharableOffer",
+          "sharableOffer.services",
+          "ownedBy"
+        ],
+      });
+
+      if (!giftCoupon) {
+        throw new NotFoundException(
+          this.i18n.translate("test.GIFT_COUPON.NOT_FOUND")
+        );
+      }
+
+      if (giftCoupon.isCanceled) {
+        throw new ConflictException(
+          this.i18n.translate("test.GIFT_COUPON.ALREADY_CANCELED")
+        );
+      }
+
+      if (giftCoupon.isRedeemed) {
+        throw new ConflictException(
+          this.i18n.translate("test.GIFT_COUPON.CANNOT_CANCEL_REDEEMED")
+        );
+      }
+
+      // Calculate refund details
       const sharableOfferServices = giftCoupon.sharableOffer.services;
-      
-      // Get unused services (Leftservices)
       const unusedServices = giftCoupon.Leftservices || [];
       
-      // Calculate refund details for each unused service
       const refundDetails = unusedServices.map(unusedService => {
         const originalService = sharableOfferServices.find(
           service => service.id === unusedService.id
@@ -471,11 +474,8 @@ export class GiftCouponService {
           );
         }
 
-        // Convert price to number and ensure discount percentage is a number
         const originalPrice = Number(originalService.price);
         const discountPercentage = Number(giftCoupon.sharableOffer.discountPercentage);
-        
-        // Calculate discounted price (90% of original price)
         const discountMultiplier = 1 - (discountPercentage / 100);
         const discountedPrice = Number((originalPrice * discountMultiplier).toFixed(2));
 
@@ -488,35 +488,59 @@ export class GiftCouponService {
           originalPrice: originalPrice,
           discountPercentage: discountPercentage,
           discountedPrice: discountedPrice,
-          refundAmount: discountedPrice, // Return the discounted amount they paid
+          refundAmount: discountedPrice,
+          duration: originalService.duration_Mins
+
         };
       });
 
-      // Calculate total refund amount
       const totalRefundAmount = Number(refundDetails.reduce(
         (sum, service) => sum + service.refundAmount,
         0
       ).toFixed(2));
 
-      // Update coupon status
-      giftCoupon.isCanceled = true; 
-      giftCoupon.canceledAt = new Date();
+      // Create receipt
+      const receipt = this.receiptRepository.create({
+        totalPayment: -totalRefundAmount, // Negative amount to indicate refund
+        remaining: 0,
+        discount: giftCoupon.sharableOffer.discountPercentage,
+        message: `Refund for canceled gift coupon: ${giftCoupon.couponCode}`,
+        reservationTimeSlot: new Date().toISOString(),
+        paymentForServices: refundDetails.map(service => ({
+          name: service.serviceName.english,
+          duration: service.duration,
+          price: service.refundAmount.toString()
+        })),
+        createdBy: await this.userRepository.findOne({ where: { id: userId } })
+      });
 
-      giftCoupon.totalRefundAmount = Number(totalRefundAmount.toFixed(2));
-      // Save the updated coupon
-      await this.giftCouponRepository.save(giftCoupon);
+      // Save receipt
+      const savedReceipt = await this.receiptRepository.save(receipt);
+
+      // Update coupon status
+      giftCoupon.isCanceled = true;
+      giftCoupon.canceledAt = new Date();
+      giftCoupon.totalRefundAmount = totalRefundAmount;
+      
+      const updatedCoupon = await this.giftCouponRepository.save(giftCoupon);
 
       return {
-        couponId: giftCoupon.id,
-        couponCode: giftCoupon.couponCode,
-        canceledAt: giftCoupon.canceledAt,
+        couponId: updatedCoupon.id,
+        couponCode: updatedCoupon.couponCode,
+        canceledAt: updatedCoupon.canceledAt,
         customer: {
           id: giftCoupon.ownedBy.id,
           name: giftCoupon.ownedBy.fullName,
           phoneNumber: giftCoupon.ownedBy.phoneNumber
         },
         refundDetails: refundDetails,
-        totalRefundAmount: Number(totalRefundAmount.toFixed(2)),
+        totalRefundAmount: totalRefundAmount,
+        receipt: {
+          id: savedReceipt.id,
+          totalPayment: savedReceipt.totalPayment,
+          generatedAt: savedReceipt.generatedAt,
+          services: savedReceipt.paymentForServices
+        },
         status: 'canceled'
       };
 
