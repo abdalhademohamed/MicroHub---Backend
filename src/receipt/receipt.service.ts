@@ -22,6 +22,7 @@ import { GetReceiptsDto } from "./dto/get-receipts.dto";
 import { CustomI18nService } from "../common/custom.18n.service";
 import { I18nService } from "nestjs-i18n";
 import { SharableOfferEntity } from "../sharable-offer/entities/sharable-offer.entity";
+import { LessThan } from "typeorm";
 
 @Injectable()
 export class ReceiptService {
@@ -873,4 +874,65 @@ export class ReceiptService {
       })),
     };
   }
+
+  async getRefundedReceiptByReservationId(reservationId: string): Promise<ReceiptEntity[]> {
+    try {
+      // First find the order associated with the reservation
+      const order = await this.orderRepository.findOne({
+        where: { reservation: { id: reservationId } },
+        relations: [
+          "reservation",
+          "reservation.services",
+          "reservation.rootoshes",
+        ],
+      });
+
+      if (!order) {
+        throw new NotFoundException(
+          this.i18n.translate("test.RECEIPT.ORDER_NOT_FOUND_FOR_RESERVATION", {
+            args: { reservationId },
+          })
+        );
+      }
+
+      // Find all refunded receipts for this order
+      const refundedReceipts = await this.receiptRepository.find({
+        where: {
+          order: { id: order.id },
+          isRefunded: true
+        },
+        relations: [
+          "order",
+          "order.customer",
+          "createdBy"
+        ],
+        order: {
+          generatedAt: 'DESC' // Most recent first
+        }
+      });
+
+      if (!refundedReceipts || refundedReceipts.length === 0) {
+        throw new NotFoundException(
+          this.i18n.translate("test.RECEIPT.NO_REFUND_RECEIPTS_FOUND", {
+            args: { orderId: order.id },
+          })
+        );
+      }
+
+      return refundedReceipts; // Return the entities directly without transformation
+
+    } catch (error) {
+      console.error("Error fetching refunded receipts:", error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        this.i18n.translate("test.RECEIPT.FETCH_FAILED")
+      );
+    }
+  }
+
+
+
+  
 }
