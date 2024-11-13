@@ -81,13 +81,12 @@ export class OrdersController {
     return this.ordersService.findAllOrders(findOrdersDto, userId);
   }
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  @Patch(':id/refund')
+  @Patch('refund/:orderId')
   @UseGuards(AccessTokenGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPERADMIN, Role.BRANCHMANAGER,Role.RECEPTIONIST)
   @UseInterceptors(FileInterceptor('image'))
- 
   async refundOrder(
-    @Param('id') orderId: string,
+    @Param('orderId') orderId: string,
     @Body('refundAmount') refundAmount: number,
     @Body('refundReason') refundReason: string,
     @UploadedFile() image: Express.Multer.File,
