@@ -2251,7 +2251,7 @@ export class OrdersService {
 
       return await this.entityManager.transaction(async (transactionalEntityManager) => {
         // Update order status and save first
-        order.status = OrderStatus.Refuneded;
+        // order.status = OrderStatus.Refuneded;
         const savedOrder = await transactionalEntityManager.save(OrderEntity, order);
         
         // Update the receipt with the saved order reference
