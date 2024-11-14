@@ -2240,8 +2240,8 @@ export class OrdersService {
       const refundReceipt = this.ReceiptRepository.create({
         order: order,  // Keep this
         totalPayment: -refundAmount,
-        remaining: totalPaid - refundAmount,
-        discount: originalReceipt.discount,
+        remaining: 0,
+        discount: 0,
         message: refundReason,
         reservationTimeSlot: originalReceipt.reservationTimeSlot,
         paymentForServices: originalReceipt.paymentForServices,
@@ -2287,7 +2287,7 @@ export class OrdersService {
           status: OrderStatus.Refuneded,
           originalPayment: totalPaid,
           refundAmount: refundAmount,
-          remainingAmount: totalPaid - refundAmount,
+          remainingAmount: 0,
           refundReason: refundReason,
           refundImage: order.image_order_refund,
           refundReceipt: {
