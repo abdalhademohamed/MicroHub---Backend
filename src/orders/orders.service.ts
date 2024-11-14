@@ -2195,7 +2195,7 @@ export class OrdersService {
           this.i18n.translate("test.ORDER.NOT_FOUND")
         );
       }
-
+      console.log(order);
       // Check if order has receipts
       if (!order.receipts || order.receipts.length === 0) {
         throw new NotFoundException(
@@ -2238,8 +2238,8 @@ export class OrdersService {
 
       // Create refund receipt
       const refundReceipt = this.ReceiptRepository.create({
-        order: order,
-        totalPayment: -refundAmount, // Negative amount to indicate refund
+        order: order,  // Keep this
+        totalPayment: -refundAmount,
         remaining: totalPaid - refundAmount,
         discount: originalReceipt.discount,
         message: refundReason,
@@ -2250,12 +2250,13 @@ export class OrdersService {
       });
 
       return await this.entityManager.transaction(async (transactionalEntityManager) => {
-        // Save refund receipt
-        await transactionalEntityManager.save(ReceiptEntity, refundReceipt);
-
-        // Update order status and save
+        // Update order status and save first
         order.status = OrderStatus.Refuneded;
-        await transactionalEntityManager.save(OrderEntity, order);
+        const savedOrder = await transactionalEntityManager.save(OrderEntity, order);
+        
+        // Update the receipt with the saved order reference
+        refundReceipt.order = savedOrder;
+        const savedReceipt = await transactionalEntityManager.save(ReceiptEntity, refundReceipt);
 
         // Create audit log
         const auditLog = new AuditLogEntity();
@@ -2290,9 +2291,9 @@ export class OrdersService {
           refundReason: refundReason,
           refundImage: order.image_order_refund,
           refundReceipt: {
-            id: refundReceipt.id,
-            generatedAt: refundReceipt.generatedAt,
-            amount: refundReceipt.totalPayment
+            id: savedReceipt.id,
+            generatedAt: savedReceipt.generatedAt,
+            amount: savedReceipt.totalPayment
           },
           customer: {
             id: order.customer.id,
