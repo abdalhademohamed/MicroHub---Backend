@@ -774,7 +774,10 @@ export class ReceiptService {
 
   async getReceiptByOrderId(orderId: string): Promise<ReceiptEntity> {
     const receipt = await this.receiptRepository.findOne({
-      where: { order: { id: orderId } },
+      where: { 
+        order: { id: orderId },
+        isRefunded: false  // Add this condition
+      },
     });
 
     if (!receipt) {
@@ -788,9 +791,7 @@ export class ReceiptService {
     return receipt;
   }
 
-  async getReceiptByReservationId(
-    reservationId: string
-  ): Promise<ReceiptEntity> {
+  async getReceiptByReservationId(reservationId: string): Promise<ReceiptEntity> {
     const order = await this.orderRepository.findOne({
       where: { reservation: { id: reservationId } },
       relations: [
@@ -809,7 +810,10 @@ export class ReceiptService {
     }
 
     const receipt = await this.receiptRepository.findOne({
-      where: { order: { id: order.id } },
+      where: { 
+        order: { id: order.id },
+        isRefunded: false  // Add this condition
+      },
     });
 
     if (!receipt) {
@@ -820,7 +824,7 @@ export class ReceiptService {
       );
     }
 
-    return receipt; // paymentForServices will now be correctly returned as an array
+    return receipt;
   }
 
   async getReceipts(getReceiptsDto: GetReceiptsDto) {
