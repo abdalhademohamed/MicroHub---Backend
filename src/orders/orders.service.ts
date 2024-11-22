@@ -2206,6 +2206,7 @@ export class OrdersService {
       // Get the original receipt
       const originalReceipt = order.receipts[0];
       const totalPaid = Number(originalReceipt.totalPayment);
+      // console.log
 
       // Validate refund amount
       if (refundAmount <= 0) {
@@ -2227,6 +2228,7 @@ export class OrdersService {
           const uploadResult = await this.CloudinaryService.uploadImage(image,folderName);
           order.image_order_refund = uploadResult.secure_url;
         } catch (error) {
+          console.log(error);
           throw new BadRequestException(
             this.i18n.translate("test.ORDER.REFUND_IMAGE_UPLOAD_FAILED")
           );
