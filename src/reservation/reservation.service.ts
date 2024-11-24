@@ -1758,7 +1758,7 @@ export class ReservationService {
     }[];
     total: number;
   }> {
-    const { branchId, fromDate, toDate, page = "1", limit = "10" } = dto;
+    const { branchId, fromDate, toDate } = dto;
 
     // Set the fromDate to the start of the day (00:00:00)
     let startOfDay: Date | undefined;
@@ -1805,8 +1805,8 @@ export class ReservationService {
     }
 
     // Pagination
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-    query.skip(skip).take(parseInt(limit));
+    // const skip = (parseInt(page) - 1) * parseInt(limit);
+    // query.skip(skip).take(parseInt(limit));
 
     // Execute the query
     const [reservations, total] = await query.getManyAndCount();
