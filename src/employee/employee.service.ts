@@ -112,6 +112,36 @@ export class EmployeeService {
       }
     }
   }
+  async searchAndCountEmployees(
+    keyword: string,
+    query: {page?: string; limit?: string; branch?: string}, 
+    user: any
+  ) {
+    let filter : any = { };
+    if( query.branch ) {
+      filter = { branch: { id: query.branch } };
+    }
+    if( user.role == 'RECEPTIONIST' ){
+      const employee = await this.employeeRepository.findOne({ 
+        where: { id: user.sub },
+        relations: ['branch']
+      });
+      filter = { branch: { id: employee.branch.id } };
+    }
+    const limit = parseInt(query.limit) || 1;
+    const page = parseInt(query.page) || 10;
+    const [data, total] = await this.employeeRepository.findAndCount({
+      where: [
+        { ... filter, phoneNumber: Like(`%${keyword}%`) },
+        { ...filter, email: Like(`%${keyword}%`) },
+        { ...filter, username: Like(`%${keyword}%`) },
+      ],
+      relations: ["branch", "position", "employeeType"],
+      take: limit,
+      skip: (page - 1) * limit,
+    });
+    return { data, total, page, limit };
+  }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

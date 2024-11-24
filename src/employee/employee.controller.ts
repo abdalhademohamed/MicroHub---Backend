@@ -15,6 +15,7 @@ import {
   UseInterceptors,
   UseGuards,
   Request,
+  Req,
 } from "@nestjs/common";
 import { EmployeeService } from "./employee.service";
 import { CreateEmployeeDto } from "./dto/create.employee.dto";
@@ -63,6 +64,20 @@ export class EmployeeController {
       );
   }
 
+  @Get('search/:keyword')
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST, Role.ADMIN, Role.ARTIST, Role.ARTISTMANAGER)
+  @UseGuards(AccessTokenGuard)
+  async getArtistsWithSearch(
+    @Param('keyword') keyword: string,
+    @Query() query: {page?: string; limit?: string; branch?: string},
+    @Req() req: any,
+  ) {
+    return this.employeeService.searchAndCountEmployees(
+      keyword,
+      query,
+      req.user
+    );
+  }
   @Get('artists')
   async getArtistsWithReviews() {
     return this.employeeService.getArtistsWithReviews();

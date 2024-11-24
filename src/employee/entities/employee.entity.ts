@@ -33,7 +33,6 @@ export class EmployeeEntity extends UserEntity {
   
   @Column({ length: 10 })
   countryCode: string; // Country code for the phone number
-
   @Column({ length: 15 })
   phoneNumber: string; // Employee phone number
 
@@ -42,6 +41,7 @@ export class EmployeeEntity extends UserEntity {
 
   @Column({nullable:true})
   speciality: string; // Store the URL of the image uploaded to Cloudinary
+
   @Column({ default: true })
   available: boolean; // Indicates if the employee is available or not
 
@@ -50,6 +50,7 @@ export class EmployeeEntity extends UserEntity {
     (EmployeeTypeEntity) => EmployeeTypeEntity.employees,
   )
   employeeType: EmployeeTypeEntity;
+  
   @Column({ default: 0 })
   totalReviews: number; // Total number of reviews for the employee
 
