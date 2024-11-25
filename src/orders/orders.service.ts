@@ -947,13 +947,7 @@ export class OrdersService {
         throw new BadRequestException("Order status cannot be changed from 'Abscent' to any other status.");
       }
   }
-    
     // Ensure that an image is provided when canceling the order
-    if (newStatus === OrderStatus.Canceled && !image) {
-      throw new BadRequestException(
-        "An image is required when canceling an order."
-      );
-    }
     if (newStatus === OrderStatus.Canceled) {
       try {
         if (!order.reservation) {

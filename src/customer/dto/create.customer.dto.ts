@@ -26,6 +26,6 @@ export class CreateCustomerDto {
   fullName: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   dateOfBirth: string; // Format: YYYY-MM-DD
 }

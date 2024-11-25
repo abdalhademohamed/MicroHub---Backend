@@ -23,8 +23,10 @@ export class ReservationEntity {
 
   @Column()
   reservationDay: number; // Day of reservation
+
   @Column()
   reservationMonth: number; // Month of reservation
+
   @Column()
   reservationYear: number; // Year of reservation
 
@@ -60,11 +62,13 @@ export class ReservationEntity {
 
   @ManyToOne(() => CustomerEntity, (customer) => customer.reservations)
   customer: CustomerEntity; // Relationship to CustomerEntity
+
   @ManyToMany(() => RootoshEntity, (rootosh) => rootosh.reservations, {
     nullable: true,
   })
   @JoinTable() // Required for Many-to-Many relationship
   rootoshes?: RootoshEntity[];
+
   @OneToOne(() => OrderEntity, (order) => order.reservation, { cascade: true })
   @JoinColumn() // Indicates the owning side of the OneToOne relationship
   order: OrderEntity;
