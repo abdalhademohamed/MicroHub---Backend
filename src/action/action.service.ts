@@ -24,7 +24,6 @@ export class ActionService {
         action.createdBy = await this.UserRepository.findOne({ where: { id: body.createdBy } });
         action.createdAt = new Date();
         await this.ActionRepository.save(action);
-        console.log(action);
     }
     async getAllActions(order: string) {
         const [actions, totalItems] = await this.ActionRepository.findAndCount({
