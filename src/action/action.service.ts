@@ -17,7 +17,7 @@ export class ActionService {
         private readonly OrderRepository: Repository<OrderEntity>,
     ){}
     async createAction(body: CreateActionDto){
-        const action = await this.ActionRepository.create({
+        const action = this.ActionRepository.create({
             action: body.action,
         })
         action.order = await this.OrderRepository.findOne({ where: { id: body.order } });
