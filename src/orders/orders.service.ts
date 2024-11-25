@@ -46,6 +46,7 @@ import { ReceiptEntity } from "../receipt/entities/receipt.entity";
 import { GetCommentsbycustomerDto } from "./dto/get-comments.dto";
 import { GiftCouponEntity } from "../gift-coupon/entities/gift-coupon.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
+import { ActionService } from "../action/action.service";
 
 @Injectable()
 export class OrdersService {
@@ -90,7 +91,8 @@ export class OrdersService {
     private readonly ReceiptRepository: Repository<ReceiptEntity>,
     private readonly i18n: CustomI18nService,
     @InjectRepository(GiftCouponEntity)
-    private readonly GiftCouponRepository: Repository<GiftCouponEntity>
+    private readonly GiftCouponRepository: Repository<GiftCouponEntity>,
+    private actionService: ActionService,
   ) {}
   // Method to generate a unique incremental invoice number
   private async generateUniqueInvoiceNumber(): Promise<number> {
@@ -235,6 +237,11 @@ export class OrdersService {
             OrderEntity,
             newOrder
           );
+          await this.actionService.createAction({
+            action: `reservation created with startTime: ${reservation.start_Time}`,
+            order: savedOrder.id,
+            createdBy: userId,
+          });
 
           // Update customer's last services list and last rootoshes
           const customer = await transactionalEntityManager.findOne(
@@ -481,6 +488,11 @@ export class OrdersService {
             OrderEntity,
             newOrder
           );
+          await this.actionService.createAction({
+            action: `reservation created with startTime: ${reservation.start_Time}`,
+            order: savedOrder.id,
+            createdBy: userId,
+          });
 
           // Update customer's last services list and last rootoshes
           const customer = await transactionalEntityManager.findOne(
@@ -613,6 +625,11 @@ export class OrdersService {
             OrderEntity,
             order
           );
+          await this.actionService.createAction({
+            action: `order services has been updated`,
+            order: updatedOrder.id,
+            createdBy: userId,
+          });
 
           // Create an audit log entry for the order update
           const auditLog = new AuditLogEntity();
@@ -706,6 +723,11 @@ export class OrdersService {
             }
           }
           await transactionalEntityManager.save(AuditLogEntity, auditLog);
+          await this.actionService.createAction({
+            action: `reservation time updated: ${reservation.start_Time} and order date is: ${order.date}`,
+            order: updatedOrder.id,
+            createdBy: userId,
+          });
 
           return updatedOrder;
         }
@@ -880,6 +902,11 @@ export class OrdersService {
           }
 
           await transactionalEntityManager.save(AuditLogEntity, auditLog);
+          await this.actionService.createAction({
+            action: `payment status updated: ${newPaymentStatus}`,
+            order: updatedOrder.id,
+            createdBy: userId,
+          });
 
           return savedOrder;
         }
@@ -947,7 +974,6 @@ export class OrdersService {
         throw new BadRequestException("Order status cannot be changed from 'Abscent' to any other status.");
       }
   }
-    // Ensure that an image is provided when canceling the order
     if (newStatus === OrderStatus.Canceled) {
       try {
         if (!order.reservation) {
@@ -1255,6 +1281,11 @@ export class OrdersService {
           }
         }
       );
+      await this.actionService.createAction({
+        action: `order status updated: ${newStatus}`,
+        order: updatedOrder.id,
+        createdBy: userId,
+      });
 
       return updatedOrder;
     } catch (error) {
@@ -1420,6 +1451,11 @@ export class OrdersService {
           await transactionalEntityManager.save(AuditLogEntity, log);
         }
       );
+      await this.actionService.createAction({
+        action: `order assigned to an artist email is: ${artist.email}`,
+        order: updatedOrder.id,
+        createdBy: userId,
+      });
 
       return updatedOrder;
     } catch (error) {
@@ -2277,6 +2313,11 @@ export class OrdersService {
         }
 
         await transactionalEntityManager.save(AuditLogEntity, auditLog);
+        await this.actionService.createAction({
+          action: `order refunded`,
+          order: savedOrder.id,
+          createdBy: userId,
+        });
 
         return {
           orderId: order.id,

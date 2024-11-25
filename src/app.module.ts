@@ -61,6 +61,8 @@ import { SharableOfferModule } from './sharable-offer/sharable-offer.module';
 import { GiftCouponModule } from './gift-coupon/gift-coupon.module';
 import { GiftCouponEntity } from "./gift-coupon/entities/gift-coupon.entity";
 import { SharableOfferEntity } from "./sharable-offer/entities/sharable-offer.entity";
+import { ActionEntity } from "./action/entities/action.entity";
+import { ActionModule } from "./action/action.module";
 
 @Module({
   imports: [
@@ -102,6 +104,7 @@ import { SharableOfferEntity } from "./sharable-offer/entities/sharable-offer.en
         AnalysisEntity,
         SharableOfferEntity,
         GiftCouponEntity,
+        ActionEntity,
       ],
       synchronize: true, // Set to false in production
       ssl: true, // Neon typically requires SSL connections
@@ -148,7 +151,8 @@ import { SharableOfferEntity } from "./sharable-offer/entities/sharable-offer.en
     AnalysisModule,
     EventEmitterModule.forRoot({ global: true }),
     SharableOfferModule, 
-    GiftCouponModule, 
+    GiftCouponModule,
+    ActionModule, 
   ],
   controllers: [AppController],
   providers: [AppService, CloudinaryProvider], 
