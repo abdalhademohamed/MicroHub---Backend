@@ -11,7 +11,7 @@ import {
 
 import { InjectEntityManager, InjectRepository } from "@nestjs/typeorm";
 import { OrderEntity } from "./entities/order.entity";
-import { EntityManager, Repository } from "typeorm";
+import { Brackets, EntityManager, Repository } from "typeorm";
 import { ReservationEntity } from "../reservation/entities/reservation.entity";
 
 import { EmployeeEntity } from "../employee/entities/employee.entity";
@@ -46,7 +46,7 @@ import { ReceiptEntity } from "../receipt/entities/receipt.entity";
 import { GetCommentsbycustomerDto } from "./dto/get-comments.dto";
 import { GiftCouponEntity } from "../gift-coupon/entities/gift-coupon.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
-import { ActionService } from "../action/action.service";
+import { ActionService } from "src/action/action.service";
 
 @Injectable()
 export class OrdersService {
@@ -1476,7 +1476,8 @@ export class OrdersService {
       page,
       limit,
       sort,
-      employeeName,
+      // employeeName,
+      filterText,
       fromDate,
       toDate,
       paymentStatus,
@@ -1486,6 +1487,7 @@ export class OrdersService {
     } = findOrdersDto;
 
     let branchId = findOrdersDto.branchId;
+    // filter => employee name & client name &  
 
     try {
       const employee = await this.employeeRepository.findOne({
@@ -1514,16 +1516,26 @@ export class OrdersService {
         .leftJoinAndSelect("o.reservation", "r")
         .leftJoinAndSelect("r.services", "s")
         .leftJoinAndSelect("r.rootoshes", "ro") // Adding the rootoshes join here
-
         .addSelect(["r.id", "r.start_Time", "r.end_Time", "r.totalPrice"])
         .take(limit)
         .skip((page - 1) * limit)
         .orderBy(`o.date`, sort.toUpperCase() as "ASC" | "DESC");
 
-      if (employeeName) {
-        query.andWhere("a.english_Name ILIKE :employeeName", {
-          employeeName: `%${employeeName}%`,
-        });
+      // if (employeeName) {
+      //   query.andWhere("a.english_Name ILIKE :employeeName", {
+      //     employeeName: `%${employeeName}%`,
+      //   });
+      // }
+
+      if (filterText) {
+        query.andWhere(
+          new Brackets((qb) => {
+            qb.where("o.id ILIKE :filterText", { filterText: `%${filterText}%` })
+              .orWhere("r.id ILIKE :filterText", { filterText: `%${filterText}%` })
+              .orWhere("a.english_Name ILIKE :filterText", { filterText: `%${filterText}%` })
+              .orWhere("c.fullName ILIKE :filterText", { filterText: `%${filterText}%` });
+          })
+        );
       }
 
       if (branchId) {

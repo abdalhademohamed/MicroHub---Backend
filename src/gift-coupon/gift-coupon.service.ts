@@ -16,8 +16,8 @@ import { OrderEntity } from "../orders/entities/order.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
 import { In } from "typeorm";
 import { OrderStatus } from "../orders/utils/order.status.enum";
-import { ReceiptEntity } from "../receipt/entities/receipt.entity";
-import { UserEntity } from "../user/entities/user.entity";
+import { ReceiptEntity } from "src/receipt/entities/receipt.entity";
+import { UserEntity } from "src/user/entities/user.entity";
 
 @Injectable()
 export class GiftCouponService {

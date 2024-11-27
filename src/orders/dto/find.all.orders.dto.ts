@@ -29,9 +29,13 @@ export class FindOrdersDto {
   @IsString()
   branchId?: string;
 
+  // @IsOptional()
+  // @IsString()
+  // employeeName?: string;
+
   @IsOptional()
   @IsString()
-  employeeName?: string;
+  filterText?: string;
 
   @IsOptional()
   @IsString()
