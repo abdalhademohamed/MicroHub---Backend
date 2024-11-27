@@ -63,13 +63,13 @@ export class OrdersController {
   }
 
   @Get("/sorted")
-  @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(
-    Role.SUPERADMIN,
-    Role.RECEPTIONIST,
-    Role.COORDINATOR,
-    Role.ARTISTMANAGER,
-  )
+  @UseGuards(AccessTokenGuard)
+  // @Roles(
+  //   Role.SUPERADMIN,
+  //   Role.RECEPTIONIST,
+  //   Role.COORDINATOR,
+  //   Role.ARTISTMANAGER,
+  // )
   async findAllOrders(
     @Query() findOrdersDto: FindOrdersDto,
     @Request() req: any, // Request object to access the user

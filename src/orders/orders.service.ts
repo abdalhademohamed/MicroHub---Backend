@@ -1530,8 +1530,8 @@ export class OrdersService {
       if (filterText) {
         query.andWhere(
           new Brackets((qb) => {
-            qb.where("o.id ILIKE :filterText", { filterText: `%${filterText}%` })
-              .orWhere("r.id ILIKE :filterText", { filterText: `%${filterText}%` })
+            qb.where("o.id::TEXT ILIKE :filterText", { filterText: `%${filterText}%` })
+              .orWhere("r.id::TEXT ILIKE :filterText", { filterText: `%${filterText}%` })
               .orWhere("a.english_Name ILIKE :filterText", { filterText: `%${filterText}%` })
               .orWhere("c.fullName ILIKE :filterText", { filterText: `%${filterText}%` });
           })
