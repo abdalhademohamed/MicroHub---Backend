@@ -1745,6 +1745,7 @@ export class OrdersService {
       fromDate,
       toDate,
       orderStatus,
+      filterText,
     } = findOrdersByDayDto;
 
     try {

@@ -13,6 +13,7 @@ import { EmployeeEntity } from "./entities/employee.entity";
 import { BranchEntity } from "../branch/entities/branch.entity";
 import { PositionEntity } from "../postion/entities/postion.entity";
 import {
+  Brackets,
   EntityManager,
   In,
   Like,
@@ -151,7 +152,7 @@ export class EmployeeService {
     employeeTypeName?: string,
     branchId?: string,
     role?: Role,
-    englishName?: string,
+    filterText?: string,
     userId?: string
   ): Promise<{
     items: EmployeeEntity[];
@@ -182,11 +183,6 @@ export class EmployeeService {
         throw new NotFoundException(`Branch with id ${branchId} not found`);
       }
       filter.branch = { id: branchId };
-    }
-
-    // Add specific name filters
-    if (englishName) {
-      filter.english_Name = Like(`%${englishName}%`);
     }
    
 
@@ -220,13 +216,28 @@ export class EmployeeService {
     }
 
     try {
-      const [items, total] = await this.employeeRepository.findAndCount({
-        where: filter,
-        relations: ["branch", "position", "employeeType"],
-        skip: (page - 1) * limit,
-        take: limit,
-      });
-
+      // Build query using query builder to handle OR condition for filterText
+      const query = this.employeeRepository.createQueryBuilder('employee')
+        .leftJoinAndSelect('employee.branch', 'branch')
+        .leftJoinAndSelect('employee.position', 'position')
+        .leftJoinAndSelect('employee.employeeType', 'employeeType')
+        .where(filter);
+  
+      // Apply filterText to match email or english_Name (OR condition)
+      if (filterText) {
+        query.andWhere(
+          new Brackets((qb) => {
+            qb.where('employee.email LIKE :filterText', { filterText: `%${filterText}%` })
+              .orWhere('employee.english_Name LIKE :filterText', { filterText: `%${filterText}%` });
+          })
+        );
+      }
+  
+      const [items, total] = await query
+        .skip((page - 1) * limit)
+        .take(limit)
+        .getManyAndCount();
+  
       return {
         items,
         total,

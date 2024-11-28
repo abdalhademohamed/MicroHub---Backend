@@ -18,6 +18,10 @@ export class FindOrdersByDayDto {
   @IsOptional()
   @IsString()
   fromDate?: string; // Format: 'yyyy-MM-dd'
+
+  @IsOptional()
+  @IsString()
+  filterText?: string; // Format: 'yyyy-MM-dd'
   
   @IsOptional()
   @IsString()

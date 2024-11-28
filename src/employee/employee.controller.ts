@@ -127,7 +127,7 @@ export class EmployeeController {
     @Query("employeeType") employeeType?: string, // Optional query parameter for filtering
     @Query("branchId") branchId?: string, // Optional query parameter for filtering
     @Query("role") role?: Role, // Optional query parameter for filtering by role
-    @Query("employeeName") englishName?: string, // Optional query parameter for filtering by English name
+    @Query("filterText") filterText?: string, // Optional query parameter for filtering by English name
   ): Promise<{
     items: EmployeeEntity[];
     total: number;
@@ -145,7 +145,7 @@ export class EmployeeController {
       employeeType,
       branchId,
       role,
-      englishName,
+      filterText,
       userId
     );
   }
