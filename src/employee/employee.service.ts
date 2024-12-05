@@ -82,7 +82,6 @@ export class EmployeeService {
     } catch (error) {
       // Log the error
       console.error("Error occurred while creating employee:", error);
-
       // Categorize the error based on the instance
       if (error instanceof NotFoundException) {
         throw new NotFoundException({
@@ -164,7 +163,7 @@ export class EmployeeService {
     page = Math.max(page, 1);
     limit = Math.max(limit, 1);
 
-    const filter: any = { deletedAt: null };
+    const filter: any = { isDeleted: false };
 
     // Get the requesting user's details
     const requestingUser = await this.employeeRepository.findOne({
@@ -687,6 +686,7 @@ export class EmployeeService {
 
         // Perform the soft delete by setting the deletedAt field
         employee.deletedAt = new Date();
+        employee.isDeleted = true; // Set the isDeleted flag
 
         await transactionalEntityManager.save(EmployeeEntity, employee);
 

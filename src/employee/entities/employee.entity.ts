@@ -85,8 +85,11 @@ export class EmployeeEntity extends UserEntity {
   reviews: ReviewEntity[]; // Reviews made by the employee
 
   // Add a soft delete column
-  @DeleteDateColumn({ name: "deleted_at", nullable: true })
+  @Column({ nullable: true, default: null })
   deletedAt?: Date;
+
+  @Column({ default: false })
+  isDeleted?: boolean;
 
   @Column({ type: "float", default: 0 })
   oldestAvgRating: number;
