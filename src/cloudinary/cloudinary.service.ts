@@ -26,15 +26,33 @@ export class CloudinaryService {
   //     }
   //   });
   // }
-
-
   async uploadImage(
     file: Express.Multer.File,
     folderName: string,
   ): Promise<UploadApiResponse | UploadApiErrorResponse> {
-     const b64 = Buffer.from(file.buffer).toString('base64');
-    const dataURI = 'data:' + file.mimetype + ';base64,' + b64;
-    const res = await v2.uploader.upload(dataURI, { folder: folderName });
-    return res;
+    return new Promise((resolve, reject) => {
+      const upload = v2.uploader.upload_stream(
+        {
+          folder: `${folderName}`, // Dynamic folder based on branch name
+        },
+        (error, result) => {
+          if (error) return reject(error);
+          resolve(result);
+        },
+      );
+
+      toStream(file.buffer).pipe(upload);
+    });
   }
+
+
+  // async uploadImage(
+  //   file: Express.Multer.File,
+  //   folderName: string,
+  // ): Promise<UploadApiResponse | UploadApiErrorResponse> {
+  //    const b64 = Buffer.from(file.buffer).toString('base64');
+  //   const dataURI = 'data:' + file.mimetype + ';base64,' + b64;
+  //   const res = await v2.uploader.upload(dataURI, { folder: folderName });
+  //   return res;
+  // }
 }
