@@ -68,6 +68,7 @@ export class ServiceService {
   
       return savedService; // Returns status code 201 Created
     } catch (error) {
+      console.log(error);
       // Handle unexpected errors
       throw new InternalServerErrorException(
         this.i18n.translate('test.SERVICE.CREATE_FAILED')

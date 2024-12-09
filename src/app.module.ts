@@ -67,7 +67,7 @@ import { ActionModule } from "./action/action.module";
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: ".env",
+      envFilePath: process.env.NODE_ENV ? 'dev.env' : 'prod.env',
       isGlobal: true,
     }),
 
@@ -158,3 +158,4 @@ import { ActionModule } from "./action/action.module";
   providers: [AppService, CloudinaryProvider], 
 })
 export class AppModule {}
+console.log(process.env.NODE_ENV)
