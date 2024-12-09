@@ -2,22 +2,25 @@ import {
     IsOptional,
     IsString,
     IsNumber,
-    IsDateString,
-    IsNotEmpty,
+    // IsDateString,
+    // IsNotEmpty,
   } from 'class-validator';
   
   export class GetCustomerPaginatedsDto {
-    @IsOptional()
-    @IsNotEmpty()
-    branchId?: string;
+    // @IsOptional()
+    // @IsNotEmpty()
+    // branchId?: string;
   
-    @IsOptional()
-    @IsDateString()
-    fromDate?: string; // Format: YYYY-MM-DD
+    // @IsOptional()
+    // @IsDateString()
+    // fromDate?: string; // Format: YYYY-MM-DD
   
+    // @IsOptional()
+    // @IsDateString()
+    // toDate?: string; // Format: YYYY-MM-DD
     @IsOptional()
-    @IsDateString()
-    toDate?: string; // Format: YYYY-MM-DD
+    @IsString()
+    keyword?: string; //
   
     @IsOptional()
     @IsNumber()

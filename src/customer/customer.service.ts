@@ -167,10 +167,17 @@ export class CustomerService {
    async getAllCustomers(
     filters: GetCustomerPaginatedsDto,
   ): Promise<{ items: CustomerEntity[]; total: number }> {
-    const { branchId, fromDate, toDate, page = 1, limit = 10 } = filters;
+    const { keyword, page = 1, limit = 10 } = filters;
   
     // Step 1: Fetch customers
-    const query = this.customerRepository.createQueryBuilder('customer');
+    const query = this.customerRepository
+      .createQueryBuilder('customer')
+      .leftJoinAndSelect('customer.reservations', 'reservation');
+      if (keyword) {
+        query.where('customer.phoneNumber LIKE :keyword', { keyword: `%${keyword}%` })
+            .orWhere('reservation.id::TEXT LIKE :keyword', { keyword: `%${keyword}%` })
+            .orWhere('customer.fullName LIKE :keyword', { keyword: `%${keyword}%` });
+      }
   
     // Pagination
     query.skip((page - 1) * limit).take(limit);
