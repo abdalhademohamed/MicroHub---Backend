@@ -79,12 +79,13 @@ export class EmployeeService {
       .createQueryBuilder("order")
       .select("order.status", "status")
       .addSelect("COUNT(order.id)", "count")
-      .where("order.artist = :employeeId", { employeeId })
+      .innerJoin("order.createdBy", "createdBy") // Ensure a proper join
+      .where("createdBy.id = :employeeId", { employeeId }) // Use the alias createdBy
       .groupBy("order.status")
       .getRawMany();
   
     return aggregation;
-  }
+}
 
   async createEmployee(
     createEmployeeDto: CreateEmployeeDto,
