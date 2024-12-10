@@ -804,6 +804,7 @@ export class EmployeeService {
       if (!userData) {
         throw new NotFoundException('User data not found');
       }
+      const result = await this.getOrderAggregationByEmployee(userId);
 
       return {
         id: employeeProfile.id,
@@ -817,6 +818,8 @@ export class EmployeeService {
         totalReviews,
         oldestAvgRating,
         newestAvgRating,
+        // @ts-ignore
+        result,
       };
     } catch (error) {
       console.error('Error in getProfile:', error);
