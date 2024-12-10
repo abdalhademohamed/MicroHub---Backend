@@ -18,6 +18,7 @@ import { SlotsEntity } from "../slots/entities/slots.entity";
 import { ReservationEntity } from "../reservation/entities/reservation.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
 import { ReviewEntity } from "../reviews/entities/review.entity";
+import { OrderEntity } from "src/orders/entities/order.entity";
 
 @Module({
   imports: [
@@ -31,7 +32,8 @@ import { ReviewEntity } from "../reviews/entities/review.entity";
       WorkingEntity,
       SlotsEntity,
       ReservationEntity,
-      ReviewEntity
+      ReviewEntity,
+      OrderEntity,
     ]),
     AuthModule,
     SlotModule,

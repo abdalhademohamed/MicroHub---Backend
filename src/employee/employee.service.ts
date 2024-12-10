@@ -38,6 +38,7 @@ import { SlotsEntity } from "../slots/entities/slots.entity";
 import { WorkingEntity } from "../slots/entities/working.entity";
 import { OrderStatus } from "../orders/utils/order.status.enum";
 import { ReviewEntity } from "../reviews/entities/review.entity";
+import { OrderEntity } from "src/orders/entities/order.entity";
 
 @Injectable()
 export class EmployeeService {
@@ -70,8 +71,20 @@ export class EmployeeService {
     @InjectRepository(SlotsEntity)
     private readonly SlotRepository: Repository<SlotsEntity>,
     @InjectRepository(WorkingEntity)
-    private readonly WorkingRepository: Repository<WorkingEntity>
+    private readonly WorkingRepository: Repository<WorkingEntity>,
+    @InjectRepository(OrderEntity) private OrderRepository: Repository<OrderEntity>,
   ) {}
+  async getOrderAggregationByEmployee(employeeId: string) {  
+    const aggregation = await this.OrderRepository
+      .createQueryBuilder("order")
+      .select("order.status", "status")
+      .addSelect("COUNT(order.id)", "count")
+      .where("order.artist = :employeeId", { employeeId })
+      .groupBy("order.status")
+      .getRawMany();
+  
+    return aggregation;
+  }
 
   async createEmployee(
     createEmployeeDto: CreateEmployeeDto,
@@ -252,7 +265,7 @@ export class EmployeeService {
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  async getEmployeeById(id: string): Promise<EmployeeEntity> {
+  async getEmployeeById(id: string) {
     const employee = await this.employeeRepository.findOne({
       where: { id },
       relations: ["branch", "position", "employeeType"], // Include related entities
@@ -261,7 +274,9 @@ export class EmployeeService {
     if (!employee) {
       throw new NotFoundException(`Employee with ID ${id} not found`);
     }
-
+    const result = await this.getOrderAggregationByEmployee(id);
+    // @ts-ignore
+    employee.result = result;
     return employee;
   }
 

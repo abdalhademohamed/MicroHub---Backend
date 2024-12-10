@@ -14,6 +14,7 @@ import {
   ValidationPipe,
   UseGuards,
   Request,
+  Patch,
 } from "@nestjs/common";
 import { ReservationService } from "./reservation.service";
 import { UpdateReservationDto } from "./dto/update.reservation.dto";
@@ -29,6 +30,7 @@ import { RolesGuard } from "../auth/guards/role.guards";
 import { Role } from "../user/utils/user.enum";
 import { Roles } from "../auth/Roles.decorator";
 import { GetReservationsTimesDto } from "./dto/get.reservations.timings.dto";
+import { UpdateBranchReservationDto } from "./dto/update-branch.reservation.dto";
 
 @ApiTags("reservation")
 @Controller("reservation")
@@ -121,6 +123,21 @@ export class ReservationController {
   @Post("customer")
   async createCustomer(@Body() body: CreateCustomerDto) {
     return this.reservationService.registerOrLookupCustomer(body);
+  }
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST)
+  @Patch("update-branch/:id")
+  async updateReservationBranch(
+    @Request() req: any, // Request object to access the user
+    @Param("id") id: string,
+    @Body() updateReservationDto: UpdateBranchReservationDto
+  ) {
+    const userId = req.user.sub; // Extract user ID from request
+
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
+    return this.reservationService.updateReservationBranch(id, updateReservationDto);
   }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
