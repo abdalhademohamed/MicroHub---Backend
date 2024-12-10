@@ -1,5 +1,7 @@
 export class CreateActionDto {
-    action: string;
+    actionAr: string;
+    actionEn: string;
+    branch: string;
     createdBy: string;
     order: string;
 }

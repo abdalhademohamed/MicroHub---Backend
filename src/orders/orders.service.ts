@@ -8,12 +8,10 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from "@nestjs/common";
-
 import { InjectEntityManager, InjectRepository } from "@nestjs/typeorm";
 import { OrderEntity } from "./entities/order.entity";
 import { Brackets, EntityManager, Repository } from "typeorm";
 import { ReservationEntity } from "../reservation/entities/reservation.entity";
-
 import { EmployeeEntity } from "../employee/entities/employee.entity";
 import { FindOrdersDto } from "./dto/find.all.orders.dto";
 import { OrderStatus } from "./utils/order.status.enum";
@@ -29,16 +27,16 @@ import { Role } from "../user/utils/user.enum";
 import { CustomerEntity } from "../customer/entities/customer.entity";
 import { OfferEntity } from "../offer/entities/offer.entity";
 import { NotificationService } from "../notification/notification.service";
-import { Console } from "console";
+// import { Console } from "console";
 import { SharableOfferEntity } from "../sharable-offer/entities/sharable-offer.entity";
-import { GiftCouponService } from "../gift-coupon/gift-coupon.service";
-import { CreateGiftCouponDto } from "../gift-coupon/dto/create-gift-coupon.dto";
+// import { GiftCouponService } from "../gift-coupon/gift-coupon.service";
+// import { CreateGiftCouponDto } from "../gift-coupon/dto/create-gift-coupon.dto";
 import { PaymentStatus } from "./utils/payment.status.enum";
 import { ReservationService } from "../reservation/reservation.service";
-import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
+// import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
 import { CommentEntity } from "../comment/entities/comment.entity";
 import {
-  CommentResponseDto,
+  // CommentResponseDto,
   ReviewResponseDto,
 } from "../comment/dto/get.comment.response.dto";
 import { PaginatedCommentResponseDto } from "./dto/paginated.comments.response.dto";
@@ -53,33 +51,23 @@ export class OrdersService {
   constructor(
     @InjectRepository(OrderEntity)
     private readonly orderRepository: Repository<OrderEntity>,
-
     @InjectRepository(CommentEntity)
     private readonly commentRepository: Repository<CommentEntity>,
-
     private readonly CloudinaryService: CloudinaryService,
-
     @InjectRepository(ReservationEntity)
     private readonly reservationRepository: Repository<ReservationEntity>,
-
     @InjectRepository(EmployeeEntity)
     private readonly employeeRepository: Repository<EmployeeEntity>,
-
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
-
     @InjectRepository(PaymentEntity)
     private readonly PaymentRepository: Repository<PaymentEntity>,
-
     @InjectRepository(PositionEntity)
     private readonly PositionRepository: Repository<PositionEntity>,
-
     @InjectRepository(OfferEntity)
     private readonly OfferRepository: Repository<OfferEntity>,
-
     @InjectEntityManager() private readonly entityManager: EntityManager,
     private readonly notificationService: NotificationService, // Inject NotificationService
-
     @InjectRepository(SharableOfferEntity)
     private readonly SharableOfferRepository: Repository<SharableOfferEntity>,
     // private readonly GiftCouponService: GiftCouponService,
@@ -238,7 +226,9 @@ export class OrdersService {
             newOrder
           );
           await this.actionService.createAction({
-            action: `reservation created with startTime: ${reservation.start_Time}`,
+            actionEn: `reservation created`,
+            actionAr: `تم إنشاء الحجز`,
+            branch: savedOrder.branch.id,
             order: savedOrder.id,
             createdBy: userId,
           });
@@ -489,8 +479,10 @@ export class OrdersService {
             newOrder
           );
           await this.actionService.createAction({
-            action: `reservation created with startTime: ${reservation.start_Time}`,
+            actionAr: `reservation created`,
+            actionEn: `تم إنشاء الحجز`,
             order: savedOrder.id,
+            branch: savedOrder.branch.id,
             createdBy: userId,
           });
 
@@ -626,7 +618,9 @@ export class OrdersService {
             order
           );
           await this.actionService.createAction({
-            action: `order services has been updated`,
+            actionEn: `order services has been updated`,
+            actionAr: `تم تحديث خدمات الطلب`,
+            branch: updatedOrder.branch.id,
             order: updatedOrder.id,
             createdBy: userId,
           });
@@ -724,7 +718,9 @@ export class OrdersService {
           }
           await transactionalEntityManager.save(AuditLogEntity, auditLog);
           await this.actionService.createAction({
-            action: `reservation time updated: ${reservation.start_Time} and order date is: ${order.date}`,
+            actionAr: `reservation time updated`,
+            actionEn: `تم تحديث وقت الحجز`,
+            branch: updatedOrder.branch.id,
             order: updatedOrder.id,
             createdBy: userId,
           });
@@ -903,7 +899,9 @@ export class OrdersService {
 
           await transactionalEntityManager.save(AuditLogEntity, auditLog);
           await this.actionService.createAction({
-            action: `payment status updated: ${newPaymentStatus}`,
+            actionAr: `payment status updated`,
+            actionEn: `تم تحديث حالة الدفع`,
+            branch: updatedOrder.branch.id,
             order: updatedOrder.id,
             createdBy: userId,
           });
@@ -1282,7 +1280,9 @@ export class OrdersService {
         }
       );
       await this.actionService.createAction({
-        action: `order status updated: ${newStatus}`,
+        actionAr: `order status updated`,
+        actionEn: `تم تحديث حالة الطلب`,
+        branch: order.branch.id,
         order: updatedOrder.id,
         createdBy: userId,
       });
@@ -1452,7 +1452,9 @@ export class OrdersService {
         }
       );
       await this.actionService.createAction({
-        action: `order assigned to an artist email is: ${artist.email}`,
+        actionAr: `order assigned to an artist email is`,
+        actionEn: `تم تعيين الطلب لفنان، البريد الإلكتروني هو `,
+        branch: order.branch.id,
         order: updatedOrder.id,
         createdBy: userId,
       });
@@ -2327,7 +2329,9 @@ export class OrdersService {
 
         await transactionalEntityManager.save(AuditLogEntity, auditLog);
         await this.actionService.createAction({
-          action: `order refunded`,
+          actionAr: `order refunded`,
+          actionEn: `تم استرداد مبلغ الطلب`,
+          branch: savedOrder.branch.id,
           order: savedOrder.id,
           createdBy: userId,
         });

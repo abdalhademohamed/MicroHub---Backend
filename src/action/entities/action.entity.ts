@@ -7,20 +7,27 @@ import {
 } from "typeorm";
 import { UserEntity } from "../../user/entities/user.entity";
 import { OrderEntity } from "../../orders/entities/order.entity";
+import { BranchEntity } from "src/branch/entities/branch.entity";
 
 @Entity()
 export class ActionEntity {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column()
-  action: string;
+  @Column({ nullable: true })
+  actionAr: string;
+
+  @Column({ nullable: true })
+  actionEn: string;
 
   @ManyToOne(() => UserEntity)
   createdBy: UserEntity;
 
   @ManyToOne(() => OrderEntity)
   order: OrderEntity;
+
+  @ManyToOne(() => BranchEntity)
+  branch: BranchEntity;
 
   @CreateDateColumn()
   createdAt: Date; // Automatically set when the entity is created

@@ -1,6 +1,5 @@
 export enum OrderStatus {
   Pending = "Pending",
-
   InQueue = "InQueue",
   Working = "Working",
   Reviewed = "Reviewed",
@@ -8,6 +7,4 @@ export enum OrderStatus {
   Canceled = "Canceled",
   Abscent = "Abscent",
   Refuneded = "Refuneded",
-
-
 }

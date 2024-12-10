@@ -88,7 +88,7 @@ export class EmployeeEntity extends UserEntity {
   @Column({ nullable: true, default: null })
   deletedAt?: Date;
 
-  @Column({ default: false })
+  @Column({ default: false, nullable: true })
   isDeleted?: boolean;
 
   @Column({ type: "float", default: 0 })

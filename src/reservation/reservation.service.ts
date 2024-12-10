@@ -35,6 +35,7 @@ import { NotificationService } from "../notification/notification.service";
 import { EmployeeEntity } from "../employee/entities/employee.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
 import { GiftCouponService } from "../gift-coupon/gift-coupon.service";
+import { UpdateBranchReservationDto } from "./dto/update-branch.reservation.dto";
 
 @Injectable()
 export class ReservationService {
@@ -666,16 +667,16 @@ export class ReservationService {
         price += serviceTotals.price;
 
         // Ensure image is provided
-        if (!image) {
-          throw new BadRequestException(
-            this.i18n.translate("test.RESERVATION.PHOTO_REQUIRED")
-          );
-        }
+        // if (!image) {
+        //   throw new BadRequestException(
+        //     this.i18n.translate("test.RESERVATION.PHOTO_REQUIRED")
+        //   );
+        // }
 
-        // Upload image to Cloudinary
-        const folderName = "reservation";
-        result = await this.CloudinaryService.uploadImage(image, folderName);
-        body.deposit_Content = result.url;
+        // // Upload image to Cloudinary
+        // const folderName = "reservation";
+        // result = await this.CloudinaryService.uploadImage(image, folderName);
+        body.deposit_Content = 'result.url';
       }
 
       // Check for sharable offer and add its services if applicable
@@ -1648,6 +1649,76 @@ export class ReservationService {
       reservation.branch.id
     );
     return { status: "deleted" };
+  }
+  async updateReservationBranch(reservationId: string, body: UpdateBranchReservationDto) {
+    const reservation = await this.ReservationRepository.findOne({
+      where: { id: reservationId, isDeleted: false },
+      relations: {
+        branch: true,
+        services: true,
+        order: true,
+      },
+    });
+    if(!reservation){
+      throw new NotFoundException('Reservation not found');
+    };
+    const branch = await this.BranchRepository.findOneBy({ id: body.branch });
+    if (!branch) {
+      throw new NotFoundException('Branch not found');
+    }
+    if(reservation.branch.id == body.branch){
+      throw new BadRequestException('Cannot move to the same branch');
+    }
+    const ids = reservation.services.map((service) => service.id);
+    const { duration } = await this.calculateTotalDuration(ids);
+    const csutomStartTime = body.startTime ? body.startTime : reservation.start_Time;
+    const startTime = new Date(csutomStartTime);
+    const endTime = new Date(startTime.getTime() + duration * 1000 * 60);
+
+    // Get working hours for the branch on the specific date
+    const workingHours = await this.getWorkingHoursAtSpecificDate(
+      body.branch,
+      startTime
+    );
+
+    // Check if the working hours allow the reservation
+    const index = workingHours.findIndex(
+      (w) => w.from <= startTime && w.to >= endTime
+    );
+    if (index === -1) {
+      throw new BadRequestException(
+        this.i18n.translate("test.RESERVATION.SCHEDULE_CONFLICT")
+      );
+    }
+    const newWorkingHours = this.newAddedWorkingHours(
+      {
+        fromOriginal: workingHours[index].from,
+        toOriginal: workingHours[index].to,
+        fromUser: startTime,
+        toUser: endTime,
+      },
+      workingHours[index].slot
+    );
+    await this.WorkingHourEntity.save(newWorkingHours);
+    await this.WorkingHourEntity.delete({ id: workingHours[index].id });
+
+    await this.cancelReservationAndAddSlot(
+      reservation.start_Time,
+      reservation.end_Time,
+      reservation.branch.id
+    );
+    reservation.start_Time = startTime;
+    reservation.end_Time = endTime;
+    reservation.branch = branch;
+    const order = await this.OrderEntity.findOneBy({ id: reservation.order.id });
+    order.branch = {
+      id: branch.id,
+      name: branch.name,
+    };
+    await this.OrderEntity.save(order);
+    await this.ReservationRepository.save(reservation);
+
+    return { reservation, order };
   }
   async cancelReservationAndAddSlot(start: Date, end: Date, branchId: string) {
     const slot = await this.SlotRepository.findOne({
