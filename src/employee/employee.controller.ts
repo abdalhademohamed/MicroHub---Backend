@@ -39,6 +39,10 @@ import { GetUserProfileDto } from "./dto/get.profile.dto";
 @Controller("employee")
 export class EmployeeController {
   constructor(private readonly employeeService: EmployeeService) {}
+  @Get('analysis/:id')
+  getAnalysis(@Param('id') id: string) {
+    return this.employeeService.getOrderAggregationByEmployee(id);
+  }
 
   @Get('top/artists')
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first

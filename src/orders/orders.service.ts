@@ -44,7 +44,7 @@ import { ReceiptEntity } from "../receipt/entities/receipt.entity";
 import { GetCommentsbycustomerDto } from "./dto/get-comments.dto";
 import { GiftCouponEntity } from "../gift-coupon/entities/gift-coupon.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
-import { ActionService } from "src/action/action.service";
+import { ActionService } from "../action/action.service";
 
 @Injectable()
 export class OrdersService {

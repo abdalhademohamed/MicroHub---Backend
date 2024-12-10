@@ -5,7 +5,7 @@ import { Repository } from "typeorm";
 import { ActionEntity } from "./entities/action.entity";
 import { OrderEntity } from "../orders/entities/order.entity";
 import { CreateActionDto } from "./dto/create.action.dto";
-import { BranchEntity } from "src/branch/entities/branch.entity";
+import { BranchEntity } from "../branch/entities/branch.entity";
 
 @Injectable()
 export class ActionService {

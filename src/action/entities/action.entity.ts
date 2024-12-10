@@ -7,7 +7,7 @@ import {
 } from "typeorm";
 import { UserEntity } from "../../user/entities/user.entity";
 import { OrderEntity } from "../../orders/entities/order.entity";
-import { BranchEntity } from "src/branch/entities/branch.entity";
+import { BranchEntity } from "../../branch/entities/branch.entity";
 
 @Entity()
 export class ActionEntity {

@@ -38,7 +38,7 @@ import { SlotsEntity } from "../slots/entities/slots.entity";
 import { WorkingEntity } from "../slots/entities/working.entity";
 import { OrderStatus } from "../orders/utils/order.status.enum";
 import { ReviewEntity } from "../reviews/entities/review.entity";
-import { OrderEntity } from "src/orders/entities/order.entity";
+import { OrderEntity } from "../orders/entities/order.entity";
 
 @Injectable()
 export class EmployeeService {
@@ -74,17 +74,20 @@ export class EmployeeService {
     private readonly WorkingRepository: Repository<WorkingEntity>,
     @InjectRepository(OrderEntity) private OrderRepository: Repository<OrderEntity>,
   ) {}
-  async getOrderAggregationByEmployee(employeeId: string) {  
+  async getOrderAggregationByEmployee(employeeId: string) { 
+    
+    
     const aggregation = await this.OrderRepository
       .createQueryBuilder("order")
       .select("order.status", "status")
       .addSelect("COUNT(order.id)", "count")
-      .where("order.artist = :employeeId", { employeeId })
+      .innerJoin("order.createdBy", "createdBy") // Ensure a proper join
+      .where("createdBy.id = :employeeId", { employeeId }) // Use the alias createdBy
       .groupBy("order.status")
       .getRawMany();
   
     return aggregation;
-  }
+}
 
   async createEmployee(
     createEmployeeDto: CreateEmployeeDto,
@@ -804,6 +807,7 @@ export class EmployeeService {
       if (!userData) {
         throw new NotFoundException('User data not found');
       }
+      const result = await this.getOrderAggregationByEmployee(userId);
 
       return {
         id: employeeProfile.id,
@@ -817,6 +821,8 @@ export class EmployeeService {
         totalReviews,
         oldestAvgRating,
         newestAvgRating,
+        // @ts-ignore
+        result,
       };
     } catch (error) {
       console.error('Error in getProfile:', error);
