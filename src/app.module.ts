@@ -67,7 +67,7 @@ import { ActionModule } from "./action/action.module";
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: process.env.NODE_ENV == 'production' ? 'prod.env' : 'dev.env',
+      envFilePath: 'dev.env',
       isGlobal: true,
     }),
 
