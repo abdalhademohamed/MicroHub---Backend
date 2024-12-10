@@ -74,7 +74,9 @@ export class EmployeeService {
     private readonly WorkingRepository: Repository<WorkingEntity>,
     @InjectRepository(OrderEntity) private OrderRepository: Repository<OrderEntity>,
   ) {}
-  async getOrderAggregationByEmployee(employeeId: string) {  
+  async getOrderAggregationByEmployee(employeeId: string) { 
+    
+    
     const aggregation = await this.OrderRepository
       .createQueryBuilder("order")
       .select("order.status", "status")
