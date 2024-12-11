@@ -74,7 +74,7 @@ export class ReservationService {
     private readonly i18n: CustomI18nService,
     
     @InjectRepository(OrderEntity)
-    private OrderEntity: Repository<OrderEntity>,
+    private OrderRepo: Repository<OrderEntity>,
     // private readonly GiftCouponService: GiftCouponService,
 
     // private readonly ReceiptService: ReceiptService, // Inject the new service
@@ -251,354 +251,6 @@ export class ReservationService {
     return slot;
   }
 
-  // async createReservation(
-  //   body: CreateReservationDto,
-  //   image: Express.Multer.File,
-  //   userId: string
-  // ) {
-  //   try {
-  //     // Validate branch existence
-  //     const branch = await this.BranchRepository.findOne({
-  //       where: { id: body.branch },
-  //     });
-  //     if (!branch) {
-  //       throw new NotFoundException(
-  //         this.i18n.translate('RESERVATION.BRANCH_NOT_FOUND')
-  //       );
-  //     }
-
-  //     let serviceIds: string[] = [];
-  //     let services: ServiceEntity[] = [];
-  //     let rootoshIds: string[] = []; // Initialize rootoshIds array
-  //     let rootoshes: RootoshEntity[] = []; // Initialize rootoshes array
-  //     // Initialize duration and price variables
-  //     let duration = 0;
-  //     let price = 0;
-  //     let result;
-  //     // Check if at least one of services, offerId, sharableOfferId, or couponCode is provided
-  //     if (!body.services || body.services.length === 0) {
-  //       if (
-  //         !body.offerId &&
-  //         !body.sharableOfferId &&
-  //         !body.couponCode &&
-  //         !body.rootosh
-  //       ) {
-  //         throw new BadRequestException(
-  //           "At least one of services, offerId, rootosh , sharableOfferId, or couponCode must be provided"
-  //         );
-  //       }
-  //     }
-
-  //     // Check if services are provided
-  //     if (body.services && body.services.length > 0) {
-  //       serviceIds = body.services;
-
-  //       // Fetch services based on provided IDs
-  //       services = await this.ServiceRepository.find({
-  //         where: { id: In(serviceIds) },
-  //       });
-  //       if (services.length !== serviceIds.length) {
-  //         throw new BadRequestException("Some services were not found");
-  //       }
-  //     }
-
-  //     // Check if offerId is provided
-  //     if (body.offerId) {
-  //       const offer = await this.OfferRepository.findOne({
-  //         where: { id: body.offerId },
-  //         relations: ["services"],
-  //       });
-  //       if (!offer) {
-  //         throw new NotFoundException("Offer not found");
-  //       }
-  //       serviceIds = offer.services.map((service) => service.id); // Extract service IDs from the offer
-  //       services = offer.services; // Use services from the offer
-
-  //       const serviceTotals = await this.calculateTotalDuration(serviceIds);
-  //       duration += serviceTotals.duration;
-  //       price += serviceTotals.price;
-
-  //       // Ensure image is provided
-  //       if (!image) {
-  //         throw new BadRequestException(
-  //           this.i18n.translate('RESERVATION.PHOTO_REQUIRED')
-  //         );
-  //       }
-
-  //       // Upload image to Cloudinary
-  //       const folderName = "reservation";
-  //       result = await this.CloudinaryService.uploadImage(image, folderName);
-  //       body.deposit_Content = result.url;
-  //     }
-
-  //     // Check for sharable offer and add its services if applicable
-  //     if (body.sharableOfferId) {
-  //       const sharableOffer = await this.SharableOfferRepository.findOne({
-  //         where: { id: body.sharableOfferId },
-  //         relations: ["services"],
-  //       });
-  //       if (!sharableOffer) {
-  //         throw new NotFoundException("Sharable offer not found");
-  //       }
-  //       if (Array.isArray(sharableOffer.services)) {
-  //         services = [...services, ...sharableOffer.services]; // Include sharable offer services
-  //       } else {
-  //         throw new BadRequestException("Sharable offer has no valid services");
-  //       }
-  //       const serviceTotals = await this.calculateTotalDuration(serviceIds);
-  //       duration += serviceTotals.duration;
-  //       price += serviceTotals.price;
-
-  //       // Ensure image is provided
-  //       if (!image) {
-  //         throw new BadRequestException(
-  //           this.i18n.translate('RESERVATION.PHOTO_REQUIRED')
-  //         );
-  //       }
-
-  //       // Upload image to Cloudinary
-  //       const folderName = "reservation";
-  //       result = await this.CloudinaryService.uploadImage(image, folderName);
-  //       body.deposit_Content = result.url;
-  //     }
-
-  //     // Check for coupon code and add its services if applicable
-  //     if (body.couponCode && body.services && body.services.length > 0) {
-
-  //       const coupon = await this.GiftCouponRepository.findOne({
-  //         where: { couponCode: body.couponCode },
-  //       });
-
-  //       if (!coupon) {
-  //         throw new NotFoundException("Coupon code not found");
-  //       }
-
-  //       // Check if the coupon is already redeemed
-  //       if (coupon.isRedeemed) {
-  //         throw new ConflictException("Coupon has already been redeemed");
-  //       }
-
-  //       // Transform the coupon services into ServiceEntity type
-  //       const transformedServices: ServiceEntity[] = coupon.services.map(
-  //         (service) => this.mapCouponServiceToServiceEntity(service)
-  //       );
-
-  //       // Merge the transformed services
-  //       services = [...services, ...transformedServices];
-  //       body.deposit = 0;
-  //       body.deposit_Content = null;
-  //       const serviceTotals = await this.calculateTotalDuration(serviceIds);
-  //       duration += serviceTotals.duration;
-  //     }
-
-  //     // Check if rootoshIds are provided
-  //     if (body.rootosh && body.rootosh.length > 0) {
-  //       rootoshIds = body.rootosh;
-
-  //       // Fetch rootosh entities based on provided IDs
-  //       rootoshes = await this.RootoshRepository.find({
-  //         where: { id: In(rootoshIds) },
-  //       });
-  //       if (rootoshes.length !== rootoshIds.length) {
-  //         throw new BadRequestException("Some rootosh IDs were not found");
-  //       }
-
-  //       const rootoshTotals =
-  //         await this.calculateRootoshTotalDuration(rootoshIds);
-
-  //       duration += rootoshTotals.duration;
-  //       price += rootoshTotals.price;
-  //       body.deposit = 0;
-  //       body.deposit_Content = null;
-  //     }
-
-  //     if (
-  //       body.services &&
-  //       body.services.length > 0 &&
-  //       !body.offerId &&
-  //       !body.sharableOfferId &&
-  //       !body.couponCode &&
-  //       !body.rootosh
-  //     ) {
-  //       // Ensure image is provided
-  //       if (!image) {
-  //         throw new BadRequestException(
-  //           this.i18n.translate('RESERVATION.PHOTO_REQUIRED')
-  //         );
-  //       }
-  //       const serviceTotals = await this.calculateTotalDuration(serviceIds);
-  //       duration += serviceTotals.duration;
-  //       price += serviceTotals.price;
-
-  //       // Upload image to Cloudinary
-  //       const folderName = "reservation";
-  //       result = await this.CloudinaryService.uploadImage(image, folderName);
-  //       body.deposit_Content = result.url;
-  //     }
-  //     if (body.sharableOfferId || body.offerId) {
-
-  //     }
-
-  //     // Handle custom time
-  //     const startTime = new Date(body.customStartTime);
-  //     const endTime = new Date(startTime.getTime() + duration * 1000 * 60);
-
-  //     // Get working hours for the branch on the specific date
-  //     const workingHours = await this.getWorkingHoursAtSpecificDate(
-  //       body.branch,
-  //       startTime
-  //     );
-
-  //     // Check if the working hours allow the reservation
-  //     const index = workingHours.findIndex(
-  //       (w) => w.from <= startTime && w.to >= endTime
-  //     );
-  //     if (index === -1) {
-  //       throw new BadRequestException(
-  //         this.i18n.translate('RESERVATION.SCHEDULE_CONFLICT')
-  //       );
-  //     }
-
-  //     // Validate customer existence
-  //     const customer = await this.CustomerRepository.findOneBy({
-  //       phoneNumber: body.phone_Number,
-  //     });
-  //     if (!customer) {
-  //       throw new BadRequestException(
-  //         this.i18n.translate('RESERVATION.CUSTOMER_NOT_FOUND')
-  //       );
-  //     }
-  //     if (body.deposit && body.deposit > Math.ceil(price)) {
-  //       throw new BadRequestException(
-  //         "The deposit can't be more than the total price"
-  //       );
-  //     }
-  //     // Validate employee existence
-  //     const employee = await this.UserRepository.findOne({
-  //       where: { id: userId },
-  //     });
-  //     if (!employee) {
-  //       throw new NotFoundException("Employee not found");
-  //     }
-  //     // Create and save reservation
-  //     const reservation = this.ReservationRepository.create({
-  //       customer,
-  //       totalPrice: Math.ceil(price),
-  //       deposit: body.deposit,
-  //       start_Time: startTime,
-  //       end_Time: endTime,
-  //       reservationDay: startTime.getDate(),
-  //       reservationMonth: startTime.getMonth() + 1,
-  //       reservationYear: startTime.getFullYear(),
-  //       branch,
-  //       deposit_Content: body.deposit_Content,
-  //       services,
-  //       rootoshes,
-  //       createdBy: userId,
-  //     });
-  //     await this.ReservationRepository.save(reservation);
-  //     // New code to check for existing reservations for the week
-  //     // const startOfWeek = new Date(startTime);
-  //     // startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay()); // Get the first day of the week (Sunday)
-
-  //     // const endOfWeek = new Date(startOfWeek);
-  //     // endOfWeek.setDate(endOfWeek.getDate() + 6); // Get the last day of the week (Saturday)
-
-  //     // // Fetch reservations for the branch in the upcoming week
-  //     // const existingReservations = await this.ReservationRepository.find({
-  //     //   where: {
-  //     //     branch: { id: branch.id },
-  //     //     start_Time: Between(startOfWeek, endOfWeek),
-  //     //   },
-  //     // });
-
-  //     // if (existingReservations.length >= 7) {
-  //     //   // Create a notification if there are reservations for every day of the week
-  //     //   this.notificationService.createNotification(
-  //     //     userId,
-  //     //     "full week branch reservation",
-  //     //     `Reservations exist for the entire week at branch ${branch.name}.`
-  //     //   );
-  //     // }
-  //     if (body.rootosh) {
-  //       const orderId = await this.OrdersService.createOrderForRootosh(reservation.id, userId);
-
-  //       if (!orderId) {
-  //         throw new InternalServerErrorException("Failed to create order for rootosh.");
-  //       }
-  //     } else {
-  //       const orderId = await this.OrdersService.createOrder(
-  //         reservation.id,
-  //         userId,
-  //         body.paymentId,
-  //         body.offerId,
-  //         body.sharableOfferId,
-  //         body.couponCode
-  //       );
-  //       if (!orderId) {
-  //         throw new InternalServerErrorException("Failed to create order.");
-  //       }
-  //     }
-
-  //     // Adjust working hours based on the new reservation
-  //     const newWorkingHours = this.newAddedWorkingHours(
-  //       {
-  //         fromOriginal: workingHours[index].from,
-  //         toOriginal: workingHours[index].to,
-  //         fromUser: startTime,
-  //         toUser: endTime,
-  //       },
-  //       workingHours[index].slot
-  //     );
-
-  //     await this.WorkingHourEntity.save(newWorkingHours);
-  //     await this.WorkingHourEntity.delete({ id: workingHours[index].id });
-
-  //     // Create an audit log for the reservation creation
-  //     const log = new AuditLogEntity();
-  //     log.tableName = "reservation";
-  //     log.action = "INSERT";
-  //     log.entityId = reservation.id;
-  //     log.performedBy = userId;
-
-  //     const user = await this.UserRepository.findOne({
-  //       where: { id: userId },
-  //       select: ["id", "username", "email", "role"],
-  //     });
-
-  //     if (user) {
-  //       log.userDetails = user;
-  //     }
-
-  //     await this.entityManager.save(AuditLogEntity, log);
-
-  //     return { reservation };
-  //   } catch (error) {
-  //     console.log(error)
-  //     // Granular error handling and categorization
-  //     if (error instanceof NotFoundException) {
-  //       throw new NotFoundException({
-  //         message: error.message,
-  //         category: "EntityNotFound", // Custom error category
-  //       });
-  //     } else if (error instanceof BadRequestException) {
-  //       throw new BadRequestException({
-  //         message: error.message,
-  //         category: "ValidationError", // Custom error category
-  //       });
-  //     } else if (error instanceof ConflictException) {
-  //       throw new ConflictException({
-  //         message: error.message,
-  //         category: "ConflictError", // Custom error category
-  //       });
-  //     } else {
-  //       throw new InternalServerErrorException({
-  //         message: error.message || "Unexpected error occurred",
-  //         category: "InternalServerError", // Custom error category for unexpected errors
-  //       });
-  //     }
-  //   }
-  // }
   async createReservation(
     body: CreateReservationDto,
     image: Express.Multer.File,
@@ -676,7 +328,7 @@ export class ReservationService {
         // Upload image to Cloudinary
         const folderName = "reservation";
         result = await this.CloudinaryService.uploadImage(image, folderName);
-        body.deposit_Content = 'result.url';
+        body.deposit_Content = result.url;
       }
 
       // Check for sharable offer and add its services if applicable
@@ -740,71 +392,9 @@ export class ReservationService {
         if (coupon.isRedeemed) {
           throw new ConflictException("Coupon has already been redeemed");
         }
-        // // Check if any of the requested services are already reserved
-        // const alreadyReservedServices =
-        //   coupon.servicesReservationStatus?.filter(
-        //     (status) =>
-        //       body.services.includes(status.serviceId) && status.isReserved
-        //   );
-
-        // if (alreadyReservedServices && alreadyReservedServices.length > 0) {
-        //   throw new ConflictException(
-        //     `Some services are already reserved: ${alreadyReservedServices.map((s) => s.serviceId).join(", ")}`
-        //   );
-        // }
-
-        // Check if the coupon is already redeemed
-        // if (coupon.isReserved) {
-        //   throw new ConflictException("Coupon has already been reserved");
-        // }
-        // // Transform the coupon services into ServiceEntity type
-        // const transformedServices: ServiceEntity[] = coupon.services.map(
-        //   (service) => this.mapCouponServiceToServiceEntity(service)
-        // );
-
-        // // Merge the transformed services
-        // services = [...services, ...transformedServices];
-        // Transform the coupon services into ServiceEntity type
         const transformedServices: ServiceEntity[] = coupon.services
           .filter((service) => body.services.includes(service.id)) // Only include services requested in body
           .map((service) => this.mapCouponServiceToServiceEntity(service));
-        //////////////////////////////////////////////
-        //   const servicesToReserve = coupon.services
-        //   .filter(service => body.services.includes(service.id))
-        //   .map(service => ({
-        //     serviceId: service.id,
-        //     isReserved: true,
-        //     serviceArabicName: service.arabic_Name,
-        //     serviceEnglishName: service.english_Name,
-        //     reservedAt: new Date(),
-        //   }));
-
-        // // Initialize or update servicesReservationStatus
-        // if (!coupon.servicesReservationStatus) {
-        //   coupon.servicesReservationStatus = [];
-        // }
-
-        // // Update or add reservation status for each service
-        // servicesToReserve.forEach(serviceToReserve => {
-        //   const existingStatusIndex = coupon.servicesReservationStatus.findIndex(
-        //     status => status.serviceId === serviceToReserve.serviceId
-        //   );
-
-        //   if (existingStatusIndex !== -1) {
-        //     coupon.servicesReservationStatus[existingStatusIndex] = {
-        //       ...coupon.servicesReservationStatus[existingStatusIndex],
-        //       ...serviceToReserve
-        //     };
-        //   } else {
-        //     coupon.servicesReservationStatus.push(serviceToReserve);
-        //   }
-        // });
-
-        // // // Update the overall coupon reservation status
-        // // coupon.isReserved = true;
-        // await this.GiftCouponRepository.save(coupon);
-        //////////////////////////////////////////////////////////////
-        // Set the services to only the transformed ones from the coupon
 
         services = transformedServices;
         body.deposit = 0;
@@ -920,33 +510,6 @@ export class ReservationService {
       });
       await this.ReservationRepository.save(reservation);
       
-       
-
-
-
-      // New code to check for existing reservations for the week
-      // const startOfWeek = new Date(startTime);
-      // startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay()); // Get the first day of the week (Sunday)
-
-      // const endOfWeek = new Date(startOfWeek);
-      // endOfWeek.setDate(endOfWeek.getDate() + 6); // Get the last day of the week (Saturday)
-
-      // // Fetch reservations for the branch in the upcoming week
-      // const existingReservations = await this.ReservationRepository.find({
-      //   where: {
-      //     branch: { id: branch.id },
-      //     start_Time: Between(startOfWeek, endOfWeek),
-      //   },
-      // });
-
-      // if (existingReservations.length >= 7) {
-      //   // Create a notification if there are reservations for every day of the week
-      //   this.notificationService.createNotification(
-      //     userId,
-      //     "full week branch reservation",
-      //     `Reservations exist for the entire week at branch ${branch.name}.`
-      //   );
-      // }
       if (body.rootosh) {
         const orderId = await this.OrdersService.createOrderForRootosh(
           reservation.id,
@@ -1083,7 +646,7 @@ export class ReservationService {
 
     try {
       // Find the single order that used this coupon
-      const order = await this.OrderEntity.findOne({
+      const order = await this.OrderRepo.findOne({
         where: {
           couponId: couponId,
         },
@@ -1204,7 +767,7 @@ export class ReservationService {
     const query = this.ReservationRepository.createQueryBuilder("reservation")
       .leftJoinAndSelect("reservation.branch", "branch")
       .leftJoinAndSelect("reservation.services", "services")
-      .leftJoinAndSelect("reservation.customer", "customer"); // Join the customer entity
+      .leftJoinAndSelect("reservation.customer", "customer");
 
     // Apply filters
     if (day) {
@@ -1710,14 +1273,19 @@ export class ReservationService {
     reservation.start_Time = startTime;
     reservation.end_Time = endTime;
     reservation.branch = branch;
-    const order = await this.OrderEntity.findOneBy({ id: reservation.order.id });
-    order.branch = {
-      id: branch.id,
-      name: branch.name,
-    };
-    await this.OrderEntity.save(order);
+    reservation.reservationDay=startTime.getDate();
+    reservation.reservationMonth = startTime.getMonth() + 1;
+    reservation.reservationYear= startTime.getFullYear();
+    const order = await this.OrderRepo.findOne({
+      where: { id: reservation.order.id },
+    });
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+    order.branch = { id: branch.id, name: branch.name };
     await this.ReservationRepository.save(reservation);
-
+    await this.OrderRepo.save(order);
+  
     return { reservation, order };
   }
   async cancelReservationAndAddSlot(start: Date, end: Date, branchId: string) {
