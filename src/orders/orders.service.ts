@@ -620,8 +620,8 @@ export class OrdersService {
           await this.actionService.createAction({
             actionEn: `order services has been updated`,
             actionAr: `تم تحديث خدمات الطلب`,
-            branch: updatedOrder.branch.id,
-            order: updatedOrder.id,
+            branch: order.branch.id,
+            order: order.id,
             createdBy: userId,
           });
 
@@ -755,15 +755,15 @@ export class OrdersService {
 
       // Update image URL if provided
       if (image) {
-        const folderName = "orders-payment-status"; // or any other dynamic name based on context
-        const resultImage = await this.CloudinaryService.uploadImage(
-          image,
-          folderName
-        );
-        if (resultImage) {
-          console.log(`Updating image URL for order ID ${orderId}`);
-          order.image_order_payment_status_Url = resultImage.url;
-        }
+        // const folderName = "orders-payment-status"; // or any other dynamic name based on context
+        // const resultImage = await this.CloudinaryService.uploadImage(
+        //   image,
+        //   folderName
+        // );
+        // if (resultImage) {
+          // console.log(`Updating image URL for order ID ${orderId}`);
+          order.image_order_payment_status_Url = 'resultImage.url';
+        // }
       }
 
       // Fetch the user who is updating the order
@@ -856,8 +856,8 @@ export class OrdersService {
           await this.actionService.createAction({
             actionAr: `payment status updated`,
             actionEn: `تم تحديث حالة الدفع`,
-            branch: updatedOrder.branch.id,
-            order: updatedOrder.id,
+            branch: order?.branch?.id,
+            order: order.id,
             createdBy: userId,
           });
 
@@ -1238,7 +1238,7 @@ export class OrdersService {
         actionAr: `order status updated`,
         actionEn: `تم تحديث حالة الطلب`,
         branch: order.branch.id,
-        order: updatedOrder.id,
+        order: order.id,
         createdBy: userId,
       });
 
@@ -1410,7 +1410,7 @@ export class OrdersService {
         actionAr: `order assigned to an artist email is`,
         actionEn: `تم تعيين الطلب لفنان، البريد الإلكتروني هو `,
         branch: order.branch.id,
-        order: updatedOrder.id,
+        order: order.id,
         createdBy: userId,
       });
 
@@ -2286,8 +2286,8 @@ export class OrdersService {
         await this.actionService.createAction({
           actionAr: `order refunded`,
           actionEn: `تم استرداد مبلغ الطلب`,
-          branch: savedOrder.branch.id,
-          order: savedOrder.id,
+          branch: order.branch.id,
+          order: order.id,
           createdBy: userId,
         });
 
