@@ -972,12 +972,15 @@ export class ReservationService {
           this.i18n.translate("test.RESERVATION.SCHEDULE_CONFLICT")
         );
       }
+      // console.log(workingHours);
+      // console.log(reservation);
       // Update the reservation with new times
       reservation.start_Time = startTime;
       reservation.end_Time = endTime;
-      reservation.reservationDay = startTime.getDate();
-      reservation.reservationMonth = startTime.getMonth() + 1;
-      reservation.reservationYear = startTime.getFullYear();
+      // reservation.reservationDay = startTime.getDate() * 1;
+      // reservation.reservationMonth = startTime.getMonth() * 1 + 1;
+      // reservation.reservationYear = startTime.getFullYear() * 1;
+      console.log(reservation);
 
       await this.ReservationRepository.save(reservation);
       const newWorkingHours = this.newAddedWorkingHours(
@@ -1228,7 +1231,7 @@ export class ReservationService {
     if (!branch) {
       throw new NotFoundException('Branch not found');
     }
-    console.log(branch);
+    // console.log(branch);
     if(reservation.branch.id == body.branch){
       const result = await this.updateTime(reservationId, { startTime: body.startTime }, userId);
       return { order: result.updatedOrder };
@@ -1273,9 +1276,9 @@ export class ReservationService {
     reservation.start_Time = startTime;
     reservation.end_Time = endTime;
     reservation.branch = branch;
-    reservation.reservationDay=startTime.getDate();
-    reservation.reservationMonth = startTime.getMonth() + 1;
-    reservation.reservationYear= startTime.getFullYear();
+    // reservation.reservationDay=startTime.getDate();
+    // reservation.reservationMonth = startTime.getMonth() + 1;
+    // reservation.reservationYear= startTime.getFullYear();
     const order = await this.OrderRepo.findOne({
       where: { id: reservation.order.id },
     });
