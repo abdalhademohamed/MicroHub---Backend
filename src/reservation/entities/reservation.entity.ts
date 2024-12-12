@@ -78,5 +78,4 @@ export class ReservationEntity {
 
   @Column({ name: "created_by", nullable: true })
   createdBy: string;
-
 }

@@ -137,7 +137,8 @@ export class ReservationController {
     if (!userId) {
       throw new BadRequestException("User not authenticated");
     }
-    return this.reservationService.updateReservationBranch(id, updateReservationDto);
+    console.log(userId)
+    return this.reservationService.updateReservationBranch(id, updateReservationDto, userId);
   }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
