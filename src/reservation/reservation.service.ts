@@ -955,13 +955,9 @@ export class ReservationService {
           this.i18n.translate("test.RESERVATION.NOT_FOUND", { args: { id } })
         );
       }
-      const acc = { price: 0, duration: 0 };
-      for (const service of reservation.services) {
-        acc.price += service.price;
-        acc.duration += service.duration_Mins;
-      }
+      const duration = (oldReservation.end_Time.getTime() - oldReservation.start_Time.getTime()) / ( 1000 * 60 );
       const startTime = new Date(body.startTime);
-      const endTime = new Date(startTime.getTime() + acc.duration * 60 * 1000);
+      const endTime = new Date(startTime.getTime() + duration * 60 * 1000);
 
       const workingHours = await this.getWorkingHoursAtSpecificDate(
         reservation.branch.id,
@@ -979,6 +975,9 @@ export class ReservationService {
       // Update the reservation with new times
       reservation.start_Time = startTime;
       reservation.end_Time = endTime;
+      reservation.reservationDay = startTime.getDate();
+      reservation.reservationMonth = startTime.getMonth() + 1;
+      reservation.reservationYear = startTime.getFullYear();
 
       await this.ReservationRepository.save(reservation);
       const newWorkingHours = this.newAddedWorkingHours(
@@ -1213,7 +1212,7 @@ export class ReservationService {
     );
     return { status: "deleted" };
   }
-  async updateReservationBranch(reservationId: string, body: UpdateBranchReservationDto) {
+  async updateReservationBranch(reservationId: string, body: UpdateBranchReservationDto, userId: string) {
     const reservation = await this.ReservationRepository.findOne({
       where: { id: reservationId, isDeleted: false },
       relations: {
@@ -1229,11 +1228,12 @@ export class ReservationService {
     if (!branch) {
       throw new NotFoundException('Branch not found');
     }
+    console.log(branch);
     if(reservation.branch.id == body.branch){
-      throw new BadRequestException('Cannot move to the same branch');
+      const result = await this.updateTime(reservationId, { startTime: body.startTime }, userId);
+      return { order: result.updatedOrder };
     }
-    const ids = reservation.services.map((service) => service.id);
-    const { duration } = await this.calculateTotalDuration(ids);
+    const duration = (reservation.end_Time.getTime() - reservation.start_Time.getTime()) / ( 1000 * 60 );
     const csutomStartTime = body.startTime ? body.startTime : reservation.start_Time;
     const startTime = new Date(csutomStartTime);
     const endTime = new Date(startTime.getTime() + duration * 1000 * 60);
