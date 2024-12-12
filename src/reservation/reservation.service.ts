@@ -36,6 +36,7 @@ import { EmployeeEntity } from "../employee/entities/employee.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
 import { GiftCouponService } from "../gift-coupon/gift-coupon.service";
 import { UpdateBranchReservationDto } from "./dto/update-branch.reservation.dto";
+import { ActionService } from "src/action/action.service";
 
 @Injectable()
 export class ReservationService {
@@ -940,7 +941,7 @@ export class ReservationService {
   }
 
   async updateTime(id: string, body: UpdateTimeReservationDto, userId: string) {
-    try {
+    // try {
       const reservation = await this.ReservationRepository.findOne({
         where: { id },
         relations: {
@@ -955,10 +956,10 @@ export class ReservationService {
           this.i18n.translate("test.RESERVATION.NOT_FOUND", { args: { id } })
         );
       }
+      console.log(oldReservation, '111111111111111111111111111111');
       const duration = (oldReservation.end_Time.getTime() - oldReservation.start_Time.getTime()) / ( 1000 * 60 );
       const startTime = new Date(body.startTime);
       const endTime = new Date(startTime.getTime() + duration * 60 * 1000);
-
       const workingHours = await this.getWorkingHoursAtSpecificDate(
         reservation.branch.id,
         startTime
@@ -972,15 +973,11 @@ export class ReservationService {
           this.i18n.translate("test.RESERVATION.SCHEDULE_CONFLICT")
         );
       }
-      // console.log(workingHours);
-      // console.log(reservation);
-      // Update the reservation with new times
       reservation.start_Time = startTime;
       reservation.end_Time = endTime;
-      // reservation.reservationDay = startTime.getDate() * 1;
-      // reservation.reservationMonth = startTime.getMonth() * 1 + 1;
-      // reservation.reservationYear = startTime.getFullYear() * 1;
-      console.log(reservation);
+      reservation.reservationDay = startTime.getDate() * 1;
+      reservation.reservationMonth = startTime.getMonth() * 1 + 1;
+      reservation.reservationYear = startTime.getFullYear() * 1;
 
       await this.ReservationRepository.save(reservation);
       const newWorkingHours = this.newAddedWorkingHours(
@@ -1001,68 +998,14 @@ export class ReservationService {
         oldReservation.end_Time,
         oldReservation.branch.id
       );
-
-      // Log the changes before updating the reservation
-
+      console.log('beforeReservation order updated', reservation);
       const updatedOrder =
         await this.OrdersService.updateOrderTimeFromReservation(
           reservation.id,
           userId
         );
-
-      // Create an audit log entry
-      const changedColumns = ["start_Time", "end_Time"];
-      const changesDetails = {};
-
-      changedColumns.forEach((column) => {
-        changesDetails[column] = {
-          oldValue: oldReservation[column],
-          newValue: reservation[column],
-        };
-      });
-
-      const log = new AuditLogEntity();
-      log.tableName = "reservation";
-      log.action = "UPDATE";
-      log.entityId = reservation.id;
-      log.changedColumns = changedColumns;
-      log.changesDetails = changesDetails;
-      log.performedBy = userId;
-
-      const user = await this.UserRepository.findOne({
-        where: { id: userId },
-        select: ["id", "username", "email", "role"],
-      });
-      if (user) {
-        log.userDetails = user;
-      }
-
-      await this.entityManager.save(AuditLogEntity, log);
-
-      return { status: "Time updated", updatedOrder };
-    } catch (error) {
-      // Categorize and log errors
-      if (error instanceof NotFoundException) {
-        // Log specific error for not found exception
-        console.error(`Error: ${error.message}`, { error });
-        throw error; // Re-throw to preserve the original exception
-      } else if (error instanceof BadRequestException) {
-        // Log specific error for bad request exception
-        console.error(`Error: ${error.message}`, { error });
-        throw error; // Re-throw to preserve the original exception
-      } else {
-        // Log unexpected errors
-        console.error("An unexpected error occurred during updateTime:", {
-          error,
-          id,
-          userId,
-          body,
-        });
-        throw new InternalServerErrorException(
-          "An error occurred while updating the reservation."
-        );
-      }
-    }
+      console.log('afterReservation order updated', updatedOrder);
+      return updatedOrder;
   }
 
   async updateTimeforRootosh(
@@ -1216,6 +1159,7 @@ export class ReservationService {
     return { status: "deleted" };
   }
   async updateReservationBranch(reservationId: string, body: UpdateBranchReservationDto, userId: string) {
+    try{
     const reservation = await this.ReservationRepository.findOne({
       where: { id: reservationId, isDeleted: false },
       relations: {
@@ -1234,7 +1178,8 @@ export class ReservationService {
     // console.log(branch);
     if(reservation.branch.id == body.branch){
       const result = await this.updateTime(reservationId, { startTime: body.startTime }, userId);
-      return { order: result.updatedOrder };
+      console.log(result, 'result');
+      return { order: result };
     }
     const duration = (reservation.end_Time.getTime() - reservation.start_Time.getTime()) / ( 1000 * 60 );
     const csutomStartTime = body.startTime ? body.startTime : reservation.start_Time;
@@ -1268,6 +1213,9 @@ export class ReservationService {
     await this.WorkingHourEntity.save(newWorkingHours);
     await this.WorkingHourEntity.delete({ id: workingHours[index].id });
 
+    console.log(reservation);
+
+
     await this.cancelReservationAndAddSlot(
       reservation.start_Time,
       reservation.end_Time,
@@ -1276,9 +1224,9 @@ export class ReservationService {
     reservation.start_Time = startTime;
     reservation.end_Time = endTime;
     reservation.branch = branch;
-    // reservation.reservationDay=startTime.getDate();
-    // reservation.reservationMonth = startTime.getMonth() + 1;
-    // reservation.reservationYear= startTime.getFullYear();
+    reservation.reservationDay=startTime.getDate();
+    reservation.reservationMonth = startTime.getMonth() + 1;
+    reservation.reservationYear= startTime.getFullYear();
     const order = await this.OrderRepo.findOne({
       where: { id: reservation.order.id },
     });
@@ -1288,8 +1236,21 @@ export class ReservationService {
     order.branch = { id: branch.id, name: branch.name };
     await this.ReservationRepository.save(reservation);
     await this.OrderRepo.save(order);
+    await this.OrdersService.updateOrderTimeFromReservation(reservation.id, userId);
   
     return { reservation, order };
+    }
+    catch (error) {
+      if (error instanceof NotFoundException) {
+        // Log specific error for not found exception
+        console.error(`Error: ${error.message}`, { error });
+        throw error; // Re-throw to preserve the original exception
+      } else if (error instanceof BadRequestException) {
+        // Log specific error for bad request exception
+        console.error(`Error: ${error.message}`, { error });
+        throw error; // Re-throw to preserve the original exception
+      }
+    }
   }
   async cancelReservationAndAddSlot(start: Date, end: Date, branchId: string) {
     const slot = await this.SlotRepository.findOne({

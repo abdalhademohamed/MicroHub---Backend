@@ -661,7 +661,7 @@ export class OrdersService {
   async updateOrderTimeFromReservation(
     reservationId: string,
     userId: string
-  ): Promise<OrderEntity> {
+  ) {
     const UpdateBy = await this.userRepository.findOne({
       where: { id: userId },
       select: ["id", "username", "email", "role"], // Only return these fields
@@ -687,53 +687,8 @@ export class OrdersService {
 
     order.date = `${reservation.reservationYear}-${reservation.reservationMonth}-${reservation.reservationDay}`;
     order.updatedBy = UpdateBy;
-    try {
-      return await this.entityManager.transaction(
-        async (transactionalEntityManager) => {
-          // Save the updated order
-          const updatedOrder = await transactionalEntityManager.save(
-            OrderEntity,
-            order
-          );
-
-          // Create an audit log entry for the order update
-          const auditLog = new AuditLogEntity();
-          auditLog.tableName = "order";
-          auditLog.action = "UPDATE";
-          auditLog.entityId = updatedOrder.id; // ID of the updated order
-          auditLog.performedBy = userId; // User who updated the order
-          // Fetch user details if needed
-          if (userId) {
-            const user = await transactionalEntityManager.findOne(UserEntity, {
-              where: { id: userId },
-            });
-            if (user) {
-              auditLog.userDetails = {
-                id: user.id,
-                username: user.username,
-                email: user.email,
-                role: user.role,
-              };
-            }
-          }
-          await transactionalEntityManager.save(AuditLogEntity, auditLog);
-          await this.actionService.createAction({
-            actionAr: `reservation time updated`,
-            actionEn: `تم تحديث وقت الحجز`,
-            branch: updatedOrder.branch.id,
-            order: updatedOrder.id,
-            createdBy: userId,
-          });
-
-          return updatedOrder;
-        }
-      );
-    } catch (error) {
-      throw new InternalServerErrorException(
-        "Failed to update order",
-        error.stack
-      );
-    }
+    const updatedOrder = await this.orderRepository.save(order);
+    return updatedOrder;
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async updatePaymentStatus(
@@ -2368,3 +2323,4 @@ export class OrdersService {
     }
   }
 }
+

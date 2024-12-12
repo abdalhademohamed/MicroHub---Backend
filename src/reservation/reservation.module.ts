@@ -12,7 +12,6 @@ import { PositionEntity } from "../postion/entities/postion.entity";
 import { UserEntity } from "../user/entities/user.entity";
 import { SlotsEntity } from "../slots/entities/slots.entity";
 import { WorkingEntity } from "../slots/entities/working.entity";
-import { ReceiptService } from "../receipt/receipt.service";
 import { OrdersService } from "../orders/orders.service";
 import { OrderEntity } from "../orders/entities/order.entity";
 import { PaymentEntity } from "../payment/entities/payment.entity";
@@ -21,12 +20,9 @@ import { SharableOfferEntity } from "../sharable-offer/entities/sharable-offer.e
 import { GiftCouponEntity } from "../gift-coupon/entities/gift-coupon.entity";
 import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
 import { NotificationModule } from "../notification/notification.module";
-import { GiftCouponModule } from "../gift-coupon/gift-coupon.module";
 import { CommentEntity } from "../comment/entities/comment.entity";
 import { ReceiptEntity } from "../receipt/entities/receipt.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
-import { GiftCouponService } from "../gift-coupon/gift-coupon.service";
-import { OrdersModule } from "../orders/orders.module";
 import { ActionModule } from "../action/action.module";
 
 
