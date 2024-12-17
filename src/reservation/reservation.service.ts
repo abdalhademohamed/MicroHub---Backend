@@ -366,16 +366,16 @@ export class ReservationService {
         price += fullServiceTotals.price;
 
         // Ensure image is provided
-        // if (!image) {
-        //   throw new BadRequestException(
-        //     this.i18n.translate("test.RESERVATION.PHOTO_REQUIRED")
-        //   );
-        // }
+        if (!image) {
+          throw new BadRequestException(
+            this.i18n.translate("test.RESERVATION.PHOTO_REQUIRED")
+          );
+        }
 
-        // // Upload image to Cloudinary
-        // const folderName = "reservation";
-        // result = await this.CloudinaryService.uploadImage(image, folderName);
-        body.deposit_Content = 'result.url';
+        // Upload image to Cloudinary
+        const folderName = "reservation";
+        result = await this.CloudinaryService.uploadImage(image, folderName);
+        body.deposit_Content = result.url;
       }
 
       // Check for coupon code and add its services if applicable
@@ -445,9 +445,9 @@ export class ReservationService {
         price += serviceTotals.price;
 
         // Upload image to Cloudinary
-        // const folderName = "reservation";
-        // result = await this.CloudinaryService.uploadImage(image, folderName);
-        body.deposit_Content = 'result.url';
+        const folderName = "reservation";
+        result = await this.CloudinaryService.uploadImage(image, folderName);
+        body.deposit_Content = result.url;
       }
       if (body.sharableOfferId || body.offerId) {
       }

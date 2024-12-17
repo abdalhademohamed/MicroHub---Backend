@@ -228,8 +228,8 @@ export class OrdersService {
           await this.actionService.createAction({
             actionEn: `reservation created`,
             actionAr: `تم إنشاء الحجز`,
-            branch: savedOrder.branch.id,
-            order: savedOrder.id,
+            branch: newOrder.branch.id,
+            order: newOrder.id,
             createdBy: userId,
           });
 
@@ -368,39 +368,6 @@ export class OrdersService {
       );
     }
 
-    // // Get all services from sharable offer
-    // const allServices = giftCoupon.services;
-
-    // // Get remaining services from coupon
-    // const leftServices = giftCoupon.services || [];
-
-    // // Filter out reserved services
-    // const availableServices = leftServices.filter((service) => {
-    //   const reservationStatus = giftCoupon.servicesReservationStatus?.find(
-    //     (status) => status.serviceId === service.id
-    //   );
-    //   return !reservationStatus || !reservationStatus.isReserved;
-    // });
-
-    // // Calculate used services
-    // const usedServices = allServices.filter(
-    //   (service) =>
-    //     !leftServices.some((leftService) => leftService.id === service.id)
-    // );
-
-    // // Sort usage history by date
-    // const sortedUsageHistory = [...(giftCoupon.usageHistory || [])].sort(
-    //   (a, b) => new Date(b.usedAt).getTime() - new Date(a.usedAt).getTime()
-    // );
-
-    // // Get reserved services
-    // const reservedServices = leftServices.filter((service) => {
-    //   const reservationStatus = giftCoupon.servicesReservationStatus?.find(
-    //     (status) => status.serviceId === service.id
-    //   );
-    //   return reservationStatus && reservationStatus.isReserved;
-    // });
-
     return {
       id: giftCoupon.id,
       couponCode: giftCoupon.couponCode,
@@ -478,14 +445,6 @@ export class OrdersService {
             OrderEntity,
             newOrder
           );
-          await this.actionService.createAction({
-            actionAr: `reservation created`,
-            actionEn: `تم إنشاء الحجز`,
-            order: savedOrder.id,
-            branch: savedOrder.branch.id,
-            createdBy: userId,
-          });
-
           // Update customer's last services list and last rootoshes
           const customer = await transactionalEntityManager.findOne(
             CustomerEntity,
