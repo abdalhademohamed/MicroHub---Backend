@@ -218,20 +218,13 @@ export class OrdersService {
     });
 
     try {
-      return await this.entityManager.transaction(
+      await this.entityManager.transaction(
         async (transactionalEntityManager) => {
           // Save the new order
           const savedOrder = await transactionalEntityManager.save(
             OrderEntity,
             newOrder
           );
-          await this.actionService.createAction({
-            actionEn: `reservation created`,
-            actionAr: `تم إنشاء الحجز`,
-            branch: newOrder.branch.id,
-            order: newOrder.id,
-            createdBy: userId,
-          });
 
           // Update customer's last services list and last rootoshes
           const customer = await transactionalEntityManager.findOne(
@@ -330,9 +323,17 @@ export class OrdersService {
               `A new order has been created: ${savedOrder.id}`
             );
           }
-          return savedOrder;
+          // return savedOrder;
         }
       );
+      await this.actionService.createAction({
+        actionEn: `reservation created`,
+        actionAr: `تم إنشاء الحجز`,
+        branch: newOrder.branch.id,
+        order: newOrder.id,
+        createdBy: userId,
+      });
+      return newOrder;
     } catch (error) {
       console.log(error.stack);
       throw new InternalServerErrorException(
@@ -438,7 +439,7 @@ export class OrdersService {
     });
 
     try {
-      return await this.entityManager.transaction(
+      await this.entityManager.transaction(
         async (transactionalEntityManager) => {
           // Save the new order
           const savedOrder = await transactionalEntityManager.save(
@@ -515,9 +516,17 @@ export class OrdersService {
               `A new order has been created: ${savedOrder.id}`
             );
           }
-          return savedOrder;
+          // return savedOrder;
         }
       );
+      await this.actionService.createAction({
+        actionEn: `reservation created`,
+        actionAr: `تم إنشاء الحجز`,
+        branch: newOrder.branch.id,
+        order: newOrder.id,
+        createdBy: userId,
+      });
+      return newOrder;
     } catch (error) {
       console.log(error);
       throw new InternalServerErrorException(

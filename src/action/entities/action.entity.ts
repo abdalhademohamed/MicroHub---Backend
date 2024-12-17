@@ -6,7 +6,6 @@ import {
   Column,
 } from "typeorm";
 import { UserEntity } from "../../user/entities/user.entity";
-import { OrderEntity } from "../../orders/entities/order.entity";
 import { BranchEntity } from "../../branch/entities/branch.entity";
 
 @Entity()
@@ -23,8 +22,8 @@ export class ActionEntity {
   @ManyToOne(() => UserEntity)
   createdBy: UserEntity;
 
-  @ManyToOne(() => OrderEntity)
-  order: OrderEntity;
+  @Column({ nullable: true })
+  order: string;
 
   @ManyToOne(() => BranchEntity)
   branch: BranchEntity;

@@ -8,7 +8,7 @@ export class ActionController {
     ){}
     @Get(':action') 
     getAllActions(
-        @Param('order') order: string,
+        @Param('action') order: string,
     ) {
         return this.actionService.getAllActions(order);
     }
