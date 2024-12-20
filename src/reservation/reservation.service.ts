@@ -1305,25 +1305,32 @@ export class ReservationService {
     });
     await this.WorkingHourEntity.save(workingSlot);
   }
-  async getTop5Reservations(fromDate: string, toDate: string): Promise<any[]> {
+  async getTop5Reservations(fromDate: string, toDate: string, branchId: string) {
     // Parse the start and end dates
     const start = new Date(fromDate);
     const end = new Date(toDate);
+    const branch = branchId?.split(',') || [];
     end.setDate(end.getDate() + 1); // Include the end date in the query
   //   const user = await this.UserRepository.findOne({
   //     where: { id: userId },
   //   });
   //  console.log(user)
   
-    const topReservations = await this.ReservationRepository.createQueryBuilder(
-      "reservation"
-    )
-      .leftJoinAndSelect("reservation.customer", "customer") // Join with customer
-      .leftJoinAndSelect("reservation.order", "order") // Join with order
-      .where("reservation.createdAt BETWEEN :start AND :end", { start, end })
-      .orderBy("reservation.totalPrice", "DESC")
-      .take(5) // Limit to top 5 reservations
-      .getMany();
+    // Build the query
+  const queryBuilder = this.ReservationRepository.createQueryBuilder('reservation')
+  .leftJoinAndSelect('reservation.customer', 'customer') // Join with customer
+  .leftJoinAndSelect('reservation.order', 'order') // Join with order
+  .where('reservation.createdAt BETWEEN :start AND :end', { start, end })
+  .orderBy('reservation.totalPrice', 'DESC')
+  .take(5); // Limit to top 5 reservations
+
+// Add branch filter if branch IDs are provided
+  if (branch.length > 0) {
+    queryBuilder.andWhere('reservation.branchId IN (:...branch)', { branch });
+  }
+
+// Execute the query
+    const topReservations = await queryBuilder.getMany();
 
     // Map the results to the desired structure, including orderId with a null check
     return topReservations.map((reservation) => ({
