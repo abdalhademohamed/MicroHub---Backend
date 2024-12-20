@@ -1523,7 +1523,6 @@ export class OrdersService {
       relations: ['position']
     });
 
-    const branch = branchId?.split(',') || [];
     if (!employee) {
       throw new NotFoundException('Employee not found');
     }
@@ -1548,11 +1547,9 @@ export class OrdersService {
         .andWhere("reviewer.id = :employeeId", { employeeId });
     }
 
-    // // Add other conditions
-    if (branch.length > 0) {
-      queryBuilder.andWhere("reservation.branchId IN (:...branch)", {
-        branch,
-      });
+    // Add other conditions
+    if (branchId) {
+      queryBuilder.andWhere("reservation.branchId = :branchId", { branchId });
     }
 
     if (fromDate) {
