@@ -1446,7 +1446,7 @@ export class OrdersService {
         .skip((page - 1) * limit)
         .orderBy(`o.date`, sort.toUpperCase() as "ASC" | "DESC");
         if(branch){
-          query.andWhere("CAST(o.branch ->> 'id' AS uuid) IN (:...branchIds)", { branch });
+          query.andWhere("CAST(o.branch ->> 'id' AS uuid) IN (:...branch)", { branch });
         }
       // if (employeeName) {
       //   query.andWhere("a.english_Name ILIKE :employeeName", {
