@@ -39,6 +39,10 @@ export class FindOrdersDto {
 
   @IsOptional()
   @IsString()
+  branch?: string;
+
+  @IsOptional()
+  @IsString()
   fromDate?: string; // Format: 'yyyy-MM-dd'
 
   @IsOptional()

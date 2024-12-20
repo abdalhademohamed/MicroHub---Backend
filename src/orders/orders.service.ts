@@ -822,8 +822,8 @@ export class OrdersService {
 
           await transactionalEntityManager.save(AuditLogEntity, auditLog);
           await this.actionService.createAction({
-            actionAr: `payment status updated`,
-            actionEn: `تم تحديث حالة الدفع`,
+            actionEn: `payment status updated`,
+            actionAr: `تم تحديث حالة الدفع`,
             branch: order?.branch?.id,
             order: order.id,
             createdBy: userId,
@@ -1375,8 +1375,8 @@ export class OrdersService {
         }
       );
       await this.actionService.createAction({
-        actionAr: `order assigned to an artist email is`,
-        actionEn: `تم تعيين الطلب لفنان، البريد الإلكتروني هو `,
+        actionEn: `order assigned to an artist email is`,
+        actionAr: `تم تعيين الطلب لفنان، البريد الإلكتروني هو `,
         branch: order.branch.id,
         order: order.id,
         createdBy: userId,
@@ -1410,7 +1410,7 @@ export class OrdersService {
       serviceId,
       customerId,
     } = findOrdersDto;
-
+    const branch = findOrdersDto.branch?.split(',');
     let branchId = findOrdersDto.branchId;
     // filter => employee name & client name &  
 
@@ -1427,7 +1427,7 @@ export class OrdersService {
         employee.branch
       ) {
         branchId = employee.branch.id;
-      }
+      };
 
       const query = this.orderRepository
         .createQueryBuilder("o")
@@ -1445,7 +1445,9 @@ export class OrdersService {
         .take(limit)
         .skip((page - 1) * limit)
         .orderBy(`o.date`, sort.toUpperCase() as "ASC" | "DESC");
-
+        if(branch){
+          query.andWhere("CAST(o.branch ->> 'id' AS uuid) IN (:...branchIds)", { branch });
+        }
       // if (employeeName) {
       //   query.andWhere("a.english_Name ILIKE :employeeName", {
       //     employeeName: `%${employeeName}%`,
@@ -1521,6 +1523,7 @@ export class OrdersService {
       relations: ['position']
     });
 
+    const branch = branchId?.split(',') || [];
     if (!employee) {
       throw new NotFoundException('Employee not found');
     }
@@ -1545,9 +1548,11 @@ export class OrdersService {
         .andWhere("reviewer.id = :employeeId", { employeeId });
     }
 
-    // Add other conditions
-    if (branchId) {
-      queryBuilder.andWhere("reservation.branchId = :branchId", { branchId });
+    // // Add other conditions
+    if (branch.length > 0) {
+      queryBuilder.andWhere("reservation.branchId IN (:...branch)", {
+        branch,
+      });
     }
 
     if (fromDate) {
@@ -2252,8 +2257,8 @@ export class OrdersService {
 
         await transactionalEntityManager.save(AuditLogEntity, auditLog);
         await this.actionService.createAction({
-          actionAr: `order refunded`,
-          actionEn: `تم استرداد مبلغ الطلب`,
+          actionEn: `order refunded`,
+          actionAr: `تم استرداد مبلغ الطلب`,
           branch: order.branch.id,
           order: order.id,
           createdBy: userId,
