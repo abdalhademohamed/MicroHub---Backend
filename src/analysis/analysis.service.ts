@@ -608,6 +608,10 @@ async generateOrderReport(dto: GenerateOrderReportDto, userId: string): Promise<
   if (toDate) {
     queryBuilder.andWhere('reservation.createdAt <= :toDate', { toDate: new Date(toDate) });
   }
+  const branch = dto.branchId?.split(',') || [];
+  if (branch.length > 0) {
+    queryBuilder.andWhere('reservation.branchId IN (:...branch)', { branch });
+  }
 
   // Fetch all orders with the applied filters and pagination
   const orders = await queryBuilder.getMany();

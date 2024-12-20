@@ -1,6 +1,6 @@
 // dto/report.dto.ts
 import { Type } from 'class-transformer';
-import { IsDateString, IsOptional, IsPositive } from 'class-validator';
+import { IsDateString, IsOptional, IsPositive, IsString } from 'class-validator';
 
 export class GenerateOrderReportDto {
   @IsOptional()
@@ -10,6 +10,10 @@ export class GenerateOrderReportDto {
   @IsOptional()
   @IsDateString()
   toDate?: string; // Optional end date for filtering
+
+  @IsOptional()
+  @IsString()
+  branchId?: string; // Optional branch
 
   
   @IsOptional()
