@@ -746,7 +746,10 @@ export class OrdersService {
         }
         order.updatedBy = updatedByObj;
       }
-      const employee = await this.employeeRepository.findOneBy({ id: userId });
+      const employee = await this.employeeRepository.findOne({ 
+        where : {id: userId },
+        select: ["id", "username", "email", "role"],
+      });
       order.confirmedBy = employee;
 
       // Perform the update within a transaction
@@ -1441,6 +1444,8 @@ export class OrdersService {
         .leftJoinAndSelect("o.customer", "c")
         .addSelect(["c.id", "c.fullName", "c.phoneNumber"])
         .leftJoin("o.createdBy", "cb")
+        // confirmedBy
+        .leftJoin("o.confirmedBy", "confirmedBy")
         .addSelect(["cb.id", "cb.username", "cb.email", "cb.role"])
         .leftJoin("o.updatedBy", "ub")
         .addSelect(["ub.id", "ub.username"])
