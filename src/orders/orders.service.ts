@@ -2177,6 +2177,22 @@ export class OrdersService {
       const originalReceipt = order.receipts[0];
       const totalPaid = Number(originalReceipt.totalPayment);
       // console.log
+      if (image) {
+        try {
+          const folderName = "branch";
+          const uploadResult = await this.CloudinaryService.uploadImage(image,folderName);
+          order.image_order_refund = uploadResult.secure_url;
+        } catch (error) {
+          console.log(error);
+          throw new BadRequestException(
+            this.i18n.translate("test.ORDER.REFUND_IMAGE_UPLOAD_FAILED")
+          );
+        }
+      }
+      if(order.status == OrderStatus.Refuneded){
+        await this.orderRepository.save(order);
+        return order;
+      }
 
       // Validate refund amount
       if (refundAmount <= 0) {
@@ -2192,18 +2208,6 @@ export class OrdersService {
       }
 
       // Validate and upload refund image if provided
-      if (image) {
-        try {
-          const folderName = "branch";
-          const uploadResult = await this.CloudinaryService.uploadImage(image,folderName);
-          order.image_order_refund = uploadResult.secure_url;
-        } catch (error) {
-          console.log(error);
-          throw new BadRequestException(
-            this.i18n.translate("test.ORDER.REFUND_IMAGE_UPLOAD_FAILED")
-          );
-        }
-      }
 
       // Add refund reason
       order.image_order_refund_reason = refundReason;

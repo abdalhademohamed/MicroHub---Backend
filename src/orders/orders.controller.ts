@@ -81,7 +81,7 @@ export class OrdersController {
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Patch('refund/:orderId')
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.SUPERADMIN, Role.BRANCHMANAGER,Role.RECEPTIONIST)
+  @Roles(Role.ADMIN, Role.SUPERADMIN, Role.BRANCHMANAGER,Role.RECEPTIONIST, Role.ACCOUNTANT)
   @UseInterceptors(FileInterceptor('image'))
   async refundOrder(
     @Param('orderId') orderId: string,
