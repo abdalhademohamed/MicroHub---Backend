@@ -1310,6 +1310,7 @@ export class OrdersService {
       // Assign the DTO to the order
       order.artist = artistDto as any; // Type assertion to bypass TypeScript checks
       order.status = OrderStatus.InQueue;
+      order.assignedAt = new Date(); // Set the assignedAt timestamp
       // Save the updated order
       const updatedOrder = await this.orderRepository.save(order);
       // Send notification to the artist

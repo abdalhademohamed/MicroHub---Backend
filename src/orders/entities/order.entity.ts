@@ -50,7 +50,6 @@ export class OrderEntity {
   })
   paymentStatus: PaymentStatus;
 
-
   @OneToOne(() => ReservationEntity, (reservation) => reservation.order)
   reservation: ReservationEntity;
 
@@ -65,6 +64,7 @@ export class OrderEntity {
 
   @OneToMany(() => ReceiptEntity, (receipt) => receipt.order)
   receipts: ReceiptEntity[];
+
   @Column({ nullable: true })
   image_order_status_Url: string; // New field for the image URL
 
@@ -104,6 +104,10 @@ export class OrderEntity {
   
   @Column({ nullable: true })
   image_order_refund: string; // New field for the image URL
+
   @Column({ nullable: true })
   image_order_refund_reason: string; // New field for the image URL
+
+  @Column({ nullable: true })
+  assignedAt: Date;
 }
