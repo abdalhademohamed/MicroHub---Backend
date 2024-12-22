@@ -1441,7 +1441,7 @@ export class OrdersService {
         .addSelect(["c.id", "c.fullName", "c.phoneNumber"])
         .leftJoin("o.createdBy", "cb")
         .leftJoin("o.confirmedBy", "confirmedBy") // Include confirmedBy relation
-        .addSelect(["confirmedBy.id", "confirmedBy.username", "confirmedBy.role"])
+        .addSelect(["confirmedBy.id", "confirmedBy.username", "confirmedBy.role", "confirmedBy.image"])
         .addSelect(["cb.id", "cb.username", "cb.email", "cb.role"])
         .leftJoin("o.updatedBy", "ub")
         .addSelect(["ub.id", "ub.username"])
