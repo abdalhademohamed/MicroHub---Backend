@@ -110,4 +110,7 @@ export class OrderEntity {
 
   @Column({ nullable: true })
   assignedAt: Date;
+
+  @Column({ nullable: true })
+  startWorkingAt: Date;
 }

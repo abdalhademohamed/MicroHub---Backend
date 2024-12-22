@@ -1076,6 +1076,9 @@ export class OrdersService {
     }
     // Update the order status
     order.status = newStatus;
+    if(newStatus == OrderStatus.Working){
+      order.startWorkingAt = new Date();
+    }
 
     // Upload image
     if (image) {
