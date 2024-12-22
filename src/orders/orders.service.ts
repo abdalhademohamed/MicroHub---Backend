@@ -687,7 +687,7 @@ export class OrdersService {
         );
       }
 
-      // Check if the current payment status allows updating to "paid"
+      // // Check if the current payment status allows updating to "paid"
       if (
         newPaymentStatus === PaymentStatus.Paid &&
         order.paymentStatus !== PaymentStatus.PartiallyPaid
@@ -745,12 +745,8 @@ export class OrdersService {
           throw new NotFoundException(`User with ID ${userId} not found`);
         }
         order.updatedBy = updatedByObj;
+        order.confirmedBy = updatedByObj;
       }
-      const employee = await this.employeeRepository.findOne({ 
-        where : {id: userId },
-        select: ["id", "username", "email", "role"],
-      });
-      order.confirmedBy = employee;
 
       // Perform the update within a transaction
       updatedOrder = await this.entityManager.transaction(
@@ -1444,8 +1440,8 @@ export class OrdersService {
         .leftJoinAndSelect("o.customer", "c")
         .addSelect(["c.id", "c.fullName", "c.phoneNumber"])
         .leftJoin("o.createdBy", "cb")
-        // confirmedBy
-        .leftJoin("o.confirmedBy", "confirmedBy")
+        .leftJoin("o.confirmedBy", "confirmedBy") // Include confirmedBy relation
+        .addSelect(["confirmedBy.id", "confirmedBy.username", "confirmedBy.role"])
         .addSelect(["cb.id", "cb.username", "cb.email", "cb.role"])
         .leftJoin("o.updatedBy", "ub")
         .addSelect(["ub.id", "ub.username"])
@@ -1864,6 +1860,7 @@ export class OrdersService {
           "customer",
           "reservation.services",
           "reservation.rootoshes",
+          "confirmedBy"
         ], // Add relations if needed
       });
     } catch (error) {
