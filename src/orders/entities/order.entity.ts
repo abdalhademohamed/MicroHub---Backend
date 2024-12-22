@@ -80,6 +80,9 @@ export class OrderEntity {
   @ManyToOne(() => UserEntity, { nullable: true })
   updatedBy: UserEntity;
 
+  @ManyToOne(() => UserEntity, { nullable: true })
+  confirmedBy: UserEntity;
+
   @CreateDateColumn()
   createdAt: Date; // Automatically set when the entity is created
 

@@ -723,15 +723,15 @@ export class OrdersService {
 
       // Update image URL if provided
       if (image) {
-        // const folderName = "orders-payment-status"; // or any other dynamic name based on context
-        // const resultImage = await this.CloudinaryService.uploadImage(
-        //   image,
-        //   folderName
-        // );
-        // if (resultImage) {
+        const folderName = "orders-payment-status"; // or any other dynamic name based on context
+        const resultImage = await this.CloudinaryService.uploadImage(
+          image,
+          folderName
+        );
+        if (resultImage) {
           // console.log(`Updating image URL for order ID ${orderId}`);
-          order.image_order_payment_status_Url = 'resultImage.url';
-        // }
+          order.image_order_payment_status_Url = resultImage.url;
+        }
       }
 
       // Fetch the user who is updating the order
@@ -746,6 +746,8 @@ export class OrdersService {
         }
         order.updatedBy = updatedByObj;
       }
+      const employee = await this.employeeRepository.findOneBy({ id: userId });
+      order.confirmedBy = employee;
 
       // Perform the update within a transaction
       updatedOrder = await this.entityManager.transaction(
