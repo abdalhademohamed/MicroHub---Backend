@@ -1213,7 +1213,7 @@ export class OrdersService {
         order: order.id,
         createdBy: userId,
       });
-      if(updatedOrder.status == OrderStatus.Working){
+      if(newStatus == OrderStatus.Working){
         updatedOrder.startWorkingAt = new Date();
         await this.orderRepository.save(updatedOrder);
       }
