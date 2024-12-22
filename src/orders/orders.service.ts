@@ -1077,10 +1077,6 @@ export class OrdersService {
       }
     }
     // Update the order status
-    order.status = newStatus;
-    if(newStatus == OrderStatus.Working){
-      order.startWorkingAt = new Date();
-    }
 
     // Upload image
     if (image) {
@@ -1118,6 +1114,9 @@ export class OrdersService {
 
     try {
       // Save the updated order
+      if(order.status == OrderStatus.Working){
+        order.startWorkingAt = new Date();
+      }
       const updatedOrder = await this.orderRepository.save(order);
 
       // Create an audit log entry
