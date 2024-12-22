@@ -1114,9 +1114,6 @@ export class OrdersService {
 
     try {
       // Save the updated order
-      if(order.status == OrderStatus.Working){
-        order.startWorkingAt = new Date();
-      }
       const updatedOrder = await this.orderRepository.save(order);
 
       // Create an audit log entry
@@ -1213,6 +1210,10 @@ export class OrdersService {
         order: order.id,
         createdBy: userId,
       });
+      if(updatedOrder.status == OrderStatus.Working){
+        updatedOrder.startWorkingAt = new Date();
+        await this.orderRepository.save(updatedOrder);
+      }
 
       return updatedOrder;
     } catch (error) {
