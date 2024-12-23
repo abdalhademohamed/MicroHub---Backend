@@ -252,8 +252,8 @@ export class OrdersController {
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Get("/:orderId")
-  @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.RECEPTIONIST, Role.ARTISTMANAGER)
+  @UseGuards(AccessTokenGuard)
+  // @Roles(Role.SUPERADMIN, Role.RECEPTIONIST, Role.ARTISTMANAGER)
   async getOrderById(@Param("orderId") orderId: string) {
   
       const order = await this.ordersService.findOrderById(orderId);
