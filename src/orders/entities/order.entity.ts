@@ -31,6 +31,9 @@ export class OrderEntity {
   @Column({ type: "date" })
   date: string; // Reservation date
 
+  @Column({ type: 'int', generated: 'increment' })
+  orderInvoice: number; // Auto-increment column for invoice numbers
+
   @Column({ type: "text" })
   serviceEnglish: string; // Description of the service in English
 
