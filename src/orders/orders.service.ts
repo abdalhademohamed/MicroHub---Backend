@@ -661,6 +661,7 @@ export class OrdersService {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async updatePaymentStatus(
     orderId: string,
+    paymentId: string,
     newPaymentStatus: PaymentStatus.Paid | PaymentStatus.PartiallyPaid,
     image: Express.Multer.File,
     userId: string // Optional parameter for the user ID
@@ -747,6 +748,16 @@ export class OrdersService {
         order.updatedBy = updatedByObj;
         order.confirmedBy = updatedByObj;
       }
+      const payment = await this.PaymentRepository.findOne({
+        where: { id: paymentId },
+      });
+
+      if (!payment) {
+        throw new NotFoundException(`Payment with ID ${paymentId} not found`);
+      }
+
+      // Update the order with the new payment
+      order.payment = payment;
 
       // Perform the update within a transaction
       updatedOrder = await this.entityManager.transaction(
