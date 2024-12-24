@@ -661,7 +661,7 @@ export class OrdersService {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async updatePaymentStatus(
     orderId: string,
-    paymentId: string,
+    // paymentId: string,
     newPaymentStatus: PaymentStatus.Paid | PaymentStatus.PartiallyPaid,
     image: Express.Multer.File,
     userId: string // Optional parameter for the user ID
@@ -748,16 +748,16 @@ export class OrdersService {
         order.updatedBy = updatedByObj;
         order.confirmedBy = updatedByObj;
       }
-      const payment = await this.PaymentRepository.findOne({
-        where: { id: paymentId },
-      });
+      // const payment = await this.PaymentRepository.findOne({
+      //   where: { id: paymentId },
+      // });
 
-      if (!payment) {
-        throw new NotFoundException(`Payment with ID ${paymentId} not found`);
-      }
+      // if (!payment) {
+      //   throw new NotFoundException(`Payment with ID ${paymentId} not found`);
+      // }
 
-      // Update the order with the new payment
-      order.payment = payment;
+      // // Update the order with the new payment
+      // order.payment = payment;
 
       // Perform the update within a transaction
       updatedOrder = await this.entityManager.transaction(
@@ -1450,8 +1450,8 @@ export class OrdersService {
         .leftJoinAndSelect("o.artist", "a")
         .leftJoinAndSelect("o.customer", "c")
         .addSelect(["c.id", "c.fullName", "c.phoneNumber"])
-        .leftJoinAndSelect("o.payment", "payment",)
-        .addSelect(["payment.methodEnglish", "payment.methodArabic", "payment.image"])
+        // .leftJoinAndSelect("o.payment", "payment",)
+        // .addSelect(["payment.methodEnglish", "payment.methodArabic", "payment.image"])
         .leftJoin("o.createdBy", "cb")
         .leftJoin("o.confirmedBy", "confirmedBy") // Include confirmedBy relation
         .addSelect(["confirmedBy.id", "confirmedBy.username", "confirmedBy.role"])
