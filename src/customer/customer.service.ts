@@ -14,6 +14,7 @@ import { GetCustomerDto } from "./dto/get.customer.dto";
 import { GetCustomerPaginatedsDto } from "./dto/get.customers.paginated.dto";
 import { ReservationEntity } from "../reservation/entities/reservation.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
+import { OrderEntity } from "src/orders/entities/order.entity";
 
 @Injectable()
 export class CustomerService {
@@ -23,6 +24,8 @@ export class CustomerService {
     @InjectRepository(ReservationEntity)
     private readonly ReservationRepository: Repository<ReservationEntity>,
     private readonly i18n: CustomI18nService,
+    @InjectRepository(OrderEntity)
+    private readonly orderRepository: Repository<OrderEntity>,
   ) {}
 
   async getCustomerByPhoneNumber(phoneNumber: string): Promise<GetCustomerDto> {
@@ -163,50 +166,35 @@ export class CustomerService {
     return await this.customerRepository.count();
 
   }
+  async findOrdersByPartialInvoice(keyword: string) {
+    const orders = await this.orderRepository
+      .createQueryBuilder('order')
+      .where('CAST(order.orderInvoice AS TEXT) LIKE :keyword', { keyword: `%${keyword}%` })
+      .getMany();
+
+    if (orders.length === 0) {
+      throw new NotFoundException(`No orders found matching keyword "${keyword}".`);
+    }
+    return orders;
+  }
 
    async getAllCustomers(
     filters: GetCustomerPaginatedsDto,
-  ): Promise<{ items: CustomerEntity[]; total: number }> {
+  ) {
     const { keyword, page = 1, limit = 10 } = filters;
-  
     // Step 1: Fetch customers
     const query = this.customerRepository
       .createQueryBuilder('customer')
-      .leftJoinAndSelect('customer.reservations', 'reservation');
       if (keyword) {
+        // orderInvoice
         query.where('customer.phoneNumber LIKE :keyword', { keyword: `%${keyword}%` })
-            .orWhere('reservation.id::TEXT LIKE :keyword', { keyword: `%${keyword}%` })
             .orWhere('customer.fullName LIKE :keyword', { keyword: `%${keyword}%` });
       }
-  
-    // Pagination
-    query.skip((page - 1) * limit).take(limit);
-  
-    const [customers, total] = await query.getManyAndCount();
-  
-    // Step 2: Fetch reservation counts for each customer using a separate query
-    const reservationCounts = await this.ReservationRepository
-      .createQueryBuilder('reservation')
-      .select('reservation.customerId', 'customerId')
-      .addSelect('COUNT(reservation.id)', 'reservationCount')
-      .groupBy('reservation.customerId')
-      .getRawMany();
-  
-    // Step 3: Map reservation counts to each customer
-    const items = customers.map(customer => {
-      const count = reservationCounts.find(
-        count => count.customerId === customer.id,
-      );
-      return {
-        ...customer,
-        reservationCount: count ? parseInt(count.reservationCount, 10) : 0,
-      };
-    });
-  
-    return { items, total };
+
+    const customers = await query.getMany();
+    const orders = await this.findOrdersByPartialInvoice(keyword);  
+    return { customers, orders };
   }
-  
-  
 }
 
 
