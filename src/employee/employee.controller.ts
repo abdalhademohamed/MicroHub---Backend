@@ -43,6 +43,22 @@ export class EmployeeController {
   getAnalysis(@Param('id') id: string) {
     return this.employeeService.getOrderAggregationByEmployee(id);
   }
+  @Get('employee-order')
+  @UseGuards(AccessTokenGuard) // Ensure AccessTokenGuard is first
+  // @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST,Role.ACCOUNTANT,Role.ARTIST,Role.ARTISTMANAGER)
+  getEmployeeOrder(@Req() req: any) {
+    const userId = req.user.sub; // Extract user ID from request
+    console.log(userId);
+    return this.employeeService.getOrderAggregationByEmployee(userId);
+  }
+  @Get('artist-order')
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.ARTIST)
+  getArtistOrder(@Req() req: any) {
+    const userId = req.user.sub; // Extract user ID from request
+    console.log(userId);
+    return this.employeeService.getOrderAggregationByArtist(userId);
+  }
 
   @Get('top/artists')
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first

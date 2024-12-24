@@ -75,8 +75,6 @@ export class EmployeeService {
     @InjectRepository(OrderEntity) private OrderRepository: Repository<OrderEntity>,
   ) {}
   async getOrderAggregationByEmployee(employeeId: string) { 
-    
-    
     const aggregation = await this.OrderRepository
       .createQueryBuilder("order")
       .select("order.status", "status")
@@ -85,9 +83,19 @@ export class EmployeeService {
       .where("createdBy.id = :employeeId", { employeeId }) // Use the alias createdBy
       .groupBy("order.status")
       .getRawMany();
-  
     return aggregation;
-}
+  }
+  async getOrderAggregationByArtist(employeeId: string) { 
+    const aggregation = await this.OrderRepository
+      .createQueryBuilder("order")
+      .select("order.status", "status")
+      .addSelect("COUNT(order.id)", "count")
+      .innerJoin("order.artist", "artist") // Ensure a proper join
+      .where("artist.id = :employeeId", { employeeId }) // Use the alias createdBy
+      .groupBy("order.status")
+      .getRawMany();
+    return aggregation;
+  }
 
   async createEmployee(
     createEmployeeDto: CreateEmployeeDto,
