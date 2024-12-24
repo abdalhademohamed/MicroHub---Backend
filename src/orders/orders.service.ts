@@ -1450,6 +1450,8 @@ export class OrdersService {
         .leftJoinAndSelect("o.artist", "a")
         .leftJoinAndSelect("o.customer", "c")
         .addSelect(["c.id", "c.fullName", "c.phoneNumber"])
+        .leftJoinAndSelect("o.payment", "payment",)
+        .addSelect(["payment.methodEnglish", "payment.methodArabic", "payment.image"])
         .leftJoin("o.createdBy", "cb")
         .leftJoin("o.confirmedBy", "confirmedBy") // Include confirmedBy relation
         .addSelect(["confirmedBy.id", "confirmedBy.username", "confirmedBy.role"])
