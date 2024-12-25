@@ -1990,67 +1990,67 @@ export class OrdersService {
     return count;
   }
 
-  async getOrderStatusCountForArtist(
-    userId: string,
-    branchId?: string,
-    artistId?: string // Optional artistId parameter for ADMIN role
-  ): Promise<{ [key in OrderStatus]: number }> {
-    // Initialize the result object with all order statuses set to zero
-    const orderStatusCounts: { [key in OrderStatus]: number } = {
-      [OrderStatus.Pending]: 0,
-      [OrderStatus.InQueue]: 0,
-      [OrderStatus.Working]: 0,
-      [OrderStatus.Reviewed]: 0,
-      [OrderStatus.Completed]: 0,
-      [OrderStatus.Canceled]: 0,
-      [OrderStatus.Abscent]: 0,
-      [OrderStatus.Refuneded]: 0,
-    };
+  // async getOrderStatusCountForArtist(
+  //   userId: string,
+  //   branchId?: string,
+  //   artistId?: string // Optional artistId parameter for ADMIN role
+  // ): Promise<{ [key in OrderStatus]: number }> {
+  //   // Initialize the result object with all order statuses set to zero
+  //   const orderStatusCounts: { [key in OrderStatus]: number } = {
+  //     [OrderStatus.Pending]: 0,
+  //     [OrderStatus.InQueue]: 0,
+  //     [OrderStatus.Working]: 0,
+  //     [OrderStatus.Reviewed]: 0,
+  //     [OrderStatus.Completed]: 0,
+  //     [OrderStatus.Canceled]: 0,
+  //     [OrderStatus.Abscent]: 0,
+  //     [OrderStatus.Refuneded]: 0,
+  //   };
 
-    // Retrieve the user based on userId
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user) {
-      throw new NotFoundException("User not found");
-    }
+  //   // Retrieve the user based on userId
+  //   const user = await this.userRepository.findOne({ where: { id: userId } });
+  //   if (!user) {
+  //     throw new NotFoundException("User not found");
+  //   }
 
-    // Determine the artistId based on the user's role
-    const effectiveArtistId = user.role === Role.ARTIST ? user.id : artistId;
+  //   // Determine the artistId based on the user's role
+  //   const effectiveArtistId = user.role === Role.ARTIST ? user.id : artistId;
 
-    if (!effectiveArtistId) {
-      throw new BadRequestException(
-        "Artist ID must be provided for ADMIN role or user must be an ARTIST."
-      );
-    }
+  //   if (!effectiveArtistId) {
+  //     throw new BadRequestException(
+  //       "Artist ID must be provided for ADMIN role or user must be an ARTIST."
+  //     );
+  //   }
 
-    // Query the repository to get counts based on artistId and optional branchId
-    const ordersQuery = this.orderRepository
-      .createQueryBuilder("order")
-      .select("order.status", "order_status") // Aliasing here
-      .addSelect("COUNT(order.id)", "count")
-      .where("order.artistId = :artistId", { artistId: effectiveArtistId });
+  //   // Query the repository to get counts based on artistId and optional branchId
+  //   const ordersQuery = this.orderRepository
+  //     .createQueryBuilder("order")
+  //     .select("order.status", "order_status") // Aliasing here
+  //     .addSelect("COUNT(order.id)", "count")
+  //     .where("order.artistId = :artistId", { artistId: effectiveArtistId });
 
-    if (branchId) {
-      ordersQuery.andWhere("order.branchId = :branchId", { branchId });
-    }
+  //   if (branchId) {
+  //     ordersQuery.andWhere("order.branchId = :branchId", { branchId });
+  //   }
 
-    // Group by order status
-    ordersQuery.groupBy("order.status");
+  //   // Group by order status
+  //   ordersQuery.groupBy("order.status");
 
-    const results = await ordersQuery.getRawMany();
-    // console.log('Query Results:', results); // Log the results for debugging
+  //   const results = await ordersQuery.getRawMany();
+  //   // console.log('Query Results:', results); // Log the results for debugging
 
-    // Populate the count object based on the results
-    for (const result of results) {
-      const status = result.order_status as OrderStatus; // Use 'order_status' to match the query result
-      if (OrderStatus[status]) {
-        orderStatusCounts[status] = parseInt(result.count, 10);
-      } else {
-        console.warn(`Unexpected order status: ${status}`); // Log unexpected statuses
-      }
-    }
+  //   // Populate the count object based on the results
+  //   for (const result of results) {
+  //     const status = result.order_status as OrderStatus; // Use 'order_status' to match the query result
+  //     if (OrderStatus[status]) {
+  //       orderStatusCounts[status] = parseInt(result.count, 10);
+  //     } else {
+  //       console.warn(`Unexpected order status: ${status}`); // Log unexpected statuses
+  //     }
+  //   }
 
-    return orderStatusCounts;
-  }
+  //   return orderStatusCounts;
+  // }
 
   async getCustomerComments(
     customerId: string,
