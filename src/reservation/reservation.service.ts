@@ -320,16 +320,13 @@ export class ReservationService {
         price += serviceTotals.price;
 
         // Ensure image is provided
-        if (!image) {
-          throw new BadRequestException(
-            this.i18n.translate("test.RESERVATION.PHOTO_REQUIRED")
-          );
+        if (image) {
+          const folderName = "reservation";
+          result = await this.CloudinaryService.uploadImage(image, folderName);
+          body.deposit_Content = result.url;
         }
 
         // Upload image to Cloudinary
-        const folderName = "reservation";
-        result = await this.CloudinaryService.uploadImage(image, folderName);
-        body.deposit_Content = result.url;
       }
 
       // Check for sharable offer and add its services if applicable
@@ -367,15 +364,12 @@ export class ReservationService {
 
         // Ensure image is provided
         if (!image) {
-          throw new BadRequestException(
-            this.i18n.translate("test.RESERVATION.PHOTO_REQUIRED")
-          );
+          const folderName = "reservation";
+          result = await this.CloudinaryService.uploadImage(image, folderName);
+          body.deposit_Content = result.url;
         }
 
         // Upload image to Cloudinary
-        const folderName = "reservation";
-        result = await this.CloudinaryService.uploadImage(image, folderName);
-        body.deposit_Content = result.url;
       }
 
       // Check for coupon code and add its services if applicable
@@ -436,18 +430,15 @@ export class ReservationService {
       ) {
         // Ensure image is provided
         if (!image) {
-          throw new BadRequestException(
-            this.i18n.translate("test.RESERVATION.PHOTO_REQUIRED")
-          );
+          const folderName = "reservation";
+          result = await this.CloudinaryService.uploadImage(image, folderName);
+          body.deposit_Content = result.url;
         }
         const serviceTotals = await this.calculateTotalDuration(serviceIds);
         duration += serviceTotals.duration;
         price += serviceTotals.price;
 
-        // Upload image to Cloudinary
-        const folderName = "reservation";
-        result = await this.CloudinaryService.uploadImage(image, folderName);
-        body.deposit_Content = result.url;
+        // Upload image to Cloudinar
       }
       if (body.sharableOfferId || body.offerId) {
       }
