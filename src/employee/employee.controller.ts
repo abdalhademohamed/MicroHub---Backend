@@ -199,8 +199,8 @@ export class EmployeeController {
     );
   }
 
-  // @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
-  // @Roles(Role.SUPERADMIN)
+  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN)
   @Delete(":employeeId")
   async deleteEmployee(
     @Request() req: any, // Request object to access the user
