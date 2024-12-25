@@ -9,23 +9,22 @@ import { CloudinaryService } from "../cloudinary/cloudinary.service";
 import { EmployeeEntity } from "../employee/entities/employee.entity";
 import { ReceiptEntity } from "../receipt/entities/receipt.entity";
 import { UserEntity } from "../user/entities/user.entity";
-import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { PaymentEntity } from "../payment/entities/payment.entity";
 import { PositionEntity } from "../postion/entities/postion.entity";
 import { OfferEntity } from "../offer/entities/offer.entity";
 import { NotificationModule } from "../notification/notification.module";
-import { NotificationEntity } from "../notification/entities/notification.entity";
 import { SharableOfferEntity } from "../sharable-offer/entities/sharable-offer.entity";
-import { GiftCouponModule } from "../gift-coupon/gift-coupon.module";
 import { ReservationModule } from "../reservation/reservation.module";
 import { CustomerEntity } from "../customer/entities/customer.entity";
 import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
 import { GiftCouponEntity } from "../gift-coupon/entities/gift-coupon.entity";
-import { GiftCouponService } from "../gift-coupon/gift-coupon.service";
 import { CustomI18nService } from "../common/custom.18n.service";
 import { ActionModule } from "../action/action.module";
+import { TransactionModule } from "src/transaction/transaction.module";
+
 @Module({
   imports: [
+    // TransactionModule,
     TypeOrmModule.forFeature([
       OrderEntity,
       ReservationEntity,
@@ -39,10 +38,8 @@ import { ActionModule } from "../action/action.module";
       CustomerEntity,
       RootoshEntity,
       CommentEntity,
-      GiftCouponEntity
-
+      GiftCouponEntity,
     ]),
-    
     NotificationModule,
     forwardRef(() => ReservationModule), // Use forwardRef for ReservationModule
     ActionModule,

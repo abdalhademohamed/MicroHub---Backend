@@ -3,7 +3,7 @@ import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { AuthModule } from "./auth/auth.module";
 import { UserModule } from "./user/user.module";
-import { ConfigModule, ConfigService } from "@nestjs/config";
+import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { BranchModule } from "./branch/branch.module";
 import { OfferModule } from "./offer/offer.module";
@@ -15,10 +15,8 @@ import { PostionModule } from "./postion/postion.module";
 import { CloudinaryModule } from "./cloudinary/cloudinary.module";
 import { CloudinaryProvider } from "./cloudinary/cloudinary/cloudinary.provider";
 import {
-  AcceptLanguageResolver,
   HeaderResolver,
   I18nModule,
-  QueryResolver,
 } from "nestjs-i18n";
 import { CustomerModule } from "./customer/customer.module";
 import * as path from "path";
@@ -63,6 +61,8 @@ import { GiftCouponEntity } from "./gift-coupon/entities/gift-coupon.entity";
 import { SharableOfferEntity } from "./sharable-offer/entities/sharable-offer.entity";
 import { ActionEntity } from "./action/entities/action.entity";
 import { ActionModule } from "./action/action.module";
+import { TransactionEntity } from "./transaction/entities/transaction.entity";
+import { TransactionModule } from "./transaction/transaction.module";
 
 @Module({
   imports: [
@@ -105,6 +105,7 @@ import { ActionModule } from "./action/action.module";
         SharableOfferEntity,
         GiftCouponEntity,
         ActionEntity,
+        TransactionEntity,
       ],
       synchronize: true, // Set to false in production
       ssl: true, // Neon typically requires SSL connections
@@ -154,7 +155,8 @@ import { ActionModule } from "./action/action.module";
     EventEmitterModule.forRoot({ global: true }),
     SharableOfferModule, 
     GiftCouponModule,
-    ActionModule, 
+    ActionModule,
+    TransactionModule,
   ],
   controllers: [AppController],
   providers: [AppService, CloudinaryProvider], 

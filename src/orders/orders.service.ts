@@ -27,24 +27,18 @@ import { Role } from "../user/utils/user.enum";
 import { CustomerEntity } from "../customer/entities/customer.entity";
 import { OfferEntity } from "../offer/entities/offer.entity";
 import { NotificationService } from "../notification/notification.service";
-// import { Console } from "console";
 import { SharableOfferEntity } from "../sharable-offer/entities/sharable-offer.entity";
-// import { GiftCouponService } from "../gift-coupon/gift-coupon.service";
-// import { CreateGiftCouponDto } from "../gift-coupon/dto/create-gift-coupon.dto";
 import { PaymentStatus } from "./utils/payment.status.enum";
 import { ReservationService } from "../reservation/reservation.service";
-// import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
 import { CommentEntity } from "../comment/entities/comment.entity";
-import {
-  // CommentResponseDto,
-  ReviewResponseDto,
-} from "../comment/dto/get.comment.response.dto";
+import { ReviewResponseDto } from "../comment/dto/get.comment.response.dto";
 import { PaginatedCommentResponseDto } from "./dto/paginated.comments.response.dto";
 import { ReceiptEntity } from "../receipt/entities/receipt.entity";
 import { GetCommentsbycustomerDto } from "./dto/get-comments.dto";
 import { GiftCouponEntity } from "../gift-coupon/entities/gift-coupon.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
 import { ActionService } from "../action/action.service";
+import { TransactionService } from "src/transaction/transaction.service";
 
 @Injectable()
 export class OrdersService {
@@ -81,6 +75,7 @@ export class OrdersService {
     @InjectRepository(GiftCouponEntity)
     private readonly GiftCouponRepository: Repository<GiftCouponEntity>,
     private actionService: ActionService,
+    // private transactionService: TransactionService,
   ) {}
   // Method to generate a unique incremental invoice number
   private async generateUniqueInvoiceNumber(): Promise<number> {
@@ -333,6 +328,10 @@ export class OrdersService {
         order: newOrder.id,
         createdBy: userId,
       });
+      // await this.transactionService.createTransaction({
+      //   orderId: newOrder.id,
+      //   paymentId,
+      // })
       return newOrder;
     } catch (error) {
       console.log(error.stack);
@@ -343,7 +342,7 @@ export class OrdersService {
     }
   }
 
-  private async getGiftCouponByCouponCode(couponCode: string): Promise<any> {
+ private async getGiftCouponByCouponCode(couponCode: string): Promise<any> {
     const giftCoupon = await this.GiftCouponRepository.findOne({
       where: { couponCode },
       relations: ["ownedBy", "sharableOffer", "sharableOffer.services"],
@@ -661,7 +660,6 @@ export class OrdersService {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async updatePaymentStatus(
     orderId: string,
-    // paymentId: string,
     newPaymentStatus: PaymentStatus.Paid | PaymentStatus.PartiallyPaid,
     image: Express.Multer.File,
     userId: string // Optional parameter for the user ID
@@ -748,16 +746,6 @@ export class OrdersService {
         order.updatedBy = updatedByObj;
         order.confirmedBy = updatedByObj;
       }
-      // const payment = await this.PaymentRepository.findOne({
-      //   where: { id: paymentId },
-      // });
-
-      // if (!payment) {
-      //   throw new NotFoundException(`Payment with ID ${paymentId} not found`);
-      // }
-
-      // // Update the order with the new payment
-      // order.payment = payment;
 
       // Perform the update within a transaction
       updatedOrder = await this.entityManager.transaction(
@@ -906,7 +894,7 @@ export class OrdersService {
       if (order.status === OrderStatus.Abscent) {
         throw new BadRequestException("Order status cannot be changed from 'Abscent' to any other status.");
       }
-  }
+    }
     if (newStatus === OrderStatus.Canceled) {
       try {
         if (!order.reservation) {
@@ -1087,6 +1075,7 @@ export class OrdersService {
       }
     }
     // Update the order status
+    order.status = newStatus;
 
     // Upload image
     if (image) {
@@ -1450,8 +1439,6 @@ export class OrdersService {
         .leftJoinAndSelect("o.artist", "a")
         .leftJoinAndSelect("o.customer", "c")
         .addSelect(["c.id", "c.fullName", "c.phoneNumber"])
-        // .leftJoinAndSelect("o.payment", "payment",)
-        // .addSelect(["payment.methodEnglish", "payment.methodArabic", "payment.image"])
         .leftJoin("o.createdBy", "cb")
         .leftJoin("o.confirmedBy", "confirmedBy") // Include confirmedBy relation
         .addSelect(["confirmedBy.id", "confirmedBy.username", "confirmedBy.role"])
@@ -1610,76 +1597,76 @@ export class OrdersService {
     return orderStatusCounts;
   }
 
-  // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  // // Method to get the count of each order status
-  // async getOrderStatusCountByArtist(
-  //   userId: string, // User ID from the token
-  //   fromDate?: string,
-  //   toDate?: string
-  // ): Promise<{ [key in OrderStatus]: number }> {
-  //   // Fetch the employee (artist) associated with the userId to get the branchId
-  //   const employee = await this.employeeRepository.findOne({
-  //     where: { id: userId },
-  //     relations: ["branch"], // Ensure to include the relation to branch
-  //   });
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Method to get the count of each order status
+  async getOrderStatusCountByArtist(
+    userId: string, // User ID from the token
+    fromDate?: string,
+    toDate?: string
+  ): Promise<{ [key in OrderStatus]: number }> {
+    // Fetch the employee (artist) associated with the userId to get the branchId
+    const employee = await this.employeeRepository.findOne({
+      where: { id: userId },
+      relations: ["branch"], // Ensure to include the relation to branch
+    });
 
-  //   if (!employee || !employee.branch) {
-  //     throw new BadRequestException("Employee or branch not found");
-  //   }
+    if (!employee || !employee.branch) {
+      throw new BadRequestException("Employee or branch not found");
+    }
 
-  //   const branchId = employee.branch.id; // Get the branchId from the employee
+    const branchId = employee.branch.id; // Get the branchId from the employee
 
-  //   const queryBuilder = this.orderRepository
-  //     .createQueryBuilder("order")
-  //     .innerJoin("order.reservation", "reservation")
-  //     .leftJoin("order.artist", "employee") // Ensure you're using the correct relation name
-  //     .select("order.status", "status")
-  //     .addSelect("COUNT(order.id)", "count")
-  //     .groupBy("order.status");
+    const queryBuilder = this.orderRepository
+      .createQueryBuilder("order")
+      .innerJoin("order.reservation", "reservation")
+      .leftJoin("order.artist", "employee") // Ensure you're using the correct relation name
+      .select("order.status", "status")
+      .addSelect("COUNT(order.id)", "count")
+      .groupBy("order.status");
 
-  //   // Add the where clause based on branchId and optional date range
-  //   queryBuilder.andWhere("reservation.branchId = :branchId", { branchId });
+    // Add the where clause based on branchId and optional date range
+    queryBuilder.andWhere("reservation.branchId = :branchId", { branchId });
 
-  //   if (fromDate) {
-  //     const startOfDay = new Date(fromDate);
-  //     startOfDay.setHours(0, 0, 0, 0); // Set time to 00:00:00
-  //     queryBuilder.andWhere("reservation.start_Time >= :fromDate", {
-  //       fromDate: startOfDay,
-  //     });
-  //   }
+    if (fromDate) {
+      const startOfDay = new Date(fromDate);
+      startOfDay.setHours(0, 0, 0, 0); // Set time to 00:00:00
+      queryBuilder.andWhere("reservation.start_Time >= :fromDate", {
+        fromDate: startOfDay,
+      });
+    }
 
-  //   if (toDate) {
-  //     const endOfDay = new Date(toDate);
-  //     endOfDay.setHours(23, 59, 59, 999); // Set time to 23:59:59
-  //     queryBuilder.andWhere("reservation.start_Time <= :toDate", {
-  //       toDate: endOfDay,
-  //     });
-  //   }
+    if (toDate) {
+      const endOfDay = new Date(toDate);
+      endOfDay.setHours(23, 59, 59, 999); // Set time to 23:59:59
+      queryBuilder.andWhere("reservation.start_Time <= :toDate", {
+        toDate: endOfDay,
+      });
+    }
 
-  //   // Add a condition to filter by employeeId (userId)
-  //   queryBuilder.andWhere("employee.id = :userId", { userId }); // Filter by user ID (employee)
+    // Add a condition to filter by employeeId (userId)
+    queryBuilder.andWhere("employee.id = :userId", { userId }); // Filter by user ID (employee)
 
-  //   const orders = await queryBuilder.getRawMany();
+    const orders = await queryBuilder.getRawMany();
 
-  //   // Initialize the status count object with all possible statuses
-  //   const orderStatusCounts: { [key in OrderStatus]: number } = {
-  //     [OrderStatus.Pending]: 0,
-  //     [OrderStatus.InQueue]: 0,
-  //     [OrderStatus.Working]: 0,
-  //     [OrderStatus.Reviewed]: 0,
-  //     [OrderStatus.Completed]: 0,
-  //     [OrderStatus.Canceled]: 0,
-  //     [OrderStatus.Abscent]: 0,
-  //     [OrderStatus.Refuneded]: 0,
-  //   };
+    // Initialize the status count object with all possible statuses
+    const orderStatusCounts: { [key in OrderStatus]: number } = {
+      [OrderStatus.Pending]: 0,
+      [OrderStatus.InQueue]: 0,
+      [OrderStatus.Working]: 0,
+      [OrderStatus.Reviewed]: 0,
+      [OrderStatus.Completed]: 0,
+      [OrderStatus.Canceled]: 0,
+      [OrderStatus.Abscent]: 0,
+      [OrderStatus.Refuneded]: 0,
+    };
 
-  //   // Populate the orderStatusCounts object with the results from the query
-  //   orders.forEach((order) => {
-  //     orderStatusCounts[order.status] = parseInt(order.count, 10);
-  //   });
+    // Populate the orderStatusCounts object with the results from the query
+    orders.forEach((order) => {
+      orderStatusCounts[order.status] = parseInt(order.count, 10);
+    });
 
-  //   return orderStatusCounts;
-  // }
+    return orderStatusCounts;
+  }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async findOrdersByEmployeeAndDay(
     userId: string,
@@ -1990,67 +1977,67 @@ export class OrdersService {
     return count;
   }
 
-  // async getOrderStatusCountForArtist(
-  //   userId: string,
-  //   branchId?: string,
-  //   artistId?: string // Optional artistId parameter for ADMIN role
-  // ): Promise<{ [key in OrderStatus]: number }> {
-  //   // Initialize the result object with all order statuses set to zero
-  //   const orderStatusCounts: { [key in OrderStatus]: number } = {
-  //     [OrderStatus.Pending]: 0,
-  //     [OrderStatus.InQueue]: 0,
-  //     [OrderStatus.Working]: 0,
-  //     [OrderStatus.Reviewed]: 0,
-  //     [OrderStatus.Completed]: 0,
-  //     [OrderStatus.Canceled]: 0,
-  //     [OrderStatus.Abscent]: 0,
-  //     [OrderStatus.Refuneded]: 0,
-  //   };
+  async getOrderStatusCountForArtist(
+    userId: string,
+    branchId?: string,
+    artistId?: string // Optional artistId parameter for ADMIN role
+  ): Promise<{ [key in OrderStatus]: number }> {
+    // Initialize the result object with all order statuses set to zero
+    const orderStatusCounts: { [key in OrderStatus]: number } = {
+      [OrderStatus.Pending]: 0,
+      [OrderStatus.InQueue]: 0,
+      [OrderStatus.Working]: 0,
+      [OrderStatus.Reviewed]: 0,
+      [OrderStatus.Completed]: 0,
+      [OrderStatus.Canceled]: 0,
+      [OrderStatus.Abscent]: 0,
+      [OrderStatus.Refuneded]: 0,
+    };
 
-  //   // Retrieve the user based on userId
-  //   const user = await this.userRepository.findOne({ where: { id: userId } });
-  //   if (!user) {
-  //     throw new NotFoundException("User not found");
-  //   }
+    // Retrieve the user based on userId
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
 
-  //   // Determine the artistId based on the user's role
-  //   const effectiveArtistId = user.role === Role.ARTIST ? user.id : artistId;
+    // Determine the artistId based on the user's role
+    const effectiveArtistId = user.role === Role.ARTIST ? user.id : artistId;
 
-  //   if (!effectiveArtistId) {
-  //     throw new BadRequestException(
-  //       "Artist ID must be provided for ADMIN role or user must be an ARTIST."
-  //     );
-  //   }
+    if (!effectiveArtistId) {
+      throw new BadRequestException(
+        "Artist ID must be provided for ADMIN role or user must be an ARTIST."
+      );
+    }
 
-  //   // Query the repository to get counts based on artistId and optional branchId
-  //   const ordersQuery = this.orderRepository
-  //     .createQueryBuilder("order")
-  //     .select("order.status", "order_status") // Aliasing here
-  //     .addSelect("COUNT(order.id)", "count")
-  //     .where("order.artistId = :artistId", { artistId: effectiveArtistId });
+    // Query the repository to get counts based on artistId and optional branchId
+    const ordersQuery = this.orderRepository
+      .createQueryBuilder("order")
+      .select("order.status", "order_status") // Aliasing here
+      .addSelect("COUNT(order.id)", "count")
+      .where("order.artistId = :artistId", { artistId: effectiveArtistId });
 
-  //   if (branchId) {
-  //     ordersQuery.andWhere("order.branchId = :branchId", { branchId });
-  //   }
+    if (branchId) {
+      ordersQuery.andWhere("order.branchId = :branchId", { branchId });
+    }
 
-  //   // Group by order status
-  //   ordersQuery.groupBy("order.status");
+    // Group by order status
+    ordersQuery.groupBy("order.status");
 
-  //   const results = await ordersQuery.getRawMany();
-  //   // console.log('Query Results:', results); // Log the results for debugging
+    const results = await ordersQuery.getRawMany();
+    // console.log('Query Results:', results); // Log the results for debugging
 
-  //   // Populate the count object based on the results
-  //   for (const result of results) {
-  //     const status = result.order_status as OrderStatus; // Use 'order_status' to match the query result
-  //     if (OrderStatus[status]) {
-  //       orderStatusCounts[status] = parseInt(result.count, 10);
-  //     } else {
-  //       console.warn(`Unexpected order status: ${status}`); // Log unexpected statuses
-  //     }
-  //   }
+    // Populate the count object based on the results
+    for (const result of results) {
+      const status = result.order_status as OrderStatus; // Use 'order_status' to match the query result
+      if (OrderStatus[status]) {
+        orderStatusCounts[status] = parseInt(result.count, 10);
+      } else {
+        console.warn(`Unexpected order status: ${status}`); // Log unexpected statuses
+      }
+    }
 
-  //   return orderStatusCounts;
-  // }
+    return orderStatusCounts;
+  }
 
   async getCustomerComments(
     customerId: string,
