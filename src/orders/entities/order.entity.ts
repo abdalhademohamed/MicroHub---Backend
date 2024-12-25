@@ -8,6 +8,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   JoinColumn,
+  BeforeInsert,
 } from "typeorm";
 import { ReservationEntity } from "../../reservation/entities/reservation.entity";
 import { CommentEntity } from "../../comment/entities/comment.entity";
@@ -31,8 +32,22 @@ export class OrderEntity {
   @Column({ type: "date" })
   date: string; // Reservation date
 
-  @Column({ type: 'int', generated: 'increment' })
-  orderInvoice: number; // Auto-increment column for invoice numbers
+  @Column({ type: 'varchar', nullable: true })
+  orderInvoice: string; // Auto-increment column for invoice numbers
+
+  generateRandomString(length: number): string {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  }
+  
+  @BeforeInsert()
+  generateOrderNumber() {
+    this.orderInvoice = this.generateRandomString(8); // Generates an 8-character alphanumeric string
+  }
 
   @Column({ type: "text" })
   serviceEnglish: string; // Description of the service in English
