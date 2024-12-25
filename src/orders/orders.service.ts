@@ -343,7 +343,7 @@ export class OrdersService {
     }
   }
 
- private async getGiftCouponByCouponCode(couponCode: string): Promise<any> {
+  private async getGiftCouponByCouponCode(couponCode: string): Promise<any> {
     const giftCoupon = await this.GiftCouponRepository.findOne({
       where: { couponCode },
       relations: ["ownedBy", "sharableOffer", "sharableOffer.services"],
@@ -1610,76 +1610,76 @@ export class OrdersService {
     return orderStatusCounts;
   }
 
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  // Method to get the count of each order status
-  async getOrderStatusCountByArtist(
-    userId: string, // User ID from the token
-    fromDate?: string,
-    toDate?: string
-  ): Promise<{ [key in OrderStatus]: number }> {
-    // Fetch the employee (artist) associated with the userId to get the branchId
-    const employee = await this.employeeRepository.findOne({
-      where: { id: userId },
-      relations: ["branch"], // Ensure to include the relation to branch
-    });
+  // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // // Method to get the count of each order status
+  // async getOrderStatusCountByArtist(
+  //   userId: string, // User ID from the token
+  //   fromDate?: string,
+  //   toDate?: string
+  // ): Promise<{ [key in OrderStatus]: number }> {
+  //   // Fetch the employee (artist) associated with the userId to get the branchId
+  //   const employee = await this.employeeRepository.findOne({
+  //     where: { id: userId },
+  //     relations: ["branch"], // Ensure to include the relation to branch
+  //   });
 
-    if (!employee || !employee.branch) {
-      throw new BadRequestException("Employee or branch not found");
-    }
+  //   if (!employee || !employee.branch) {
+  //     throw new BadRequestException("Employee or branch not found");
+  //   }
 
-    const branchId = employee.branch.id; // Get the branchId from the employee
+  //   const branchId = employee.branch.id; // Get the branchId from the employee
 
-    const queryBuilder = this.orderRepository
-      .createQueryBuilder("order")
-      .innerJoin("order.reservation", "reservation")
-      .leftJoin("order.artist", "employee") // Ensure you're using the correct relation name
-      .select("order.status", "status")
-      .addSelect("COUNT(order.id)", "count")
-      .groupBy("order.status");
+  //   const queryBuilder = this.orderRepository
+  //     .createQueryBuilder("order")
+  //     .innerJoin("order.reservation", "reservation")
+  //     .leftJoin("order.artist", "employee") // Ensure you're using the correct relation name
+  //     .select("order.status", "status")
+  //     .addSelect("COUNT(order.id)", "count")
+  //     .groupBy("order.status");
 
-    // Add the where clause based on branchId and optional date range
-    queryBuilder.andWhere("reservation.branchId = :branchId", { branchId });
+  //   // Add the where clause based on branchId and optional date range
+  //   queryBuilder.andWhere("reservation.branchId = :branchId", { branchId });
 
-    if (fromDate) {
-      const startOfDay = new Date(fromDate);
-      startOfDay.setHours(0, 0, 0, 0); // Set time to 00:00:00
-      queryBuilder.andWhere("reservation.start_Time >= :fromDate", {
-        fromDate: startOfDay,
-      });
-    }
+  //   if (fromDate) {
+  //     const startOfDay = new Date(fromDate);
+  //     startOfDay.setHours(0, 0, 0, 0); // Set time to 00:00:00
+  //     queryBuilder.andWhere("reservation.start_Time >= :fromDate", {
+  //       fromDate: startOfDay,
+  //     });
+  //   }
 
-    if (toDate) {
-      const endOfDay = new Date(toDate);
-      endOfDay.setHours(23, 59, 59, 999); // Set time to 23:59:59
-      queryBuilder.andWhere("reservation.start_Time <= :toDate", {
-        toDate: endOfDay,
-      });
-    }
+  //   if (toDate) {
+  //     const endOfDay = new Date(toDate);
+  //     endOfDay.setHours(23, 59, 59, 999); // Set time to 23:59:59
+  //     queryBuilder.andWhere("reservation.start_Time <= :toDate", {
+  //       toDate: endOfDay,
+  //     });
+  //   }
 
-    // Add a condition to filter by employeeId (userId)
-    queryBuilder.andWhere("employee.id = :userId", { userId }); // Filter by user ID (employee)
+  //   // Add a condition to filter by employeeId (userId)
+  //   queryBuilder.andWhere("employee.id = :userId", { userId }); // Filter by user ID (employee)
 
-    const orders = await queryBuilder.getRawMany();
+  //   const orders = await queryBuilder.getRawMany();
 
-    // Initialize the status count object with all possible statuses
-    const orderStatusCounts: { [key in OrderStatus]: number } = {
-      [OrderStatus.Pending]: 0,
-      [OrderStatus.InQueue]: 0,
-      [OrderStatus.Working]: 0,
-      [OrderStatus.Reviewed]: 0,
-      [OrderStatus.Completed]: 0,
-      [OrderStatus.Canceled]: 0,
-      [OrderStatus.Abscent]: 0,
-      [OrderStatus.Refuneded]: 0,
-    };
+  //   // Initialize the status count object with all possible statuses
+  //   const orderStatusCounts: { [key in OrderStatus]: number } = {
+  //     [OrderStatus.Pending]: 0,
+  //     [OrderStatus.InQueue]: 0,
+  //     [OrderStatus.Working]: 0,
+  //     [OrderStatus.Reviewed]: 0,
+  //     [OrderStatus.Completed]: 0,
+  //     [OrderStatus.Canceled]: 0,
+  //     [OrderStatus.Abscent]: 0,
+  //     [OrderStatus.Refuneded]: 0,
+  //   };
 
-    // Populate the orderStatusCounts object with the results from the query
-    orders.forEach((order) => {
-      orderStatusCounts[order.status] = parseInt(order.count, 10);
-    });
+  //   // Populate the orderStatusCounts object with the results from the query
+  //   orders.forEach((order) => {
+  //     orderStatusCounts[order.status] = parseInt(order.count, 10);
+  //   });
 
-    return orderStatusCounts;
-  }
+  //   return orderStatusCounts;
+  // }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async findOrdersByEmployeeAndDay(
     userId: string,

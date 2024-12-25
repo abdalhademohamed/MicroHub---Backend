@@ -199,24 +199,6 @@ export class OrdersController {
     return this.ordersService.assignOrderToArtist(orderId, artistId, userId);
   }
 
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-  @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.ARTIST)
-  @Get('artist/status/count')
-  async getOrderStatusCountByArtist(
-    @Request() req: any, // Request object to access the user
-    @Query('fromDate') fromDate?: string,
-    @Query('toDate') toDate?: string,
-     // New query parameter for employeeId
-  ): Promise<{ [key in OrderStatus]: number }> {
-    const userId = req.user.sub; // Extract user ID from request
-
-    if (!userId) {
-      throw new BadRequestException("User not authenticated");
-    }
-    return this.ordersService.getOrderStatusCountByArtist(userId,fromDate,toDate);
-  }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard)
@@ -230,9 +212,6 @@ export class OrdersController {
   ): Promise<{ [key in OrderStatus]: number }> {
     return this.ordersService.getOrderStatusCount(branchId, fromDate, toDate, employeeId);
   }
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   @Get("filterd")
   @UseGuards(AccessTokenGuard, RolesGuard)

@@ -74,27 +74,59 @@ export class EmployeeService {
     private readonly WorkingRepository: Repository<WorkingEntity>,
     @InjectRepository(OrderEntity) private OrderRepository: Repository<OrderEntity>,
   ) {}
-  async getOrderAggregationByEmployee(employeeId: string) { 
-    const aggregation = await this.OrderRepository
-      .createQueryBuilder("order")
-      .select("order.status", "status")
-      .addSelect("COUNT(order.id)", "count")
-      .innerJoin("order.createdBy", "createdBy") // Ensure a proper join
-      .where("createdBy.id = :employeeId", { employeeId }) // Use the alias createdBy
-      .groupBy("order.status")
-      .getRawMany();
-    return aggregation;
-  }
-  async getOrderAggregationByArtist(employeeId: string) { 
-    const aggregation = await this.OrderRepository
-      .createQueryBuilder("order")
-      .select("order.status", "status")
-      .addSelect("COUNT(order.id)", "count")
-      .innerJoin("order.artist", "artist") // Ensure a proper join
-      .where("artist.id = :employeeId", { employeeId }) // Use the alias createdBy
-      .groupBy("order.status")
-      .getRawMany();
-    return aggregation;
+
+  async getOrderStatusCountByArtist(
+    userId: string, // User ID from the token
+    fromDate: string,
+    toDate: string,
+  ) {
+    const queryBuilder = this.OrderRepository.createQueryBuilder("o") // Change "order" to "o"
+      .select("o.status", "status")
+      .addSelect("COUNT(o.id)", "count")
+      .leftJoin("o.reservation", "reservation"); // Use "o" instead of "order"
+    queryBuilder
+      .innerJoin("o.artist", "artist") // Adjust to match your entity relation
+      .where("artist.id = :userId", { userId }); // Correct parameter name
+  
+    // Filter by reservation start time if fromDate is provided
+    if (fromDate) {
+      const startOfDay = new Date(fromDate);
+      startOfDay.setHours(0, 0, 0, 0); // Set the time to the start of the day
+      queryBuilder.andWhere("reservation.start_Time >= :fromDate", {
+        fromDate: startOfDay,
+      });
+    }
+  
+    // Filter by reservation end time if toDate is provided
+    if (toDate) {
+      const endOfDay = new Date(toDate);
+      endOfDay.setHours(23, 59, 59, 999); // Set the time to the end of the day
+      queryBuilder.andWhere("reservation.end_Time <= :toDate", {
+        toDate: endOfDay,
+      });
+    }
+  
+    // Group by order status
+    const orders = await queryBuilder.groupBy("o.status").getRawMany(); // Use "o" instead of "order"
+  
+    // Initialize the status count object with all possible statuses
+    const orderStatusCounts: { [key in OrderStatus]: number } = {
+      [OrderStatus.Pending]: 0,
+      [OrderStatus.InQueue]: 0,
+      [OrderStatus.Working]: 0,
+      [OrderStatus.Reviewed]: 0,
+      [OrderStatus.Completed]: 0,
+      [OrderStatus.Canceled]: 0,
+      [OrderStatus.Abscent]: 0,
+      [OrderStatus.Refuneded]: 0,
+    };
+  
+    // Populate the orderStatusCounts object with the results from the query
+    orders.forEach((order) => {
+      orderStatusCounts[order.status] = parseInt(order.count, 10);
+    });
+  
+    return orderStatusCounts;
   }
 
   async createEmployee(
@@ -285,9 +317,6 @@ export class EmployeeService {
     if (!employee) {
       throw new NotFoundException(`Employee with ID ${id} not found`);
     }
-    const result = await this.getOrderAggregationByEmployee(id);
-    // @ts-ignore
-    employee.result = result;
     return employee;
   }
 
@@ -815,8 +844,6 @@ export class EmployeeService {
       if (!userData) {
         throw new NotFoundException('User data not found');
       }
-      const result = await this.getOrderAggregationByEmployee(userId);
-
       return {
         id: employeeProfile.id,
         username: userData.username,
@@ -829,8 +856,6 @@ export class EmployeeService {
         totalReviews,
         oldestAvgRating,
         newestAvgRating,
-        // @ts-ignore
-        result,
       };
     } catch (error) {
       console.error('Error in getProfile:', error);

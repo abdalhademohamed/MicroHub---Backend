@@ -166,22 +166,30 @@ export class CustomerService {
     return await this.customerRepository.count();
 
   }
-  async findOrdersByPartialInvoice(keyword: string) {
+
+  async findOrdersAndCustomersByKeyword(keyword: string) {
+    // Filter orders where `orderInvoice` matches the exact keyword
     const orders = await this.orderRepository
       .createQueryBuilder('order')
-      .where('CAST(order.orderInvoice AS TEXT) LIKE :keyword', { keyword: `%${keyword}%` })
+      .where('CAST(order.orderInvoice AS TEXT) = :keyword', { keyword })
       .getMany();
-
-    if (orders.length === 0) {
-      throw new NotFoundException(`No orders found matching keyword "${keyword}".`);
-    }
-    return orders;
+  
+    // Filter customers where `phoneNumber` or `fullName` matches the exact keyword
+    const customers = await this.customerRepository
+      .createQueryBuilder('customer')
+      .where('customer.phoneNumber = :keyword', { keyword })
+      .orWhere('customer.fullName = :keyword', { keyword })
+      .getMany();
+  
+    return { orders, customers };
   }
+
 
    async getAllCustomers(
     filters: GetCustomerPaginatedsDto,
-  ) {
+  ): Promise<{ items: CustomerEntity[]; total: number }> {
     const { keyword, page = 1, limit = 10 } = filters;
+  
     // Step 1: Fetch customers
     const query = this.customerRepository
       .createQueryBuilder('customer')
@@ -190,10 +198,32 @@ export class CustomerService {
         query.where('customer.phoneNumber LIKE :keyword', { keyword: `%${keyword}%` })
             .orWhere('customer.fullName LIKE :keyword', { keyword: `%${keyword}%` });
       }
+  
+    // Pagination
+    query.skip((page - 1) * limit).take(limit);
+  
+    const [customers, total] = await query.getManyAndCount();
+  
+    // Step 2: Fetch reservation counts for each customer using a separate query
+    const reservationCounts = await this.ReservationRepository
+      .createQueryBuilder('reservation')
+      .select('reservation.customerId', 'customerId')
+      .addSelect('COUNT(reservation.id)', 'reservationCount')
+      .groupBy('reservation.customerId')
+      .getRawMany();
+  
+    // Step 3: Map reservation counts to each customer
+    const items = customers.map(customer => {
+      const count = reservationCounts.find(
+        count => count.customerId === customer.id,
+      );
+      return {
+        ...customer,
+        reservationCount: count ? parseInt(count.reservationCount, 10) : 0,
+      };
+    });
 
-    const customers = await query.getMany();
-    const orders = await this.findOrdersByPartialInvoice(keyword);  
-    return { customers, orders };
+    return { items, total };
   }
 }
 

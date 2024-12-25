@@ -38,6 +38,11 @@ export class CustomerController {
   async getCustomers(@Query() filters: GetCustomerPaginatedsDto) {
     return this.customerService.getAllCustomers(filters);
   }
+  @UseGuards(AccessTokenGuard) // Ensure AccessTokenGuard is first
+  @Get("search")
+  async getCustomerSearch(@Query('keyword') keyword: string) {
+    return this.customerService.findOrdersAndCustomersByKeyword(keyword);
+  }
   @Get("count")
   async getCustomerCount(): Promise<{ count: number }> {
     const count = await this.customerService.countCustomers();
