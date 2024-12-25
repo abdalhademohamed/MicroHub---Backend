@@ -36,7 +36,7 @@ export class OrderEntity {
   orderInvoice: string; // Auto-increment column for invoice numbers
 
   generateRandomString(length: number): string {
-    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    const chars = 'ABCDEFGHIJKL01234MNOPQRSTUVWXYZ56789';
     let result = '';
     for (let i = 0; i < length; i++) {
       result += chars.charAt(Math.floor(Math.random() * chars.length));
