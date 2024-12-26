@@ -35,10 +35,10 @@ export class ServiceEntity {
   @Column("int")
   duration_Mins: number;
 
-  @Column("int")
+  @Column("int", { nullable: true })
   rootosh_Number: number;
 
-  @Column("int")
+  @Column("int", { nullable: true })
   months_To_Expire: number;
 
   @ManyToMany(

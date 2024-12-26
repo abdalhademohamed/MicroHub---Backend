@@ -1,4 +1,4 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsString,
   IsNotEmpty,
@@ -38,19 +38,19 @@ export class CreateServiceDto {
   @Transform(({ value }) => parseInt(value, 10)) // Convert string to integer
   duration_Mins: number;
 
-  @ApiProperty({ description: "The rootosh number of the service" })
+  @ApiPropertyOptional({ description: "The rootosh number of the service" })
+  @IsOptional()
   @IsInt()
   @IsPositive({ message: "Rootosh number must be a positive number" })
-  @IsOptional()
   @Transform(({ value }) => parseInt(value, 10)) // Convert string to integer
   rootosh_Number: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: "The number of months before the service expires",
   })
+  @IsOptional()
   @IsInt()
   @IsPositive({ message: "Months to expire must be a positive number" })
-  @IsOptional()
   @Transform(({ value }) => parseInt(value, 10)) // Convert string to integer
   months_To_Expire: number;
 }
