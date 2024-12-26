@@ -198,6 +198,16 @@ export class OrdersController {
     }
     return this.ordersService.assignOrderToArtist(orderId, artistId, userId);
   }
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST,Role.ARTISTMANAGER,Role.ACCOUNTANT,Role.ARTIST,Role.BRANCHMANAGER)
+  @Get('status/count-statics')
+  async getOrderStatusCountByBranch(
+    @Query('branchId') branchId?: string,
+    @Query('fromDate') fromDate?: string,
+    @Query('toDate') toDate?: string,
+  ): Promise<{ [key in OrderStatus]: number }> {
+    return this.ordersService.getOrderStatusCountByBranchArray(branchId, fromDate, toDate);
+  }
 
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

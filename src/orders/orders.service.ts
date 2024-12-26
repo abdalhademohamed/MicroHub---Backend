@@ -1555,9 +1555,14 @@ export class OrdersService {
     }
 
     // Add other conditions
+    // if (branchId) {
+    //   queryBuilder.andWhere("reservation.branchId = :branchId", { branchId });
+    // }
     if (branchId) {
-      queryBuilder.andWhere("reservation.branchId = :branchId", { branchId });
+      const branchIds = branchId.split(',');
+      queryBuilder.andWhere("reservation.branchId IN (:...branchIds)", { branchIds });
     }
+    
 
     if (fromDate) {
       const startOfDay = new Date(fromDate);
@@ -1599,12 +1604,63 @@ export class OrdersService {
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Method to get the count of each order status
+  async getOrderStatusCountByBranchArray(
+    branchId?: string, // User ID from the token
+    fromDate?: string,
+    toDate?: string
+  ){
+      // Fetch the employee (artist) associated with the userId to get the branchId
+      const queryBuilder = this.orderRepository.createQueryBuilder("o") // Change "order" to "o"
+        .select("o.status", "status")
+        .addSelect("COUNT(o.id)", "count")
+        .leftJoin("o.reservation", "reservation")
+        .leftJoin("reservation.branch", "branch"); // Join branch from reservation // Use "o" instead of "order"
+      if(branchId){
+        const branch = branchId.split(',');
+        queryBuilder.andWhere("branch.id IN (:...branch)", { branch }); // Adjust parameter name
+      }
+      if (fromDate) {
+        const startOfDay = new Date(fromDate);
+        startOfDay.setHours(0, 0, 0, 0); // Set the time to the start of the day
+        queryBuilder.andWhere("reservation.start_Time >= :fromDate", {
+          fromDate: startOfDay,
+        });
+      }
+    
+      // // Filter by reservation end time if toDate is provided
+      if (toDate) {
+        const endOfDay = new Date(toDate);
+        endOfDay.setHours(23, 59, 59, 999); // Set the time to the end of the day
+        queryBuilder.andWhere("reservation.end_Time <= :toDate", {
+          toDate: endOfDay,
+        });
+      }
+    
+      // // Group by order status
+      const orders = await queryBuilder.groupBy("o.status").getRawMany(); // Use "o" instead of "order"
+      const orderStatusCounts: { [key in OrderStatus]: number } = {
+        [OrderStatus.Pending]: 0,
+        [OrderStatus.InQueue]: 0,
+        [OrderStatus.Working]: 0,
+        [OrderStatus.Reviewed]: 0,
+        [OrderStatus.Completed]: 0,
+        [OrderStatus.Canceled]: 0,
+        [OrderStatus.Abscent]: 0,
+        [OrderStatus.Refuneded]: 0,
+      };
+  
+      // Populate the orderStatusCounts object with the results from the query
+      orders.forEach((order) => {
+        orderStatusCounts[order.status] = parseInt(order.count, 10);
+      });
+  
+      return orderStatusCounts;
+  }
   async getOrderStatusCountByArtist(
     userId: string, // User ID from the token
     fromDate?: string,
     toDate?: string
   ): Promise<{ [key in OrderStatus]: number }> {
-    // Fetch the employee (artist) associated with the userId to get the branchId
     const employee = await this.employeeRepository.findOne({
       where: { id: userId },
       relations: ["branch"], // Ensure to include the relation to branch

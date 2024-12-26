@@ -32,9 +32,7 @@ export class TransactionService {
             .leftJoinAndSelect('transaction.order', 'order')
             .where('order.id = :orderId', { orderId })
             .orderBy('transaction.createdAt', 'DESC');
-    
-        const [transactions, totalItems] = await queryBuilder.getManyAndCount();
-    
-        return { items: transactions, totalItems };
+      const [transactions, totalItems] = await queryBuilder.getManyAndCount();   
+      return { items: transactions, totalItems };
     }
 }
