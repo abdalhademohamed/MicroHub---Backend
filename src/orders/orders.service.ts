@@ -75,7 +75,7 @@ export class OrdersService {
     @InjectRepository(GiftCouponEntity)
     private readonly GiftCouponRepository: Repository<GiftCouponEntity>,
     private actionService: ActionService,
-    // private transactionService: TransactionService,
+    private transactionService: TransactionService,
   ) {}
   // Method to generate a unique incremental invoice number
   private async generateUniqueInvoiceNumber(): Promise<number> {
@@ -2210,6 +2210,7 @@ export class OrdersService {
     userId: string,
     image: Express.Multer.File,
     refundReason?: string,
+    paymentId?: string,
   ): Promise<any> {
     try {
       // Find order with all necessary relations
@@ -2253,6 +2254,11 @@ export class OrdersService {
           );
         }
       }
+      await this.transactionService.createTransaction({
+        orderId,
+        amount: -refundAmount,
+        paymentId,
+      })
       if(order.status == OrderStatus.Refuneded){
         await this.orderRepository.save(order);
         return order;
@@ -2299,28 +2305,28 @@ export class OrdersService {
         const savedReceipt = await transactionalEntityManager.save(ReceiptEntity, refundReceipt);
 
         // Create audit log
-        const auditLog = new AuditLogEntity();
-        auditLog.tableName = "order";
-        auditLog.action = "REFUND";
-        auditLog.entityId = order.id;
-        auditLog.performedBy = userId;
+        // const auditLog = new AuditLogEntity();
+        // auditLog.tableName = "order";
+        // auditLog.action = "REFUND";
+        // auditLog.entityId = order.id;
+        // auditLog.performedBy = userId;
       
 
-        if (userId) {
-          const user = await transactionalEntityManager.findOne(UserEntity, {
-            where: { id: userId },
-          });
-          if (user) {
-            auditLog.userDetails = {
-              id: user.id,
-              username: user.username,
-              email: user.email,
-              role: user.role,
-            };
-          }
-        }
+        // if (userId) {
+        //   const user = await transactionalEntityManager.findOne(UserEntity, {
+        //     where: { id: userId },
+        //   });
+        //   if (user) {
+        //     auditLog.userDetails = {
+        //       id: user.id,
+        //       username: user.username,
+        //       email: user.email,
+        //       role: user.role,
+        //     };
+        //   }
+        // }
 
-        await transactionalEntityManager.save(AuditLogEntity, auditLog);
+        // await transactionalEntityManager.save(AuditLogEntity, auditLog);
         await this.actionService.createAction({
           actionEn: `order refunded`,
           actionAr: `تم استرداد مبلغ الطلب`,

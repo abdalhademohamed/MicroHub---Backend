@@ -1,4 +1,5 @@
 export class CreateTransactionDto {
   paymentId: string;
-  orderId: string;  
+  orderId: string;
+  amount: number;
 }

@@ -3,6 +3,7 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   CreateDateColumn,
+  Column,
 } from "typeorm";
 import { OrderEntity } from "../../orders/entities/order.entity";
 import { PaymentEntity } from "src/payment/entities/payment.entity";
@@ -14,6 +15,9 @@ export class TransactionEntity {
 
   @ManyToOne(() => OrderEntity)
   order: OrderEntity;
+
+  @Column({ type: "numeric" })
+  amount: number;
 
   @CreateDateColumn()
   createdAt: Date; // Automatically set when the entity is created

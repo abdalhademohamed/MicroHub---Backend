@@ -18,21 +18,14 @@ export class TransactionService {
     ) {}
     async createTransaction(body: CreateTransactionDto) {
       const order = await this.orderRepository.findOne({ where: { id: body.orderId } });
-      const payment = await this.paymentRepository.findOne({ where: { id: body.paymentId } });
       const transaction = this.transactionRepository.create({
         order,
-        payment,
+        amount: body.amount,
         createdAt: new Date(),
       });
+      if(body.paymentId){
+        transaction.payment = await this.paymentRepository.findOne({ where: { id: body.paymentId } });
+      }
       await this.transactionRepository.save(transaction);
-    }
-    async getAllTransactionsToOrder(orderId: string) {
-      const queryBuilder = this.transactionRepository.createQueryBuilder('transaction')
-            .leftJoinAndSelect('transaction.payment', 'payment')
-            .leftJoinAndSelect('transaction.order', 'order')
-            .where('order.id = :orderId', { orderId })
-            .orderBy('transaction.createdAt', 'DESC');
-      const [transactions, totalItems] = await queryBuilder.getManyAndCount();   
-      return { items: transactions, totalItems };
     }
 }

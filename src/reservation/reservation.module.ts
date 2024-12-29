@@ -24,6 +24,7 @@ import { CommentEntity } from "../comment/entities/comment.entity";
 import { ReceiptEntity } from "../receipt/entities/receipt.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
 import { ActionModule } from "../action/action.module";
+import { TransactionModule } from "src/transaction/transaction.module";
 
 
 @Module({
@@ -49,7 +50,7 @@ import { ActionModule } from "../action/action.module";
     ]),
     NotificationModule,
     ActionModule,
-
+    TransactionModule,
   ],
   controllers: [ReservationController],
   providers: [
