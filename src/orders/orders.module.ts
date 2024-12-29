@@ -24,7 +24,7 @@ import { TransactionModule } from "src/transaction/transaction.module";
 
 @Module({
   imports: [
-    // TransactionModule,
+    TransactionModule,
     TypeOrmModule.forFeature([
       OrderEntity,
       ReservationEntity,

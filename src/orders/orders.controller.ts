@@ -88,6 +88,7 @@ export class OrdersController {
     @Body('refundAmount') refundAmount: number,
     @Body('refundReason') refundReason: string,
     @UploadedFile() image: Express.Multer.File,
+    @Body('paymentId') paymentId: string,
     @Request() req: any,
   ) {
     const userId = req.user.sub;
@@ -99,7 +100,8 @@ export class OrdersController {
       refundAmount,
       userId,
       image,
-      refundReason
+      refundReason,
+      paymentId,
     );
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
