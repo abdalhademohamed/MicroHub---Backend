@@ -64,7 +64,7 @@ export class ServiceService {
       const savedService = await this.ServiceRepository.save(service);
   
       // Save the audit log
-      await this.saveAuditLog(savedService.id, userId);
+      // await this.saveAuditLog(savedService.id, userId);
   
       return savedService; // Returns status code 201 Created
     } catch (error) {
