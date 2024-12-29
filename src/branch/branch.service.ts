@@ -271,7 +271,7 @@ export class BranchService {
         .orderBy("branch.name", order.toUpperCase() as "ASC" | "DESC");
 
       // If the user is not an admin,restrict to the branch they're associated with
-      if (![Role.ADMIN, Role.SUPERADMIN, Role.COORDINATOR,Role.ARTISTMANAGER].includes(userRole)) {
+      if (![Role.ADMIN, Role.SUPERADMIN, Role.COORDINATOR,Role.ARTISTMANAGER, Role.ACCOUNTANT].includes(userRole)) {
         query = query
           .leftJoin("branch.employees", "userEmployee") // Alias for user's employee
           .where("userEmployee.id = :userId", { userId });
