@@ -41,8 +41,6 @@ export class CreateServiceDto {
   @ApiPropertyOptional({ description: "The rootosh number of the service" })
   @IsOptional()
   @IsInt()
-  @IsPositive({ message: "Rootosh number must be a positive number" })
-  @Transform(({ value }) => parseInt(value, 10)) // Convert string to integer
   rootosh_Number: number;
 
   @ApiPropertyOptional({
@@ -50,7 +48,5 @@ export class CreateServiceDto {
   })
   @IsOptional()
   @IsInt()
-  @IsPositive({ message: "Months to expire must be a positive number" })
-  @Transform(({ value }) => parseInt(value, 10)) // Convert string to integer
   months_To_Expire: number;
 }
