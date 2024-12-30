@@ -328,10 +328,11 @@ export class OrdersService {
         order: newOrder.id,
         createdBy: userId,
       });
-      // await this.transactionService.createTransaction({
-      //   orderId: newOrder.id,
-      //   paymentId,
-      // })
+      await this.transactionService.createTransaction({
+        orderId: newOrder.id,
+        amount: reservation.deposit,
+        paymentId,
+      })
       return newOrder;
     } catch (error) {
       console.log(error.stack);
@@ -389,7 +390,8 @@ export class OrdersService {
   /* -------------------------------------------------------------------------- */
   async createOrderForRootosh(
     reservationId: string,
-    userId: string
+    userId: string,
+    paymentId: string,
   ): Promise<OrderEntity> {
     // Fetch reservation with related services
     const reservation = await this.reservationRepository.findOne({
@@ -525,6 +527,11 @@ export class OrdersService {
         order: newOrder.id,
         createdBy: userId,
       });
+      await this.transactionService.createTransaction({
+        orderId: newOrder.id,
+        amount: reservation.deposit,
+        paymentId,
+      })
       return newOrder;
     } catch (error) {
       console.log(error);
@@ -662,7 +669,8 @@ export class OrdersService {
     orderId: string,
     newPaymentStatus: PaymentStatus.Paid | PaymentStatus.PartiallyPaid,
     image: Express.Multer.File,
-    userId: string // Optional parameter for the user ID
+    userId: string,// Optional parameter for the user ID,
+    paymentId: string,
   ): Promise<OrderEntity> {
     let updatedOrder: OrderEntity;
 
@@ -755,7 +763,6 @@ export class OrdersService {
             OrderEntity,
             order
           );
-
           // Update remaining balance in receipts to 0 if payment status is Paid
           if (newPaymentStatus === PaymentStatus.Paid) {
             const order = await this.orderRepository.findOne({
@@ -766,61 +773,19 @@ export class OrdersService {
             if (!order) {
               throw new Error("Order not found");
             }
-
+            let amount = 0;
             // Iterate over each receipt and set the remaining balance to zero
             for (const receipt of order.receipts) {
+              amount += Number(receipt.remaining);
               receipt.remaining = 0;
               await this.ReceiptRepository.save(receipt);
             }
+            await this.transactionService.createTransaction({
+              orderId: savedOrder.id,
+              amount,
+              paymentId,
+            })
           }
-          // Create an audit log entry
-          const auditLog = new AuditLogEntity();
-          auditLog.tableName = "order";
-          auditLog.action = "UPDATE";
-          auditLog.entityId = savedOrder.id; // ID of the updated order
-
-          // Determine changed columns and details
-          const changedColumns = [];
-          const changesDetails = {};
-
-          // Collect old values from the database
-          const oldOrder = await transactionalEntityManager.findOne(
-            OrderEntity,
-            { where: { id: savedOrder.id } }
-          );
-
-          if (oldOrder) {
-            Object.keys(order).forEach((key) => {
-              if (oldOrder[key] !== order[key]) {
-                changedColumns.push(key);
-                changesDetails[key] = {
-                  oldValue: oldOrder[key],
-                  newValue: order[key],
-                };
-              }
-            });
-          }
-
-          auditLog.changedColumns = changedColumns;
-          auditLog.changesDetails = changesDetails;
-          auditLog.performedBy = userId;
-
-          // Fetch user details if needed
-          if (userId) {
-            const user = await transactionalEntityManager.findOne(UserEntity, {
-              where: { id: userId },
-            });
-            if (user) {
-              auditLog.userDetails = {
-                id: user.id,
-                username: user.username,
-                email: user.email,
-                role: user.role,
-              };
-            }
-          }
-
-          await transactionalEntityManager.save(AuditLogEntity, auditLog);
           await this.actionService.createAction({
             actionEn: `payment status updated`,
             actionAr: `تم تحديث حالة الدفع`,
@@ -828,7 +793,6 @@ export class OrdersService {
             order: order.id,
             createdBy: userId,
           });
-
           return savedOrder;
         }
       );
@@ -1543,7 +1507,7 @@ export class OrdersService {
         .leftJoinAndSelect("r.services", "s")
         .leftJoinAndSelect("r.rootoshes", "ro") // Adding the rootoshes join here
         .addSelect(["r.id", "r.start_Time", "r.end_Time", "r.totalPrice"])
-        .where("o.status = :status", { status: OrderStatus.Refuneded }) // Filter for refunded status
+        .where("o.status = :status", { status: OrderStatus.Canceled }) // Filter for refunded status
         .andWhere("o.image_order_refund IS NULL") // Filter for null refund image URL
         .take(limit)
         .skip((page - 1) * limit);

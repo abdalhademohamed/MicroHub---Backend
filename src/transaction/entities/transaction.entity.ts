@@ -16,7 +16,7 @@ export class TransactionEntity {
   @ManyToOne(() => OrderEntity)
   order: OrderEntity;
 
-  @Column({ type: "numeric" })
+  @Column({ type: "float", nullable: true })
   amount: number;
 
   @CreateDateColumn()
