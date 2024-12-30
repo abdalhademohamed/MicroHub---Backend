@@ -151,6 +151,7 @@ export class OrdersController {
     @Param("orderId") orderId: string,
     @Body('paymentStatus') paymentStatus: PaymentStatus.Paid | PaymentStatus.PartiallyPaid, // Enum-like string values for payment status
     @UploadedFile() image: Express.Multer.File, // File uploads cannot be passed as query parameters
+    @Body('paymentId') paymentId: string,
     // @Body('paymentId') paymentId: string,
   ) {
 
@@ -165,6 +166,7 @@ export class OrdersController {
       paymentStatus,
       image,
       userId,
+      paymentId,
     );
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

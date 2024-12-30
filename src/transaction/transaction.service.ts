@@ -17,15 +17,17 @@ export class TransactionService {
         private readonly transactionRepository: Repository<TransactionEntity>,
     ) {}
     async createTransaction(body: CreateTransactionDto) {
+      console.log(body.amount);
       const order = await this.orderRepository.findOne({ where: { id: body.orderId } });
       const transaction = this.transactionRepository.create({
         order,
-        amount: body.amount,
+        amount: Number(body.amount),
         createdAt: new Date(),
       });
       if(body.paymentId){
         transaction.payment = await this.paymentRepository.findOne({ where: { id: body.paymentId } });
       }
+      console.log(transaction);
       await this.transactionRepository.save(transaction);
     }
 }
