@@ -324,7 +324,7 @@ export class EmployeeService {
   async updateEmployee(
     id: string,
     updateEmployeeDto: UpdateEmployeeDto,
-    userId: string,
+    // userId: string,
     image: Express.Multer.File
   ): Promise<
     EmployeeEntity | { message: string; error: string; statusCode: number }
@@ -522,93 +522,6 @@ export class EmployeeService {
 
       // Step 7: Save updated employee details
       const updatedEmployee = await this.employeeRepository.save(employee);
-
-      // Step 8: Audit log - Track changes
-      const changedColumns = [];
-      const changesDetails = {};
-
-      this.logChangedField(
-        "english_Name",
-        originalEmployee,
-        updatedEmployee,
-        changedColumns,
-        changesDetails
-      );
-      this.logChangedField(
-        "arabic_Name",
-        originalEmployee,
-        updatedEmployee,
-        changedColumns,
-        changesDetails
-      );
-      this.logChangedField(
-        "workingHours",
-        originalEmployee,
-        updatedEmployee,
-        changedColumns,
-        changesDetails
-      );
-      this.logChangedField(
-        "countryCode",
-        originalEmployee,
-        updatedEmployee,
-        changedColumns,
-        changesDetails
-      );
-      this.logChangedField(
-        "phoneNumber",
-        originalEmployee,
-        updatedEmployee,
-        changedColumns,
-        changesDetails
-      );
-      this.logChangedField(
-        "available",
-        originalEmployee,
-        updatedEmployee,
-        changedColumns,
-        changesDetails
-      );
-      this.logChangedField(
-        "image",
-        originalEmployee,
-        updatedEmployee,
-        changedColumns,
-        changesDetails
-      );
-      this.logChangedField(
-        "branch",
-        originalEmployee,
-        updatedEmployee,
-        changedColumns,
-        changesDetails
-      ); // Track branch changes
-      this.logChangedField(
-        "position",
-        originalEmployee,
-        updatedEmployee,
-        changedColumns,
-        changesDetails
-      ); // Track position changes
-
-      // Step 9: Create an audit log entry
-      const auditLog = new AuditLogEntity();
-      auditLog.tableName = "employee";
-      auditLog.action = "UPDATE";
-      auditLog.entityId = employee.id;
-      auditLog.performedBy = userId;
-      auditLog.changedColumns = changedColumns;
-      auditLog.changesDetails = changesDetails;
-
-      if (userId) {
-        auditLog.userDetails = {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          role: user.role,
-        };
-      }
-      await this.AuditLogRepository.save(auditLog);
 
       // Log the updated employee after saving
       // console.log("Employee updated successfully:", updatedEmployee);
