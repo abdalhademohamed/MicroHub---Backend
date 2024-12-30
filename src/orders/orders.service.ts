@@ -1516,6 +1516,62 @@ export class OrdersService {
       throw new Error("Unable to fetch orders.");
     }
   }
+  async findAllRefundedOrders(
+    findOrdersDto: FindOrdersDto,
+    userId: string
+  ) {
+    const {
+      page,
+      limit,
+      fromDate,
+      toDate
+    } = findOrdersDto; 
+
+    try {
+      const query = this.orderRepository
+        .createQueryBuilder("o")
+        .leftJoinAndSelect("o.artist", "a")
+        .leftJoinAndSelect("o.customer", "c")
+        .addSelect(["c.id", "c.fullName", "c.phoneNumber"])
+        .leftJoin("o.createdBy", "cb")
+        .leftJoin("o.confirmedBy", "confirmedBy") // Include confirmedBy relation
+        .addSelect(["confirmedBy.id", "confirmedBy.username", "confirmedBy.role"])
+        .addSelect(["cb.id", "cb.username", "cb.email", "cb.role"])
+        .leftJoin("o.updatedBy", "ub")
+        .addSelect(["ub.id", "ub.username"])
+        .leftJoinAndSelect("o.reservation", "r")
+        .leftJoinAndSelect("r.services", "s")
+        .leftJoinAndSelect("r.rootoshes", "ro") // Adding the rootoshes join here
+        .addSelect(["r.id", "r.start_Time", "r.end_Time", "r.totalPrice"])
+        .where("o.status = :status", { status: OrderStatus.Refuneded }) // Filter for refunded status
+        .andWhere("o.image_order_refund IS NULL") // Filter for null refund image URL
+        .take(limit)
+        .skip((page - 1) * limit);
+        // if(branch){
+        //   query.andWhere("CAST(o.branch ->> 'id' AS uuid) IN (:...branch)", { branch });
+        // }
+
+      if (fromDate || toDate) {
+        if (fromDate) {
+          query.andWhere("o.date >= :fromDate", {
+            fromDate: new Date(fromDate).toISOString(),
+          });
+        }
+        if (toDate) {
+          query.andWhere("o.date < :toDate", {
+            toDate: new Date(toDate).toISOString(),
+          });
+        }
+      }
+
+      const [items, total] = await query.getManyAndCount();
+
+      return { items, total };
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      throw new NotFoundException("Unable to fetch orders.");
+    }
+  }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Method to get the count of each order status
@@ -2254,14 +2310,8 @@ export class OrdersService {
           );
         }
       }
-      await this.transactionService.createTransaction({
-        orderId,
-        amount: -refundAmount,
-        paymentId,
-      })
-      if(order.status == OrderStatus.Refuneded){
-        await this.orderRepository.save(order);
-        return order;
+      if(refundReason){
+        order.image_order_refund_reason = refundReason;
       }
 
       // Validate refund amount
@@ -2280,53 +2330,35 @@ export class OrdersService {
       // Validate and upload refund image if provided
 
       // Add refund reason
-      order.image_order_refund_reason = refundReason;
+      // order.image_order_refund_reason = refundReason;
 
       // Create refund receipt
-      const refundReceipt = this.ReceiptRepository.create({
-        order: order,  // Keep this
-        totalPayment: -refundAmount,
-        remaining: 0,
-        discount: 0,
-        message: refundReason,
-        reservationTimeSlot: originalReceipt.reservationTimeSlot,
-        paymentForServices: originalReceipt.paymentForServices,
-        createdBy: await this.userRepository.findOne({ where: { id: userId } }),
-        isRefunded: true
-      });
-
-      return await this.entityManager.transaction(async (transactionalEntityManager) => {
-        // Update order status and save first
-        order.status = OrderStatus.Refuneded;
-        const savedOrder = await transactionalEntityManager.save(OrderEntity, order);
-        
-        // Update the receipt with the saved order reference
-        refundReceipt.order = savedOrder;
-        const savedReceipt = await transactionalEntityManager.save(ReceiptEntity, refundReceipt);
-
-        // Create audit log
-        // const auditLog = new AuditLogEntity();
-        // auditLog.tableName = "order";
-        // auditLog.action = "REFUND";
-        // auditLog.entityId = order.id;
-        // auditLog.performedBy = userId;
-      
-
-        // if (userId) {
-        //   const user = await transactionalEntityManager.findOne(UserEntity, {
-        //     where: { id: userId },
-        //   });
-        //   if (user) {
-        //     auditLog.userDetails = {
-        //       id: user.id,
-        //       username: user.username,
-        //       email: user.email,
-        //       role: user.role,
-        //     };
-        //   }
-        // }
-
-        // await transactionalEntityManager.save(AuditLogEntity, auditLog);
+      let savedReceipt;
+      if(image && paymentId){
+        const refundReceipt = this.ReceiptRepository.create({
+          order: order,  // Keep this
+          totalPayment: -refundAmount,
+          remaining: 0,
+          discount: 0,
+          message: refundReason,
+          reservationTimeSlot: originalReceipt.reservationTimeSlot,
+          paymentForServices: originalReceipt.paymentForServices,
+          createdBy: await this.userRepository.findOne({ where: { id: userId } }),
+          isRefunded: true
+        });
+        await this.transactionService.createTransaction({
+          orderId,
+          amount: -refundAmount,
+          paymentId,
+        })
+        savedReceipt = await this.ReceiptRepository.save(refundReceipt);
+      }
+      if(order.status == OrderStatus.Refuneded){
+        await this.orderRepository.save(order);
+        return order;
+      }
+      order.status = OrderStatus.Refuneded;
+      await this.orderRepository.save(order);
         await this.actionService.createAction({
           actionEn: `order refunded`,
           actionAr: `تم استرداد مبلغ الطلب`,
@@ -2344,9 +2376,9 @@ export class OrdersService {
           refundReason: refundReason,
           refundImage: order.image_order_refund,
           refundReceipt: {
-            id: savedReceipt.id,
-            generatedAt: savedReceipt.generatedAt,
-            amount: savedReceipt.totalPayment
+            id: savedReceipt?.id,
+            generatedAt: savedReceipt?.generatedAt,
+            amount: savedReceipt?.totalPayment
           },
           customer: {
             id: order.customer.id,
@@ -2354,7 +2386,7 @@ export class OrdersService {
             phoneNumber: order.customer.phoneNumber
           }
         };
-      });
+      // });
 
     } catch (error) {
       console.error("Error processing refund:", error);

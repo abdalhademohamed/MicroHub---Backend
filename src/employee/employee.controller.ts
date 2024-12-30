@@ -55,6 +55,29 @@ export class EmployeeController {
       toDate
     );
   }
+  @UseGuards(AccessTokenGuard)
+  // @Roles(Role.SUPERADMIN)
+  @Put("profile")
+  @UseInterceptors(FileInterceptor("image")) // Use interceptor for file uploads
+  async updateLoggedEmployee(
+    @Request() req: any, // Request object to access the user
+    @Body() updateEmployeeDto: UpdateEmployeeDto,
+    @UploadedFile() image: Express.Multer.File, // If uploading a file
+  ) {
+    if (image) {
+      updateEmployeeDto.image = image.path; // Adjust based on how you handle file paths
+    }
+    const userId = req.user.sub; // Extract user ID from request
+
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
+    return await this.employeeService.updateEmployee(
+      userId,
+      updateEmployeeDto,
+      image,
+    );
+  }
 
   @Get('top/artists')
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
@@ -182,7 +205,7 @@ export class EmployeeController {
     @Param("id") id: string,
     @Body() updateEmployeeDto: UpdateEmployeeDto,
     @UploadedFile() image: Express.Multer.File, // If uploading a file
-  ): Promise<EmployeeEntity | { message: string; error: string; statusCode: number }> {
+  ) {
     if (image) {
       updateEmployeeDto.image = image.path; // Adjust based on how you handle file paths
     }
@@ -194,7 +217,6 @@ export class EmployeeController {
     return await this.employeeService.updateEmployee(
       id,
       updateEmployeeDto,
-      userId,
       image,
     );
   }

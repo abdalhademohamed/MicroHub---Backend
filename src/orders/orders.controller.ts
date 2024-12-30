@@ -59,6 +59,24 @@ export class OrdersController {
     const count = await this.ordersService.getOrderCount(branchId);
     return { count: count.toString() }; // Return the count as a string
   }
+  @Get("/refunded")
+  @UseGuards(AccessTokenGuard)
+  // @Roles(
+  //   Role.SUPERADMIN,
+  //   Role.RECEPTIONIST,
+  //   Role.COORDINATOR,
+  //   Role.ARTISTMANAGER,
+  // )
+  async findAllOrdersRefunded(
+    @Query() findOrdersDto: FindOrdersDto,
+    @Request() req: any, // Request object to access the user
+  ) {
+    const userId = req.user.sub; // Assuming user ID is stored in the request
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
+    return this.ordersService.findAllRefundedOrders(findOrdersDto, userId);
+  }
 
   @Get("/sorted")
   @UseGuards(AccessTokenGuard)
