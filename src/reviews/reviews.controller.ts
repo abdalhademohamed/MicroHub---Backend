@@ -52,7 +52,7 @@ export class ReviewsController {
   @ApiInternalServerErrorResponse({ description: "Failed to create review" })
   async createReview(
     @Req() req: any, // Request object to access the user
-    @Body() createReviewDto: CreateReviewDto
+    @Body() createReviewDto: CreateReviewDto,
   ) {
     const userId = req.user.sub; // Hardcoded user ID for now
 
@@ -63,7 +63,7 @@ export class ReviewsController {
   }
   @Get("IsFirstOrder/:orderId")
   async isFirstTimeOrder(
-    @Param("orderId") orderId: string
+    @Param("orderId") orderId: string,
   ): Promise<{ isFirstTime: boolean }> {
     const isFirstTime = await this.reviewsService.isFirstTimeOrder(orderId);
     return { isFirstTime };
@@ -75,7 +75,7 @@ export class ReviewsController {
   async getEmployeeReviewsAndComments(
     @Request() req: any, // Request object to access the user
 
-    @Query() query: GetEmployeeReviewsCommentsDto
+    @Query() query: GetEmployeeReviewsCommentsDto,
   ) {
     const userId = req.user.sub; // Extract user ID from request
     if (!userId) {
@@ -97,7 +97,12 @@ export class ReviewsController {
 
   @Get("artist/:employeeId")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER, Role.ARTISTMANAGER, Role.RECEPTIONIST)
+  @Roles(
+    Role.SUPERADMIN,
+    Role.BRANCHMANAGER,
+    Role.ARTISTMANAGER,
+    Role.RECEPTIONIST,
+  )
   @ApiParam({
     name: "employeeId",
     type: String,
@@ -114,16 +119,14 @@ export class ReviewsController {
   })
   @ApiResponse({ status: 500, description: "Failed to retrieve reviews" })
   async getReviewsForArtist(
-    @Param("employeeId") employeeId: string
+    @Param("employeeId") employeeId: string,
   ): Promise<ReviewEntity[]> {
     return await this.reviewsService.getReviewsForArtist(employeeId);
-
-    }
-  
+  }
 
   @Get("order/:orderId")
   async getReviewsByOrderId(
-    @Param("orderId") orderId: string
+    @Param("orderId") orderId: string,
   ): Promise<ReviewEntity[]> {
     return this.reviewsService.getReviewsByOrderId(orderId);
   }

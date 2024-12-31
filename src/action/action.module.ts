@@ -8,7 +8,14 @@ import { UserEntity } from "../user/entities/user.entity";
 import { BranchEntity } from "../branch/entities/branch.entity";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([OrderEntity, ActionEntity, UserEntity, BranchEntity])],
+  imports: [
+    TypeOrmModule.forFeature([
+      OrderEntity,
+      ActionEntity,
+      UserEntity,
+      BranchEntity,
+    ]),
+  ],
   controllers: [ActionController],
   providers: [ActionService],
   exports: [ActionService],

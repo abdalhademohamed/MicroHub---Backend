@@ -31,10 +31,10 @@ export class CommentService {
     // @InjectRepository(EmployeeEntity)
     // private readonly employeeRepository: Repository<EmployeeEntity>,
 
-    private readonly i18n: CustomI18nService
+    private readonly i18n: CustomI18nService,
   ) {}
   async getCommentByOrderId(
-    orderId: string
+    orderId: string,
   ): Promise<CommentResponseDto | null> {
     try {
       // Find the comment with relations
@@ -104,7 +104,7 @@ export class CommentService {
                 phoneNumber: review.artist.phoneNumber,
               }
             : null,
-        })
+        }),
       );
 
       // Construct and return the response using the CommentResponseDto structure
@@ -120,7 +120,7 @@ export class CommentService {
     } catch (error) {
       throw new InternalServerErrorException(
         this.i18n.translate("test.COMMENT.RETRIEVE_FAILED"),
-        error.stack
+        error.stack,
       );
     }
   }
@@ -157,12 +157,13 @@ export class CommentService {
 
   async getCustomerComments(
     customerId: string,
-    getCommentsDto:GetCommentsbycustomerDto
+    getCommentsDto: GetCommentsbycustomerDto,
   ): Promise<PaginatedCommentResponseDto> {
     const { page = 1, limit = 10, fromDate, toDate, sort } = getCommentsDto;
 
     try {
-      const query = this.commentRepository.createQueryBuilder("comment")
+      const query = this.commentRepository
+        .createQueryBuilder("comment")
         .leftJoinAndSelect("comment.order", "order")
         .leftJoinAndSelect("comment.employee", "employee")
         .leftJoinAndSelect("order.customer", "customer")
@@ -174,7 +175,9 @@ export class CommentService {
       if (fromDate) {
         const startOfDay = new Date(fromDate);
         startOfDay.setHours(0, 0, 0, 0);
-        query.andWhere("comment.createdAt >= :fromDate", { fromDate: startOfDay });
+        query.andWhere("comment.createdAt >= :fromDate", {
+          fromDate: startOfDay,
+        });
       }
 
       if (toDate) {
@@ -196,46 +199,55 @@ export class CommentService {
         imageBeforeUrl: comment.imageBeforeUrl,
         imageAfterUrl: comment.imageAfterUrl,
         createdAt: comment.createdAt,
-        employee: comment.employee ? {
-          id: comment.employee.id,
-          username: comment.employee.username,
-          email: comment.employee.email,
-          role: comment.employee.role,
-          english_Name: comment.employee.english_Name,
-          arabic_Name: comment.employee.arabic_Name,
-          workingHours: comment.employee.workingHours?.toString(),
-          phoneNumber: comment.employee.phoneNumber,
-          image: comment.employee.image,
-          available: comment.employee.available,
-          totalReviews: comment.employee.totalReviews,
-          status: comment.employee.status,
-          oldestAvgRating: comment.employee.oldestAvgRating,
-          newestAvgRating: comment.employee.newestAvgRating,
-        } : null,
-        reviews: comment.order?.reviews?.map((review): ReviewResponseDto => ({
-          id: review.id,
-          rating: review.rating,
-          createdAt: review.createdAt,
-          imageOrder: review.imageOrder,
-          commentBefore: review.comment_Before,
-          commentAfter: review.comment_After,
-          reviewer: review.employee ? {
-            id: review.employee.id,
-            username: review.employee.username,
-            image: review.employee.image,
-            english_Name: review.employee.english_Name,
-            role: review.employee.role,
-            phoneNumber: review.employee.phoneNumber,
-          } : null,
-          artist: review.artist ? {
-            id: review.artist.id,
-            image: review.artist.image,
-            username: review.artist.username,
-            english_Name: review.artist.english_Name,
-            role: review.artist.role,
-            phoneNumber: review.artist.phoneNumber,
-          } : null,
-        })) || [],
+        employee: comment.employee
+          ? {
+              id: comment.employee.id,
+              username: comment.employee.username,
+              email: comment.employee.email,
+              role: comment.employee.role,
+              english_Name: comment.employee.english_Name,
+              arabic_Name: comment.employee.arabic_Name,
+              workingHours: comment.employee.workingHours?.toString(),
+              phoneNumber: comment.employee.phoneNumber,
+              image: comment.employee.image,
+              available: comment.employee.available,
+              totalReviews: comment.employee.totalReviews,
+              status: comment.employee.status,
+              oldestAvgRating: comment.employee.oldestAvgRating,
+              newestAvgRating: comment.employee.newestAvgRating,
+            }
+          : null,
+        reviews:
+          comment.order?.reviews?.map(
+            (review): ReviewResponseDto => ({
+              id: review.id,
+              rating: review.rating,
+              createdAt: review.createdAt,
+              imageOrder: review.imageOrder,
+              commentBefore: review.comment_Before,
+              commentAfter: review.comment_After,
+              reviewer: review.employee
+                ? {
+                    id: review.employee.id,
+                    username: review.employee.username,
+                    image: review.employee.image,
+                    english_Name: review.employee.english_Name,
+                    role: review.employee.role,
+                    phoneNumber: review.employee.phoneNumber,
+                  }
+                : null,
+              artist: review.artist
+                ? {
+                    id: review.artist.id,
+                    image: review.artist.image,
+                    username: review.artist.username,
+                    english_Name: review.artist.english_Name,
+                    role: review.artist.role,
+                    phoneNumber: review.artist.phoneNumber,
+                  }
+                : null,
+            }),
+          ) || [],
       }));
 
       return {
@@ -246,22 +258,23 @@ export class CommentService {
         totalPages: Math.ceil(total / limit),
       };
     } catch (error) {
-      console.error('Error in getCustomerComments:', error);
+      console.error("Error in getCustomerComments:", error);
       throw new InternalServerErrorException(
         "Failed to retrieve customer comments",
-        error.stack
+        error.stack,
       );
     }
   }
 
   async getArtistComments(
     artistId: string,
-    getCommentsDto: GetCommentsbycustomerDto
+    getCommentsDto: GetCommentsbycustomerDto,
   ): Promise<PaginatedCommentResponseDto> {
     const { page = 1, limit = 10, fromDate, toDate, sort } = getCommentsDto;
 
     try {
-      const query = this.commentRepository.createQueryBuilder("comment")
+      const query = this.commentRepository
+        .createQueryBuilder("comment")
         .leftJoinAndSelect("comment.order", "order")
         .leftJoinAndSelect("comment.employee", "employee")
         .leftJoinAndSelect("order.reviews", "review")
@@ -274,7 +287,9 @@ export class CommentService {
       if (fromDate) {
         const startOfDay = new Date(fromDate);
         startOfDay.setHours(0, 0, 0, 0);
-        query.andWhere("comment.createdAt >= :fromDate", { fromDate: startOfDay });
+        query.andWhere("comment.createdAt >= :fromDate", {
+          fromDate: startOfDay,
+        });
       }
 
       if (toDate) {
@@ -296,46 +311,55 @@ export class CommentService {
         imageBeforeUrl: comment.imageBeforeUrl,
         imageAfterUrl: comment.imageAfterUrl,
         createdAt: comment.createdAt,
-        employee: comment.employee ? {
-          id: comment.employee.id,
-          username: comment.employee.username,
-          email: comment.employee.email,
-          role: comment.employee.role,
-          english_Name: comment.employee.english_Name,
-          arabic_Name: comment.employee.arabic_Name,
-          workingHours: comment.employee.workingHours?.toString(),
-          phoneNumber: comment.employee.phoneNumber,
-          image: comment.employee.image,
-          available: comment.employee.available,
-          totalReviews: comment.employee.totalReviews,
-          status: comment.employee.status,
-          oldestAvgRating: comment.employee.oldestAvgRating,
-          newestAvgRating: comment.employee.newestAvgRating,
-        } : null,
-        reviews: comment.order?.reviews?.map((review): ReviewResponseDto => ({
-          id: review.id,
-          rating: review.rating,
-          createdAt: review.createdAt,
-          imageOrder: review.imageOrder,
-          commentBefore: review.comment_Before,
-          commentAfter: review.comment_After,
-          reviewer: review.employee ? {
-            id: review.employee.id,
-            username: review.employee.username,
-            image: review.employee.image,
-            english_Name: review.employee.english_Name,
-            role: review.employee.role,
-            phoneNumber: review.employee.phoneNumber,
-          } : null,
-          artist: review.artist ? {
-            id: review.artist.id,
-            image: review.artist.image,
-            username: review.artist.username,
-            english_Name: review.artist.english_Name,
-            role: review.artist.role,
-            phoneNumber: review.artist.phoneNumber,
-          } : null,
-        })) || [],
+        employee: comment.employee
+          ? {
+              id: comment.employee.id,
+              username: comment.employee.username,
+              email: comment.employee.email,
+              role: comment.employee.role,
+              english_Name: comment.employee.english_Name,
+              arabic_Name: comment.employee.arabic_Name,
+              workingHours: comment.employee.workingHours?.toString(),
+              phoneNumber: comment.employee.phoneNumber,
+              image: comment.employee.image,
+              available: comment.employee.available,
+              totalReviews: comment.employee.totalReviews,
+              status: comment.employee.status,
+              oldestAvgRating: comment.employee.oldestAvgRating,
+              newestAvgRating: comment.employee.newestAvgRating,
+            }
+          : null,
+        reviews:
+          comment.order?.reviews?.map(
+            (review): ReviewResponseDto => ({
+              id: review.id,
+              rating: review.rating,
+              createdAt: review.createdAt,
+              imageOrder: review.imageOrder,
+              commentBefore: review.comment_Before,
+              commentAfter: review.comment_After,
+              reviewer: review.employee
+                ? {
+                    id: review.employee.id,
+                    username: review.employee.username,
+                    image: review.employee.image,
+                    english_Name: review.employee.english_Name,
+                    role: review.employee.role,
+                    phoneNumber: review.employee.phoneNumber,
+                  }
+                : null,
+              artist: review.artist
+                ? {
+                    id: review.artist.id,
+                    image: review.artist.image,
+                    username: review.artist.username,
+                    english_Name: review.artist.english_Name,
+                    role: review.artist.role,
+                    phoneNumber: review.artist.phoneNumber,
+                  }
+                : null,
+            }),
+          ) || [],
       }));
 
       return {
@@ -346,14 +370,11 @@ export class CommentService {
         totalPages: Math.ceil(total / limit),
       };
     } catch (error) {
-      console.error('Error in getArtistComments:', error);
+      console.error("Error in getArtistComments:", error);
       throw new InternalServerErrorException(
         "Failed to retrieve artist comments",
-        error.stack
+        error.stack,
       );
     }
   }
-
-
-  
 }

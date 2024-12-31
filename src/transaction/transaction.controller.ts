@@ -1,7 +1,20 @@
-import { Controller, Get, Param } from "@nestjs/common";
+import { Controller, Get, Param, Query } from "@nestjs/common";
 import { TransactionService } from "./transaction.service";
+import { FindTransactionDto } from "./dto/query.transaction.dto";
 
-@Controller('transaction')
+@Controller("transaction")
 export class TransactionController {
-    constructor(private transactionService: TransactionService){}
+  constructor(private transactionService: TransactionService) {}
+  @Get()
+  async getTransaction(@Query() obj: FindTransactionDto){
+    return this.transactionService.latestTransaction(obj);
+  }
+  @Get('income')
+  async incomeTransaction(@Query() obj: FindTransactionDto){
+    return this.transactionService.incomeAggregations(obj);
+  }
+  @Get('refund')
+  async refundTransaction(@Query() obj: FindTransactionDto){
+    return this.transactionService.refundAggregations(obj);
+  }
 }

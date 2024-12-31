@@ -32,7 +32,7 @@ export class CustomerController {
     Role.COORDINATOR,
     Role.RECEPTIONIST,
     Role.ACCOUNTANT,
-    Role.ARTISTMANAGER
+    Role.ARTISTMANAGER,
   )
   @Get("sorted")
   async getCustomers(@Query() filters: GetCustomerPaginatedsDto) {
@@ -40,7 +40,7 @@ export class CustomerController {
   }
   @UseGuards(AccessTokenGuard) // Ensure AccessTokenGuard is first
   @Get("search")
-  async getCustomerSearch(@Query('keyword') keyword: string) {
+  async getCustomerSearch(@Query("keyword") keyword: string) {
     return this.customerService.findOrdersAndCustomersByKeyword(keyword);
   }
   @Get("count")
@@ -55,17 +55,17 @@ export class CustomerController {
     Role.COORDINATOR,
     Role.RECEPTIONIST,
     Role.ACCOUNTANT,
-    Role.ARTISTMANAGER
+    Role.ARTISTMANAGER,
   )
   @Get(":phoneNumber")
   async getCustomerByPhoneNumber(
-    @Param("phoneNumber") phoneNumber: string
+    @Param("phoneNumber") phoneNumber: string,
   ): Promise<GetCustomerDto> {
     const customer =
       await this.customerService.getCustomerByPhoneNumber(phoneNumber);
     if (!customer) {
       throw new NotFoundException(
-        `Customer with phone number ${phoneNumber} not found.`
+        `Customer with phone number ${phoneNumber} not found.`,
       );
     }
     return customer;

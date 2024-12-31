@@ -42,13 +42,14 @@ export class RootoshService {
 
     if (!service) {
       throw new NotFoundException(
-        this.i18n.translate('test.ROOTOSH.SERVICE_NOT_FOUND', { args: { serviceId } })
+        this.i18n.translate("test.ROOTOSH.SERVICE_NOT_FOUND", {
+          args: { serviceId },
+        }),
       );
     }
 
     // Create the rootosh entity
     const rootosh = this.rootoshRepository.create({ ...rootoshData, service });
-
 
     try {
       // Save the rootosh to the database
@@ -61,25 +62,27 @@ export class RootoshService {
     } catch (error) {
       // Handle unexpected errors
       throw new InternalServerErrorException(
-        this.i18n.translate('test.ROOTOSH.CREATE_FAILED')
+        this.i18n.translate("test.ROOTOSH.CREATE_FAILED"),
       );
     }
   }
-  
+
   // Save the audit log for the create action
   private async saveAuditLogForCreate(rootosh: RootoshEntity, userId: string) {
     const auditLog = new AuditLogEntity();
-    auditLog.tableName = 'Rootosh';  // Specify the table name
-    auditLog.action = 'INSERT';  // Specify the action type
-    auditLog.entityId = rootosh.id;  // ID of the created entity
-    auditLog.performedBy = userId;  // ID of the user who performed the action
-  
+    auditLog.tableName = "Rootosh"; // Specify the table name
+    auditLog.action = "INSERT"; // Specify the action type
+    auditLog.entityId = rootosh.id; // ID of the created entity
+    auditLog.performedBy = userId; // ID of the user who performed the action
+
     // Fetch user details for audit log
-    const userDetails = await this.UserRepository.findOne({ where: { id: userId } });
+    const userDetails = await this.UserRepository.findOne({
+      where: { id: userId },
+    });
     if (userDetails) {
-      auditLog.userDetails = userDetails;  // Optional: Add user details for further tracking
+      auditLog.userDetails = userDetails; // Optional: Add user details for further tracking
     }
-  
+
     // Save the audit log to the audit log repository
     await this.AuditLogRepository.save(auditLog);
   }
@@ -114,7 +117,7 @@ export class RootoshService {
     });
     if (!rootosh) {
       throw new NotFoundException(
-        this.i18n.translate('test.ROOTOSH.NOT_FOUND', { args: { id } })
+        this.i18n.translate("test.ROOTOSH.NOT_FOUND", { args: { id } }),
       );
     }
     return rootosh;
@@ -123,18 +126,22 @@ export class RootoshService {
   // Function to get Rootoshes by serviceId
   async getRootoshesByServiceId(serviceId: string): Promise<RootoshEntity[]> {
     // Check if the service exists first
-    const service = await this.serviceRepository.findOne({ where: { id: serviceId } });
-    
+    const service = await this.serviceRepository.findOne({
+      where: { id: serviceId },
+    });
+
     if (!service) {
       throw new NotFoundException(
-        this.i18n.translate('test.ROOTOSH.SERVICE_NOT_FOUND', { args: { serviceId } })
+        this.i18n.translate("test.ROOTOSH.SERVICE_NOT_FOUND", {
+          args: { serviceId },
+        }),
       );
     }
 
     // Find and return all rootoshes associated with the given service
     return this.rootoshRepository.find({
       where: { service: { id: serviceId } },
-          });
+    });
   }
   async updateRootosh(
     id: string,
@@ -146,14 +153,14 @@ export class RootoshService {
       id,
       ...updateRootoshDto,
     });
-  
+
     // Throw an exception if the rootosh does not exist
     if (!rootosh) {
       throw new NotFoundException(
-        this.i18n.translate('test.ROOTOSH.NOT_FOUND', { args: { id } })
+        this.i18n.translate("test.ROOTOSH.NOT_FOUND", { args: { id } }),
       );
     }
-  
+
     // Check if serviceId is provided and update the service relation if needed
     if (updateRootoshDto.serviceId) {
       const service = await this.serviceRepository.findOne({
@@ -161,42 +168,46 @@ export class RootoshService {
       });
       if (!service) {
         throw new NotFoundException(
-          this.i18n.translate('test.ROOTOSH.SERVICE_NOT_FOUND', { args: { serviceId: updateRootoshDto.serviceId } })
+          this.i18n.translate("test.ROOTOSH.SERVICE_NOT_FOUND", {
+            args: { serviceId: updateRootoshDto.serviceId },
+          }),
         );
       }
       rootosh.service = service;
     }
-  
+
     try {
       // Save the updated rootosh entity to the database
       const updatedRootosh = await this.rootoshRepository.save(rootosh);
-  
+
       // Log the update action to the audit log
       await this.saveAuditLogForUpdate(updatedRootosh, userId);
-  
+
       return updatedRootosh;
     } catch (error) {
       // Handle unexpected errors
       throw new InternalServerErrorException(
-        this.i18n.translate('test.ROOTOSH.UPDATE_FAILED')
+        this.i18n.translate("test.ROOTOSH.UPDATE_FAILED"),
       );
     }
   }
-  
+
   // Save the audit log for the update action
   private async saveAuditLogForUpdate(rootosh: RootoshEntity, userId: string) {
     const auditLog = new AuditLogEntity();
-    auditLog.tableName = 'Rootosh';  // Specify the table name
-    auditLog.action = 'UPDATE';  // Specify the action type
-    auditLog.entityId = rootosh.id;  // ID of the updated entity
-    auditLog.performedBy = userId;  // ID of the user who performed the action
-  
+    auditLog.tableName = "Rootosh"; // Specify the table name
+    auditLog.action = "UPDATE"; // Specify the action type
+    auditLog.entityId = rootosh.id; // ID of the updated entity
+    auditLog.performedBy = userId; // ID of the user who performed the action
+
     // Fetch user details for audit log
-    const userDetails = await this.UserRepository.findOne({ where: { id: userId } });
+    const userDetails = await this.UserRepository.findOne({
+      where: { id: userId },
+    });
     if (userDetails) {
-      auditLog.userDetails = userDetails;  // Optional: Add user details for further tracking
+      auditLog.userDetails = userDetails; // Optional: Add user details for further tracking
     }
-  
+
     // Save the audit log to the audit log repository
     await this.AuditLogRepository.save(auditLog);
   }
@@ -204,7 +215,7 @@ export class RootoshService {
     const result = await this.rootoshRepository.delete(id);
     if (result.affected === 0) {
       throw new NotFoundException(
-        this.i18n.translate('test.ROOTOSH.NOT_FOUND', { args: { id } })
+        this.i18n.translate("test.ROOTOSH.NOT_FOUND", { args: { id } }),
       );
     }
   }

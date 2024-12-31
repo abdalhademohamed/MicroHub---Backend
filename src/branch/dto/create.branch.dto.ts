@@ -1,5 +1,11 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsString, IsNotEmpty, IsOptional, IsArray, IsUrl } from "class-validator";
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsArray,
+  IsUrl,
+} from "class-validator";
 import { CreateWorkingBranchDto } from "../../working-branch/dto/create.working.branch.dto";
 
 export class CreateBranchDto {

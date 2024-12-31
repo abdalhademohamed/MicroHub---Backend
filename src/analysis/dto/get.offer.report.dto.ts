@@ -1,5 +1,5 @@
-import { IsOptional, IsDateString, IsBoolean } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsOptional, IsDateString, IsBoolean } from "class-validator";
+import { Type } from "class-transformer";
 
 export class OfferReportDto {
   @IsOptional()

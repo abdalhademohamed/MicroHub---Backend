@@ -1,15 +1,11 @@
 import { Controller, Get, Param } from "@nestjs/common";
 import { ActionService } from "./action.service";
 
-@Controller('action')
+@Controller("action")
 export class ActionController {
-    constructor(
-        private readonly actionService: ActionService,
-    ){}
-    @Get(':action') 
-    getAllActions(
-        @Param('action') order: string,
-    ) {
-        return this.actionService.getAllActions(order);
-    }
+  constructor(private readonly actionService: ActionService) {}
+  @Get(":action")
+  getAllActions(@Param("action") order: string) {
+    return this.actionService.getAllActions(order);
+  }
 }

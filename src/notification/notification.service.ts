@@ -45,7 +45,7 @@ export class NotificationService {
       message,
       fcmToken,
     });
- 
+
     const savedNotification =
       await this.notificationRepository.save(notification);
 

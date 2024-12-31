@@ -28,9 +28,9 @@ export class EmployeeEntity extends UserEntity {
   @Column()
   arabic_Name: string;
 
-  @Column({ nullable: true ,default:8})
+  @Column({ nullable: true, default: 8 })
   workingHours: number; // Number of working hours
-  
+
   @Column({ length: 10 })
   countryCode: string; // Country code for the phone number
   @Column({ length: 15 })
@@ -39,7 +39,7 @@ export class EmployeeEntity extends UserEntity {
   @Column()
   image: string; // Store the URL of the image uploaded to Cloudinary
 
-  @Column({nullable:true})
+  @Column({ nullable: true })
   speciality: string; // Store the URL of the image uploaded to Cloudinary
 
   @Column({ default: true })
@@ -50,7 +50,7 @@ export class EmployeeEntity extends UserEntity {
     (EmployeeTypeEntity) => EmployeeTypeEntity.employees,
   )
   employeeType: EmployeeTypeEntity;
-  
+
   @Column({ default: 0 })
   totalReviews: number; // Total number of reviews for the employee
 
@@ -70,7 +70,6 @@ export class EmployeeEntity extends UserEntity {
     (ReservationEntity) => ReservationEntity.employee,
   )
   @JoinTable() // Add this decorator to create the join table
-
   reservations: ReservationEntity[];
   // @OneToMany(() => ReservationEntity, ReservationEntity => ReservationEntity.artist)
   // reservations: ReservationEntity[];

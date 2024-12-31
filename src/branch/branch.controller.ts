@@ -49,9 +49,7 @@ export class BranchController {
     private readonly CloudinaryService: CloudinaryService,
   ) {}
 
-
-  
- @Get("calendar")
+  @Get("calendar")
   @ApiQuery({
     name: "branchId",
     type: String,
@@ -126,14 +124,14 @@ export class BranchController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ACCOUNTANT)
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER, Role.ACCOUNTANT)
   @Get("count")
   async getBranchCount(): Promise<{ count: number }> {
     const count = await this.branchService.countBranches();
     return { count };
   }
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER,Role.ACCOUNTANT)
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER, Role.ACCOUNTANT)
   @Post()
   @UseInterceptors(FileInterceptor("image")) // 'file' is the name of the field in the form-data
   async createBranch(
@@ -154,10 +152,12 @@ export class BranchController {
     }
     return this.branchService.createBranch(createBranchDto, userId);
   }
-  
+
   // Endpoint to check if a branch has an artist
-  @Get('has/artist/:branchId')
-  async checkIfBranchHasArtist(@Param('branchId') branchId: string): Promise<{ hasArtist: boolean }> {
+  @Get("has/artist/:branchId")
+  async checkIfBranchHasArtist(
+    @Param("branchId") branchId: string,
+  ): Promise<{ hasArtist: boolean }> {
     const hasArtist = await this.branchService.hasArtist(branchId);
     return { hasArtist };
   }
@@ -169,8 +169,8 @@ export class BranchController {
     Role.COORDINATOR,
     Role.BRANCHMANAGER,
     Role.RECEPTIONIST,
-    Role.ARTISTMANAGER
-    ,Role.ACCOUNTANT
+    Role.ARTISTMANAGER,
+    Role.ACCOUNTANT,
   )
   @Get("sorted")
   @ApiQuery({
@@ -253,7 +253,6 @@ export class BranchController {
     return result;
   }
 
- 
   @Put(":id")
   @UseGuards(AccessTokenGuard, RolesGuard)
   @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER)

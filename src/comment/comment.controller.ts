@@ -14,28 +14,30 @@ export class CommentController {
     return this.commentService.getCommentByOrderId(orderId);
   }
 
-
   @Get()
   async getComments(@Query() dto: GetCommentsDto) {
     return this.commentService.getComments(dto);
   }
-  @Get('customer/:customerId')
+  @Get("customer/:customerId")
   async getCustomerComments(
-    @Param('customerId') customerId: string,
-    @Query() GetCommentsbycustomerDto: GetCommentsbycustomerDto
+    @Param("customerId") customerId: string,
+    @Query() GetCommentsbycustomerDto: GetCommentsbycustomerDto,
   ) {
-    return await this.commentService.getCustomerComments(customerId, GetCommentsbycustomerDto);
+    return await this.commentService.getCustomerComments(
+      customerId,
+      GetCommentsbycustomerDto,
+    );
   }
 
-  @Get('artist/:artistId')
-  @ApiOperation({ summary: 'Get comments for a specific artist' })
+  @Get("artist/:artistId")
+  @ApiOperation({ summary: "Get comments for a specific artist" })
   @ApiResponse({
     status: 200,
-    description: 'Returns paginated comments for the specified artist',
+    description: "Returns paginated comments for the specified artist",
     type: PaginatedCommentResponseDto,
   })
   async getArtistComments(
-    @Param('artistId') artistId: string,
+    @Param("artistId") artistId: string,
     @Query() getCommentsDto: GetCommentsbycustomerDto,
   ): Promise<PaginatedCommentResponseDto> {
     return this.commentService.getArtistComments(artistId, getCommentsDto);

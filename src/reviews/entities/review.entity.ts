@@ -32,13 +32,11 @@ export class ReviewEntity {
   @Column({ type: "boolean", default: false })
   orderFirstTime: boolean;
 
-
   @Column({ default: new Date() })
-  createdAt: Date; 
-  @Column({nullable:true})
+  createdAt: Date;
+  @Column({ nullable: true })
   comment_Before: string; // before after
 
-    
-  @Column({nullable:true})
+  @Column({ nullable: true })
   comment_After: string; // before after
 }

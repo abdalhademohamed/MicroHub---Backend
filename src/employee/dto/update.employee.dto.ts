@@ -12,7 +12,7 @@ import { CreateEmployeeDto } from "./create.employee.dto";
 
 export class UpdateEmployeeDto extends PartialType(CreateEmployeeDto) {
   @ApiProperty({
-    description: "The name of the employee in English", 
+    description: "The name of the employee in English",
     example: "John Doe",
     required: false,
   })
@@ -35,7 +35,6 @@ export class UpdateEmployeeDto extends PartialType(CreateEmployeeDto) {
     example: "9AM - 5PM",
     required: false,
   })
-
   @IsNumber()
   @IsOptional()
   workingHours?: number;

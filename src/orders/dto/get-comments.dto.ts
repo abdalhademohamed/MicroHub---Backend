@@ -1,10 +1,16 @@
-
-import { IsOptional, IsString, IsDateString, IsEnum, IsInt, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import {
+  IsOptional,
+  IsString,
+  IsDateString,
+  IsEnum,
+  IsInt,
+  Min,
+} from "class-validator";
+import { Type } from "class-transformer";
 
 enum SortOrder {
-  ASC = 'ASC',
-  DESC = 'DESC',
+  ASC = "ASC",
+  DESC = "DESC",
 }
 
 export class GetCommentsbycustomerDto {

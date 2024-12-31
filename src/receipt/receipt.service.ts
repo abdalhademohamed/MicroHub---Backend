@@ -37,12 +37,12 @@ export class ReceiptService {
     private readonly i18n: CustomI18nService,
 
     @InjectRepository(SharableOfferEntity)
-    private readonly sharableOfferRepository: Repository<SharableOfferEntity>
+    private readonly sharableOfferRepository: Repository<SharableOfferEntity>,
   ) {}
 
   async createReceipt(
     createReceiptDto: CreateReceiptDto,
-    userId: string
+    userId: string,
   ): Promise<ReceiptEntity> {
     const { orderId, message } = createReceiptDto;
 
@@ -59,7 +59,7 @@ export class ReceiptService {
         throw new NotFoundException(
           this.i18n.translate("test.RECEIPT.USER_NOT_FOUND", {
             args: { userId },
-          })
+          }),
         );
       }
 
@@ -75,25 +75,25 @@ export class ReceiptService {
 
       if (!order) {
         throw new NotFoundException(
-          this.i18n.translate("test.RECEIPT.ORDER_NOT_FOUND")
+          this.i18n.translate("test.RECEIPT.ORDER_NOT_FOUND"),
         );
       }
 
       const reservation = order.reservation;
       if (!reservation) {
         throw new NotFoundException(
-          `Reservation not found for Order ID ${order.id}`
+          `Reservation not found for Order ID ${order.id}`,
         );
       }
 
-      if(order.sharableOfferId){
+      if (order.sharableOfferId) {
         const sharableOffer = await this.sharableOfferRepository.findOne({
           where: { id: order.sharableOfferId },
-          relations: ['services']
+          relations: ["services"],
         });
-        services=sharableOffer.services
-      }else{
-        services=reservation.services
+        services = sharableOffer.services;
+      } else {
+        services = reservation.services;
       }
       const rootoshes = reservation.rootoshes;
       // }  // Determine the formatted services/rootoshes for the receipt
@@ -124,7 +124,7 @@ export class ReceiptService {
         }));
       } else {
         throw new NotFoundException(
-          "No services or rootoshes found for the reservation"
+          "No services or rootoshes found for the reservation",
         );
       }
 
@@ -140,7 +140,7 @@ export class ReceiptService {
         // Calculate total payment from services if no rootoshes
         const totalServicePrice = services.reduce(
           (acc, service) => acc + service.price,
-          0
+          0,
         );
         totalPayment = totalServicePrice;
 
@@ -177,11 +177,11 @@ export class ReceiptService {
       // Format the reservation time slot as "startTime-endTime"
       const startTime = new Date(reservation.start_Time).toLocaleTimeString(
         "en-GB",
-        { hour: "2-digit", minute: "2-digit" }
+        { hour: "2-digit", minute: "2-digit" },
       );
       const endTime = new Date(reservation.end_Time).toLocaleTimeString(
         "en-GB",
-        { hour: "2-digit", minute: "2-digit" }
+        { hour: "2-digit", minute: "2-digit" },
       );
       const reservationTimeSlot = `${startTime}-${endTime}`;
 
@@ -213,7 +213,7 @@ export class ReceiptService {
         throw error;
       }
       throw new InternalServerErrorException(
-        this.i18n.translate("test.RECEIPT.CREATE_FAILED")
+        this.i18n.translate("test.RECEIPT.CREATE_FAILED"),
       );
     }
   }
@@ -238,7 +238,7 @@ export class ReceiptService {
 
   async createReceiptFromReservationId(
     CreateReceiptFromReservationIdDto: CreateReceiptFromReservationIdDto,
-    userId: string
+    userId: string,
   ): Promise<ReceiptEntity> {
     const { reservationId, message } = CreateReceiptFromReservationIdDto;
     try {
@@ -254,7 +254,7 @@ export class ReceiptService {
         throw new NotFoundException(
           this.i18n.translate("test.RECEIPT.USER_NOT_FOUND", {
             args: { userId },
-          })
+          }),
         );
       }
 
@@ -270,7 +270,7 @@ export class ReceiptService {
 
       if (!order) {
         throw new NotFoundException(
-          this.i18n.translate("test.RECEIPT.ORDER_NOT_FOUND")
+          this.i18n.translate("test.RECEIPT.ORDER_NOT_FOUND"),
         );
       }
 
@@ -279,19 +279,18 @@ export class ReceiptService {
         throw new NotFoundException(
           this.i18n.translate("test.RECEIPT.RESERVATION_NOT_FOUND", {
             args: { reservationId },
-          })
+          }),
         );
       }
 
-     
-      if(order.sharableOfferId){
+      if (order.sharableOfferId) {
         const sharableOffer = await this.sharableOfferRepository.findOne({
           where: { id: order.sharableOfferId },
-          relations: ['services']
+          relations: ["services"],
         });
-        services=sharableOffer.services
-      }else{
-        services=reservation.services
+        services = sharableOffer.services;
+      } else {
+        services = reservation.services;
       }
       const rootoshes = reservation.rootoshes;
 
@@ -322,7 +321,7 @@ export class ReceiptService {
         }));
       } else {
         throw new NotFoundException(
-          "No services or rootoshes found for the reservation"
+          "No services or rootoshes found for the reservation",
         );
       }
 
@@ -342,7 +341,7 @@ export class ReceiptService {
         // Calculate total payment from services if no rootoshes and no coupon
         const totalServicePrice = services.reduce(
           (acc, service) => acc + service.price,
-          0
+          0,
         );
         totalPayment = totalServicePrice;
 
@@ -380,14 +379,14 @@ export class ReceiptService {
         {
           hour: "2-digit",
           minute: "2-digit",
-        }
+        },
       );
       const endTime = new Date(reservation.end_Time).toLocaleTimeString(
         "en-GB",
         {
           hour: "2-digit",
           minute: "2-digit",
-        }
+        },
       );
       const reservationTimeSlot = `${startTime}-${endTime}`;
 
@@ -414,7 +413,7 @@ export class ReceiptService {
       // Log the creation action in the audit log
       await this.saveAuditLogForCreateReceiptFromReservationId(
         savedReceipt,
-        userId
+        userId,
       );
 
       return savedReceipt;
@@ -424,7 +423,7 @@ export class ReceiptService {
         throw error;
       }
       throw new InternalServerErrorException(
-        this.i18n.translate("test.RECEIPT.CREATE_FAILED")
+        this.i18n.translate("test.RECEIPT.CREATE_FAILED"),
       );
     }
   }
@@ -432,7 +431,7 @@ export class ReceiptService {
   // Save the audit log for the create action
   private async saveAuditLogForCreateReceiptFromReservationId(
     receipt: ReceiptEntity,
-    userId: string
+    userId: string,
   ) {
     const auditLog = new AuditLogEntity();
     auditLog.tableName = "Receipt"; // Specify the table name
@@ -454,9 +453,9 @@ export class ReceiptService {
 
   async getReceiptByOrderId(orderId: string): Promise<ReceiptEntity> {
     const receipt = await this.receiptRepository.findOne({
-      where: { 
+      where: {
         order: { id: orderId },
-        isRefunded: false  // Add this condition
+        isRefunded: false, // Add this condition
       },
     });
 
@@ -464,14 +463,16 @@ export class ReceiptService {
       throw new NotFoundException(
         this.i18n.translate("test.RECEIPT.NOT_FOUND_FOR_ORDER", {
           args: { orderId },
-        })
+        }),
       );
     }
 
     return receipt;
   }
 
-  async getReceiptByReservationId(reservationId: string): Promise<ReceiptEntity> {
+  async getReceiptByReservationId(
+    reservationId: string,
+  ): Promise<ReceiptEntity> {
     const order = await this.orderRepository.findOne({
       where: { reservation: { id: reservationId } },
       relations: [
@@ -485,14 +486,14 @@ export class ReceiptService {
       throw new NotFoundException(
         this.i18n.translate("test.RECEIPT.ORDER_NOT_FOUND_FOR_RESERVATION", {
           args: { reservationId },
-        })
+        }),
       );
     }
 
     const receipt = await this.receiptRepository.findOne({
-      where: { 
+      where: {
         order: { id: order.id },
-        isRefunded: false  // Add this condition
+        isRefunded: false, // Add this condition
       },
     });
 
@@ -500,7 +501,7 @@ export class ReceiptService {
       throw new NotFoundException(
         this.i18n.translate("test.RECEIPT.NOT_FOUND_FOR_ORDER", {
           args: { orderId: order.id },
-        })
+        }),
       );
     }
 
@@ -559,7 +560,9 @@ export class ReceiptService {
     };
   }
 
-  async getRefundedReceiptByReservationId(reservationId: string): Promise<ReceiptEntity[]> {
+  async getRefundedReceiptByReservationId(
+    reservationId: string,
+  ): Promise<ReceiptEntity[]> {
     try {
       // First find the order associated with the reservation
       const order = await this.orderRepository.findOne({
@@ -575,7 +578,7 @@ export class ReceiptService {
         throw new NotFoundException(
           this.i18n.translate("test.RECEIPT.ORDER_NOT_FOUND_FOR_RESERVATION", {
             args: { reservationId },
-          })
+          }),
         );
       }
 
@@ -583,37 +586,31 @@ export class ReceiptService {
       const refundedReceipts = await this.receiptRepository.find({
         where: {
           order: { id: order.id },
-          isRefunded: true
+          isRefunded: true,
         },
-        relations: [
-          "order",
-          "order.customer",
-          "createdBy"
-        ],
+        relations: ["order", "order.customer", "createdBy"],
         order: {
-          generatedAt: 'DESC' // Most recent first
-        }
+          generatedAt: "DESC", // Most recent first
+        },
       });
 
       if (!refundedReceipts || refundedReceipts.length === 0) {
         throw new NotFoundException(
           this.i18n.translate("test.RECEIPT.NO_REFUND_RECEIPTS_FOUND", {
             args: { orderId: order.id },
-          })
+          }),
         );
       }
 
       return refundedReceipts; // Return the entities directly without transformation
-
     } catch (error) {
       console.error("Error fetching refunded receipts:", error);
       if (error instanceof NotFoundException) {
         throw error;
       }
       throw new InternalServerErrorException(
-        this.i18n.translate("test.RECEIPT.FETCH_FAILED")
+        this.i18n.translate("test.RECEIPT.FETCH_FAILED"),
       );
     }
   }
-  
 }

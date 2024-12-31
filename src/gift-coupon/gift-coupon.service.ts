@@ -36,11 +36,11 @@ export class GiftCouponService {
     @InjectRepository(ReceiptEntity)
     private readonly receiptRepository: Repository<ReceiptEntity>,
     @InjectRepository(UserEntity)
-    private readonly userRepository: Repository<UserEntity>,  
+    private readonly userRepository: Repository<UserEntity>,
   ) {}
 
   async createGiftCoupon(
-    createGiftCouponDto: CreateGiftCouponDto
+    createGiftCouponDto: CreateGiftCouponDto,
   ): Promise<GiftCouponEntity> {
     const { orderId, customerId } = createGiftCouponDto;
 
@@ -57,7 +57,7 @@ export class GiftCouponService {
 
       if (!sharableOffer) {
         throw new NotFoundException(
-          this.i18n.translate("test.GIFT_COUPON.SHARABLE_OFFER_NOT_FOUND")
+          this.i18n.translate("test.GIFT_COUPON.SHARABLE_OFFER_NOT_FOUND"),
         );
       }
 
@@ -67,17 +67,17 @@ export class GiftCouponService {
 
       if (!customer) {
         throw new NotFoundException(
-          this.i18n.translate("test.GIFT_COUPON.CUSTOMER_NOT_FOUND")
+          this.i18n.translate("test.GIFT_COUPON.CUSTOMER_NOT_FOUND"),
         );
       }
       // Get the IDs of services in the order
       const orderServiceIds = Order.reservation.services.map(
-        (service) => service.id
+        (service) => service.id,
       );
 
       // Filter out services that are in the order
       const services = sharableOffer.services.filter(
-        (service) => !orderServiceIds.includes(service.id)
+        (service) => !orderServiceIds.includes(service.id),
       );
 
       const giftCoupon = this.giftCouponRepository.create({
@@ -101,7 +101,7 @@ export class GiftCouponService {
         throw error;
       }
       throw new InternalServerErrorException(
-        this.i18n.translate("test.GIFT_COUPON.CREATE_FAILED")
+        this.i18n.translate("test.GIFT_COUPON.CREATE_FAILED"),
       );
     }
   }
@@ -114,7 +114,7 @@ export class GiftCouponService {
 
     if (!giftCoupon) {
       throw new NotFoundException(
-        this.i18n.translate("test.GIFT_COUPON.NOT_FOUND")
+        this.i18n.translate("test.GIFT_COUPON.NOT_FOUND"),
       );
     }
 
@@ -122,18 +122,18 @@ export class GiftCouponService {
 
     if (giftCoupon.isRedeemed) {
       throw new ConflictException(
-        this.i18n.translate("test.GIFT_COUPON.ALREADY_REDEEMED")
+        this.i18n.translate("test.GIFT_COUPON.ALREADY_REDEEMED"),
       );
     }
 
     if (giftCoupon.isCanceled) {
       throw new ConflictException(
-        this.i18n.translate("test.GIFT_COUPON.ALREADY_CANCELED")
+        this.i18n.translate("test.GIFT_COUPON.ALREADY_CANCELED"),
       );
     }
     if (giftCoupon.endDateTime && giftCoupon.endDateTime < now) {
       throw new ConflictException(
-        this.i18n.translate("test.GIFT_COUPON.EXPIRED")
+        this.i18n.translate("test.GIFT_COUPON.EXPIRED"),
       );
     }
 
@@ -162,7 +162,7 @@ export class GiftCouponService {
       ownedBy: giftCoupon.ownedBy,
       services: giftCoupon.services,
       leftServices: giftCoupon.Leftservices, // Now only returns unreserved services
-      usedServices:giftCoupon.Usedservices,
+      usedServices: giftCoupon.Usedservices,
       totalServicesCount: giftCoupon.totalServicesCount,
       remainingServicesCount: giftCoupon.remainingServicesCount,
       usedServicesCount: giftCoupon.usedServicesCount,
@@ -178,7 +178,7 @@ export class GiftCouponService {
 
     if (!giftCoupon) {
       throw new NotFoundException(
-        this.i18n.translate("test.GIFT_COUPON.NOT_FOUND")
+        this.i18n.translate("test.GIFT_COUPON.NOT_FOUND"),
       );
     }
 
@@ -186,18 +186,18 @@ export class GiftCouponService {
 
     if (giftCoupon.isRedeemed) {
       throw new ConflictException(
-        this.i18n.translate("test.GIFT_COUPON.ALREADY_REDEEMED")
+        this.i18n.translate("test.GIFT_COUPON.ALREADY_REDEEMED"),
       );
     }
     if (giftCoupon.isCanceled) {
       throw new ConflictException(
-        this.i18n.translate("test.GIFT_COUPON.ALREADY_CANCELED")
+        this.i18n.translate("test.GIFT_COUPON.ALREADY_CANCELED"),
       );
     }
 
     if (giftCoupon.endDateTime && giftCoupon.endDateTime < now) {
       throw new ConflictException(
-        this.i18n.translate("test.GIFT_COUPON.EXPIRED")
+        this.i18n.translate("test.GIFT_COUPON.EXPIRED"),
       );
     }
 
@@ -243,7 +243,7 @@ export class GiftCouponService {
       services: giftCoupon.services,
       leftServices: giftCoupon.Leftservices, // Now only returns unreserved services
       // reservedServices, // Add reserved services to response
-      usedServices:giftCoupon.Usedservices,
+      usedServices: giftCoupon.Usedservices,
       totalServicesCount: giftCoupon.totalServicesCount,
       remainingServicesCount: giftCoupon.remainingServicesCount,
       usedServicesCount: giftCoupon.usedServicesCount,
@@ -253,7 +253,7 @@ export class GiftCouponService {
 
   async updateGiftCouponServices(
     couponId: string,
-    serviceIdsToRemove: string[]
+    serviceIdsToRemove: string[],
   ): Promise<GiftCouponEntity> {
     const giftCoupon = await this.giftCouponRepository.findOne({
       where: { id: couponId },
@@ -262,7 +262,7 @@ export class GiftCouponService {
 
     if (!giftCoupon) {
       throw new NotFoundException(
-        this.i18n.translate("test.GIFT_COUPON.NOT_FOUND")
+        this.i18n.translate("test.GIFT_COUPON.NOT_FOUND"),
       );
     }
 
@@ -270,13 +270,13 @@ export class GiftCouponService {
 
     if (giftCoupon.isRedeemed) {
       throw new ConflictException(
-        this.i18n.translate("test.GIFT_COUPON.CANNOT_UPDATE_REDEEMED")
+        this.i18n.translate("test.GIFT_COUPON.CANNOT_UPDATE_REDEEMED"),
       );
     }
 
     if (giftCoupon.endDateTime && giftCoupon.endDateTime < now) {
       throw new ConflictException(
-        this.i18n.translate("test.GIFT_COUPON.EXPIRED")
+        this.i18n.translate("test.GIFT_COUPON.EXPIRED"),
       );
     }
 
@@ -292,7 +292,7 @@ export class GiftCouponService {
       if (!order) {
         throw new NotFoundException("Order not found for this coupon");
       }
-      
+
       // Initialize arrays if they don't exist
       if (!giftCoupon.Leftservices) {
         giftCoupon.Leftservices = [...giftCoupon.services];
@@ -302,14 +302,14 @@ export class GiftCouponService {
       }
       // Find services to be moved to used services
       const servicesToMove = giftCoupon.services.filter((service) =>
-        serviceIdsToRemove.includes(service.id)
+        serviceIdsToRemove.includes(service.id),
       );
 
       // Update Usedservices array - add newly used services
       giftCoupon.Usedservices = [...giftCoupon.Usedservices, ...servicesToMove];
       // Update Leftservices array - remove used services
       giftCoupon.Leftservices = giftCoupon.Leftservices.filter(
-        (service) => !serviceIdsToRemove.includes(service.id)
+        (service) => !serviceIdsToRemove.includes(service.id),
       );
 
       // // Update services list
@@ -358,7 +358,6 @@ export class GiftCouponService {
       giftCoupon.usedServicesCount += servicesRemovedCount;
       giftCoupon.remainingServicesCount -= servicesRemovedCount; // Update remaining count
 
-
       if (giftCoupon.usedServicesCount >= giftCoupon.totalServicesCount) {
         giftCoupon.isRedeemed = true;
         giftCoupon.redeemedAt = now;
@@ -369,7 +368,7 @@ export class GiftCouponService {
     } catch (error) {
       console.error("Error updating gift coupon:", error);
       throw new InternalServerErrorException(
-        this.i18n.translate("test.GIFT_COUPON.UPDATE_FAILED")
+        this.i18n.translate("test.GIFT_COUPON.UPDATE_FAILED"),
       );
     }
   }
@@ -378,7 +377,7 @@ export class GiftCouponService {
     page: number = 1,
     limit: number = 10,
     fromDate?: string,
-    toDate?: string
+    toDate?: string,
   ) {
     try {
       const take = Math.max(1, Number(limit));
@@ -425,7 +424,7 @@ export class GiftCouponService {
       };
     } catch (error) {
       throw new InternalServerErrorException(
-        this.i18n.translate("test.GIFT_COUPON.FETCH_FAILED")
+        this.i18n.translate("test.GIFT_COUPON.FETCH_FAILED"),
       );
     }
   }
@@ -434,70 +433,70 @@ export class GiftCouponService {
     try {
       const giftCoupon = await this.giftCouponRepository.findOne({
         where: { id: couponId },
-        relations: [
-          "sharableOffer",
-          "sharableOffer.services",
-          "ownedBy"
-        ],
+        relations: ["sharableOffer", "sharableOffer.services", "ownedBy"],
       });
 
       if (!giftCoupon) {
         throw new NotFoundException(
-          this.i18n.translate("test.GIFT_COUPON.NOT_FOUND")
+          this.i18n.translate("test.GIFT_COUPON.NOT_FOUND"),
         );
       }
 
       if (giftCoupon.isCanceled) {
         throw new ConflictException(
-          this.i18n.translate("test.GIFT_COUPON.ALREADY_CANCELED")
+          this.i18n.translate("test.GIFT_COUPON.ALREADY_CANCELED"),
         );
       }
 
       if (giftCoupon.isRedeemed) {
         throw new ConflictException(
-          this.i18n.translate("test.GIFT_COUPON.CANNOT_CANCEL_REDEEMED")
+          this.i18n.translate("test.GIFT_COUPON.CANNOT_CANCEL_REDEEMED"),
         );
       }
 
       // Calculate refund details
       const sharableOfferServices = giftCoupon.sharableOffer.services;
       const unusedServices = giftCoupon.Leftservices || [];
-      
-      const refundDetails = unusedServices.map(unusedService => {
+
+      const refundDetails = unusedServices.map((unusedService) => {
         const originalService = sharableOfferServices.find(
-          service => service.id === unusedService.id
+          (service) => service.id === unusedService.id,
         );
 
         if (!originalService) {
           throw new NotFoundException(
-            `Original service not found for ID: ${unusedService.id}`
+            `Original service not found for ID: ${unusedService.id}`,
           );
         }
 
         const originalPrice = Number(originalService.price);
-        const discountPercentage = Number(giftCoupon.sharableOffer.discountPercentage);
-        const discountMultiplier = 1 - (discountPercentage / 100);
-        const discountedPrice = Number((originalPrice * discountMultiplier).toFixed(2));
+        const discountPercentage = Number(
+          giftCoupon.sharableOffer.discountPercentage,
+        );
+        const discountMultiplier = 1 - discountPercentage / 100;
+        const discountedPrice = Number(
+          (originalPrice * discountMultiplier).toFixed(2),
+        );
 
         return {
           serviceId: unusedService.id,
           serviceName: {
             arabic: unusedService.arabic_Name,
-            english: unusedService.english_Name
+            english: unusedService.english_Name,
           },
           originalPrice: originalPrice,
           discountPercentage: discountPercentage,
           discountedPrice: discountedPrice,
           refundAmount: discountedPrice,
-          duration: originalService.duration_Mins
-
+          duration: originalService.duration_Mins,
         };
       });
 
-      const totalRefundAmount = Number(refundDetails.reduce(
-        (sum, service) => sum + service.refundAmount,
-        0
-      ).toFixed(2));
+      const totalRefundAmount = Number(
+        refundDetails
+          .reduce((sum, service) => sum + service.refundAmount, 0)
+          .toFixed(2),
+      );
 
       // Create receipt
       const receipt = this.receiptRepository.create({
@@ -506,12 +505,12 @@ export class GiftCouponService {
         discount: giftCoupon.sharableOffer.discountPercentage,
         message: `Refund for canceled gift coupon: ${giftCoupon.couponCode}`,
         reservationTimeSlot: new Date().toISOString(),
-        paymentForServices: refundDetails.map(service => ({
+        paymentForServices: refundDetails.map((service) => ({
           name: service.serviceName.english,
           duration: service.duration,
-          price: service.refundAmount.toString()
+          price: service.refundAmount.toString(),
         })),
-        createdBy: await this.userRepository.findOne({ where: { id: userId } })
+        createdBy: await this.userRepository.findOne({ where: { id: userId } }),
       });
 
       // Save receipt
@@ -521,7 +520,7 @@ export class GiftCouponService {
       giftCoupon.isCanceled = true;
       giftCoupon.canceledAt = new Date();
       giftCoupon.totalRefundAmount = totalRefundAmount;
-      
+
       const updatedCoupon = await this.giftCouponRepository.save(giftCoupon);
 
       return {
@@ -531,7 +530,7 @@ export class GiftCouponService {
         customer: {
           id: giftCoupon.ownedBy.id,
           name: giftCoupon.ownedBy.fullName,
-          phoneNumber: giftCoupon.ownedBy.phoneNumber
+          phoneNumber: giftCoupon.ownedBy.phoneNumber,
         },
         refundDetails: refundDetails,
         totalRefundAmount: totalRefundAmount,
@@ -539,15 +538,14 @@ export class GiftCouponService {
           id: savedReceipt.id,
           totalPayment: savedReceipt.totalPayment,
           generatedAt: savedReceipt.generatedAt,
-          services: savedReceipt.paymentForServices
+          services: savedReceipt.paymentForServices,
         },
-        status: 'canceled'
+        status: "canceled",
       };
-
     } catch (error) {
       console.error("Error canceling gift coupon:", error);
       throw new InternalServerErrorException(
-        this.i18n.translate("test.GIFT_COUPON.CANCEL_FAILED")
+        this.i18n.translate("test.GIFT_COUPON.CANCEL_FAILED"),
       );
     }
   }

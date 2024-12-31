@@ -14,10 +14,7 @@ import { EmployeeModule } from "./employee/employee.module";
 import { PostionModule } from "./postion/postion.module";
 import { CloudinaryModule } from "./cloudinary/cloudinary.module";
 import { CloudinaryProvider } from "./cloudinary/cloudinary/cloudinary.provider";
-import {
-  HeaderResolver,
-  I18nModule,
-} from "nestjs-i18n";
+import { HeaderResolver, I18nModule } from "nestjs-i18n";
 import { CustomerModule } from "./customer/customer.module";
 import * as path from "path";
 import { UserEntity } from "./user/entities/user.entity";
@@ -55,8 +52,8 @@ import { SlotModule } from "./slots/slot.module";
 import { AnalysisModule } from "./analysis/analysis.module";
 import { AnalysisEntity } from "./analysis/entities/analysis.entity";
 import { EventEmitterModule } from "@nestjs/event-emitter";
-import { SharableOfferModule } from './sharable-offer/sharable-offer.module';
-import { GiftCouponModule } from './gift-coupon/gift-coupon.module';
+import { SharableOfferModule } from "./sharable-offer/sharable-offer.module";
+import { GiftCouponModule } from "./gift-coupon/gift-coupon.module";
 import { GiftCouponEntity } from "./gift-coupon/entities/gift-coupon.entity";
 import { SharableOfferEntity } from "./sharable-offer/entities/sharable-offer.entity";
 import { ActionEntity } from "./action/entities/action.entity";
@@ -67,7 +64,7 @@ import { TransactionModule } from "./transaction/transaction.module";
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: '.env',
+      envFilePath: ".env",
       isGlobal: true,
     }),
 
@@ -121,13 +118,11 @@ import { TransactionModule } from "./transaction/transaction.module";
       fallbackLanguage: "en",
       loaderOptions: {
         path: path.join(__dirname, "/../src/i18n/"),
-      // //////////////////////////////////////////////////////////////////
-      
+        // //////////////////////////////////////////////////////////////////
+
         watch: true,
       },
-      resolvers: [
-        new HeaderResolver(['language']),
-      ],
+      resolvers: [new HeaderResolver(["language"])],
     }),
     AuthModule,
     UserModule,
@@ -153,13 +148,13 @@ import { TransactionModule } from "./transaction/transaction.module";
     SlotModule,
     AnalysisModule,
     EventEmitterModule.forRoot({ global: true }),
-    SharableOfferModule, 
+    SharableOfferModule,
     GiftCouponModule,
     ActionModule,
     TransactionModule,
   ],
   controllers: [AppController],
-  providers: [AppService, CloudinaryProvider], 
+  providers: [AppService, CloudinaryProvider],
 })
 export class AppModule {}
-console.log(process.env.NODE_ENV)
+console.log(process.env.NODE_ENV);

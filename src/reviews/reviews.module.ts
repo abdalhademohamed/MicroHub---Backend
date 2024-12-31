@@ -23,9 +23,9 @@ import { CommentEntity } from "../comment/entities/comment.entity";
       AuditLogEntity,
       CommentEntity,
     ]), // Add OrderEntity here
-    NotificationModule
+    NotificationModule,
   ],
   controllers: [ReviewsController],
-  providers: [ReviewsService,CustomI18nService],
+  providers: [ReviewsService, CustomI18nService],
 })
 export class ReviewsModule {}

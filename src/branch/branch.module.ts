@@ -21,11 +21,10 @@ import { CustomI18nService } from "../common/custom.18n.service";
       ReservationEntity,
       AuditLogEntity,
       UserEntity,
-      EmployeeEntity
+      EmployeeEntity,
     ]),
   ],
   controllers: [BranchController],
-  providers: [BranchService, CloudinaryService, UserService,    CustomI18nService,
-  ],
+  providers: [BranchService, CloudinaryService, UserService, CustomI18nService],
 })
 export class BranchModule {}

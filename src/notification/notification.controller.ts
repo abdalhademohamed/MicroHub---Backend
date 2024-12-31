@@ -85,8 +85,16 @@ export class NotificationController {
 
   @Post("save")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER, Role.ARTISTMANAGER, Role.RECEPTIONIST,Role.ARTIST,Role.ACCOUNTANT,Role.ADMIN,Role.COORDINATOR)
-
+  @Roles(
+    Role.SUPERADMIN,
+    Role.BRANCHMANAGER,
+    Role.ARTISTMANAGER,
+    Role.RECEPTIONIST,
+    Role.ARTIST,
+    Role.ACCOUNTANT,
+    Role.ADMIN,
+    Role.COORDINATOR,
+  )
   @ApiOperation({ summary: "Save FCM token for a user" })
   @ApiBody({
     description: "FCM token to be saved",

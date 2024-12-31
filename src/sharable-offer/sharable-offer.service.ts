@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from "@nestjs/common";
 import { CreateSharableOfferDto } from "./dto/create-sharable-offer.dto";
 import { UpdateSharableOfferDto } from "./dto/update-sharable-offer.dto";
 import { SharableOfferEntity } from "./entities/sharable-offer.entity";
@@ -27,7 +32,7 @@ export class SharableOfferService {
   ) {}
 
   async createSharableOffer(
-    createSharableOfferDto: CreateSharableOfferDto
+    createSharableOfferDto: CreateSharableOfferDto,
   ): Promise<SharableOfferEntity> {
     const { serviceIds, branchIds, ...offerData } = createSharableOfferDto;
 
@@ -37,7 +42,7 @@ export class SharableOfferService {
 
     if (services.length === 0) {
       throw new NotFoundException(
-        this.i18n.translate('test.SHARABLE_OFFER.SERVICES_NOT_FOUND')
+        this.i18n.translate("test.SHARABLE_OFFER.SERVICES_NOT_FOUND"),
       );
     }
 
@@ -47,7 +52,9 @@ export class SharableOfferService {
 
     if (!branches || branches.length === 0) {
       throw new NotFoundException(
-        this.i18n.translate('test.SHARABLE_OFFER.BRANCHES_NOT_FOUND', { args: { branchIds } })
+        this.i18n.translate("test.SHARABLE_OFFER.BRANCHES_NOT_FOUND", {
+          args: { branchIds },
+        }),
       );
     }
 
@@ -58,12 +65,12 @@ export class SharableOfferService {
 
     if (offerStartDay < currentday) {
       throw new BadRequestException(
-        this.i18n.translate('test.SHARABLE_OFFER.INVALID_START_DATE')
+        this.i18n.translate("test.SHARABLE_OFFER.INVALID_START_DATE"),
       );
     }
     if (offerStartDay >= offerEndDay) {
       throw new BadRequestException(
-        this.i18n.translate('test.SHARABLE_OFFER.INVALID_DATE_RANGE')
+        this.i18n.translate("test.SHARABLE_OFFER.INVALID_DATE_RANGE"),
       );
     }
 
@@ -82,12 +89,12 @@ export class SharableOfferService {
       return await this.sharableOfferRepository.save(sharableOffer);
     } catch (error) {
       throw new InternalServerErrorException(
-        this.i18n.translate('test.SHARABLE_OFFER.CREATE_FAILED')
+        this.i18n.translate("test.SHARABLE_OFFER.CREATE_FAILED"),
       );
     }
   }
 
-  async findActiveSharableOffer(): Promise<SharableOfferEntity[]> { 
+  async findActiveSharableOffer(): Promise<SharableOfferEntity[]> {
     const now = new Date();
     return await this.sharableOfferRepository.find({
       where: {
@@ -113,17 +120,17 @@ export class SharableOfferService {
     return { total, active };
   }
 
-
   async updateIsActive(
     id: string,
-    isActive: boolean  ): Promise<SharableOfferEntity> {
+    isActive: boolean,
+  ): Promise<SharableOfferEntity> {
     // Fetch the offer by ID
     const offer = await this.sharableOfferRepository.findOneBy({ id });
 
     // Handle cases where the offer is not found
     if (!offer) {
       throw new NotFoundException(
-        this.i18n.translate('test.SHARABLE_OFFER.NOT_FOUND', { args: { id } })
+        this.i18n.translate("test.SHARABLE_OFFER.NOT_FOUND", { args: { id } }),
       );
     }
 
@@ -134,18 +141,15 @@ export class SharableOfferService {
       return await this.sharableOfferRepository.save(offer);
     } catch (error) {
       throw new InternalServerErrorException(
-        this.i18n.translate('test.SHARABLE_OFFER.UPDATE_FAILED')
+        this.i18n.translate("test.SHARABLE_OFFER.UPDATE_FAILED"),
       );
     }
   }
 
-
-
-
   async update(
     sharableOfferId: string,
     UpdateSharableOfferDto: UpdateSharableOfferDto,
-    userId: string
+    userId: string,
   ): Promise<SharableOfferEntity> {
     const sharableOffer = await this.sharableOfferRepository.findOne({
       where: { id: sharableOfferId },
@@ -153,11 +157,14 @@ export class SharableOfferService {
 
     if (!sharableOffer) {
       throw new NotFoundException(
-        this.i18n.translate('test.SHARABLE_OFFER.NOT_FOUND', { args: { id: sharableOfferId } })
+        this.i18n.translate("test.SHARABLE_OFFER.NOT_FOUND", {
+          args: { id: sharableOfferId },
+        }),
       );
     }
 
-    const { serviceIds, branchIds, ...sharableOfferData } = UpdateSharableOfferDto;
+    const { serviceIds, branchIds, ...sharableOfferData } =
+      UpdateSharableOfferDto;
 
     // Fetch new services and branches if provided, otherwise keep existing ones
     const services = serviceIds
@@ -168,7 +175,11 @@ export class SharableOfferService {
       : sharableOffer.branches;
 
     // Update offer entity with new data
-    Object.assign(sharableOffer, sharableOfferData, { services, branches, updatedBy: userId });
+    Object.assign(sharableOffer, sharableOfferData, {
+      services,
+      branches,
+      updatedBy: userId,
+    });
 
     let updatedOffer: SharableOfferEntity;
 
@@ -177,7 +188,7 @@ export class SharableOfferService {
         // Save the updated offer
         updatedOffer = await transactionalEntityManager.save(
           SharableOfferEntity,
-          sharableOffer
+          sharableOffer,
         );
 
         // Create an audit log entry for the update
@@ -188,9 +199,12 @@ export class SharableOfferService {
         auditLog.performedBy = userId;
 
         // Collect changes details
-        const oldOffer = await transactionalEntityManager.findOne(SharableOfferEntity, {
-          where: { id: updatedOffer.id },
-        });
+        const oldOffer = await transactionalEntityManager.findOne(
+          SharableOfferEntity,
+          {
+            where: { id: updatedOffer.id },
+          },
+        );
         const changedColumns = Object.keys(sharableOfferData);
         const changesDetails = {};
 
@@ -222,7 +236,7 @@ export class SharableOfferService {
       } catch (error) {
         console.error("Error updating offer and audit log:", error);
         throw new InternalServerErrorException(
-          this.i18n.translate('test.SHARABLE_OFFER.UPDATE_FAILED')
+          this.i18n.translate("test.SHARABLE_OFFER.UPDATE_FAILED"),
         );
       }
     });

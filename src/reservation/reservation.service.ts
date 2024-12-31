@@ -506,7 +506,7 @@ export class ReservationService {
         const orderId = await this.OrdersService.createOrderForRootosh(
           reservation.id,
           userId,
-          body.paymentId,
+          body.paymentId
         );
 
         if (!orderId) {

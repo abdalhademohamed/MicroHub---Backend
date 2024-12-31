@@ -30,8 +30,6 @@ export class SharableOfferEntity {
   @Column({ type: "decimal", precision: 5, scale: 2 })
   discountPercentage: number;
 
-
-
   @ManyToMany(() => ServiceEntity)
   @JoinTable()
   services: ServiceEntity[];
@@ -40,7 +38,6 @@ export class SharableOfferEntity {
   @JoinTable()
   branches: BranchEntity[];
 
- 
   // Relation to the gift coupons associated with this sharable offer
   @OneToMany(() => GiftCouponEntity, (coupon) => coupon.sharableOffer)
   giftCoupons: GiftCouponEntity[];
@@ -51,8 +48,7 @@ export class SharableOfferEntity {
   @DeleteDateColumn({ name: "deleted_at", nullable: true })
   deletedAt?: Date;
 
-   // Add a new column to track how many times the offer has been used
-   @Column({ type: "int", default: 0 }) // Default to 0 initially
-   usageCount: number;
+  // Add a new column to track how many times the offer has been used
+  @Column({ type: "int", default: 0 }) // Default to 0 initially
+  usageCount: number;
 }
-

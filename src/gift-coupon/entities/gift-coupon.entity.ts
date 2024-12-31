@@ -26,7 +26,7 @@ export class GiftCouponEntity {
   @ManyToOne(
     () => SharableOfferEntity,
     (SharableOfferEntity) => SharableOfferEntity.giftCoupons,
-    { onDelete: "CASCADE" }
+    { onDelete: "CASCADE" },
   )
   @JoinColumn({ name: "sharableOfferId" })
   sharableOffer: SharableOfferEntity;
@@ -61,7 +61,7 @@ export class GiftCouponEntity {
     months_To_Expire: number;
   }[]; // List of services associated with this coupon
 
-  @Column("jsonb", { nullable: true ,default:[]})
+  @Column("jsonb", { nullable: true, default: [] })
   Leftservices: {
     id: string;
     name: string;
@@ -75,7 +75,7 @@ export class GiftCouponEntity {
     months_To_Expire: number;
   }[]; // List of services associated with this coupon
 
-  @Column("jsonb", { nullable: true ,default:[]})
+  @Column("jsonb", { nullable: true, default: [] })
   Usedservices: {
     id: string;
     name: string;
@@ -98,13 +98,12 @@ export class GiftCouponEntity {
   @Column({ type: "timestamp", nullable: true })
   endDateTime: Date; // End date and time for the coupon validity
 
-  @Column('jsonb', { nullable: true, default: [] })
+  @Column("jsonb", { nullable: true, default: [] })
   usageHistory: {
     customer: {
       id: string;
       name: string;
       phoneNumber: string;
-   
     };
     services: {
       id: string;
@@ -114,7 +113,7 @@ export class GiftCouponEntity {
     usedAt: Date;
   }[];
 
-  @Column({ type: "boolean", default: false ,nullable: true})
+  @Column({ type: "boolean", default: false, nullable: true })
   isCanceled: boolean; // Indicates whether the coupon has been canceled
 
   @Column({ type: "timestamp", nullable: true })
@@ -128,6 +127,6 @@ export class GiftCouponEntity {
   //   reservedAt: Date
 
   // }[];
-  @Column({default:0})
+  @Column({ default: 0 })
   totalRefundAmount: number;
 }

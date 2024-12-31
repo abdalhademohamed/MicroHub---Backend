@@ -13,6 +13,6 @@ import { CustomI18nService } from "../common/custom.18n.service";
     TypeOrmModule.forFeature([ServiceEntity, UserEntity, AuditLogEntity]),
   ],
   controllers: [ServiceController],
-  providers: [ServiceService, CloudinaryService,CustomI18nService],
+  providers: [ServiceService, CloudinaryService, CustomI18nService],
 })
 export class ServiceModule {}

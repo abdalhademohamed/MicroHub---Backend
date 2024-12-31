@@ -26,7 +26,6 @@ import { CustomI18nService } from "../common/custom.18n.service";
 import { ActionModule } from "../action/action.module";
 import { TransactionModule } from "src/transaction/transaction.module";
 
-
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -59,6 +58,6 @@ import { TransactionModule } from "src/transaction/transaction.module";
     CloudinaryService, // Add OrdersService here
     CustomI18nService,
   ],
-  exports: [ReservationService],  // Export ReservationService here
+  exports: [ReservationService], // Export ReservationService here
 })
 export class ReservationModule {}

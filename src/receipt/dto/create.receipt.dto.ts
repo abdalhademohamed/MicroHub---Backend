@@ -21,6 +21,4 @@ export class CreateReceiptDto {
   @IsOptional()
   @IsString()
   message?: string;
-
- 
 }

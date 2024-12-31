@@ -33,7 +33,7 @@ export class WorkingBranchController {
       branchId,
       createWorkingBranchDto,
     );
-  } 
+  }
 
   @Get()
   @ApiOperation({
@@ -53,7 +53,7 @@ export class WorkingBranchController {
   })
   async findAll(
     @Query("branchId") branchId?: string,
-  ):Promise<Omit<WorkingBranchEntity, 'branch'>[]> {
+  ): Promise<Omit<WorkingBranchEntity, "branch">[]> {
     return this.workingBranchService.findAll(branchId);
   }
 
