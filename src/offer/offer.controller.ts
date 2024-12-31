@@ -43,29 +43,43 @@ export class OfferController {
       throw new BadRequestException("User not authenticated");
     }
     return await this.offerService.create(createOfferDto, userId);
-
   }
-  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN,Role.ACCOUNTANT)
-  @Get('count') // GET request to /sharable-offers/count
-  @ApiResponse({ status: 200, description: 'Get the count of sharable offers.' })
+  @Roles(Role.SUPERADMIN, Role.ACCOUNTANT)
+  @Get("count") // GET request to /sharable-offers/count
+  @ApiResponse({
+    status: 200,
+    description: "Get the count of sharable offers.",
+  })
   async getSharableOffersCount(): Promise<{ total: number; active: number }> {
     return await this.offerService.countOffers();
   }
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ARTISTMANAGER,Role.ACCOUNTANT)
-@Get('active') // Route to get active sharable offers
-async findActiveSharableOffer(
-  @Query('branchId') branchId?: string, // Accept branchId as an optional query parameter
-): Promise<OfferEntity[]> {
-  return this.offerService.findActiveOffers(branchId);
-} 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  @Roles(
+    Role.SUPERADMIN,
+    Role.COORDINATOR,
+    Role.RECEPTIONIST,
+    Role.ARTISTMANAGER,
+    Role.ACCOUNTANT,
+  )
+  @Get("active") // Route to get active sharable offers
+  async findActiveSharableOffer(
+    @Query("branchId") branchId?: string, // Accept branchId as an optional query parameter
+  ): Promise<OfferEntity[]> {
+    return this.offerService.findActiveOffers(branchId);
+  }
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ARTISTMANAGER,Role.ACCOUNTANT)
+  @Roles(
+    Role.SUPERADMIN,
+    Role.COORDINATOR,
+    Role.RECEPTIONIST,
+    Role.ARTISTMANAGER,
+    Role.ACCOUNTANT,
+  )
   @Get()
   async findAll(
     @Query("page") page: string = "1",
@@ -78,18 +92,15 @@ async findActiveSharableOffer(
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ACCOUNTANT)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST, Role.ACCOUNTANT)
   @Get(":id")
   async findOne(@Param("id") id: string): Promise<OfferEntity> {
     return await this.offerService.findOne(id);
   }
 
-
-
-
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN,Role.ACCOUNTANT)
+  @Roles(Role.SUPERADMIN, Role.ACCOUNTANT)
   @Put(":offerId")
   async update(
     @Request() req: any, // Request object to access the user

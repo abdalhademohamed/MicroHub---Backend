@@ -51,7 +51,10 @@ export class BranchEntity {
   @OneToMany(() => SlotsEntity, (entity) => entity.branch)
   slots: SlotsEntity[];
 
-  @ManyToMany(() => SharableOfferEntity, (SharableOfferEntity) => SharableOfferEntity.branches)
+  @ManyToMany(
+    () => SharableOfferEntity,
+    (SharableOfferEntity) => SharableOfferEntity.branches,
+  )
   sharableOffers: SharableOfferEntity[];
   @Column({ name: "created_by", nullable: true })
   createdBy: string;

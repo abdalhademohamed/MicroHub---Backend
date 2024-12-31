@@ -1,6 +1,12 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
-import { IsOptional, IsInt, IsEnum, IsDateString, IsString } from "class-validator";
+import {
+  IsOptional,
+  IsInt,
+  IsEnum,
+  IsDateString,
+  IsString,
+} from "class-validator";
 import { OrderStatus } from "../utils/order.status.enum";
 
 export class FindOrdersByDayDto {
@@ -14,7 +20,6 @@ export class FindOrdersByDayDto {
   @IsInt()
   limit: number = 10;
 
-
   @IsOptional()
   @IsString()
   fromDate?: string; // Format: 'yyyy-MM-dd'
@@ -22,14 +27,14 @@ export class FindOrdersByDayDto {
   @IsOptional()
   @IsString()
   filterText?: string; // Format: 'yyyy-MM-dd'
-  
+
   @IsOptional()
   @IsString()
   toDate?: string; // Format: 'yyyy-MM-dd'
   // Update to allow multiple statuses, split by commas
   @IsOptional()
   @Transform(({ value }) =>
-    value.split(",").map((status: string) => status.trim())
+    value.split(",").map((status: string) => status.trim()),
   )
   @IsEnum(OrderStatus, { each: true }) // Ensure each value is a valid OrderStatus
   orderStatus?: OrderStatus[];

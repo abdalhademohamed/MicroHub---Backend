@@ -52,7 +52,7 @@ export class FindOrdersDto {
   // Update to allow multiple statuses, split by commas
   @IsOptional()
   @Transform(({ value }) =>
-    value.split(",").map((status: string) => status.trim())
+    value.split(",").map((status: string) => status.trim()),
   )
   @IsEnum(OrderStatus, { each: true }) // Ensure each value is a valid OrderStatus
   orderStatus?: OrderStatus[];

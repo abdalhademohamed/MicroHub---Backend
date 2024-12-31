@@ -14,7 +14,19 @@ import { OrderedBulkOperation } from "typeorm";
 import { OrderEntity } from "../orders/entities/order.entity";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ReservationEntity, PaymentEntity,BranchEntity,EmployeeEntity,CustomerEntity,ServiceEntity,OfferEntity,SharableOfferEntity,OrderEntity])],
+  imports: [
+    TypeOrmModule.forFeature([
+      ReservationEntity,
+      PaymentEntity,
+      BranchEntity,
+      EmployeeEntity,
+      CustomerEntity,
+      ServiceEntity,
+      OfferEntity,
+      SharableOfferEntity,
+      OrderEntity,
+    ]),
+  ],
   controllers: [AnalysisController],
   providers: [AnalysisService],
 })

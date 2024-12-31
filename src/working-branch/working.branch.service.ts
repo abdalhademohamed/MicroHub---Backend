@@ -26,7 +26,7 @@ export class WorkingBranchService {
     @InjectRepository(WorkingBranchEntity)
     private readonly WorkingBranchsRepository: Repository<WorkingBranchEntity>,
 
-    private slotService: SlotService
+    private slotService: SlotService,
     // private eventEmitter: EventEmitter2,
   ) {}
 
@@ -151,12 +151,12 @@ export class WorkingBranchService {
 
   async createWorkingBranch(
     branchId: string,
-    createWorkingBranchDto: CreateWorkingBranchDto
+    createWorkingBranchDto: CreateWorkingBranchDto,
   ): Promise<{ id: string; dayOfWeek: string; workingHours: string[] }> {
     const { dayOfWeek, workingHours } = createWorkingBranchDto;
 
     // Convert dayOfWeek from string to WeekDays enum
-    const weekDayEnum = WeekDays[dayOfWeek as keyof typeof WeekDays]; 
+    const weekDayEnum = WeekDays[dayOfWeek as keyof typeof WeekDays];
     if (!weekDayEnum) {
       throw new BadRequestException({
         error: "InvalidDayOfWeek",
@@ -179,7 +179,7 @@ export class WorkingBranchService {
 
     // Check if there is at least one employee with the position of "Artist"
     const artistEmployees = branch.employees.filter(
-      (employee) => employee.position?.postion === Postion.ARTIST
+      (employee) => employee.position?.postion === Postion.ARTIST,
     );
 
     if (artistEmployees.length === 0) {
@@ -216,7 +216,7 @@ export class WorkingBranchService {
 
     // Find existing WorkingBranchEntity for the specified dayOfWeek
     let workingBranchEntity = branch.workingbranch.find(
-      (wb) => wb.dayOfWeek === weekDayEnum
+      (wb) => wb.dayOfWeek === weekDayEnum,
     );
 
     if (workingBranchEntity) {
@@ -239,7 +239,7 @@ export class WorkingBranchService {
     await this.slotService.getNextFourWeeksDatesForDay(
       createWorkingBranchDto.dayOfWeek,
       branchId,
-      createWorkingBranchDto.workingHours
+      createWorkingBranchDto.workingHours,
     );
 
     // Return only the required fields (id, dayOfWeek, and workingHours)
@@ -254,24 +254,28 @@ export class WorkingBranchService {
   private calculateTotalWorkingHours(workingHours: string[]): number {
     // Initialize total hours
     let totalHours = 0;
-  
+
     // Check for special case of 24-hour operation
-    if (workingHours.length === 2 && workingHours[0] === "00:00" && workingHours[1] === "00:00") {
+    if (
+      workingHours.length === 2 &&
+      workingHours[0] === "00:00" &&
+      workingHours[1] === "00:00"
+    ) {
       return 24; // 24 hours operation
     }
-  
+
     // Convert workingHours into hour ranges
     for (let i = 0; i < workingHours.length; i += 2) {
       const start = workingHours[i];
       const end = workingHours[i + 1] || start; // Use start if no end is provided
       const startDate = this.convertToDate(start);
       const endDate = this.convertToDate(end);
-      totalHours += (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60);
+      totalHours +=
+        (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60);
     }
-  
+
     return totalHours;
   }
-  
 
   // Helper method to convert time string to Date
   private convertToDate(time: string): Date {
@@ -301,7 +305,7 @@ export class WorkingBranchService {
   // }
 
   async findAll(
-    branchId?: string
+    branchId?: string,
   ): Promise<Omit<WorkingBranchEntity, "branch">[]> {
     // Validate branchId format if necessary
     if (branchId && typeof branchId !== "string") {
@@ -344,7 +348,7 @@ export class WorkingBranchService {
       } else if (error instanceof QueryFailedError) {
         // Handle database-specific errors
         throw new BadRequestException(
-          "Database query failed. Please check your request and try again."
+          "Database query failed. Please check your request and try again.",
         );
       } else {
         // Handle other unexpected errors
@@ -354,7 +358,7 @@ export class WorkingBranchService {
             error:
               "An unexpected error occurred while retrieving working branches. Please try again later.",
           },
-          HttpStatus.BAD_REQUEST
+          HttpStatus.BAD_REQUEST,
         );
       }
     }
@@ -375,7 +379,7 @@ export class WorkingBranchService {
   // Update a working branch by ID
   async updateWorkingBranches(
     branchId: string,
-    updateWorkingBranchesDto: UpdateWorkingBranchDto[]
+    updateWorkingBranchesDto: UpdateWorkingBranchDto[],
   ): Promise<BranchEntity> {
     const branch = await this.branchRepository.findOne({
       where: { id: branchId },
@@ -400,7 +404,7 @@ export class WorkingBranchService {
 
     // Save new working branches
     branch.workingbranch = await this.WorkingBranchsRepository.save(
-      updatedWorkingBranches
+      updatedWorkingBranches,
     );
 
     // Save the branch with updated working branches

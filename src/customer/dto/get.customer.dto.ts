@@ -46,10 +46,10 @@ export class GetCustomerDto {
   lastRootoshes?: Array<{
     id: string;
     english_Name: string;
-    arabic_Name:string
-    expirationDuration:number
-    expirationDate:Date
-    duration:number
+    arabic_Name: string;
+    expirationDuration: number;
+    expirationDate: Date;
+    duration: number;
     description: string;
     // serviceEnglishName:string
     // serviceArabicName:string
@@ -84,6 +84,5 @@ export class GetCustomerDto {
   @ApiProperty({ description: "Count of orders for the customer" })
   orderCount?: number; // Count of orders
 
-
-  rootoshesexpirationDate?:Date
+  rootoshesexpirationDate?: Date;
 }

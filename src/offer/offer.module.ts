@@ -9,7 +9,6 @@ import { UserEntity } from "../user/entities/user.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 
-
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -17,14 +16,11 @@ import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
       ServiceEntity,
       BranchEntity,
       UserEntity,
-      AuditLogEntity
+      AuditLogEntity,
     ]),
   ],
   controllers: [OfferController],
-  providers: [
-    OfferService,
-    CustomI18nService,
-  ],
+  providers: [OfferService, CustomI18nService],
   exports: [OfferService],
 })
 export class OfferModule {}

@@ -31,7 +31,7 @@ export class ServiceService {
   async createService(
     createServiceDto: CreateServiceDto,
     file: Express.Multer.File, // Accept the file as a parameter
-    userId: string,            // Pass the userId extracted from the token
+    userId: string, // Pass the userId extracted from the token
   ): Promise<ServiceEntity> {
     // Check if a service with the same name exists
     const existingService = await this.ServiceRepository.findOne({
@@ -40,13 +40,13 @@ export class ServiceService {
         { english_Name: createServiceDto.english_Name },
       ],
     });
-  
+
     if (existingService) {
       throw new ConflictException(
-        this.i18n.translate('test.SERVICE.NAME_EXISTS')
+        this.i18n.translate("test.SERVICE.NAME_EXISTS"),
       );
     }
-  
+
     try {
       // Upload the photo to Cloudinary
       const folderName = "services";
@@ -54,47 +54,49 @@ export class ServiceService {
         file,
         folderName,
       );
-  
+
       // Create and save the new service
       const service = this.ServiceRepository.create({
         ...createServiceDto,
         imageUrl: uploadResult.url, // Save the image URL in the database
       });
-  
+
       const savedService = await this.ServiceRepository.save(service);
-  
+
       // Save the audit log
       // await this.saveAuditLog(savedService.id, userId);
-  
+
       return savedService; // Returns status code 201 Created
     } catch (error) {
       console.log(error);
       // Handle unexpected errors
       throw new InternalServerErrorException(
-        this.i18n.translate('test.SERVICE.CREATE_FAILED')
+        this.i18n.translate("test.SERVICE.CREATE_FAILED"),
       );
     }
   }
-  
+
   // Save the audit log
   private async saveAuditLog(serviceId: string, userId: string) {
     // Create and save the audit log
     const auditLog = new AuditLogEntity();
-    auditLog.tableName = 'Service';
-    auditLog.action = 'INSERT';
+    auditLog.tableName = "Service";
+    auditLog.action = "INSERT";
     auditLog.entityId = serviceId;
     auditLog.performedBy = userId;
-  
+
     // Fetch user details for the audit log
-    const userDetails = await this.UserRepository.findOne({ where: { id: userId } });
+    const userDetails = await this.UserRepository.findOne({
+      where: { id: userId },
+    });
     if (userDetails) {
       auditLog.userDetails = userDetails;
     }
-  
+
     // Save the audit log
     await this.AuditLogRepository.save(auditLog);
   }
-  
+
   async getAllServices(
     page: number = 1,
     limit: number = 10,
@@ -128,7 +130,7 @@ export class ServiceService {
       // Handle unexpected errors
       // 500 Internal Server Error
       throw new InternalServerErrorException(
-        this.i18n.translate('test.SERVICE.FETCH_FAILED')
+        this.i18n.translate("test.SERVICE.FETCH_FAILED"),
       );
     }
   }
@@ -136,29 +138,33 @@ export class ServiceService {
   async updateService(
     id: string,
     updateServiceDto: CreateServiceDto,
-    userId: string,  // Pass the userId for audit logging
+    userId: string, // Pass the userId for audit logging
     image?: Express.Multer.File,
   ): Promise<ServiceEntity> {
     // Find the existing service or throw a not found exception
     const service = await this.ServiceRepository.findOne({ where: { id } });
-  
+
     if (!service) {
       throw new NotFoundException(
-        this.i18n.translate('test.SERVICE.NOT_FOUND', { args: { id } })
+        this.i18n.translate("test.SERVICE.NOT_FOUND", { args: { id } }),
       );
     }
-  
+
     // Store original values before updating for auditing
     const originalService = { ...service };
-  
+
     // Update properties only if they are provided in the DTO
     service.arabic_Name = updateServiceDto.arabic_Name ?? service.arabic_Name;
-    service.english_Name = updateServiceDto.english_Name ?? service.english_Name;
+    service.english_Name =
+      updateServiceDto.english_Name ?? service.english_Name;
     service.price = updateServiceDto.price ?? service.price;
-    service.duration_Mins = updateServiceDto.duration_Mins ?? service.duration_Mins;
-    service.rootosh_Number = updateServiceDto.rootosh_Number ?? service.rootosh_Number;
-    service.months_To_Expire = updateServiceDto.months_To_Expire ?? service.months_To_Expire;
-  
+    service.duration_Mins =
+      updateServiceDto.duration_Mins ?? service.duration_Mins;
+    service.rootosh_Number =
+      updateServiceDto.rootosh_Number ?? service.rootosh_Number;
+    service.months_To_Expire =
+      updateServiceDto.months_To_Expire ?? service.months_To_Expire;
+
     // Handle image upload if a file is provided
     if (image) {
       try {
@@ -169,27 +175,27 @@ export class ServiceService {
         service.imageUrl = uploadedImage.url;
       } catch (error) {
         throw new InternalServerErrorException(
-          this.i18n.translate('test.SERVICE.IMAGE_UPLOAD_FAILED')
+          this.i18n.translate("test.SERVICE.IMAGE_UPLOAD_FAILED"),
         );
       }
     }
-  
+
     // Save the updated service entity to the database
     try {
       const updatedService = await this.ServiceRepository.save(service);
-  
+
       // Log the update action in the audit log
       await this.UpdateAuditLog(updatedService, originalService, userId);
-  
+
       return updatedService;
     } catch (error) {
       console.error("Error updating service:", error);
       throw new InternalServerErrorException(
-        this.i18n.translate('test.SERVICE.UPDATE_FAILED')
+        this.i18n.translate("test.SERVICE.UPDATE_FAILED"),
       );
     }
   }
-  
+
   // Save the audit log
   private async UpdateAuditLog(
     updatedService: ServiceEntity,
@@ -199,44 +205,59 @@ export class ServiceService {
     // Create audit log for each updated field
     const changes = [];
     if (originalService.arabic_Name !== updatedService.arabic_Name) {
-      changes.push(`arabic_Name: ${originalService.arabic_Name} -> ${updatedService.arabic_Name}`);
+      changes.push(
+        `arabic_Name: ${originalService.arabic_Name} -> ${updatedService.arabic_Name}`,
+      );
     }
     if (originalService.english_Name !== updatedService.english_Name) {
-      changes.push(`english_Name: ${originalService.english_Name} -> ${updatedService.english_Name}`);
+      changes.push(
+        `english_Name: ${originalService.english_Name} -> ${updatedService.english_Name}`,
+      );
     }
     if (originalService.price !== updatedService.price) {
-      changes.push(`price: ${originalService.price} -> ${updatedService.price}`);
+      changes.push(
+        `price: ${originalService.price} -> ${updatedService.price}`,
+      );
     }
     if (originalService.duration_Mins !== updatedService.duration_Mins) {
-      changes.push(`duration_Mins: ${originalService.duration_Mins} -> ${updatedService.duration_Mins}`);
+      changes.push(
+        `duration_Mins: ${originalService.duration_Mins} -> ${updatedService.duration_Mins}`,
+      );
     }
     if (originalService.rootosh_Number !== updatedService.rootosh_Number) {
-      changes.push(`rootosh_Number: ${originalService.rootosh_Number} -> ${updatedService.rootosh_Number}`);
+      changes.push(
+        `rootosh_Number: ${originalService.rootosh_Number} -> ${updatedService.rootosh_Number}`,
+      );
     }
     if (originalService.months_To_Expire !== updatedService.months_To_Expire) {
-      changes.push(`months_To_Expire: ${originalService.months_To_Expire} -> ${updatedService.months_To_Expire}`);
+      changes.push(
+        `months_To_Expire: ${originalService.months_To_Expire} -> ${updatedService.months_To_Expire}`,
+      );
     }
     if (originalService.imageUrl !== updatedService.imageUrl) {
-      changes.push(`imageUrl: ${originalService.imageUrl} -> ${updatedService.imageUrl}`);
+      changes.push(
+        `imageUrl: ${originalService.imageUrl} -> ${updatedService.imageUrl}`,
+      );
     }
-  
+
     // Create and save the audit log
     const auditLog = new AuditLogEntity();
-    auditLog.tableName = 'Service';
-    auditLog.action = 'UPDATE';
+    auditLog.tableName = "Service";
+    auditLog.action = "UPDATE";
     auditLog.entityId = updatedService.id;
     auditLog.performedBy = userId;
-  
+
     // Fetch user details for the audit log
-    const userDetails = await this.UserRepository.findOne({ where: { id: userId } });
+    const userDetails = await this.UserRepository.findOne({
+      where: { id: userId },
+    });
     if (userDetails) {
       auditLog.userDetails = userDetails;
     }
-  
+
     // Save the audit log
     await this.AuditLogRepository.save(auditLog);
   }
-  
 
   async deleteService(id: string): Promise<void> {
     try {
@@ -247,7 +268,7 @@ export class ServiceService {
       if (result.affected === 0) {
         // Status Code: 404 Not Found
         throw new NotFoundException(
-          this.i18n.translate('test.SERVICE.NOT_FOUND', { args: { id } })
+          this.i18n.translate("test.SERVICE.NOT_FOUND", { args: { id } }),
         );
       }
 
@@ -260,16 +281,12 @@ export class ServiceService {
         throw error;
       }
       throw new InternalServerErrorException(
-        this.i18n.translate('test.SERVICE.DELETE_FAILED')
+        this.i18n.translate("test.SERVICE.DELETE_FAILED"),
       );
     }
   }
 
-
-
-
-
   async countServices(): Promise<number> {
     return await this.ServiceRepository.count();
   }
-} 
+}

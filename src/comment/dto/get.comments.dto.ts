@@ -1,6 +1,6 @@
 // get-comments.dto.ts
-import { IsOptional, IsDateString, IsInt, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsOptional, IsDateString, IsInt, Min } from "class-validator";
+import { Type } from "class-transformer";
 
 export class GetCommentsDto {
   @IsOptional()

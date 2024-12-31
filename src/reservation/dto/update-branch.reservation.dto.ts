@@ -1,10 +1,10 @@
 import { IsOptional, IsString } from "class-validator";
 
 export class UpdateBranchReservationDto {
-    @IsString()
-    branch: string;
+  @IsString()
+  branch: string;
 
-    @IsOptional()
-    @IsString()
-    startTime: string;
+  @IsOptional()
+  @IsString()
+  startTime: string;
 }

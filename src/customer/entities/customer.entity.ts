@@ -53,20 +53,21 @@ export class CustomerEntity {
   lastRootoshes: RootoshEntity[];
 
   @Column({ type: "date", nullable: true }) // Expiration date can be null
-  rootoshesexpirationDate: Date ;
-  
+  rootoshesexpirationDate: Date;
+
   @OneToMany(
     () => ReservationEntity,
-    (ReservationEntity) => ReservationEntity.customer
+    (ReservationEntity) => ReservationEntity.customer,
   )
   reservations: ReservationEntity[]; // Relation to reservations
 
   @OneToMany(() => OrderEntity, (doc) => doc.customer)
   orders: OrderEntity[]; // Relation to reservations
 
-
-
-   // Relation to gift coupons (coupons gifted to the customer)
-   @OneToMany(() => GiftCouponEntity, (GiftCouponEntity) => GiftCouponEntity.ownedBy)
-   receivedCoupons: GiftCouponEntity[];
+  // Relation to gift coupons (coupons gifted to the customer)
+  @OneToMany(
+    () => GiftCouponEntity,
+    (GiftCouponEntity) => GiftCouponEntity.ownedBy,
+  )
+  receivedCoupons: GiftCouponEntity[];
 }

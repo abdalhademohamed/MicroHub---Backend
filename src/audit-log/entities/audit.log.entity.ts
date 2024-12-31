@@ -11,7 +11,7 @@ export class AuditLogEntity {
   id: string;
 
   @Column({ name: "table_name" })
-  tableName: string;  
+  tableName: string;
 
   @Column()
   action: string; // 'INSERT', 'UPDATE', 'DELETE'

@@ -40,11 +40,7 @@ import { OrderEntity } from "../orders/entities/order.entity";
     ArtistModule,
   ],
   controllers: [EmployeeController],
-  providers: [
-    EmployeeService,
-    CloudinaryService,
-    CustomI18nService,
-  ],
+  providers: [EmployeeService, CloudinaryService, CustomI18nService],
   exports: [EmployeeService],
 })
 export class EmployeeModule {}

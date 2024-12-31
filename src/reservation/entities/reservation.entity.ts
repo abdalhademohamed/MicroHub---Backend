@@ -45,20 +45,22 @@ export class ReservationEntity {
   @Column({ default: new Date() })
   createdAt: Date;
 
-  @Column({    nullable: true,
-  })
+  @Column({ nullable: true })
   deposit_Content: string; // Correct property name
 
   @ManyToOne(() => BranchEntity, (branch) => branch.reservations)
   branch: BranchEntity;
 
-  @ManyToMany(() => ServiceEntity, (service) => service.reservations, { nullable: true })
+  @ManyToMany(() => ServiceEntity, (service) => service.reservations, {
+    nullable: true,
+  })
   services?: ServiceEntity[]; // Make it optional
 
-  @ManyToOne(() => EmployeeEntity, (employee) => employee.reservations, { nullable: true })
+  @ManyToOne(() => EmployeeEntity, (employee) => employee.reservations, {
+    nullable: true,
+  })
   @JoinColumn() // Indicates the owning side of the ManyToOne relationship
   employee: EmployeeEntity; // Optional, based on whether the employee can be null
-
 
   @ManyToOne(() => CustomerEntity, (customer) => customer.reservations)
   customer: CustomerEntity; // Relationship to CustomerEntity

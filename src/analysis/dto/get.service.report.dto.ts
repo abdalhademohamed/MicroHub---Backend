@@ -9,12 +9,12 @@ export class GetServiceReportDto {
     required: false,
   })
   @IsOptional()
-    @Type(() => Number)
-    page: number = 1;
-  
-    @IsOptional()
-    @Type(() => Number)
-    limit: number = 10;
+  @Type(() => Number)
+  page: number = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  limit: number = 10;
 
   @ApiProperty({
     description: "Filter from this date (YYYY-MM-DD format)",

@@ -45,7 +45,9 @@ export class CustomerService {
       // Handle case where customer is not found
       if (!customer) {
         throw new NotFoundException(
-          this.i18n.translate('test.CUSTOMER.NOT_FOUND', { args: { phoneNumber } })
+          this.i18n.translate("test.CUSTOMER.NOT_FOUND", {
+            args: { phoneNumber },
+          }),
         );
       }
 
@@ -87,32 +89,30 @@ export class CustomerService {
           id: rootosh.id,
           english_Name: rootosh.english_Name,
           arabic_Name: rootosh.arabic_Name,
-          expirationDuration:rootosh.expireduration,
-          expirationDate:customer.rootoshesexpirationDate,
-          duration:rootosh.duration_Mins,
+          expirationDuration: rootosh.expireduration,
+          expirationDate: customer.rootoshesexpirationDate,
+          duration: rootosh.duration_Mins,
           description: rootosh.description,
-       
-
         })),
         reservations: customer.reservations
-        ?.slice(-10) // Get the last 10 reservations
-        .map((reservation) => ({
-          id: reservation.id,
-          reservationDate: formatReservationDate(
-            reservation.reservationDay,
-            reservation.reservationMonth,
-            reservation.reservationYear,
-          ),
-          services: reservation.services?.map((service) => ({
-            id: service.id,
-            name: service.english_Name,
-            duration: service.duration_Mins,
-            price: service.price,
+          ?.slice(-10) // Get the last 10 reservations
+          .map((reservation) => ({
+            id: reservation.id,
+            reservationDate: formatReservationDate(
+              reservation.reservationDay,
+              reservation.reservationMonth,
+              reservation.reservationYear,
+            ),
+            services: reservation.services?.map((service) => ({
+              id: service.id,
+              name: service.english_Name,
+              duration: service.duration_Mins,
+              price: service.price,
+            })),
           })),
-        })),
-       
+
         orderCount, // Count of orders
-        rootoshesexpirationDate:customer.rootoshesexpirationDate
+        rootoshesexpirationDate: customer.rootoshesexpirationDate,
       };
 
       return dto;
@@ -131,7 +131,7 @@ export class CustomerService {
 
       // Handle unexpected errors
       throw new InternalServerErrorException(
-        this.i18n.translate('test.CUSTOMER.RETRIEVE_FAILED')
+        this.i18n.translate("test.CUSTOMER.RETRIEVE_FAILED"),
       );
     }
   }
@@ -164,58 +164,60 @@ export class CustomerService {
 
   async countCustomers(): Promise<number> {
     return await this.customerRepository.count();
-
   }
 
   async findOrdersAndCustomersByKeyword(keyword: string) {
     // Filter orders where `orderInvoice` matches the exact keyword
     const orders = await this.orderRepository
-      .createQueryBuilder('order')
-      .where('CAST(order.orderInvoice AS TEXT) = :keyword', { keyword })
+      .createQueryBuilder("order")
+      .where("CAST(order.orderInvoice AS TEXT) = :keyword", { keyword })
       .getMany();
-  
+
     // Filter customers where `phoneNumber` or `fullName` matches the exact keyword
     const customers = await this.customerRepository
-      .createQueryBuilder('customer')
-      .where('customer.phoneNumber = :keyword', { keyword })
-      .orWhere('customer.fullName = :keyword', { keyword })
+      .createQueryBuilder("customer")
+      .where("customer.phoneNumber = :keyword", { keyword })
+      .orWhere("customer.fullName = :keyword", { keyword })
       .getMany();
-  
+
     return { orders, customers };
   }
 
-
-   async getAllCustomers(
+  async getAllCustomers(
     filters: GetCustomerPaginatedsDto,
   ): Promise<{ items: CustomerEntity[]; total: number }> {
     const { keyword, page = 1, limit = 10 } = filters;
-  
+
     // Step 1: Fetch customers
-    const query = this.customerRepository
-      .createQueryBuilder('customer')
-      if (keyword) {
-        // orderInvoice
-        query.where('customer.phoneNumber LIKE :keyword', { keyword: `%${keyword}%` })
-            .orWhere('customer.fullName LIKE :keyword', { keyword: `%${keyword}%` });
-      }
-  
+    const query = this.customerRepository.createQueryBuilder("customer");
+    if (keyword) {
+      // orderInvoice
+      query
+        .where("customer.phoneNumber LIKE :keyword", {
+          keyword: `%${keyword}%`,
+        })
+        .orWhere("customer.fullName LIKE :keyword", {
+          keyword: `%${keyword}%`,
+        });
+    }
+
     // Pagination
     query.skip((page - 1) * limit).take(limit);
-  
+
     const [customers, total] = await query.getManyAndCount();
-  
+
     // Step 2: Fetch reservation counts for each customer using a separate query
-    const reservationCounts = await this.ReservationRepository
-      .createQueryBuilder('reservation')
-      .select('reservation.customerId', 'customerId')
-      .addSelect('COUNT(reservation.id)', 'reservationCount')
-      .groupBy('reservation.customerId')
-      .getRawMany();
-  
+    const reservationCounts =
+      await this.ReservationRepository.createQueryBuilder("reservation")
+        .select("reservation.customerId", "customerId")
+        .addSelect("COUNT(reservation.id)", "reservationCount")
+        .groupBy("reservation.customerId")
+        .getRawMany();
+
     // Step 3: Map reservation counts to each customer
-    const items = customers.map(customer => {
+    const items = customers.map((customer) => {
       const count = reservationCounts.find(
-        count => count.customerId === customer.id,
+        (count) => count.customerId === customer.id,
       );
       return {
         ...customer,
@@ -226,5 +228,3 @@ export class CustomerService {
     return { items, total };
   }
 }
-
-

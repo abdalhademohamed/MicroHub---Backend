@@ -37,34 +37,44 @@ import { UpdateBranchReservationDto } from "./dto/update-branch.reservation.dto"
 export class ReservationController {
   constructor(private readonly reservationService: ReservationService) {}
 
- 
-  @Get('top5')  
+  @Get("top5")
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST,Role.ACCOUNTANT,)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST, Role.ACCOUNTANT)
   async getTop5Reservations(
     @Request() req: any, // Request object to access the user
-    @Query('fromDate') fromDate: string,
-    @Query('toDate') toDate: string,
-    @Query('branchId') branchId: string, // Branch
+    @Query("fromDate") fromDate: string,
+    @Query("toDate") toDate: string,
+    @Query("branchId") branchId: string, // Branch
   ) {
     // const userId = "a919b4c2-9e42-4709-b576-a6ff4c8cdfbd"; // Extract user ID from request
 
     // if (!userId) {
     //   throw new BadRequestException("User not authenticated");
     // }
-    return this.reservationService.getTop5Reservations(fromDate, toDate, branchId);
+    return this.reservationService.getTop5Reservations(
+      fromDate,
+      toDate,
+      branchId,
+    );
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  @Get('times')
+  @Get("times")
   async getReservations(
     @Query() GetReservationsTimesDto: GetReservationsTimesDto,
   ): Promise<{ items: any[]; total: number }> {
-    const result = await this.reservationService.getReservationsTimes(GetReservationsTimesDto);
+    const result = await this.reservationService.getReservationsTimes(
+      GetReservationsTimesDto,
+    );
     return result;
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ARTISTMANAGER)
+  @Roles(
+    Role.SUPERADMIN,
+    Role.COORDINATOR,
+    Role.RECEPTIONIST,
+    Role.ARTISTMANAGER,
+  )
   @Post()
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   @UseInterceptors(FileInterceptor("deposit_Content")) // Intercept the file upload
@@ -72,42 +82,45 @@ export class ReservationController {
     @Request() req: any, // Request object to access the user
 
     @Body() CreateCustomerDto: CreateReservationDto, // Array of customer DTOs
-    @UploadedFile() image: Express.Multer.File // Handle the uploaded file
+    @UploadedFile() image: Express.Multer.File, // Handle the uploaded file
   ): Promise<any> {
-  
-      // Call the service to create reservations 
-      // console.log("data:",CreateCustomerDto)
-      const userId = req.user.sub; // Extract user ID from request
+    // Call the service to create reservations
+    // console.log("data:",CreateCustomerDto)
+    const userId = req.user.sub; // Extract user ID from request
 
-      if (!userId) {
-        throw new BadRequestException("User not authenticated");
-      }
-      return await this.reservationService.createReservation(
-        CreateCustomerDto,
-        image,
-        userId
-      );
-   
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
+    return await this.reservationService.createReservation(
+      CreateCustomerDto,
+      image,
+      userId,
+    );
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Get("booking/:branchId")
   async getAllBookings(
     @Param("branchId") branchId: string,
-    @Query() getReservationsDto: GetReservationsDto
+    @Query() getReservationsDto: GetReservationsDto,
   ) {
     return this.reservationService.getBookingBranch(
       branchId,
-      getReservationsDto
+      getReservationsDto,
     );
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ARTISTMANAGER)
+  @Roles(
+    Role.SUPERADMIN,
+    Role.COORDINATOR,
+    Role.RECEPTIONIST,
+    Role.ARTISTMANAGER,
+  )
   @Get()
   async getAllReservations(
     @Request() req: any, // Request object to access the user
 
-    @Query() getReservationsDto: GetReservationsDto
+    @Query() getReservationsDto: GetReservationsDto,
   ): Promise<{
     items: ReservationEntity[];
     total: number;
@@ -119,27 +132,36 @@ export class ReservationController {
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN,Role.RECEPTIONIST,Role.COORDINATOR,Role.ARTISTMANAGER) 
+  @Roles(
+    Role.SUPERADMIN,
+    Role.RECEPTIONIST,
+    Role.COORDINATOR,
+    Role.ARTISTMANAGER,
+  )
   // Update a reservation by ID
   @Post("customer")
   async createCustomer(@Body() body: CreateCustomerDto) {
     return this.reservationService.registerOrLookupCustomer(body);
   }
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST)
   @Patch("update-branch/:id")
   async updateReservationBranch(
     @Request() req: any, // Request object to access the user
     @Param("id") id: string,
-    @Body() updateReservationDto: UpdateBranchReservationDto
+    @Body() updateReservationDto: UpdateBranchReservationDto,
   ) {
     const userId = req.user.sub; // Extract user ID from request
 
     if (!userId) {
       throw new BadRequestException("User not authenticated");
     }
-    console.log(userId)
-    return this.reservationService.updateReservationBranch(id, updateReservationDto, userId);
+    console.log(userId);
+    return this.reservationService.updateReservationBranch(
+      id,
+      updateReservationDto,
+      userId,
+    );
   }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -150,7 +172,7 @@ export class ReservationController {
     @Request() req: any, // Request object to access the user
 
     @Param("id") id: string,
-    @Body() updateReservationDto: UpdateReservationDto
+    @Body() updateReservationDto: UpdateReservationDto,
   ) {
     const userId = req.user.sub; // Extract user ID from request
 
@@ -160,17 +182,17 @@ export class ReservationController {
     return this.reservationService.updateReservationServices(
       id,
       updateReservationDto,
-      userId
+      userId,
     );
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST)
   @Put("time/:id")
   async updateReservationStartTime(
     @Request() req: any, // Request object to access the user
     @Param("id") id: string,
-    @Body() updateReservationDto: UpdateTimeReservationDto
+    @Body() updateReservationDto: UpdateTimeReservationDto,
   ) {
     const userId = req.user.sub; // Extract user ID from request
 
@@ -180,19 +202,23 @@ export class ReservationController {
     return this.reservationService.updateTime(id, updateReservationDto, userId);
   } /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST)
   @Put("rootosh/time/:id")
   async updateReservationStartTimeForRootosh(
     @Request() req: any, // Request object to access the user
     @Param("id") id: string,
-    @Body() updateReservationDto: UpdateTimeReservationDto
+    @Body() updateReservationDto: UpdateTimeReservationDto,
   ) {
     const userId = req.user.sub; // Extract user ID from request
 
     if (!userId) {
       throw new BadRequestException("User not authenticated");
     }
-    return this.reservationService.updateTimeforRootosh(id, updateReservationDto, userId);
+    return this.reservationService.updateTimeforRootosh(
+      id,
+      updateReservationDto,
+      userId,
+    );
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Delete(":id")

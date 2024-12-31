@@ -18,10 +18,7 @@ import { CustomI18nService } from "../common/custom.18n.service";
     ]),
   ],
   controllers: [PostionController],
-  providers: [
-    PostionService,
-    CustomI18nService,
-  ],
+  providers: [PostionService, CustomI18nService],
   exports: [PostionService],
 })
 export class PostionModule {}

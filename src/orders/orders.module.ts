@@ -45,7 +45,7 @@ import { TransactionModule } from "src/transaction/transaction.module";
     ActionModule,
   ],
   controllers: [OrdersController],
-  providers: [OrdersService, CloudinaryService,CustomI18nService],
+  providers: [OrdersService, CloudinaryService, CustomI18nService],
   exports: [OrdersService],
 })
 export class OrdersModule {}

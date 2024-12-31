@@ -1,4 +1,4 @@
 export enum PaymentStatus {
-    PartiallyPaid = "partially paid",
-    Paid = "paid",
-  }
+  PartiallyPaid = "partially paid",
+  Paid = "paid",
+}

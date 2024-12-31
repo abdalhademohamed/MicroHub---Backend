@@ -32,18 +32,18 @@ export class OrderEntity {
   @Column({ type: "date" })
   date: string; // Reservation date
 
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ type: "varchar", nullable: true })
   orderInvoice: string; // Auto-increment column for invoice numbers
 
   generateRandomString(length: number): string {
-    const chars = 'ABCDEFGHIJKL01234MNOPQRSTUVWXYZ56789';
-    let result = '';
+    const chars = "ABCDEFGHIJKL01234MNOPQRSTUVWXYZ56789";
+    let result = "";
     for (let i = 0; i < length; i++) {
       result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return result;
   }
-  
+
   @BeforeInsert()
   generateOrderNumber() {
     this.orderInvoice = this.generateRandomString(8); // Generates an 8-character alphanumeric string
@@ -113,16 +113,15 @@ export class OrderEntity {
   @Column({ nullable: true }) // Optional column for the offer ID
   offerId?: string; // Add offer ID as an optional field
 
-
   @Column({ nullable: true }) // Optional column for the offer ID
   sharableOfferId?: string; // Add offer ID as an optional field
 
   @Column({ nullable: true }) // Optional column for the offer ID
   couponId?: string; // Add offer ID as an optional field
-  
+
   @Column({ type: "boolean", default: false })
   isReviewed: boolean; // New boolean column
-  
+
   @Column({ nullable: true })
   image_order_refund: string; // New field for the image URL
 

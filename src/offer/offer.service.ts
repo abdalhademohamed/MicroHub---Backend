@@ -36,7 +36,7 @@ export class OfferService {
   ) {}
   async create(
     createOfferDto: CreateOfferDto,
-    userId: string
+    userId: string,
   ): Promise<OfferEntity> {
     const { serviceIds, branchIds, ...offerData } = createOfferDto;
 
@@ -51,7 +51,9 @@ export class OfferService {
     // Handle cases where no branches were found
     if (!branches || branches.length === 0) {
       throw new NotFoundException(
-        this.i18n.translate('test.OFFER.BRANCH_NOT_FOUND', { args: { branchIds } })
+        this.i18n.translate("test.OFFER.BRANCH_NOT_FOUND", {
+          args: { branchIds },
+        }),
       );
     }
     const currentday = new Date();
@@ -61,12 +63,12 @@ export class OfferService {
 
     if (offerStartDay < currentday) {
       throw new BadRequestException(
-        this.i18n.translate('test.OFFER.INVALID_START_DATE')
+        this.i18n.translate("test.OFFER.INVALID_START_DATE"),
       );
     }
     if (offerStartDay >= offerEndDay) {
       throw new BadRequestException(
-        this.i18n.translate('test.OFFER.INVALID_END_DATE')
+        this.i18n.translate("test.OFFER.INVALID_END_DATE"),
       );
     }
 
@@ -116,7 +118,7 @@ export class OfferService {
       } catch (error) {
         console.error("Error creating offer and audit log:", error);
         throw new InternalServerErrorException(
-          this.i18n.translate('test.OFFER.CREATE_FAILED')
+          this.i18n.translate("test.OFFER.CREATE_FAILED"),
         );
       }
     });
@@ -127,13 +129,13 @@ export class OfferService {
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async findAll(
     page: number = 1,
-    limit: number = 10
+    limit: number = 10,
   ): Promise<{ items: OfferEntity[]; total: number }> {
     try {
       // Validate pagination parameters
       if (page < 1 || limit < 1) {
         throw new BadRequestException(
-          this.i18n.translate('test.OFFER.INVALID_PAGINATION')
+          this.i18n.translate("test.OFFER.INVALID_PAGINATION"),
         );
       }
 
@@ -154,16 +156,15 @@ export class OfferService {
         throw error;
       } else {
         throw new InternalServerErrorException(
-          this.i18n.translate('test.OFFER.RETRIEVE_FAILED')
+          this.i18n.translate("test.OFFER.RETRIEVE_FAILED"),
         );
       }
     }
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  async findActiveOffers(branchId?:string): Promise<OfferEntity[]> {
+  async findActiveOffers(branchId?: string): Promise<OfferEntity[]> {
     const now = new Date();
-    if(branchId &&branchId.length>1)
-    {
+    if (branchId && branchId.length > 1) {
       return await this.OfferRepository.find({
         where: {
           endDateTime: MoreThan(now),
@@ -174,8 +175,7 @@ export class OfferService {
         },
         relations: ["services", "branches"],
       });
-    }else{
-  
+    } else {
       return await this.OfferRepository.find({
         where: {
           endDateTime: MoreThan(now),
@@ -184,12 +184,10 @@ export class OfferService {
         relations: ["services", "branches"],
       });
     }
-   
   }
 
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async findOne(id: string): Promise<OfferEntity> {
     const offer = await this.OfferRepository.findOne({
       where: { id },
@@ -198,7 +196,7 @@ export class OfferService {
 
     if (!offer) {
       throw new NotFoundException(
-        this.i18n.translate('test.OFFER.NOT_FOUND', { args: { id } })
+        this.i18n.translate("test.OFFER.NOT_FOUND", { args: { id } }),
       );
     }
 
@@ -208,7 +206,7 @@ export class OfferService {
   async update(
     offerId: string,
     updateOfferDto: UpdateOfferDto,
-    userId: string
+    userId: string,
   ): Promise<OfferEntity> {
     const offer = await this.OfferRepository.findOne({
       where: { id: offerId },
@@ -216,7 +214,7 @@ export class OfferService {
 
     if (!offer) {
       throw new NotFoundException(
-        this.i18n.translate('test.OFFER.NOT_FOUND', { args: { id: offerId } })
+        this.i18n.translate("test.OFFER.NOT_FOUND", { args: { id: offerId } }),
       );
     }
 
@@ -240,7 +238,7 @@ export class OfferService {
         // Save the updated offer
         updatedOffer = await transactionalEntityManager.save(
           OfferEntity,
-          offer
+          offer,
         );
 
         // Create an audit log entry for the update
@@ -285,7 +283,7 @@ export class OfferService {
       } catch (error) {
         console.error("Error updating offer and audit log:", error);
         throw new InternalServerErrorException(
-          this.i18n.translate('test.OFFER.UPDATE_FAILED')
+          this.i18n.translate("test.OFFER.UPDATE_FAILED"),
         );
       }
     });
@@ -295,7 +293,7 @@ export class OfferService {
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async updateIsActive(
     id: string,
-    UpdateIsActiveDto: UpdateIsActiveDto
+    UpdateIsActiveDto: UpdateIsActiveDto,
   ): Promise<OfferEntity> {
     // Fetch the offer by ID
     const offer = await this.OfferRepository.findOneBy({ id });
@@ -324,7 +322,7 @@ export class OfferService {
 
     if (!offer) {
       throw new NotFoundException(
-        this.i18n.translate('test.OFFER.NOT_FOUND', { args: { id: offerId } })
+        this.i18n.translate("test.OFFER.NOT_FOUND", { args: { id: offerId } }),
       );
     }
 
@@ -361,10 +359,10 @@ export class OfferService {
       } catch (error) {
         console.error(
           "Error performing soft delete and creating audit log:",
-          error
+          error,
         );
         throw new InternalServerErrorException(
-          this.i18n.translate('test.OFFER.DELETE_FAILED')
+          this.i18n.translate("test.OFFER.DELETE_FAILED"),
         );
       }
     });
@@ -378,5 +376,4 @@ export class OfferService {
 
     return { total, active };
   }
-
 }

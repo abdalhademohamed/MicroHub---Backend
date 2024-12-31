@@ -38,19 +38,25 @@ export class ReceiptController {
     return this.receiptService.getReceipts(getReceiptsDto);
   }
 
-   // Endpoint to create a receipt
-   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-   @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ARTISTMANAGER)
-   @Post('reservation')
-   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-   @Roles(Role.SUPERADMIN)
-   async createReceiptFromReservationId(
-     @Request() Req: any, // Request object to access the user
- 
-     @Body() CreateReceiptFromReservationIdDto: CreateReceiptFromReservationIdDto,
-   ) {
+  // Endpoint to create a receipt
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(
+    Role.SUPERADMIN,
+    Role.COORDINATOR,
+    Role.RECEPTIONIST,
+    Role.ARTISTMANAGER,
+  )
+  @Post("reservation")
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN)
+  async createReceiptFromReservationId(
+    @Request() Req: any, // Request object to access the user
+
+    @Body()
+    CreateReceiptFromReservationIdDto: CreateReceiptFromReservationIdDto,
+  ) {
     const userId = Req.user.sub; // Extract user ID from request
- 
+
     if (!userId) {
       throw new BadRequestException("User not authenticated");
     }
@@ -59,10 +65,15 @@ export class ReceiptController {
       userId,
     );
     return { receipt };
-   }
+  }
 
-   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-   @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ARTISTMANAGER)
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(
+    Role.SUPERADMIN,
+    Role.COORDINATOR,
+    Role.RECEPTIONIST,
+    Role.ARTISTMANAGER,
+  )
   // Endpoint to create a receipt
   @Post()
   async createReceipt(
@@ -82,7 +93,12 @@ export class ReceiptController {
     return { receipt };
   }
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ARTISTMANAGER)
+  @Roles(
+    Role.SUPERADMIN,
+    Role.COORDINATOR,
+    Role.RECEPTIONIST,
+    Role.ARTISTMANAGER,
+  )
   @Get(":orderId")
   async getReceiptByOrderId(
     @Param("orderId") orderId: string,
@@ -90,7 +106,12 @@ export class ReceiptController {
     return this.receiptService.getReceiptByOrderId(orderId);
   }
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ARTISTMANAGER)
+  @Roles(
+    Role.SUPERADMIN,
+    Role.COORDINATOR,
+    Role.RECEPTIONIST,
+    Role.ARTISTMANAGER,
+  )
   @Get("reservation/:reservationId")
   async getReceiptByReservationId(
     @Param("reservationId") reservationId: string,
@@ -98,10 +119,6 @@ export class ReceiptController {
     return this.receiptService.getReceiptByReservationId(reservationId);
   }
 
-
-
-
-  
   // //  Endpoint to generate and download the receipt PDF
   // @Get('download/:id')
   // @UseGuards(AccessTokenGuard,RolesGuard)  // Ensure AccessTokenGuard is first
@@ -132,10 +149,9 @@ export class ReceiptController {
   //   }
   // }
 
-
-  @Get('refunded/:reservationId')
+  @Get("refunded/:reservationId")
   async getRefundedReceiptByReservationId(
-    @Param('reservationId') reservationId: string
+    @Param("reservationId") reservationId: string,
   ): Promise<ReceiptEntity[]> {
     return this.receiptService.getRefundedReceiptByReservationId(reservationId);
   }

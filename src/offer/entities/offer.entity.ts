@@ -40,8 +40,7 @@ export class OfferEntity {
   @DeleteDateColumn({ name: "deleted_at", nullable: true })
   deletedAt?: Date;
 
-
-   // Add a new column to track how many times the offer has been used
-   @Column({ type: "int", default: 0 }) // Default to 0 initially
-   usageCount: number;
+  // Add a new column to track how many times the offer has been used
+  @Column({ type: "int", default: 0 }) // Default to 0 initially
+  usageCount: number;
 }

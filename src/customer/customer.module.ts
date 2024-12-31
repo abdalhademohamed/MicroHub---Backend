@@ -8,11 +8,10 @@ import { CustomI18nService } from "../common/custom.18n.service";
 import { OrderEntity } from "src/orders/entities/order.entity";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CustomerEntity,ReservationEntity, OrderEntity])],
-  controllers: [CustomerController],
-  providers: [
-    CustomerService,
-    CustomI18nService,
+  imports: [
+    TypeOrmModule.forFeature([CustomerEntity, ReservationEntity, OrderEntity]),
   ],
+  controllers: [CustomerController],
+  providers: [CustomerService, CustomI18nService],
 })
 export class CustomerModule {}

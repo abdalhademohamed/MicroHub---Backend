@@ -39,20 +39,20 @@ import { GetUserProfileDto } from "./dto/get.profile.dto";
 @Controller("employee")
 export class EmployeeController {
   constructor(private readonly employeeService: EmployeeService) {}
- 
-  @Get('artist-order')
+
+  @Get("artist-order")
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.ARTIST)
   getArtistOrder(
-    @Req() req: any, 
-    @Query('fromDate') fromDate: string,
-    @Query('toDate') toDate: string
+    @Req() req: any,
+    @Query("fromDate") fromDate: string,
+    @Query("toDate") toDate: string,
   ) {
     const userId = req.user.sub; // Extract user ID from request
     return this.employeeService.getOrderStatusCountByArtist(
       userId,
-      fromDate, 
-      toDate
+      fromDate,
+      toDate,
     );
   }
   @UseGuards(AccessTokenGuard)
@@ -79,12 +79,19 @@ export class EmployeeController {
     );
   }
 
-  @Get('top/artists')
+  @Get("top/artists")
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST,Role.ACCOUNTANT,Role.ARTIST,Role.ARTISTMANAGER)
+  @Roles(
+    Role.SUPERADMIN,
+    Role.COORDINATOR,
+    Role.RECEPTIONIST,
+    Role.ACCOUNTANT,
+    Role.ARTIST,
+    Role.ARTISTMANAGER,
+  )
   async getTopArtists(
-    @Query('fromDate') fromDate?: string,
-    @Query('toDate') toDate?: string
+    @Query("fromDate") fromDate?: string,
+    @Query("toDate") toDate?: string,
   ): Promise<EmployeeEntity[]> {
     // Parse the date strings to Date objects if they are provided
     const from = fromDate ? new Date(fromDate) : undefined;
@@ -92,37 +99,44 @@ export class EmployeeController {
 
     return this.employeeService.getTopArtistsWithCompletedOrders(from, to);
   }
-  @Put("working/:id")  
-  async updateWorkingHoursEmployee( 
-    @Param("id") id: string, 
+  @Put("working/:id")
+  async updateWorkingHoursEmployee(
+    @Param("id") id: string,
     @Body() body: EmployeeWorkingHoursDto,
-  ) { 
-      return await this.employeeService.updateArtistWorkingHours(
-        id,
-        body.workingHours,
-      );
+  ) {
+    return await this.employeeService.updateArtistWorkingHours(
+      id,
+      body.workingHours,
+    );
   }
 
-  @Get('search/:keyword')
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST, Role.ADMIN, Role.ARTIST, Role.ARTISTMANAGER)
+  @Get("search/:keyword")
+  @Roles(
+    Role.SUPERADMIN,
+    Role.COORDINATOR,
+    Role.RECEPTIONIST,
+    Role.ADMIN,
+    Role.ARTIST,
+    Role.ARTISTMANAGER,
+  )
   @UseGuards(AccessTokenGuard)
   async getArtistsWithSearch(
-    @Param('keyword') keyword: string,
-    @Query() query: {page?: string; limit?: string; branch?: string},
+    @Param("keyword") keyword: string,
+    @Query() query: { page?: string; limit?: string; branch?: string },
     @Req() req: any,
   ) {
     return this.employeeService.searchAndCountEmployees(
       keyword,
       query,
-      req.user
+      req.user,
     );
   }
-  @Get('artists')
+  @Get("artists")
   async getArtistsWithReviews() {
     return this.employeeService.getArtistsWithReviews();
   }
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST,Role.ACCOUNTANT)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST, Role.ACCOUNTANT)
   @Get("/count")
   async getEmployeeCount(
     @Query("branchId") branchId?: string,
@@ -155,9 +169,14 @@ export class EmployeeController {
     return await this.employeeService.createEmployee(createEmployeeDto, userId);
   }
 
-  
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST,Role.ARTISTMANAGER,Role.ACCOUNTANT)
+  @Roles(
+    Role.SUPERADMIN,
+    Role.COORDINATOR,
+    Role.RECEPTIONIST,
+    Role.ARTISTMANAGER,
+    Role.ACCOUNTANT,
+  )
   @Get()
   async getAllEmployees(
     @Request() req: any, // Request object to access the user
@@ -185,12 +204,12 @@ export class EmployeeController {
       branchId,
       role,
       filterText,
-      userId
+      userId,
     );
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN,Role.ARTISTMANAGER,Role.ACCOUNTANT)
+  @Roles(Role.SUPERADMIN, Role.ARTISTMANAGER, Role.ACCOUNTANT)
   @Get(":id")
   async getEmployeeById(@Param("id") id: string): Promise<EmployeeEntity> {
     return await this.employeeService.getEmployeeById(id);
@@ -221,7 +240,7 @@ export class EmployeeController {
     );
   }
 
-  @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
   @Delete(":employeeId")
   async deleteEmployee(
@@ -243,10 +262,10 @@ export class EmployeeController {
   @Get("show/profile")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get user profile with reviews" })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: "Return user profile data with reviews",
-    type: GetUserProfileDto 
+    type: GetUserProfileDto,
   })
   async getProfile(@Request() req: any): Promise<GetUserProfileDto> {
     const userId = req.user.sub;

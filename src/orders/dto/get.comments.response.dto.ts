@@ -6,7 +6,7 @@ export class CommentResponseDto {
   imageBeforeUrl: string;
   imageAfterUrl: string;
   createdAt: Date;
-  
+
   employee: {
     id: string;
     username: string;

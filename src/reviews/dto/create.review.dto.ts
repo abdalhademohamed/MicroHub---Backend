@@ -18,7 +18,6 @@ export class CreateReviewDto {
   @Max(5)
   oldestRating: number;
 
-
   @ApiProperty({
     description: "Order ID to link the review",
     example: "order-id",
@@ -32,6 +31,4 @@ export class CreateReviewDto {
   @IsOptional()
   @IsString()
   comment_After: string;
-
-
 }

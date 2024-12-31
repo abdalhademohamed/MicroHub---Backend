@@ -4,10 +4,10 @@ import {
   Post,
   Body,
   Patch,
-  Param, 
+  Param,
   Delete,
   UseInterceptors,
-  UseGuards, 
+  UseGuards,
   UploadedFile,
   Query,
   BadRequestException,
@@ -20,11 +20,11 @@ import {
 import { OrdersService } from "./orders.service";
 import {
   ApiOperation,
-  ApiParam, 
+  ApiParam,
   ApiQuery,
   ApiResponse,
   ApiTags,
-} from "@nestjs/swagger";  
+} from "@nestjs/swagger";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { AccessTokenGuard } from "../auth/guards/accessToken.guard";
 import { RolesGuard } from "../auth/guards/role.guards";
@@ -49,8 +49,6 @@ export class OrdersController {
   // ) {
   //   return await this.ordersService.getCustomerComments(customerId, getCommentsDto);
   // }
-
-
 
   @Get("count")
   async getOrderCount(
@@ -97,16 +95,22 @@ export class OrdersController {
     return this.ordersService.findAllOrders(findOrdersDto, userId);
   }
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  @Patch('refund/:orderId')
+  @Patch("refund/:orderId")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.SUPERADMIN, Role.BRANCHMANAGER,Role.RECEPTIONIST, Role.ACCOUNTANT)
-  @UseInterceptors(FileInterceptor('image'))
+  @Roles(
+    Role.ADMIN,
+    Role.SUPERADMIN,
+    Role.BRANCHMANAGER,
+    Role.RECEPTIONIST,
+    Role.ACCOUNTANT,
+  )
+  @UseInterceptors(FileInterceptor("image"))
   async refundOrder(
-    @Param('orderId') orderId: string,
-    @Body('refundAmount') refundAmount: number,
-    @Body('refundReason') refundReason: string,
+    @Param("orderId") orderId: string,
+    @Body("refundAmount") refundAmount: number,
+    @Body("refundReason") refundReason: string,
     @UploadedFile() image: Express.Multer.File,
-    @Body('paymentId') paymentId: string,
+    @Body("paymentId") paymentId: string,
     @Request() req: any,
   ) {
     const userId = req.user.sub;
@@ -149,14 +153,14 @@ export class OrdersController {
   async updateOrderPaymentStatus(
     @Request() req: any, // Request object to access the user
     @Param("orderId") orderId: string,
-    @Body('paymentStatus') paymentStatus: PaymentStatus.Paid | PaymentStatus.PartiallyPaid, // Enum-like string values for payment status
+    @Body("paymentStatus")
+    paymentStatus: PaymentStatus.Paid | PaymentStatus.PartiallyPaid, // Enum-like string values for payment status
     @UploadedFile() image: Express.Multer.File, // File uploads cannot be passed as query parameters
-    @Body('paymentId') paymentId: string,
+    @Body("paymentId") paymentId: string,
     // @Body('paymentId') paymentId: string,
   ) {
-
     const userId = req.user.sub; // Extract user ID from request
-    console.log(userId)
+    console.log(userId);
     if (!userId) {
       throw new BadRequestException("User not authenticated");
     }
@@ -184,24 +188,27 @@ export class OrdersController {
       throw new BadRequestException("Invalid status");
     }
 
-   
-      const userId = req.user.sub; // Extract user ID from request
+    const userId = req.user.sub; // Extract user ID from request
 
-      if (!userId) {
-        throw new BadRequestException("User not authenticated");
-      }
-      return await this.ordersService.updateOrderStatus(
-        orderId,
-        status,
-        image,
-        userId,
-      );
-    
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
+    return await this.ordersService.updateOrderStatus(
+      orderId,
+      status,
+      image,
+      userId,
+    );
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Patch("assign")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST,Role.ARTISTMANAGER)
+  @Roles(
+    Role.SUPERADMIN,
+    Role.COORDINATOR,
+    Role.RECEPTIONIST,
+    Role.ARTISTMANAGER,
+  )
   async assignOrderToArtist(
     @Request() req: any, // Request object to access the user
     @Query("orderId") orderId: string,
@@ -221,28 +228,52 @@ export class OrdersController {
     return this.ordersService.assignOrderToArtist(orderId, artistId, userId);
   }
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST,Role.ARTISTMANAGER,Role.ACCOUNTANT,Role.ARTIST,Role.BRANCHMANAGER)
-  @Get('status/count-statics')
+  @Roles(
+    Role.SUPERADMIN,
+    Role.COORDINATOR,
+    Role.RECEPTIONIST,
+    Role.ARTISTMANAGER,
+    Role.ACCOUNTANT,
+    Role.ARTIST,
+    Role.BRANCHMANAGER,
+  )
+  @Get("status/count-statics")
   async getOrderStatusCountByBranch(
-    @Query('branchId') branchId?: string,
-    @Query('fromDate') fromDate?: string,
-    @Query('toDate') toDate?: string,
+    @Query("branchId") branchId?: string,
+    @Query("fromDate") fromDate?: string,
+    @Query("toDate") toDate?: string,
   ): Promise<{ [key in OrderStatus]: number }> {
-    return this.ordersService.getOrderStatusCountByBranchArray(branchId, fromDate, toDate);
+    return this.ordersService.getOrderStatusCountByBranchArray(
+      branchId,
+      fromDate,
+      toDate,
+    );
   }
-
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST,Role.ARTISTMANAGER,Role.ACCOUNTANT,Role.ARTIST,Role.BRANCHMANAGER)
-  @Get('status/count')
+  @Roles(
+    Role.SUPERADMIN,
+    Role.COORDINATOR,
+    Role.RECEPTIONIST,
+    Role.ARTISTMANAGER,
+    Role.ACCOUNTANT,
+    Role.ARTIST,
+    Role.BRANCHMANAGER,
+  )
+  @Get("status/count")
   async getOrderStatusCount(
-    @Query('branchId') branchId?: string,
-    @Query('fromDate') fromDate?: string,
-    @Query('toDate') toDate?: string,
-    @Query('employeeId') employeeId?: string  // New query parameter for employeeId
+    @Query("branchId") branchId?: string,
+    @Query("fromDate") fromDate?: string,
+    @Query("toDate") toDate?: string,
+    @Query("employeeId") employeeId?: string, // New query parameter for employeeId
   ): Promise<{ [key in OrderStatus]: number }> {
-    return this.ordersService.getOrderStatusCount(branchId, fromDate, toDate, employeeId);
+    return this.ordersService.getOrderStatusCount(
+      branchId,
+      fromDate,
+      toDate,
+      employeeId,
+    );
   }
 
   @Get("filterd")
@@ -268,11 +299,9 @@ export class OrdersController {
   @UseGuards(AccessTokenGuard)
   // @Roles(Role.SUPERADMIN, Role.RECEPTIONIST, Role.ARTISTMANAGER)
   async getOrderById(@Param("orderId") orderId: string) {
-  
-      const order = await this.ordersService.findOrderById(orderId);
-   
-      return order;
-  
+    const order = await this.ordersService.findOrderById(orderId);
+
+    return order;
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

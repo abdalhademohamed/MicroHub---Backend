@@ -19,6 +19,6 @@ import { CustomI18nService } from "../common/custom.18n.service";
   ],
 
   controllers: [RootoshController],
-  providers: [RootoshService,CustomI18nService],
+  providers: [RootoshService, CustomI18nService],
 })
 export class RootoshModule {}

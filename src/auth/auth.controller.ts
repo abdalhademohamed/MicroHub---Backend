@@ -40,7 +40,6 @@ import { Role } from "../user/utils/user.enum";
 import { AuthGuard } from "@nestjs/passport";
 import { CreateAdminDto } from "./guards/create.admin.dto";
 @ApiTags("auth")
-
 @Controller("auth")
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -77,10 +76,10 @@ export class AuthController {
   @ApiResponse({ status: 500, description: "Internal server error." })
   async signIn(
     @Body() LoginAuthDto: LoginAuthDto,
-  ): Promise<{ accessToken: string; refreshToken: string,userName:string}> {
-    const { accessToken, refreshToken,userName } =
+  ): Promise<{ accessToken: string; refreshToken: string; userName: string }> {
+    const { accessToken, refreshToken, userName } =
       await this.authService.signIn(LoginAuthDto);
-    return { accessToken, refreshToken ,userName};
+    return { accessToken, refreshToken, userName };
   }
 
   @UseGuards(AccessTokenGuard)
@@ -229,7 +228,7 @@ export class AuthController {
     }
   }
 
-  @Post('create/admin')
+  @Post("create/admin")
   @UseGuards(AccessTokenGuard, RolesGuard)
   @Roles(Role.SUPERADMIN)
   async createAdminUser(
@@ -238,7 +237,7 @@ export class AuthController {
     @Body() createAdminDto: CreateAdminDto,
   ) {
     const userId = req.user.sub;
-    
+
     if (!userId) {
       throw new BadRequestException("User not authenticated");
     }

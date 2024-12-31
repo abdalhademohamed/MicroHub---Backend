@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Query, Param, UseGuards } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Query,
+  Param,
+  UseGuards,
+} from "@nestjs/common";
 import { SlotService } from "./slots.service";
 import { CreateSlotDto } from "./dto/create.slot.dto";
 import { GetNearestSlot } from "./dto/nearest.slot.dto";
@@ -19,10 +27,13 @@ export class SlotController {
 
   // Get all available slots that have working entities
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ARTISTMANAGER)
+  @Roles(
+    Role.SUPERADMIN,
+    Role.COORDINATOR,
+    Role.RECEPTIONIST,
+    Role.ARTISTMANAGER,
+  )
   @Get("/available/:branchId")
-
-
   async getAllAvailableSlots(
     @Param("branchId") branchId: string,
     @Query() query: AvailableQueryDto,
@@ -32,12 +43,21 @@ export class SlotController {
 
   // Get the first available slot for a given branch and duration
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR,Role.RECEPTIONIST,Role.ARTISTMANAGER)
+  @Roles(
+    Role.SUPERADMIN,
+    Role.COORDINATOR,
+    Role.RECEPTIONIST,
+    Role.ARTISTMANAGER,
+  )
   @Get("/nearest")
   async getFirstSlotAvailable(@Query() query: GetNearestSlot) {
     const ids = query.services?.split(",") || [];
     const rootoshIds = query.rootosh?.split(",") || [];
 
-    return this.slotService.getFirstSlotAvailable(query.branch, ids,rootoshIds);
+    return this.slotService.getFirstSlotAvailable(
+      query.branch,
+      ids,
+      rootoshIds,
+    );
   }
 }

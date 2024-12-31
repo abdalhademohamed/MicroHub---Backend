@@ -32,7 +32,7 @@ export class RootoshController {
   @Post()
   async create(
     @Request() req: any,
-    @Body() createRootoshDto: CreateRootoshDto
+    @Body() createRootoshDto: CreateRootoshDto,
   ): Promise<any> {
     const userId = req.user.sub; // Hardcoded user ID for now
 
@@ -43,11 +43,11 @@ export class RootoshController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN,Role.RECEPTIONIST)
+  @Roles(Role.SUPERADMIN, Role.RECEPTIONIST)
   @Get()
   async findAllRootosh(
     @Query("page") page: number = 1, // Default page is 1
-    @Query("limit") limit: number = 10 // Default limit is 10
+    @Query("limit") limit: number = 10, // Default limit is 10
   ): Promise<{
     items: RootoshEntity[];
     total: number;
@@ -58,18 +58,17 @@ export class RootoshController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN,Role.RECEPTIONIST)
+  @Roles(Role.SUPERADMIN, Role.RECEPTIONIST)
   @Get(":id")
   async findOne(@Param("id") id: string): Promise<RootoshEntity> {
     return this.RootoshService.findOneRootosh(id);
   }
 
-
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN,Role.RECEPTIONIST)
+  @Roles(Role.SUPERADMIN, Role.RECEPTIONIST)
   @Get("service/:serviceId")
   async getRootoshesByServiceId(
-    @Param("serviceId") serviceId: string
+    @Param("serviceId") serviceId: string,
   ): Promise<RootoshEntity[]> {
     return this.RootoshService.getRootoshesByServiceId(serviceId);
   }
@@ -80,7 +79,7 @@ export class RootoshController {
   async update(
     @Request() req: any,
     @Param("id") id: string,
-    @Body() updateRootoshDto: UpdateRootoshDto
+    @Body() updateRootoshDto: UpdateRootoshDto,
   ): Promise<RootoshEntity> {
     const userId = req.user.sub; // Hardcoded user ID for now
 
