@@ -527,11 +527,13 @@ export class OrdersService {
         order: newOrder.id,
         createdBy: userId,
       });
-      await this.transactionService.createTransaction({
-        orderId: newOrder.id,
-        amount: reservation.deposit,
-        paymentId,
-      });
+      if(paymentId){
+        await this.transactionService.createTransaction({
+          orderId: newOrder.id,
+          amount: reservation.deposit,
+          paymentId,
+        });
+      }
       return newOrder;
     } catch (error) {
       console.log(error);
