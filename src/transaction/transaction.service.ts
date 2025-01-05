@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, OnModuleInit } from "@nestjs/common";
 import { CreateTransactionDto } from "./dto/create.transaction.dto";
 import { InjectRepository } from "@nestjs/typeorm";
 import { PaymentEntity } from "src/payment/entities/payment.entity";
@@ -9,7 +9,7 @@ import { BranchEntity } from "src/branch/entities/branch.entity";
 import { FindTransactionDto } from "./dto/query.transaction.dto";
 
 @Injectable()
-export class TransactionService {
+export class TransactionService implements OnModuleInit {
   constructor(
     @InjectRepository(PaymentEntity)
     private readonly paymentRepository: Repository<PaymentEntity>,
@@ -20,8 +20,18 @@ export class TransactionService {
     @InjectRepository(BranchEntity)
     private readonly branchRepository: Repository<BranchEntity>,
   ) {}
+  async onModuleInit() {
+      let payment = await this.paymentRepository.findOne({ where: { methodEnglish: 'free' } });
+      if(!payment){
+        const result = this.paymentRepository.create({
+          methodEnglish: 'free',
+          methodArabic: 'مجاني',
+        });
+        await this.paymentRepository.save(result);
+        console.log(result);
+      }
+    }
   async createTransaction(body: CreateTransactionDto) {
-    console.log(body.amount);
     const order = await this.orderRepository.findOne({
       where: { id: body.orderId },
     });
@@ -32,13 +42,17 @@ export class TransactionService {
     });
     transaction.branch = await this.branchRepository.findOne({
       where: { id: order.branch.id },
+      relations: {
+        reservations: true,
+      }
     });
     if (body.paymentId) {
       transaction.payment = await this.paymentRepository.findOne({
         where: { id: body.paymentId },
       });
+    } else if( transaction.amount == 0 ) {
+      transaction.payment = await this.paymentRepository.findOne({ where: { methodEnglish: 'free' } })
     }
-    console.log(transaction);
     await this.transactionRepository.save(transaction);
   }
   async latestTransaction(findTransactionDto: FindTransactionDto) {

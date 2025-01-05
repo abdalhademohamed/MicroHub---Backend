@@ -5,8 +5,6 @@ import {
   Column,
   PrimaryGeneratedColumn,
   ManyToOne,
-  OneToOne,
-  JoinColumn,
   OneToMany,
 } from "typeorm";
 
@@ -21,7 +19,7 @@ export class PaymentEntity {
   @Column({ type: "varchar", length: 255 })
   methodArabic: string;
 
-  @Column({ type: "varchar", length: 255 })
+  @Column({ type: "varchar", length: 255, nullable: true })
   image: string; // This will store the image URL or file path
 
   @Column({ default: new Date() })

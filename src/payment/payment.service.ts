@@ -2,6 +2,9 @@ import {
   Injectable,
   NotFoundException,
   InternalServerErrorException,
+  OnModuleInit,
+  Scope,
+  OnApplicationBootstrap,
 } from "@nestjs/common";
 import { CreatePaymentDto } from "./dto/create.payment.dto";
 import { UpdatePaymentDto } from "./dto/update.payment.dto";
@@ -12,13 +15,14 @@ import { CloudinaryService } from "../cloudinary/cloudinary.service";
 import { CustomI18nService } from "../common/custom.18n.service";
 
 @Injectable()
-export class PaymentService {
+export class PaymentService  {
   constructor(
     @InjectRepository(PaymentEntity)
     private readonly paymentRepository: Repository<PaymentEntity>,
     private readonly CloudinaryService: CloudinaryService,
     private readonly i18n: CustomI18nService,
-  ) {}
+  ) {
+  }
 
   async createPayment(
     createPaymentDto: CreatePaymentDto,

@@ -111,6 +111,7 @@ export class OrdersService {
     if (!reservation) {
       throw new NotFoundException("Reservation not found");
     }
+    console.log(reservation);
 
     // Fetch the user who is creating the order, limiting the fields returned
     const createdBy = await this.userRepository.findOne({
@@ -127,7 +128,7 @@ export class OrdersService {
       //   await this.GiftCouponService.getGiftCouponByCouponCode(couponCode);
       // console;
       coupon = await this.getGiftCouponByCouponCode(couponCode);
-    } else {
+    } else if (paymentId) {
       // Find the payment method with 'Visa'
       payment = await this.PaymentRepository.findOne({
         where: { id: paymentId },
@@ -168,14 +169,6 @@ export class OrdersService {
       // Increment the usage count of the offer
       sharableOffer.usageCount += 1;
       await this.SharableOfferRepository.save(sharableOffer); // Save the updated offer
-
-      // // Create a new gift coupon after saving the sharable offer
-      // const createGiftCouponDto: CreateGiftCouponDto = {
-      //   sharableOfferId: sharableOffer.id, // Use the saved offer ID
-      //   customerId: reservation.customer.id, // Assuming customerId is available in offerData
-      // };
-      // // After saving the sharable offer, create a gift coupon for its services
-      // await this.GiftCouponService.createGiftCoupon(createGiftCouponDto);
     }
 
     // Set payment status based on coupon code
@@ -527,13 +520,11 @@ export class OrdersService {
         order: newOrder.id,
         createdBy: userId,
       });
-      if(paymentId){
-        await this.transactionService.createTransaction({
-          orderId: newOrder.id,
-          amount: reservation.deposit,
-          paymentId,
-        });
-      }
+      await this.transactionService.createTransaction({
+        orderId: newOrder.id,
+        amount: reservation.deposit,
+        paymentId,
+      });
       return newOrder;
     } catch (error) {
       console.log(error);
