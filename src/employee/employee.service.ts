@@ -700,6 +700,36 @@ export class EmployeeService {
       }
     });
   }
+  async activeEmployeeByEmployeeId(
+    employeeId: string,
+  ): Promise<void> {
+    let employee: EmployeeEntity;
+
+    await this.entityManager.transaction(async (transactionalEntityManager) => {
+      try {
+        // Load the employee associated with the employeeId
+        employee = await transactionalEntityManager.findOne(EmployeeEntity, {
+          where: { id: employeeId },
+          relations: ["branch"],
+        });
+        if (!employee) {
+          throw new NotFoundException("Employee not found");
+        }
+
+        // Perform the soft delete by setting the deletedAt field
+        employee.deletedAt = null;
+        employee.isDeleted = false; // Set the isDeleted flag
+
+        await transactionalEntityManager.save(EmployeeEntity, employee);
+        return employee;
+      } catch (error) {
+        console.error("Error performing soft delete on employee:", error);
+        throw new InternalServerErrorException(
+          "Failed to soft delete employee",
+        );
+      }
+    });
+  }
   async uploadImage(
     file: Express.Multer.File,
     folderName: string,
