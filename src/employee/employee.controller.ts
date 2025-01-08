@@ -259,7 +259,7 @@ export class EmployeeController {
   }
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
-  @Post("active/:employeeId")
+  @Put("active/:employeeId")
   async activeEmployee( @Param("employeeId") employeeId: string ) {
     return this.employeeService.activeEmployeeByEmployeeId(
       employeeId,
