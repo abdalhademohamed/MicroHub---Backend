@@ -156,7 +156,7 @@ export class ReceiptService {
         }
 
         if (order.sharableOfferId) {
-          offer = await this.OfferRepository.findOne({
+          offer = await this.sharableOfferRepository.findOne({
             where: { id: order.sharableOfferId },
           });
           if (!offer) {
