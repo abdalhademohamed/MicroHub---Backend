@@ -16,6 +16,7 @@ import { OrderEntity } from "../../orders/entities/order.entity";
 import { CommentEntity } from "../../comment/entities/comment.entity";
 import { ReviewEntity } from "../../reviews/entities/review.entity";
 import { UserEntity } from "../../user/entities/user.entity";
+import { TransactionEntity } from "src/transaction/entities/transaction.entity";
 
 @Entity()
 export class EmployeeEntity extends UserEntity {
@@ -50,6 +51,9 @@ export class EmployeeEntity extends UserEntity {
     (EmployeeTypeEntity) => EmployeeTypeEntity.employees,
   )
   employeeType: EmployeeTypeEntity;
+
+  // @OneToMany(() => TransactionEntity, (tr) => tr.employee)
+  // transactions: TransactionEntity[];
 
   @Column({ default: 0 })
   totalReviews: number; // Total number of reviews for the employee

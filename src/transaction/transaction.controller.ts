@@ -17,4 +17,8 @@ export class TransactionController {
   async refundTransaction(@Query() obj: FindTransactionDto){
     return this.transactionService.refundAggregations(obj);
   }
+  @Get('employee')
+  async aggregations(@Query() obj: FindTransactionDto){
+    return this.transactionService.incomeAndRefundAggregations(obj);
+  }
 }

@@ -325,6 +325,7 @@ export class OrdersService {
         orderId: newOrder.id,
         amount: reservation.deposit,
         paymentId,
+        userId,
       });
       return newOrder;
     } catch (error) {
@@ -524,6 +525,7 @@ export class OrdersService {
         orderId: newOrder.id,
         amount: reservation.deposit,
         paymentId,
+        userId,
       });
       return newOrder;
     } catch (error) {
@@ -781,6 +783,7 @@ export class OrdersService {
               orderId: savedOrder.id,
               amount,
               paymentId,
+              userId,
             });
           }
           await this.actionService.createAction({
@@ -2324,6 +2327,7 @@ export class OrdersService {
           orderId,
           amount: -refundAmount,
           paymentId,
+          userId,
         });
         savedReceipt = await this.ReceiptRepository.save(refundReceipt);
       }

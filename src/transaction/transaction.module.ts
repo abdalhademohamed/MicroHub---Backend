@@ -7,6 +7,7 @@ import { TransactionEntity } from "./entities/transaction.entity";
 import { OrderEntity } from "src/orders/entities/order.entity";
 import { PaymentEntity } from "src/payment/entities/payment.entity";
 import { BranchEntity } from "src/branch/entities/branch.entity";
+import { EmployeeEntity } from "src/employee/entities/employee.entity";
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { BranchEntity } from "src/branch/entities/branch.entity";
       OrderEntity,
       PaymentEntity,
       BranchEntity,
+      EmployeeEntity,
     ]),
   ],
   controllers: [TransactionController],

@@ -7,6 +7,8 @@ import { OrderEntity } from "src/orders/entities/order.entity";
 import { TransactionEntity } from "./entities/transaction.entity";
 import { BranchEntity } from "src/branch/entities/branch.entity";
 import { FindTransactionDto } from "./dto/query.transaction.dto";
+import { EmployeeEntity } from "src/employee/entities/employee.entity";
+import { UserEntity } from "src/user/entities/user.entity";
 
 @Injectable()
 export class TransactionService implements OnModuleInit {
@@ -19,6 +21,7 @@ export class TransactionService implements OnModuleInit {
     private readonly transactionRepository: Repository<TransactionEntity>,
     @InjectRepository(BranchEntity)
     private readonly branchRepository: Repository<BranchEntity>,
+    @InjectRepository(UserEntity) private readonly userRepository: Repository<UserEntity>,
   ) {}
   async onModuleInit() {
       let payment = await this.paymentRepository.findOne({ where: { methodEnglish: 'free' } });
@@ -40,6 +43,9 @@ export class TransactionService implements OnModuleInit {
       amount: Number(body.amount),
       createdAt: new Date(),
     });
+    transaction.user = await this.userRepository.findOne({
+      where: { id: body.userId },
+    })
     transaction.branch = await this.branchRepository.findOne({
       where: { id: order.branch.id },
       relations: {
@@ -168,4 +174,53 @@ export class TransactionService implements OnModuleInit {
     const result = await queryBuilder.getRawOne();
     return { totalRefund: result?.totalRefund * -1 || 0 };
   }
+  async incomeAndRefundAggregations(findTransactionDto: FindTransactionDto) {
+    const { branch, fromDate, toDate, payment, page = 1, limit = 20 } = findTransactionDto;
+    const queryBuilder = this.transactionRepository
+      .createQueryBuilder('transaction')
+      .select('user.id', 'userId')  // Select user ID
+      .addSelect('user.username', 'userName')  // Select user English name
+      .addSelect('user.email', 'userEmail')  // Select user Arabic name
+      .addSelect('SUM(CASE WHEN transaction.amount > 0 THEN transaction.amount ELSE 0 END)', 'totalIncome')  // Sum of income
+      .addSelect('SUM(CASE WHEN transaction.amount < 0 THEN transaction.amount ELSE 0 END)', 'totalRefund')  // Sum of refund
+      .innerJoin('transaction.user', 'user')  // Join user table
+      .innerJoin('transaction.branch', 'branch')  // Join branch table
+      .innerJoin('transaction.payment', 'payment')  // Join payment table
+      .where('transaction.amount != 0');  // Exclude transactions with 0 amount
+  
+    // Apply filters for branch and payment
+    if (branch) {
+      queryBuilder.andWhere('branch.id = :branch', { branch });
+    }
+  
+    if (payment) {
+      queryBuilder.andWhere('payment.id = :payment', { payment });
+    }
+  
+    // Apply date filters
+    if (fromDate) {
+      queryBuilder.andWhere('transaction.createdAt >= :fromDate', { fromDate });
+    }
+  
+    if (toDate) {
+      queryBuilder.andWhere('transaction.createdAt <= :toDate', { toDate });
+    }
+  
+    // Group by user to calculate total income and refund for each one
+    queryBuilder.groupBy('user.id');
+  
+    const skip = (page - 1) * limit;
+    // Execute query
+    const result = await queryBuilder.skip(skip).limit(limit).getRawMany();
+  
+    // Return the detailed information for each user
+    return result.map((entry) => ({
+      id: entry.userId,
+      name: entry.userName,
+      email: entry.userEmail,
+      totalIncome: parseFloat(entry.totalIncome), // Convert to float if necessary
+      totalRefund: parseFloat(entry.totalRefund), // Convert to float if necessary
+    }));
+  }  
+  
 }
