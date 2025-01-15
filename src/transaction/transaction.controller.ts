@@ -21,4 +21,8 @@ export class TransactionController {
   async aggregations(@Query() obj: FindTransactionDto){
     return this.transactionService.incomeAndRefundAggregations(obj);
   }
+  @Get('statistics')
+  async getStatisticsWithDetails() {
+    return this.transactionService.getPaymentStatisticsWithDetails();
+  }
 }

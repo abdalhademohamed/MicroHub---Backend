@@ -247,6 +247,30 @@ export class TransactionService implements OnModuleInit {
         currentPage: page,
         totalPages,
       };
-  }  
+  }
+  async getPaymentStatisticsWithDetails() {
+    const stats = await this.transactionRepository
+      .createQueryBuilder("transaction")
+      .innerJoinAndSelect("transaction.payment", "payment") // Join with PaymentEntity
+      .select("payment.id", "paymentId")
+      .addSelect("payment.methodEnglish", "methodName") // Include the method name
+      .addSelect("payment.image", "methodImage") // Include the method image
+      .addSelect("COUNT(transaction.id)", "numberOfTransactions")
+      .addSelect(
+        "SUM(CASE WHEN transaction.amount > 0 THEN transaction.amount ELSE 0 END)",
+        "totalIncome"
+      )
+      .addSelect(
+        "SUM(CASE WHEN transaction.amount < 0 THEN ABS(transaction.amount) ELSE 0 END)",
+        "totalRefund"
+      )
+      .groupBy("payment.id")
+      .addGroupBy("payment.methodEnglish")
+      .addGroupBy("payment.image")
+      .getRawMany();
+  
+    return { items: stats };
+  }    
+  
   
 }
