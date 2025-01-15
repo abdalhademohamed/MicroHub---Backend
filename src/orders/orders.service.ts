@@ -1495,6 +1495,78 @@ export class OrdersService {
       throw new Error("Unable to fetch orders.");
     }
   }
+  async findAllCreatedOrders(
+    findOrdersDto: FindOrdersDto,
+    userId: string,
+  ): Promise<{ items: OrderEntity[]; total: number }> {
+    const {
+      page,
+      limit,
+      sort,
+      fromDate,
+      toDate,
+      paymentStatus,
+      orderStatus
+    } = findOrdersDto;
+    try {
+      console.log(userId);
+      const query = this.orderRepository
+        .createQueryBuilder("o")
+        .leftJoinAndSelect("o.artist", "a")
+        .leftJoinAndSelect("o.customer", "c")
+        .addSelect(["c.id", "c.fullName", "c.phoneNumber"])
+        .leftJoin("o.createdBy", "cb")
+        .leftJoin("o.confirmedBy", "confirmedBy") // Include confirmedBy relation
+        .addSelect([
+          "confirmedBy.id",
+          "confirmedBy.username",
+          "confirmedBy.role",
+        ])
+        .addSelect(["cb.id", "cb.username", "cb.email", "cb.role"])
+        .leftJoin("o.updatedBy", "ub")
+        .addSelect(["ub.id", "ub.username"])
+        .leftJoinAndSelect("o.reservation", "r")
+        .leftJoinAndSelect("r.services", "s")
+        .leftJoinAndSelect("r.rootoshes", "ro") // Adding the rootoshes join here
+        .addSelect(["r.id", "r.start_Time", "r.end_Time", "r.totalPrice"])
+        .take(limit)
+        .skip((page - 1) * limit)
+        .orderBy(`o.date`, sort.toUpperCase() as "ASC" | "DESC");
+      
+      query.andWhere("cb.id = :userId", {
+        userId,
+      });
+
+      if (fromDate || toDate) {
+        if (fromDate) {
+          query.andWhere("o.date >= :fromDate", {
+            fromDate: new Date(fromDate).toISOString(),
+          });
+        }
+        if (toDate) {
+          query.andWhere("o.date < :toDate", {
+            toDate: new Date(toDate).toISOString(),
+          });
+        }
+      }
+
+      if (paymentStatus) {
+        query.andWhere("o.paymentStatus = :paymentStatus", { paymentStatus });
+      }
+
+      // // Handle multiple order statuses
+      // if (orderStatus) {
+      //   query.andWhere("o.status = :orderStatus", { orderStatus });
+      // }
+
+      const [items, total] = await query.getManyAndCount();
+
+      return { items, total };
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      throw new NotFoundException("Unable to fetch orders.");
+    }
+  }
   async findAllRefundedOrders(findOrdersDto: FindOrdersDto, userId: string) {
     const { page, limit, fromDate, toDate } = findOrdersDto;
 

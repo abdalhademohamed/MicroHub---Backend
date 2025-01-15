@@ -36,19 +36,33 @@ import { OrderStatus } from "./utils/order.status.enum";
 import { FindOrdersByDayDto } from "./dto/find.orders.dto.for.artist";
 import { PaymentStatus } from "./utils/payment.status.enum";
 import { GetCommentsbycustomerDto } from "./dto/get-comments.dto";
+import { use } from "passport";
 
 @ApiTags("orders")
 @Controller("order")
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
-  // @Get('comments/:customerId')
-  // async getCustomerComments(
-  //   @Param('customerId') customerId: string,
-  //   @Query() getCommentsDto: GetCommentsbycustomerDto,
-  // ) {
-  //   return await this.ordersService.getCustomerComments(customerId, getCommentsDto);
-  // }
+  @Get("created/:emloyeeId")
+  // @UseGuards(AccessTokenGuard)
+  // // @Roles(
+  // //   Role.SUPERADMIN,
+  // //   Role.RECEPTIONIST,
+  // //   Role.COORDINATOR,
+  // //   Role.ARTISTMANAGER,
+  // // )
+  async findAllCreatedOrders(
+    @Query() findOrdersDto: FindOrdersDto,
+    @Request() req: any, // Request object to access the user
+    @Param("emloyeeId") emloyeeId: string,
+  ) {
+    // const userId = req.user.sub; // Assuming user ID is stored in the request
+    // if (!userId) {
+    //   throw new BadRequestException("User not authenticated");
+    // }
+    // console.log(userId);
+    return this.ordersService.findAllCreatedOrders(findOrdersDto, emloyeeId);
+  }
 
   @Get("count")
   async getOrderCount(
