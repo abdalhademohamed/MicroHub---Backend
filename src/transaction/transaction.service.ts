@@ -9,6 +9,7 @@ import { BranchEntity } from "src/branch/entities/branch.entity";
 import { FindTransactionDto } from "./dto/query.transaction.dto";
 import { EmployeeEntity } from "src/employee/entities/employee.entity";
 import { UserEntity } from "src/user/entities/user.entity";
+import { OrderStatus } from "src/orders/utils/order.status.enum";
 
 @Injectable()
 export class TransactionService implements OnModuleInit {
@@ -176,7 +177,7 @@ export class TransactionService implements OnModuleInit {
   }
   async incomeAndRefundAggregations(findTransactionDto: FindTransactionDto) {
     const { branch, fromDate, toDate, payment, page = 1, limit = 20 } = findTransactionDto;
-
+  
     const queryBuilder = this.transactionRepository
       .createQueryBuilder('transaction')
       .select('user.id', 'userId')  // Select user ID
@@ -184,11 +185,13 @@ export class TransactionService implements OnModuleInit {
       .addSelect('user.email', 'userEmail')  // Select user email
       .addSelect('SUM(CASE WHEN transaction.amount > 0 THEN transaction.amount ELSE 0 END)', 'totalIncome')  // Sum of income
       .addSelect('SUM(CASE WHEN transaction.amount < 0 THEN transaction.amount ELSE 0 END)', 'totalRefund')  // Sum of refund
-      .addSelect('COUNT(DISTINCT order.id)', 'orderCount')  // Count the number of orders for each user
+      .addSelect('COUNT(DISTINCT order.id)', 'orderCount')  // Count of all orders created by user
+      // .addSelect('COUNT(DISTINCT CASE WHEN order.status = :cancelledStatus THEN order.id ELSE NULL END)', OrderStatus.Canceled)  // Count cancelled orders
       .innerJoin('transaction.user', 'user')  // Join user table
       .innerJoin('transaction.branch', 'branch')  // Join branch table
       .innerJoin('transaction.payment', 'payment')  // Join payment table
-      .leftJoin('transaction.order', 'order')  // Join order table (left join in case no orders exist)
+      .leftJoin('transaction.order', 'order')  // Join order table (left join to include users without orders)
+      .leftJoin('order.artist', 'employee')  // Join employee (artist) table to count employees
       .where('transaction.amount != 0');  // Exclude transactions with 0 amount
   
     // Apply filters for branch and payment
@@ -209,29 +212,41 @@ export class TransactionService implements OnModuleInit {
       queryBuilder.andWhere('transaction.createdAt <= :toDate', { toDate });
     }
   
-    // Group by user to calculate total income, refund, and order count for each one
+    // Group by user to calculate total income, refund, and order counts
     queryBuilder.groupBy('user.id');
+    queryBuilder.addGroupBy('employee.id');  // Group by employee to get employee-level aggregations
   
+    const totalRowsQuery = queryBuilder.clone().select('COUNT(DISTINCT user.id)', 'totalRows');  // Count total number of rows
+  
+    const totalRowsResult = await totalRowsQuery.getRawOne();  // Execute the query to get the count
+  
+    // Pagination (skip and take)
     const skip = (page - 1) * limit;
     queryBuilder.skip(skip).take(limit);
-
+  
     const result = await queryBuilder.getRawMany();
   
-    // Map the result and include the new order count
+    // Map the result and include the necessary fields
     const data = result.map((entry) => ({
-      id: entry.userId,
-      name: entry.userName,
-      email: entry.userEmail,
+      userId: entry.userId,
+      userName: entry.userName,
+      userEmail: entry.userEmail,
       totalIncome: parseFloat(entry.totalIncome),
       totalRefund: parseFloat(entry.totalRefund),
-      orderCount: parseInt(entry.orderCount, 10),  // Convert order count to an integer
+      orderCount: parseInt(entry.orderCount, 10),  // Number of orders created by the user
+      // cancelledOrderCount: parseInt(entry.cancelledOrderCount, 10),  // Number of cancelled orders
+      employeeId: entry.employeeId,  // Employee ID
+      employeeName: entry.employeeName,  // Employee name
     }));
+    const totalPages = Math.ceil(totalRowsResult.totalRows / limit);
 
-    return {
-      data,
-      page,
-      limit,
-    };
-  }
+      // Return paginated and sorted result
+      return {
+        items: data,
+        total: limit,
+        currentPage: page,
+        totalPages,
+      };
+  }  
   
 }
