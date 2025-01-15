@@ -134,6 +134,17 @@ export class ServiceService {
       );
     }
   }
+  async getServicesWithReservationCount(page: number, limit: number) {
+    const skip = (page - 1) * limit;
+    const [items, total] = 
+    await this.ServiceRepository.createQueryBuilder("service")
+      .leftJoin("service.reservations", "reservation")
+      .loadRelationCountAndMap("service.reservationCount", "service.reservations")
+      .skip(skip).take(limit)
+      .getManyAndCount();
+    const totalPages = Math.ceil(total / limit);
+    return { items, total, totalPages, currentPage: page };
+  }
 
   async updateService(
     id: string,
