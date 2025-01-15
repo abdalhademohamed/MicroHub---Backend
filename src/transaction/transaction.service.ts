@@ -176,16 +176,19 @@ export class TransactionService implements OnModuleInit {
   }
   async incomeAndRefundAggregations(findTransactionDto: FindTransactionDto) {
     const { branch, fromDate, toDate, payment, page = 1, limit = 20 } = findTransactionDto;
+
     const queryBuilder = this.transactionRepository
       .createQueryBuilder('transaction')
       .select('user.id', 'userId')  // Select user ID
-      .addSelect('user.username', 'userName')  // Select user English name
-      .addSelect('user.email', 'userEmail')  // Select user Arabic name
+      .addSelect('user.username', 'userName')  // Select user name
+      .addSelect('user.email', 'userEmail')  // Select user email
       .addSelect('SUM(CASE WHEN transaction.amount > 0 THEN transaction.amount ELSE 0 END)', 'totalIncome')  // Sum of income
       .addSelect('SUM(CASE WHEN transaction.amount < 0 THEN transaction.amount ELSE 0 END)', 'totalRefund')  // Sum of refund
+      .addSelect('COUNT(DISTINCT order.id)', 'orderCount')  // Count the number of orders for each user
       .innerJoin('transaction.user', 'user')  // Join user table
       .innerJoin('transaction.branch', 'branch')  // Join branch table
       .innerJoin('transaction.payment', 'payment')  // Join payment table
+      .leftJoin('transaction.order', 'order')  // Join order table (left join in case no orders exist)
       .where('transaction.amount != 0');  // Exclude transactions with 0 amount
   
     // Apply filters for branch and payment
@@ -206,21 +209,29 @@ export class TransactionService implements OnModuleInit {
       queryBuilder.andWhere('transaction.createdAt <= :toDate', { toDate });
     }
   
-    // Group by user to calculate total income and refund for each one
+    // Group by user to calculate total income, refund, and order count for each one
     queryBuilder.groupBy('user.id');
   
     const skip = (page - 1) * limit;
-    // Execute query
-    const result = await queryBuilder.skip(skip).limit(limit).getRawMany();
+    queryBuilder.skip(skip).take(limit);
+
+    const result = await queryBuilder.getRawMany();
   
-    // Return the detailed information for each user
-    return result.map((entry) => ({
+    // Map the result and include the new order count
+    const data = result.map((entry) => ({
       id: entry.userId,
       name: entry.userName,
       email: entry.userEmail,
-      totalIncome: parseFloat(entry.totalIncome), // Convert to float if necessary
-      totalRefund: parseFloat(entry.totalRefund), // Convert to float if necessary
+      totalIncome: parseFloat(entry.totalIncome),
+      totalRefund: parseFloat(entry.totalRefund),
+      orderCount: parseInt(entry.orderCount, 10),  // Convert order count to an integer
     }));
-  }  
+
+    return {
+      data,
+      page,
+      limit,
+    };
+  }
   
 }

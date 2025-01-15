@@ -77,6 +77,7 @@ export class ReservationService {
     
     @InjectRepository(OrderEntity)
     private OrderRepo: Repository<OrderEntity>,
+    private actionService: ActionService,
   ) {}
   splitIntervals(
     fromOriginal: Date,
@@ -1176,6 +1177,14 @@ export class ReservationService {
     if(reservation.branch.id == body.branch){
       const result = await this.updateTime(reservationId, { startTime: body.startTime }, userId);
       console.log(result, 'result');
+      await this.actionService.createAction({
+        actionEn: `reservation branch updated to ${branch.name} and time is ${body.startTime}`,
+        actionAr: `تم تحديث فرع الحجز إلى ${branch.name} والوقت هو ${body.startTime}`,
+        branch: branch.id,
+        createdBy: userId,
+        order: reservation.order.id,
+      })
+      // 
       return { order: result };
     }
     const duration = (reservation.end_Time.getTime() - reservation.start_Time.getTime()) / ( 1000 * 60 );
@@ -1234,6 +1243,13 @@ export class ReservationService {
     await this.ReservationRepository.save(reservation);
     await this.OrderRepo.save(order);
     await this.OrdersService.updateOrderTimeFromReservation(reservation.id, userId);
+    await this.actionService.createAction({
+      actionEn: `reservation time updated to ${body.startTime}`,
+      actionAr: `تم تحديث وقت الحجز إلى ${body.startTime}`,
+      branch: branch.id,
+      createdBy: userId,
+      order: reservation.order.id,
+    })
   
     return { reservation, order };
     }
