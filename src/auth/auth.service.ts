@@ -487,7 +487,7 @@ export class AuthService {
       const payload = { sub: userId, username, email, role };
       const accessOptions = {
         secret: process.env.JWT_ACCESS_SECRET,
-        expiresIn: "10h",
+        expiresIn: "2d",
       };
       const refreshOptions = {
         secret: process.env.JWT_REFRESH_SECRET,

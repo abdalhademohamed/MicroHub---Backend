@@ -25,6 +25,7 @@ import { ReceiptEntity } from "../receipt/entities/receipt.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
 import { ActionModule } from "../action/action.module";
 import { TransactionModule } from "src/transaction/transaction.module";
+// import { ActionEntity } from "src/action/entities/action.entity";
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { TransactionModule } from "src/transaction/transaction.module";
       RootoshEntity,
       CommentEntity,
       ReceiptEntity,
+      // ActionEntity,
     ]),
     NotificationModule,
     ActionModule,

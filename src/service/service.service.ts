@@ -15,10 +15,12 @@ import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { UserEntity } from "../user/entities/user.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
 import { I18nService } from "nestjs-i18n";
+import { ExcelService } from "src/excel/excel.service";
 
 @Injectable()
 export class ServiceService {
   constructor(
+    private excelService: ExcelService,
     @InjectRepository(ServiceEntity)
     private readonly ServiceRepository: Repository<ServiceEntity>,
     private readonly cloudinaryService: CloudinaryService, // Inject CloudinaryService
@@ -28,6 +30,11 @@ export class ServiceService {
     private readonly AuditLogRepository: Repository<AuditLogEntity>,
     private readonly i18n: CustomI18nService,
   ) {}
+  async serviceCountExcel(page: number, limit: number){
+      const { items } = await this.getServicesWithReservationCount(page, limit);
+      return this.excelService.generateAndUploadExcel(items, `service-excel-${Date.now()}`)
+    }
+    
   async createService(
     createServiceDto: CreateServiceDto,
     file: Express.Multer.File, // Accept the file as a parameter
@@ -133,6 +140,17 @@ export class ServiceService {
         this.i18n.translate("test.SERVICE.FETCH_FAILED"),
       );
     }
+  }
+  async getServicesWithReservationCount(page: number, limit: number) {
+    const skip = (page - 1) * limit;
+    const [items, total] = 
+    await this.ServiceRepository.createQueryBuilder("service")
+      .leftJoin("service.reservations", "reservation")
+      .loadRelationCountAndMap("service.reservationCount", "service.reservations")
+      .skip(skip).take(limit)
+      .getManyAndCount();
+    const totalPages = Math.ceil(total / limit);
+    return { items, total, totalPages, currentPage: page };
   }
 
   async updateService(

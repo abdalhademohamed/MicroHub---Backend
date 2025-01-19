@@ -189,7 +189,9 @@ export class CustomerService {
     const { keyword, page = 1, limit = 10 } = filters;
 
     // Step 1: Fetch customers
-    const query = this.customerRepository.createQueryBuilder("customer");
+    const query = this.customerRepository
+      .createQueryBuilder("customer")
+      .leftJoin("customer.orders", "order");
     if (keyword) {
       // orderInvoice
       query
@@ -198,7 +200,8 @@ export class CustomerService {
         })
         .orWhere("customer.fullName LIKE :keyword", {
           keyword: `%${keyword}%`,
-        });
+        })
+        .orWhere("CAST(order.orderInvoice AS TEXT) LIKE :keyword", { keyword: `%${keyword}%` })
     }
 
     // Pagination

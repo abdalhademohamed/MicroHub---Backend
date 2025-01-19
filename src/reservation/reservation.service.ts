@@ -7,7 +7,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { InjectEntityManager, InjectRepository } from "@nestjs/typeorm";
-import { Between, EntityManager, In, Repository } from "typeorm";
+import { EntityManager, In, Repository } from "typeorm";
 import { ReservationEntity } from "./entities/reservation.entity";
 import { BranchEntity } from "../branch/entities/branch.entity";
 import { ServiceEntity } from "../service/entities/service.entity";
@@ -16,12 +16,10 @@ import { CloudinaryService } from "../cloudinary/cloudinary.service";
 import { CustomerEntity } from "../customer/entities/customer.entity";
 import { CreateCustomerDto } from "../customer/dto/create.customer.dto";
 import { CreateReservationDto } from "./dto/create.reservation.dto";
-
 import { UpdateReservationDto } from "./dto/update.reservation.dto";
 import { UpdateTimeReservationDto } from "./dto/update-time.reservation.dto";
 import { WorkingEntity } from "../slots/entities/working.entity";
 import { SlotsEntity } from "../slots/entities/slots.entity";
-import { ReceiptService } from "../receipt/receipt.service";
 import { OrderEntity } from "../orders/entities/order.entity";
 import { OrdersService } from "../orders/orders.service";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
@@ -37,6 +35,7 @@ import { CustomI18nService } from "../common/custom.18n.service";
 import { GiftCouponService } from "../gift-coupon/gift-coupon.service";
 import { UpdateBranchReservationDto } from "./dto/update-branch.reservation.dto";
 import { ActionService } from "src/action/action.service";
+import { of } from "rxjs";
 
 @Injectable()
 export class ReservationService {
@@ -70,15 +69,13 @@ export class ReservationService {
     @InjectRepository(RootoshEntity)
     private RootoshRepository: Repository<RootoshEntity>,
     @InjectRepository(EmployeeEntity)
-    private EmployeeRepository: Repository<EmployeeEntity>,
-    private readonly notificationService: NotificationService,
+    // private EmployeeRepository: Repository<EmployeeEntity>,
+    // private readonly notificationService: NotificationService,
     private readonly i18n: CustomI18nService,
     
     @InjectRepository(OrderEntity)
     private OrderRepo: Repository<OrderEntity>,
-    // private readonly GiftCouponService: GiftCouponService,
-
-    // private readonly ReceiptService: ReceiptService, // Inject the new service
+    private actionService: ActionService,
   ) {}
   splitIntervals(
     fromOriginal: Date,
@@ -312,12 +309,17 @@ export class ReservationService {
         if (!offer) {
           throw new NotFoundException("Offer not found");
         }
+        console.log(offer);
         serviceIds = offer.services.map((service) => service.id); // Extract service IDs from the offer
         services = offer.services; // Use services from the offer
 
         const serviceTotals = await this.calculateTotalDuration(serviceIds);
         duration += serviceTotals.duration;
         price += serviceTotals.price;
+
+        console.log((Number(offer.discountPercentage) / 100) * price);
+
+        price = price - (Number(offer.discountPercentage) / 100) * price;
 
         // Ensure image is provided
         if (image) {
@@ -362,6 +364,8 @@ export class ReservationService {
         duration += serviceTotals.duration;
         price += fullServiceTotals.price;
 
+        price = price - (Number(sharableOffer.discountPercentage) / 100) * price;
+
         // Ensure image is provided
         if (!image) {
           const folderName = "reservation";
@@ -393,10 +397,10 @@ export class ReservationService {
 
         services = transformedServices;
         body.deposit = 0;
+        price = 0;
         body.deposit_Content = null;
         const serviceTotals = await this.calculateTotalDuration(serviceIds);
         duration += serviceTotals.duration;
-      
       }
 
       // Check if rootoshIds are provided
@@ -440,8 +444,6 @@ export class ReservationService {
 
         // Upload image to Cloudinar
       }
-      if (body.sharableOfferId || body.offerId) {
-      }
 
       // Handle custom time
       const startTime = new Date(body.customStartTime);
@@ -457,6 +459,9 @@ export class ReservationService {
       const index = workingHours.findIndex(
         (w) => w.from <= startTime && w.to >= endTime
       );
+
+      console.log(index);
+
       if (index === -1) {
         throw new BadRequestException(
           this.i18n.translate("test.RESERVATION.SCHEDULE_CONFLICT")
@@ -559,53 +564,52 @@ export class ReservationService {
       }
 
       await this.entityManager.save(AuditLogEntity, log);
-      if (body.couponCode && body.services && body.services.length > 0) {
-      
+      if (body.couponCode && body.services && body.services.length > 0) { 
         const coupon = await this.GiftCouponRepository.findOne({
           where: { couponCode: body.couponCode },
         });
-      //  After reservation is created successfully, update the gift coupon
-       try {
-        await this.updateGiftCouponServices(
-          coupon.id,
-          body.services // serviceIdsToRemove are the services being used in this reservation
-        );
-      } catch (error) {
-        // If updating gift coupon fails, we should rollback the reservation
-        if (reservation) {
-          await this.ReservationRepository.remove(reservation);
+        //  After reservation is created successfully, update the gift coupon
+        try {
+          await this.updateGiftCouponServices(
+            coupon.id,
+            body.services // serviceIdsToRemove are the services being used in this reservation
+          );
+        } catch (error) {
+          // If updating gift coupon fails, we should rollback the reservation
+          if (reservation) {
+            await this.ReservationRepository.remove(reservation);
+          }
+          throw new InternalServerErrorException(
+            "Failed to update gift coupon services"
+          );
         }
-        throw new InternalServerErrorException(
-          "Failed to update gift coupon services"
-        );
-      }
       }
       return { reservation };
-    } catch (error) {
-      console.log(error);
-      // Granular error handling and categorization
-      if (error instanceof NotFoundException) {
-        throw new NotFoundException({
-          message: error.message,
-          category: "EntityNotFound", // Custom error category
-        });
-      } else if (error instanceof BadRequestException) {
-        throw new BadRequestException({
-          message: error.message,
-          category: "ValidationError", // Custom error category
-        });
-      } else if (error instanceof ConflictException) {
-        throw new ConflictException({
-          message: error.message,
-          category: "ConflictError", // Custom error category
-        });
-      } else {
-        throw new InternalServerErrorException({
-          message: error.message || "Unexpected error occurred",
-          category: "InternalServerError", // Custom error category for unexpected errors
-        });
+      } catch (error) {
+        console.log(error);
+        if (error instanceof NotFoundException) {
+          throw new NotFoundException({
+            message: error.message,
+            category: "EntityNotFound", // Custom error category
+          });
+        } else if (error instanceof BadRequestException) {
+          throw new BadRequestException({
+            message: error.message,
+            category: "ValidationError", // Custom error category
+          });
+        } else if (error instanceof ConflictException) {
+          throw new ConflictException({
+            message: error.message,
+            category: "ConflictError", // Custom error category
+          });
+        } else {
+          console.log(error);
+          throw new InternalServerErrorException({
+            message: error.message || "Unexpected error occurred",
+            category: "InternalServerError", // Custom error category for unexpected errors
+          });
+        }
       }
-    }
   }
 
   private async updateGiftCouponServices(
@@ -1171,6 +1175,14 @@ export class ReservationService {
     if(reservation.branch.id == body.branch){
       const result = await this.updateTime(reservationId, { startTime: body.startTime }, userId);
       console.log(result, 'result');
+      await this.actionService.createAction({
+        actionEn: `reservation branch updated to ${branch.name} and time is ${body.startTime}`,
+        actionAr: `تم تحديث فرع الحجز إلى ${branch.name} والوقت هو ${body.startTime}`,
+        branch: branch.id,
+        createdBy: userId,
+        order: reservation.order.id,
+      })
+      // 
       return { order: result };
     }
     const duration = (reservation.end_Time.getTime() - reservation.start_Time.getTime()) / ( 1000 * 60 );
@@ -1229,6 +1241,13 @@ export class ReservationService {
     await this.ReservationRepository.save(reservation);
     await this.OrderRepo.save(order);
     await this.OrdersService.updateOrderTimeFromReservation(reservation.id, userId);
+    await this.actionService.createAction({
+      actionEn: `reservation branch updated time is ${body.startTime}`,
+      actionAr: `تم تحديث فرع الحجز إلى ${branch.name} والوقت هو ${body.startTime}`,
+      branch: branch.id,
+      createdBy: userId,
+      order: reservation.order.id,
+    })
   
     return { reservation, order };
     }

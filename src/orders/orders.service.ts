@@ -111,6 +111,7 @@ export class OrdersService {
     if (!reservation) {
       throw new NotFoundException("Reservation not found");
     }
+    console.log(reservation);
 
     // Fetch the user who is creating the order, limiting the fields returned
     const createdBy = await this.userRepository.findOne({
@@ -127,7 +128,7 @@ export class OrdersService {
       //   await this.GiftCouponService.getGiftCouponByCouponCode(couponCode);
       // console;
       coupon = await this.getGiftCouponByCouponCode(couponCode);
-    } else {
+    } else if (paymentId) {
       // Find the payment method with 'Visa'
       payment = await this.PaymentRepository.findOne({
         where: { id: paymentId },
@@ -168,14 +169,6 @@ export class OrdersService {
       // Increment the usage count of the offer
       sharableOffer.usageCount += 1;
       await this.SharableOfferRepository.save(sharableOffer); // Save the updated offer
-
-      // // Create a new gift coupon after saving the sharable offer
-      // const createGiftCouponDto: CreateGiftCouponDto = {
-      //   sharableOfferId: sharableOffer.id, // Use the saved offer ID
-      //   customerId: reservation.customer.id, // Assuming customerId is available in offerData
-      // };
-      // // After saving the sharable offer, create a gift coupon for its services
-      // await this.GiftCouponService.createGiftCoupon(createGiftCouponDto);
     }
 
     // Set payment status based on coupon code
@@ -332,6 +325,7 @@ export class OrdersService {
         orderId: newOrder.id,
         amount: reservation.deposit,
         paymentId,
+        userId,
       });
       return newOrder;
     } catch (error) {
@@ -531,6 +525,7 @@ export class OrdersService {
         orderId: newOrder.id,
         amount: reservation.deposit,
         paymentId,
+        userId,
       });
       return newOrder;
     } catch (error) {
@@ -788,6 +783,7 @@ export class OrdersService {
               orderId: savedOrder.id,
               amount,
               paymentId,
+              userId,
             });
           }
           await this.actionService.createAction({
@@ -1497,6 +1493,78 @@ export class OrdersService {
     } catch (error) {
       console.error("Error fetching orders:", error);
       throw new Error("Unable to fetch orders.");
+    }
+  }
+  async findAllCreatedOrders(
+    findOrdersDto: FindOrdersDto,
+    userId: string,
+  ): Promise<{ items: OrderEntity[]; total: number }> {
+    const {
+      page,
+      limit,
+      sort,
+      fromDate,
+      toDate,
+      paymentStatus,
+      orderStatus
+    } = findOrdersDto;
+    try {
+      console.log(userId);
+      const query = this.orderRepository
+        .createQueryBuilder("o")
+        .leftJoinAndSelect("o.artist", "a")
+        .leftJoinAndSelect("o.customer", "c")
+        .addSelect(["c.id", "c.fullName", "c.phoneNumber"])
+        .leftJoin("o.createdBy", "cb")
+        .leftJoin("o.confirmedBy", "confirmedBy") // Include confirmedBy relation
+        .addSelect([
+          "confirmedBy.id",
+          "confirmedBy.username",
+          "confirmedBy.role",
+        ])
+        .addSelect(["cb.id", "cb.username", "cb.email", "cb.role"])
+        .leftJoin("o.updatedBy", "ub")
+        .addSelect(["ub.id", "ub.username"])
+        .leftJoinAndSelect("o.reservation", "r")
+        .leftJoinAndSelect("r.services", "s")
+        .leftJoinAndSelect("r.rootoshes", "ro") // Adding the rootoshes join here
+        .addSelect(["r.id", "r.start_Time", "r.end_Time", "r.totalPrice"])
+        .take(limit)
+        .skip((page - 1) * limit)
+        .orderBy(`o.date`, sort.toUpperCase() as "ASC" | "DESC");
+      
+      query.andWhere("cb.id = :userId", {
+        userId,
+      });
+
+      if (fromDate || toDate) {
+        if (fromDate) {
+          query.andWhere("o.date >= :fromDate", {
+            fromDate: new Date(fromDate).toISOString(),
+          });
+        }
+        if (toDate) {
+          query.andWhere("o.date < :toDate", {
+            toDate: new Date(toDate).toISOString(),
+          });
+        }
+      }
+
+      if (paymentStatus) {
+        query.andWhere("o.paymentStatus = :paymentStatus", { paymentStatus });
+      }
+
+      // // Handle multiple order statuses
+      // if (orderStatus) {
+      //   query.andWhere("o.status = :orderStatus", { orderStatus });
+      // }
+
+      const [items, total] = await query.getManyAndCount();
+
+      return { items, total };
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      throw new NotFoundException("Unable to fetch orders.");
     }
   }
   async findAllRefundedOrders(findOrdersDto: FindOrdersDto, userId: string) {
@@ -2331,6 +2399,7 @@ export class OrdersService {
           orderId,
           amount: -refundAmount,
           paymentId,
+          userId,
         });
         savedReceipt = await this.ReceiptRepository.save(refundReceipt);
       }

@@ -60,6 +60,14 @@ export class ServiceController {
       userId,
     );
   }
+  @Get("with-reservation-count")
+  async getServicesWithReservationCount(@Query('page') page: number = 1,@Query('limit') limit: number = 10) {
+    return this.serviceService.getServicesWithReservationCount(page, limit);
+  }
+  @Get("with-reservation-count-excel")
+  async getServicesWithReservationCountExcel(@Query('page') page: number = 1,@Query('limit') limit: number = 10) {
+    return this.serviceService.serviceCountExcel(page, limit);
+  }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first

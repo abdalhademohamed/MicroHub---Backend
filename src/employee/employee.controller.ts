@@ -55,6 +55,33 @@ export class EmployeeController {
       toDate,
     );
   }
+  @Get("count-order")
+  @UseGuards(AccessTokenGuard)
+  countOrder(
+    @Query("fromDate") fromDate: string,
+    @Query("toDate") toDate: string,
+    @Query("employeeId") userId: string,
+  ) {
+    return this.employeeService.getOrderStatusCountForCoordinator(
+      userId,
+      fromDate,
+      toDate,
+    );
+  }
+  @Get("count-order-profile")
+  @UseGuards(AccessTokenGuard)
+  countOrderForLoogedEmployee(
+    @Query("fromDate") fromDate: string,
+    @Query("toDate") toDate: string,
+    @Req() req: any,
+  ) {
+    const userId = req.user.sub;
+    return this.employeeService.getOrderStatusCountForCoordinator(
+      userId,
+      fromDate,
+      toDate,
+    );
+  }
   @UseGuards(AccessTokenGuard)
   // @Roles(Role.SUPERADMIN)
   @Put("profile")
@@ -255,6 +282,14 @@ export class EmployeeController {
     await this.employeeService.softDeleteEmployeeByEmployeeId(
       employeeId,
       userId,
+    );
+  }
+  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @Roles(Role.SUPERADMIN)
+  @Put("active/:employeeId")
+  async activeEmployee( @Param("employeeId") employeeId: string ) {
+    return this.employeeService.activeEmployeeByEmployeeId(
+      employeeId,
     );
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
