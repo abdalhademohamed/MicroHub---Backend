@@ -27,7 +27,19 @@ export class TransactionController {
     return this.transactionService.getPaymentStatisticsWithDetails();
   }
   @Get('statistics-excel')
-  async getStatisticsWithExcel(@Res() res: Response) {
-    return this.transactionService.getPaymentStaticesExcel(res);
+  async getStatisticsWithExcel() {
+    return this.transactionService.getPaymentStaticesExcel();
+  }
+  @Get('employee-excel')
+  async aggregationsExcel(@Query() obj: FindTransactionDto){
+    return this.transactionService.incomeAndRefundAggregationsExcel(obj);
+  }
+  @Get('refund-income-excel')
+  async refundTransactionExcel(@Query() obj: FindTransactionDto){
+    return this.transactionService.refundIncomeExcel(obj);
+  }
+  @Get('transaction-excel')
+  async getTransactionExcel(@Query() obj: FindTransactionDto){
+    return this.transactionService.latestTransactionExcel(obj);
   }
 }

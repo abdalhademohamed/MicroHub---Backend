@@ -7,11 +7,8 @@ import { OrderEntity } from "src/orders/entities/order.entity";
 import { TransactionEntity } from "./entities/transaction.entity";
 import { BranchEntity } from "src/branch/entities/branch.entity";
 import { FindTransactionDto } from "./dto/query.transaction.dto";
-import { EmployeeEntity } from "src/employee/entities/employee.entity";
 import { UserEntity } from "src/user/entities/user.entity";
-import { OrderStatus } from "src/orders/utils/order.status.enum";
 import { ExcelService } from "src/excel/excel.service";
-import { Response } from "express";
 
 @Injectable()
 export class TransactionService implements OnModuleInit {
@@ -274,9 +271,75 @@ export class TransactionService implements OnModuleInit {
   
     return { items: stats };
   }
-  async getPaymentStaticesExcel(res: Response){
+  async getPaymentStaticesExcel(){
     const { items } = await this.getPaymentStatisticsWithDetails();
     return this.excelService.generateAndUploadExcel(items, `payment-methods-${Date.now()}`)
+  }
+  async refundIncomeExcel(findTransactionDto: FindTransactionDto){
+    const { totalRefund } = await this.refundAggregations(findTransactionDto);
+    const { totalIncome } = await this.incomeAggregations(findTransactionDto);
+    return this.excelService.generateAndUploadExcel([{ totalIncome, totalRefund }], `refund-income-${Date.now()}`)
+  }
+  async incomeAndRefundAggregationsExcel(findTransactionDto: FindTransactionDto){
+    const { branch, fromDate, toDate, payment } = findTransactionDto;
+  
+    const queryBuilder = this.transactionRepository
+      .createQueryBuilder('transaction')
+      .select('user.id', 'userId')  // Select user ID
+      .addSelect('user.username', 'userName')  // Select user name
+      .addSelect('user.email', 'userEmail')  // Select user email
+      .addSelect('SUM(CASE WHEN transaction.amount > 0 THEN transaction.amount ELSE 0 END)', 'totalIncome')  // Sum of income
+      .addSelect('SUM(CASE WHEN transaction.amount < 0 THEN transaction.amount ELSE 0 END)', 'totalRefund')  // Sum of refund
+      .addSelect('COUNT(DISTINCT order.id)', 'orderCount')  // Count of all orders created by user
+      // .addSelect('COUNT(DISTINCT CASE WHEN order.status = :cancelledStatus THEN order.id ELSE NULL END)', OrderStatus.Canceled)  // Count cancelled orders
+      .innerJoin('transaction.user', 'user')  // Join user table
+      .innerJoin('transaction.branch', 'branch')  // Join branch table
+      .innerJoin('transaction.payment', 'payment')  // Join payment table
+      .leftJoin('transaction.order', 'order')  // Join order table (left join to include users without orders)
+      .leftJoin('order.artist', 'employee')  // Join employee (artist) table to count employees
+      .where('transaction.amount != 0');  // Exclude transactions with 0 amount
+  
+    // Apply filters for branch and payment
+    if (branch) {
+      queryBuilder.andWhere('branch.id = :branch', { branch });
+    }
+  
+    if (payment) {
+      queryBuilder.andWhere('payment.id = :payment', { payment });
+    }
+  
+    // Apply date filters
+    if (fromDate) {
+      queryBuilder.andWhere('transaction.createdAt >= :fromDate', { fromDate });
+    }
+  
+    if (toDate) {
+      queryBuilder.andWhere('transaction.createdAt <= :toDate', { toDate });
+    }
+  
+    // Group by user to calculate total income, refund, and order counts
+    queryBuilder.groupBy('user.id');
+    queryBuilder.addGroupBy('employee.id');  // Group by employee to get employee-level aggregations
+  
+    const result = await queryBuilder.getRawMany();
+  
+    // Map the result and include the necessary fields
+    const data = result.map((entry) => ({
+      userId: entry.userId,
+      userName: entry.userName,
+      userEmail: entry.userEmail,
+      totalIncome: parseFloat(entry.totalIncome),
+      totalRefund: parseFloat(entry.totalRefund),
+      orderCount: parseInt(entry.orderCount, 10),  // Number of orders created by the user
+      // cancelledOrderCount: parseInt(entry.cancelledOrderCount, 10),  // Number of cancelled orders
+      employeeId: entry.employeeId,  // Employee ID
+      employeeName: entry.employeeName,  // Employee name
+    }));
+    return this.excelService.generateAndUploadExcel(data, `employee-${Date.now()}`)
+  }
+  async latestTransactionExcel(findTransactionDto: FindTransactionDto){
+    const { data } = await this.latestTransaction(findTransactionDto);
+    return this.excelService.generateAndUploadExcel(data, `transaction-excel-${Date.now()}`)
   }
   
 }

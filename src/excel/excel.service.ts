@@ -6,7 +6,7 @@ import { CloudinaryService } from "src/cloudinary/cloudinary.service";
 export class ExcelService {
   constructor(private cloudinaryService: CloudinaryService) {}
 
-  async generateAndUploadExcel(data: any[], fileName: string): Promise<string> {
+  async generateAndUploadExcel(data: any[], fileName: string) {
     console.log(data)
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Sheet1");
@@ -26,7 +26,7 @@ export class ExcelService {
     const buffer = Buffer.from(arrayBuffer);
 
     const fileUrl = await this.cloudinaryService.uploadToCloudinary(buffer, fileName);
-    return fileUrl; // Return the Cloudinary file URL
+    return { fileUrl }; // Return the Cloudinary file URL
   }
 
   private extractHeaders(data: any[]): string[] {
