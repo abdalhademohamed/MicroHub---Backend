@@ -1,6 +1,7 @@
-import { Controller, Get, Param, Query } from "@nestjs/common";
+import { Controller, Get, Param, Query, Res } from "@nestjs/common";
 import { TransactionService } from "./transaction.service";
 import { FindTransactionDto } from "./dto/query.transaction.dto";
+import { Response } from "express";
 
 @Controller("transaction")
 export class TransactionController {
@@ -24,5 +25,9 @@ export class TransactionController {
   @Get('statistics')
   async getStatisticsWithDetails() {
     return this.transactionService.getPaymentStatisticsWithDetails();
+  }
+  @Get('statistics-excel')
+  async getStatisticsWithExcel(@Res() res: Response) {
+    return this.transactionService.getPaymentStaticesExcel(res);
   }
 }

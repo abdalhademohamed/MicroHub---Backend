@@ -10,6 +10,8 @@ import { FindTransactionDto } from "./dto/query.transaction.dto";
 import { EmployeeEntity } from "src/employee/entities/employee.entity";
 import { UserEntity } from "src/user/entities/user.entity";
 import { OrderStatus } from "src/orders/utils/order.status.enum";
+import { ExcelService } from "src/excel/excel.service";
+import { Response } from "express";
 
 @Injectable()
 export class TransactionService implements OnModuleInit {
@@ -23,6 +25,7 @@ export class TransactionService implements OnModuleInit {
     @InjectRepository(BranchEntity)
     private readonly branchRepository: Repository<BranchEntity>,
     @InjectRepository(UserEntity) private readonly userRepository: Repository<UserEntity>,
+    private excelService: ExcelService,
   ) {}
   async onModuleInit() {
       let payment = await this.paymentRepository.findOne({ where: { methodEnglish: 'free' } });
@@ -270,7 +273,10 @@ export class TransactionService implements OnModuleInit {
       .getRawMany();
   
     return { items: stats };
-  }    
-  
+  }
+  async getPaymentStaticesExcel(res: Response){
+    const { items } = await this.getPaymentStatisticsWithDetails();
+    return this.excelService.generateAndUploadExcel(items, `payment-methods-${Date.now()}`)
+  }
   
 }

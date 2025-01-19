@@ -8,9 +8,11 @@ import { OrderEntity } from "src/orders/entities/order.entity";
 import { PaymentEntity } from "src/payment/entities/payment.entity";
 import { BranchEntity } from "src/branch/entities/branch.entity";
 import { EmployeeEntity } from "src/employee/entities/employee.entity";
+import { ExcelModule } from "../excel/excel.module";
 
 @Module({
   imports: [
+    ExcelModule,
     TypeOrmModule.forFeature([
       TransactionEntity,
       UserEntity,

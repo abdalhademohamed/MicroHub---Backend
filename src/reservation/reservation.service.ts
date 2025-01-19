@@ -7,7 +7,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { InjectEntityManager, InjectRepository } from "@nestjs/typeorm";
-import { Between, EntityManager, In, Repository } from "typeorm";
+import { EntityManager, In, Repository } from "typeorm";
 import { ReservationEntity } from "./entities/reservation.entity";
 import { BranchEntity } from "../branch/entities/branch.entity";
 import { ServiceEntity } from "../service/entities/service.entity";
@@ -16,12 +16,10 @@ import { CloudinaryService } from "../cloudinary/cloudinary.service";
 import { CustomerEntity } from "../customer/entities/customer.entity";
 import { CreateCustomerDto } from "../customer/dto/create.customer.dto";
 import { CreateReservationDto } from "./dto/create.reservation.dto";
-
 import { UpdateReservationDto } from "./dto/update.reservation.dto";
 import { UpdateTimeReservationDto } from "./dto/update-time.reservation.dto";
 import { WorkingEntity } from "../slots/entities/working.entity";
 import { SlotsEntity } from "../slots/entities/slots.entity";
-import { ReceiptService } from "../receipt/receipt.service";
 import { OrderEntity } from "../orders/entities/order.entity";
 import { OrdersService } from "../orders/orders.service";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
@@ -1244,8 +1242,8 @@ export class ReservationService {
     await this.OrderRepo.save(order);
     await this.OrdersService.updateOrderTimeFromReservation(reservation.id, userId);
     await this.actionService.createAction({
-      actionEn: `reservation time updated to ${body.startTime}`,
-      actionAr: `تم تحديث وقت الحجز إلى ${body.startTime}`,
+      actionEn: `reservation branch updated time is ${body.startTime}`,
+      actionAr: `تم تحديث فرع الحجز إلى ${branch.name} والوقت هو ${body.startTime}`,
       branch: branch.id,
       createdBy: userId,
       order: reservation.order.id,

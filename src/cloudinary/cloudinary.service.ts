@@ -1,6 +1,8 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { UploadApiErrorResponse, UploadApiResponse, v2 } from "cloudinary";
 import toStream = require("buffer-to-stream");
+import * as streamifier from "streamifier";
+
 @Injectable()
 export class CloudinaryService {
   // async uploadImage(
@@ -26,6 +28,28 @@ export class CloudinaryService {
   //     }
   //   });
   // }
+  async uploadToCloudinary(buffer: Buffer, fileName: string): Promise<string> {
+    console.log("uploadToCloudinar", buffer, fileName);
+    return new Promise((resolve, reject) => {
+      const uploadStream = v2.uploader.upload_stream(
+        {
+          resource_type: "raw", // Treat file as raw binary
+          public_id:`${fileName}.xlsx`,
+          // folder: "excels", // Optional Cloudinary folder
+          format: "xlsx",
+        },
+        (error, result) => {
+          if (error) {
+            console.error("Cloudinary Upload Error:", error);
+            reject(error);
+          } else {
+            resolve(result.secure_url); // Return Cloudinary file URL
+          }
+        }
+      );
+      streamifier.createReadStream(buffer).pipe(uploadStream);
+    });
+  }
   async uploadImage(
     file: Express.Multer.File,
     folderName: string,
