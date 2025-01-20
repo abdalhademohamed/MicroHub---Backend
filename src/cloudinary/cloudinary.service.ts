@@ -45,6 +45,30 @@ export class CloudinaryService {
       toStream(file.buffer).pipe(upload);
     });
   }
+  // async uploadPdfToCloudinary(fileBuffer: Buffer, fileName: string): Promise<string> {
+  //   return new Promise((resolve, reject) => {
+  //     // Convert the PDF buffer into a readable stream
+  //     const stream = streamifier.createReadStream(fileBuffer);
+
+  //     // Upload the buffer to Cloudinary as a PDF
+  //     const uploadStream = v2.uploader.upload_stream(
+  //       {
+  //         public_id: `${fileName}`,  // The Cloudinary folder and file name
+  //         resource_type: 'auto',          // Let Cloudinary auto-detect the file type (PDF in this case)
+  //       },
+  //       (error, result) => {
+  //         if (error) {
+  //           reject(`Failed to upload PDF: ${error.message}`);
+  //         } else {
+  //           resolve(result.secure_url);  // Return the secure URL of the uploaded file
+  //         }
+  //       }
+  //     );
+
+  //     // Pipe the buffer stream into Cloudinary's upload stream
+  //     stream.pipe(uploadStream);
+  //   });
+  // }
 
   // async uploadImage(
   //   file: Express.Multer.File,

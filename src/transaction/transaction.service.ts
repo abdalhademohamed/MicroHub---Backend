@@ -238,7 +238,8 @@ export class TransactionService implements OnModuleInit {
       employeeId: entry.employeeId,  // Employee ID
       employeeName: entry.employeeName,  // Employee name
     }));
-    const totalPages = Math.ceil(totalRowsResult.totalRows / limit);
+    console.log(totalRowsResult);
+    const totalPages = Math.ceil(totalRowsResult?.totalRows || 0 / limit);
 
       // Return paginated and sorted result
       return {
