@@ -2,9 +2,33 @@ import { BadRequestException, HttpException, Injectable } from "@nestjs/common";
 import * as ExcelJS from "exceljs";
 import * as puppeteer from "puppeteer";
 import { Response } from "express";
+import { CloudinaryService } from "src/cloudinary/cloudinary.service";
+import { InjectRepository } from "@nestjs/typeorm";
+import { FileEntity } from "./entities/file.entity";
+import { Repository } from "typeorm";
 
 @Injectable()
 export class ExcelService {
+  constructor(
+    private cloudinaryService: CloudinaryService,
+    @InjectRepository(FileEntity) private fileRepository: Repository<FileEntity>,
+  ){}
+  async getAllFiles(page: number, limit: number) {
+    page ||= 1;
+    limit ||= 10;
+    const queryBuilder = this.fileRepository.createQueryBuilder('files');
+    queryBuilder.skip((page - 1) * limit).take(limit);
+  
+    // Execute query and get results
+    const [data, total] = await queryBuilder.getManyAndCount();
+  
+    return {
+      data,
+      total,
+      page,
+      limit,
+    };
+  }
   async exportFile(data: any[], res: Response, type: string){ 
     if (type === "excel") {
       await this.generateAndUploadExcel(data, res);
@@ -29,12 +53,14 @@ export class ExcelService {
 
     const arrayBuffer = await workbook.xlsx.writeBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    res.set({
-      "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 
-      "Content-Disposition": `attachment; filename="report.xlsx"` 
-    });
-    res.send(buffer); 
-
+    const url = await this.cloudinaryService.uploadToCloudinary(buffer);
+    const action = this.fileRepository.create({
+      link: url,
+      type: "excel",
+      createdAt: new Date()
+    })
+    await this.fileRepository.save(action);
+    res.status(200).json({ url });
   }
 
   private async generateAndUploadPdfFromHtmlTable(data: any[], res: Response) {
@@ -47,11 +73,14 @@ export class ExcelService {
       printBackground: true,
     });
     await browser.close();
-    res.set({
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="report.pdf"`,
-    });
-    res.send(Buffer.from(pdfBuffer));
+    const url = await this.cloudinaryService.uploadPdfToCloudinary(Buffer.from(pdfBuffer));
+    const action = this.fileRepository.create({
+      link: url,
+      type: "pdf",
+      createdAt: new Date()
+    })
+    await this.fileRepository.save(action);
+    res.status(200).json({ url });
   }
 
   private extractHeaders(data: any[]): string[] {
