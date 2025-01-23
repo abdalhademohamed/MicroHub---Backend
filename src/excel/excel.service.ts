@@ -23,7 +23,7 @@ export class ExcelService {
     const [data, total] = await queryBuilder.getManyAndCount();
   
     return {
-      data,
+      items: data,
       total,
       page,
       limit,
