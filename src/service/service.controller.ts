@@ -15,6 +15,7 @@ import {
   UseGuards,
   BadRequestException,
   Request,
+  Res,
 } from "@nestjs/common";
 import { ServiceService } from "./service.service";
 import { CreateServiceDto } from "./dto/create.service.dto";
@@ -27,6 +28,7 @@ import { AccessTokenGuard } from "../auth/guards/accessToken.guard";
 import { RolesGuard } from "../auth/guards/role.guards";
 import { Role } from "../user/utils/user.enum";
 import { Roles } from "../auth/Roles.decorator";
+import { Response } from "express";
 @ApiTags("service")
 @Controller("service")
 export class ServiceController {
@@ -64,9 +66,14 @@ export class ServiceController {
   async getServicesWithReservationCount(@Query('page') page: number = 1,@Query('limit') limit: number = 10) {
     return this.serviceService.getServicesWithReservationCount(page, limit);
   }
-  @Get("with-reservation-count-excel")
-  async getServicesWithReservationCountExcel(@Query('page') page: number = 1,@Query('limit') limit: number = 10) {
-    return this.serviceService.serviceCountExcel(page, limit);
+  @Get("with-reservation-count-file")
+  async getServicesWithReservationCountExcel(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @Res() res: Response,
+    @Query('file') file: string,
+  ) {
+    return this.serviceService.serviceCountExcel(page, limit, res, file);
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

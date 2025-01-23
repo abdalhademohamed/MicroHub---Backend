@@ -1,19 +1,23 @@
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, HttpException, Injectable } from "@nestjs/common";
 import * as ExcelJS from "exceljs";
-import { CloudinaryService } from "src/cloudinary/cloudinary.service";
-// import * as pdfMake from "pdfmake/build/pdfmake";
-// import * as pdfFonts from "pdfmake/build/vfs_fonts";
+import * as puppeteer from "puppeteer";
+import { Response } from "express";
 
 @Injectable()
 export class ExcelService {
-  constructor(private cloudinaryService: CloudinaryService) {}
-
-  async generateAndUploadExcel(data: any[], fileName: string) {
-    console.log(data)
+  async exportFile(data: any[], res: Response, type: string){ 
+    if (type === "excel") {
+      await this.generateAndUploadExcel(data, res);
+    } else if (type === "pdf") {
+      await this.generateAndUploadPdfFromHtmlTable(data, res);
+    } else {
+      throw new BadRequestException("Unsupported file type");
+    }
+  }
+  private async generateAndUploadExcel(data: any[], res: Response) {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Sheet1");
 
-    // Extract headers
     const headers = this.extractHeaders(data);
     worksheet.addRow(headers).font = { bold: true };
 
@@ -23,12 +27,31 @@ export class ExcelService {
       worksheet.addRow(rowValues);
     });
 
-    // Generate buffer from workbook
     const arrayBuffer = await workbook.xlsx.writeBuffer();
     const buffer = Buffer.from(arrayBuffer);
+    res.set({
+      "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 
+      "Content-Disposition": `attachment; filename="report.xlsx"` 
+    });
+    res.send(buffer); 
 
-    const fileUrl = await this.cloudinaryService.uploadToCloudinary(buffer, fileName);
-    return { fileUrl }; // Return the Cloudinary file URL
+  }
+
+  private async generateAndUploadPdfFromHtmlTable(data: any[], res: Response) {
+    const htmlTable = this.generateHtmlTable(data);
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.setContent(htmlTable, { waitUntil: "networkidle0" });
+    const pdfBuffer = await page.pdf({
+      format: "A4",
+      printBackground: true,
+    });
+    await browser.close();
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="report.pdf"`,
+    });
+    res.send(Buffer.from(pdfBuffer));
   }
 
   private extractHeaders(data: any[]): string[] {
@@ -38,89 +61,37 @@ export class ExcelService {
     });
     return Array.from(headers);
   }
-  // // Convert Excel buffer to PDF
-  // async convertExcelBufferToPdf(excelBuffer: Buffer, fileName: string) {
-  //   try {
-  //     // Step 1: Load the Excel buffer using ExcelJS
-  //     const workbook = new ExcelJS.Workbook();
-  //     await workbook.xlsx.load(excelBuffer);
 
-  //     // Step 2: Extract data from the first sheet
-  //     const worksheet = workbook.worksheets[0];
-  //     const headers = this.extractHeadersFromExcel(worksheet);
-  //     const rows = this.extractRowsFromExcel(worksheet, headers);
-
-  //     // Step 3: Generate PDF using pdfMake
-  //     const docDefinition: any = {
-  //       content: [
-  //         {
-  //           table: {
-  //             headerRows: 1,
-  //             widths: Array(headers.length).fill("*"), // Auto widths for columns
-  //             body: [headers, ...rows], // Add headers and rows to the table
-  //           },
-  //           style: "tableStyle",
-  //         },
-  //       ],
-  //       // styles: {
-  //       //   tableStyle: {
-  //       //     margin: [0, 5, 0, 15], // [top, right, bottom, left]
-  //       //     fontSize: 10,
-  //       //   },
-  //       // },
-  //       defaultStyle: {
-  //         font: 'Times' // Default font set to Times
-  //       }
-  //     };
-
-  //     // Step 4: Generate PDF buffer from pdfMake
-  //     const pdfBuffer = await new Promise<Buffer>((resolve, reject) => {
-  //       pdfMake.createPdf(docDefinition).getBuffer((buffer) => {
-  //         if (buffer) {
-  //           resolve(buffer);
-  //         } else {
-  //           reject(new Error("Error generating PDF"));
-  //         }
-  //       });
-  //     });
-
-  //     // Step 5: Upload the generated PDF buffer to Cloudinary (or return the buffer)
-  //     const fileUrl = await this.cloudinaryService.uploadPdfToCloudinary(pdfBuffer, fileName);
-  //     return { fileUrl }; // Return the Cloudinary file URL for the PDF
-
-  //   } catch (error) {
-  //     console.error("Error converting Excel to PDF:", error);
-  //     throw new Error("Failed to convert Excel to PDF");
-  //   }
-  // }
-  // private extractHeadersFromExcel(worksheet: ExcelJS.Worksheet): string[] {
-  //   const headers: string[] = [];
-  //   worksheet.getRow(1).eachCell((cell) => {
-  //     headers.push(cell.text);
-  //   });
-  //   return headers;
-  // }
-
-  // // Extract rows from the Excel worksheet, skipping the header row
-  // private extractRowsFromExcel(worksheet: ExcelJS.Worksheet, headers: string[]): string[][] {
-  //   const rows: string[][] = [];
-  //   worksheet.eachRow((row, rowIndex) => {
-  //     if (rowIndex > 1) { // Skip the header row (index 1)
-  //       const rowData: string[] = [];
-  //       headers.forEach((header, index) => {
-  //         rowData.push(row.getCell(index + 1).text); // Extract data from each column
-  //       });
-  //       rows.push(rowData);
-  //     }
-  //   });
-  //   return rows;
-  // }
   private flattenValue(value: any): string {
     if (typeof value === "object" && value !== null) {
       return JSON.stringify(value);
     }
     return value;
   }
+
+  private generateHtmlTable(data: any[]): string {
+    const headers = this.extractHeaders(data);
+    const headerRow = `<tr>${headers.map((header) => `<th>${header}</th>`).join("")}</tr>`;
+    const rows = data
+      .map((item) => {
+        const cells = headers.map((key) => `<td>${this.flattenValue(item[key])}</td>`).join("");
+        return `<tr>${cells}</tr>`;
+      })
+      .join("");
+
+    return `
+      <html>
+        <head>
+          <style>
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid black; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+          </style>
+        </head>
+        <body>
+          <table>${headerRow}${rows}</table>
+        </body>
+      </html>
+    `;
+  }
 }
-
-

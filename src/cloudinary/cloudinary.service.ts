@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { UploadApiErrorResponse, UploadApiResponse, v2 } from "cloudinary";
 import toStream = require("buffer-to-stream");
 import * as streamifier from "streamifier";
@@ -45,38 +45,21 @@ export class CloudinaryService {
       toStream(file.buffer).pipe(upload);
     });
   }
-  // async uploadPdfToCloudinary(fileBuffer: Buffer, fileName: string): Promise<string> {
-  //   return new Promise((resolve, reject) => {
-  //     // Convert the PDF buffer into a readable stream
-  //     const stream = streamifier.createReadStream(fileBuffer);
-
-  //     // Upload the buffer to Cloudinary as a PDF
-  //     const uploadStream = v2.uploader.upload_stream(
-  //       {
-  //         public_id: `${fileName}`,  // The Cloudinary folder and file name
-  //         resource_type: 'auto',          // Let Cloudinary auto-detect the file type (PDF in this case)
-  //       },
-  //       (error, result) => {
-  //         if (error) {
-  //           reject(`Failed to upload PDF: ${error.message}`);
-  //         } else {
-  //           resolve(result.secure_url);  // Return the secure URL of the uploaded file
-  //         }
-  //       }
-  //     );
-
-  //     // Pipe the buffer stream into Cloudinary's upload stream
-  //     stream.pipe(uploadStream);
-  //   });
-  // }
-
-  // async uploadImage(
-  //   file: Express.Multer.File,
-  //   folderName: string,
-  // ): Promise<UploadApiResponse | UploadApiErrorResponse> {
-  //    const b64 = Buffer.from(file.buffer).toString('base64');
-  //   const dataURI = 'data:' + file.mimetype + ';base64,' + b64;
-  //   const res = await v2.uploader.upload(dataURI, { folder: folderName });
-  //   return res;
-  // }
+  async uploadPdfToCloudinary(pdfBuffer: Buffer, fileName: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      v2.uploader.upload_stream(
+        {
+          resource_type: 'raw',    // Treat as raw file (not an image)
+          public_id: `${fileName}.pdf`, // Optional: specify a custom file name
+        },
+        (error, result) => {
+          if (error) {
+            reject(`Error uploading PDF: ${error}`);
+          } else {
+            resolve(result?.secure_url || ''); // Return the secure URL of the uploaded PDF
+          }
+        }
+      ).end(pdfBuffer);  // Pass the PDF buffer to upload
+    });
+  }
 }

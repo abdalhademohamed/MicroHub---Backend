@@ -9,6 +9,7 @@ import { BranchEntity } from "src/branch/entities/branch.entity";
 import { FindTransactionDto } from "./dto/query.transaction.dto";
 import { UserEntity } from "src/user/entities/user.entity";
 import { ExcelService } from "src/excel/excel.service";
+import { Response } from "express";
 
 @Injectable()
 export class TransactionService implements OnModuleInit {
@@ -272,16 +273,16 @@ export class TransactionService implements OnModuleInit {
   
     return { items: stats };
   }
-  async getPaymentStaticesExcel(){
+  async getPaymentStaticesExcel(res: Response, type: string){
     const { items } = await this.getPaymentStatisticsWithDetails();
-    return this.excelService.generateAndUploadExcel(items, `payment-methods-${Date.now()}`)
+    return this.excelService.exportFile(items, res, type)
   }
-  async refundIncomeExcel(findTransactionDto: FindTransactionDto){
+  async refundIncomeExcel(findTransactionDto: FindTransactionDto, res: Response, type: string){
     const { totalRefund } = await this.refundAggregations(findTransactionDto);
     const { totalIncome } = await this.incomeAggregations(findTransactionDto);
-    return this.excelService.generateAndUploadExcel([{ totalIncome, totalRefund }], `refund-income-${Date.now()}`)
+    return this.excelService.exportFile([{ totalIncome, totalRefund }], res, type);
   }
-  async incomeAndRefundAggregationsExcel(findTransactionDto: FindTransactionDto){
+  async incomeAndRefundAggregationsExcel(findTransactionDto: FindTransactionDto, res: Response, type: string){
     const { branch, fromDate, toDate, payment } = findTransactionDto;
   
     const queryBuilder = this.transactionRepository
@@ -336,11 +337,10 @@ export class TransactionService implements OnModuleInit {
       employeeId: entry.employeeId,  // Employee ID
       employeeName: entry.employeeName,  // Employee name
     }));
-    return this.excelService.generateAndUploadExcel(data, `employee-${Date.now()}`)
+    return this.excelService.exportFile(data, res, type)
   }
-  async latestTransactionExcel(findTransactionDto: FindTransactionDto){
+  async latestTransactionExcel(findTransactionDto: FindTransactionDto, res: Response, type: string){
     const { data } = await this.latestTransaction(findTransactionDto);
-    return this.excelService.generateAndUploadExcel(data, `transaction-excel-${Date.now()}`)
+    return this.excelService.exportFile(data, res, type)
   }
-  
 }

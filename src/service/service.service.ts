@@ -5,7 +5,6 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { CreateServiceDto } from "./dto/create.service.dto";
-import { UpdateServiceDto } from "./dto/update.service.dto";
 import { ServiceEntity } from "./entities/service.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
@@ -14,8 +13,8 @@ import { CloudinaryService } from "../cloudinary/cloudinary.service";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
 import { UserEntity } from "../user/entities/user.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
-import { I18nService } from "nestjs-i18n";
 import { ExcelService } from "src/excel/excel.service";
+import { Response } from "express";
 
 @Injectable()
 export class ServiceService {
@@ -30,10 +29,10 @@ export class ServiceService {
     private readonly AuditLogRepository: Repository<AuditLogEntity>,
     private readonly i18n: CustomI18nService,
   ) {}
-  async serviceCountExcel(page: number, limit: number){
-      const { items } = await this.getServicesWithReservationCount(page, limit);
-      return this.excelService.generateAndUploadExcel(items, `service-excel-${Date.now()}`)
-    }
+  async serviceCountExcel(page: number, limit: number, res: Response, type: string){
+    const { items } = await this.getServicesWithReservationCount(page, limit);
+    return this.excelService.exportFile(items, res, type);
+  }
     
   async createService(
     createServiceDto: CreateServiceDto,
