@@ -88,16 +88,7 @@ export class ExcelService {
     try {
       const htmlTable = this.generateHtmlTable(data);
   
-      // Create PDF buffer
-      const file = { content: htmlTable };
-      // console.log(file.content);
-  
-      const generatePdfPromise = promisify(htmlToPdf.generatePdf);
-    
-      const pdfBuffer = await generatePdfPromise(file, {
-        format: 'A4',
-        printBackground: true,
-      });
+      let pdfBuffer = await this.generatePdfBuffer(htmlTable);
 
       // console.log(pdfBuffer);
   
@@ -117,6 +108,18 @@ export class ExcelService {
       console.error('Error generating PDF:', error);
       res.status(500).json({ error: 'Failed to generate PDF' });
     }
+  }
+  private generatePdfBuffer(htmlContent: string): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      const file = { content: htmlContent };
+  
+      htmlToPdf.generatePdf(file, { format: 'A4', printBackground: true }, (err, pdf) => {
+        if (err) {
+          return reject(new Error('Error generating PDF: ' + err));
+        }
+        resolve(pdf);  // Resolve with the generated PDF buffer
+      });
+    });
   }
 
   private extractHeaders(data: any[]): string[] {
