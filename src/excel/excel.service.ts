@@ -1,11 +1,13 @@
 import { BadRequestException, HttpException, Injectable } from "@nestjs/common";
 import * as ExcelJS from "exceljs";
-import * as puppeteer from "puppeteer";
+// import * as puppeteer from "puppeteer";
 import { Response } from "express";
 import { CloudinaryService } from "src/cloudinary/cloudinary.service";
 import { InjectRepository } from "@nestjs/typeorm";
 import { FileEntity } from "./entities/file.entity";
 import { Repository } from "typeorm";
+import chromium from '@sparticuz/chromium';
+import puppeteer from 'puppeteer-core';
 
 @Injectable()
 export class ExcelService {
@@ -63,24 +65,58 @@ export class ExcelService {
     res.status(200).json({ url });
   }
 
-  private async generateAndUploadPdfFromHtmlTable(data: any[], res: Response) {
-    const htmlTable = this.generateHtmlTable(data);
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
-    await page.setContent(htmlTable, { waitUntil: "networkidle0" });
-    const pdfBuffer = await page.pdf({
-      format: "A4",
-      printBackground: true,
-    });
-    await browser.close();
-    const url = await this.cloudinaryService.uploadPdfToCloudinary(Buffer.from(pdfBuffer));
-    const action = this.fileRepository.create({
-      link: url,
-      type: "pdf",
-      createdAt: new Date()
-    })
-    await this.fileRepository.save(action);
-    res.status(200).json({ url });
+  // private async generateAndUploadPdfFromHtmlTable(data: any[], res: Response) {
+  //   const htmlTable = this.generateHtmlTable(data);
+  //   const browser = await puppeteer.launch();
+  //   const page = await browser.newPage();
+  //   await page.setContent(htmlTable, { waitUntil: "networkidle0" });
+  //   const pdfBuffer = await page.pdf({
+  //     format: "A4",
+  //     printBackground: true,
+  //   });
+  //   await browser.close();
+  //   const url = await this.cloudinaryService.uploadPdfToCloudinary(Buffer.from(pdfBuffer));
+  //   const action = this.fileRepository.create({
+  //     link: url,
+  //     type: "pdf",
+  //     createdAt: new Date()
+  //   })
+  //   await this.fileRepository.save(action);
+  //   res.status(200).json({ url });
+  // }
+  async generateAndUploadPdfFromHtmlTable(data: any[], res: Response) {
+    try {
+      const htmlTable = this.generateHtmlTable(data); // Implement this method
+  
+      const browser = await puppeteer.launch({
+        executablePath: await chromium.executablePath(),
+        args: chromium.args,
+        headless: chromium.headless,
+      });
+  
+      const page = await browser.newPage();
+      await page.setContent(htmlTable, { waitUntil: 'networkidle0' });
+  
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+      });
+  
+      await browser.close();
+  
+      const url = await this.cloudinaryService.uploadPdfToCloudinary(Buffer.from(pdfBuffer)); // Replace with your actual Cloudinary service
+      const action = this.fileRepository.create({
+        link: url,
+        type: 'pdf',
+        createdAt: new Date(),
+      });
+      await this.fileRepository.save(action);
+  
+      res.status(200).json({ url });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      res.status(500).json({ error: 'Failed to generate PDF' });
+    }
   }
 
   private extractHeaders(data: any[]): string[] {
