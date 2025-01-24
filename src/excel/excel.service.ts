@@ -1,13 +1,13 @@
 import { BadRequestException, HttpException, Injectable } from "@nestjs/common";
 import * as ExcelJS from "exceljs";
-// import * as puppeteer from "puppeteer";
+import * as puppeteer from "puppeteer";
 import { Response } from "express";
 import { CloudinaryService } from "src/cloudinary/cloudinary.service";
 import { InjectRepository } from "@nestjs/typeorm";
 import { FileEntity } from "./entities/file.entity";
 import { Repository } from "typeorm";
 import chromium from '@sparticuz/chromium';
-import puppeteer from 'puppeteer-core';
+// import puppeteer from 'puppeteer-core';
 
 @Injectable()
 export class ExcelService {
