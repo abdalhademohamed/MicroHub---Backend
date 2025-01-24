@@ -6,8 +6,8 @@ import { CloudinaryService } from "src/cloudinary/cloudinary.service";
 import { InjectRepository } from "@nestjs/typeorm";
 import { FileEntity } from "./entities/file.entity";
 import { Repository } from "typeorm";
-import chromium from '@sparticuz/chromium';
-import puppeteer from 'puppeteer-core';
+import { promisify } from "util";
+import * as htmlToPdf from 'html-pdf-node';
 
 @Injectable()
 export class ExcelService {
@@ -84,27 +84,25 @@ export class ExcelService {
   //   await this.fileRepository.save(action);
   //   res.status(200).json({ url });
   // }
-  async generateAndUploadPdfFromHtmlTable(data: any[], res: Response) {
+  private async generateAndUploadPdfFromHtmlTable(data: any[], res: Response) {
     try {
-      const htmlTable = this.generateHtmlTable(data); // Implement this method
+      const htmlTable = this.generateHtmlTable(data);
   
-      const browser = await puppeteer.launch({
-        executablePath: await chromium.executablePath(),
-        args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
-        headless: chromium.headless,
-      });
+      // Create PDF buffer
+      const file = { content: htmlTable };
+      // console.log(file.content);
   
-      const page = await browser.newPage();
-      await page.setContent(htmlTable, { waitUntil: 'networkidle0' });
-  
-      const pdfBuffer = await page.pdf({
+      const pdfBuffer = await promisify(htmlToPdf.generatePdf)(file, {
         format: 'A4',
         printBackground: true,
       });
+
+      // console.log(pdfBuffer);
   
-      await browser.close();
+      // Upload to Cloudinary
+      const url = await this.cloudinaryService.uploadPdfToCloudinary(Buffer.from(pdfBuffer));
   
-      const url = await this.cloudinaryService.uploadPdfToCloudinary(Buffer.from(pdfBuffer)); // Replace with your actual Cloudinary service
+      // Save the file metadata to the database
       const action = this.fileRepository.create({
         link: url,
         type: 'pdf',
