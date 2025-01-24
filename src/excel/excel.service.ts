@@ -6,8 +6,7 @@ import { CloudinaryService } from "src/cloudinary/cloudinary.service";
 import { InjectRepository } from "@nestjs/typeorm";
 import { FileEntity } from "./entities/file.entity";
 import { Repository } from "typeorm";
-import { promisify } from "util";
-import * as htmlToPdf from 'html-pdf-node';
+import * as htmlToPdf from 'html-pdf';
 
 @Injectable()
 export class ExcelService {
@@ -111,13 +110,9 @@ export class ExcelService {
   }
   private generatePdfBuffer(htmlContent: string): Promise<Buffer> {
     return new Promise((resolve, reject) => {
-      const file = { content: htmlContent };
-  
-      htmlToPdf.generatePdf(file, { format: 'A4', printBackground: true }, (err, pdf) => {
-        if (err) {
-          return reject(new Error('Error generating PDF: ' + err));
-        }
-        resolve(pdf);  // Resolve with the generated PDF buffer
+      htmlToPdf.create(htmlContent, { format: 'A4' }).toBuffer((err, buffer) => {
+        if (err) return reject(err);
+        resolve(buffer);
       });
     });
   }
