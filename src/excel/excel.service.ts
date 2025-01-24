@@ -1,12 +1,10 @@
-import { BadRequestException, HttpException, Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import * as ExcelJS from "exceljs";
-// import * as puppeteer from "puppeteer";
 import { Response } from "express";
 import { CloudinaryService } from "src/cloudinary/cloudinary.service";
 import { InjectRepository } from "@nestjs/typeorm";
 import { FileEntity } from "./entities/file.entity";
 import { Repository } from "typeorm";
-import * as htmlToPdf from 'html-pdf';
 
 @Injectable()
 export class ExcelService {
@@ -63,36 +61,11 @@ export class ExcelService {
     await this.fileRepository.save(action);
     res.status(200).json({ url });
   }
-
-  // private async generateAndUploadPdfFromHtmlTable(data: any[], res: Response) {
-  //   const htmlTable = this.generateHtmlTable(data);
-  //   const browser = await puppeteer.launch();
-  //   const page = await browser.newPage();
-  //   await page.setContent(htmlTable, { waitUntil: "networkidle0" });
-  //   const pdfBuffer = await page.pdf({
-  //     format: "A4",
-  //     printBackground: true,
-  //   });
-  //   await browser.close();
-  //   const url = await this.cloudinaryService.uploadPdfToCloudinary(Buffer.from(pdfBuffer));
-  //   const action = this.fileRepository.create({
-  //     link: url,
-  //     type: "pdf",
-  //     createdAt: new Date()
-  //   })
-  //   await this.fileRepository.save(action);
-  //   res.status(200).json({ url });
-  // }
   private async generateAndUploadPdfFromHtmlTable(data: any[], res: Response) {
     try {
       const htmlTable = this.generateHtmlTable(data);
-  
-      let pdfBuffer = await this.generatePdfBuffer(htmlTable);
 
-      // console.log(pdfBuffer);
-  
-      // Upload to Cloudinary
-      const url = await this.cloudinaryService.uploadPdfToCloudinary(Buffer.from(pdfBuffer));
+      const url = htmlTable;
   
       // Save the file metadata to the database
       const action = this.fileRepository.create({
@@ -107,14 +80,6 @@ export class ExcelService {
       console.error('Error generating PDF:', error);
       res.status(500).json({ error: 'Failed to generate PDF' });
     }
-  }
-  private generatePdfBuffer(htmlContent: string): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      htmlToPdf.create(htmlContent, { format: 'A4' }).toBuffer((err, buffer) => {
-        if (err) return reject(err);
-        resolve(buffer);
-      });
-    });
   }
 
   private extractHeaders(data: any[]): string[] {
