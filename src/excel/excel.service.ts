@@ -92,7 +92,9 @@ export class ExcelService {
       const file = { content: htmlTable };
       // console.log(file.content);
   
-      const pdfBuffer = await promisify(htmlToPdf.generatePdf)(file, {
+      const generatePdfPromise = promisify(htmlToPdf.generatePdf);
+    
+      const pdfBuffer = await generatePdfPromise(file, {
         format: 'A4',
         printBackground: true,
       });
