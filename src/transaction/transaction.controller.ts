@@ -28,7 +28,12 @@ export class TransactionController {
   }
   @Get('statistics-file')
   async getStatisticsWithExcel(@Res() res: Response, @Query('file') file: string) {
-    return this.transactionService.getPaymentStaticesExcel(res, file);
+    try{
+      return this.transactionService.getPaymentStaticesExcel(res, file);
+    }catch(e){
+      console.error(e);
+      return res.status(500).json({message: 'Error export file'});
+    }
   }
   @Get('employee-file')
   async aggregationsExcel(@Query() obj: FindTransactionDto, @Res() res: Response, @Query('file') file: string){
