@@ -1,17 +1,18 @@
-import { Injectable, InternalServerErrorException } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { UploadApiErrorResponse, UploadApiResponse, v2 } from "cloudinary";
 import toStream = require("buffer-to-stream");
 import * as streamifier from "streamifier";
+import { v4 } from "uuid";
 
 @Injectable()
 export class CloudinaryService {
-  async uploadToCloudinary(buffer: Buffer, fileName: string): Promise<string> {
-    console.log("uploadToCloudinar", buffer, fileName);
+  async uploadToCloudinary(buffer: Buffer): Promise<string> {
+    console.log("uploadToCloudinar", buffer);
     return new Promise((resolve, reject) => {
       const uploadStream = v2.uploader.upload_stream(
         {
           resource_type: "raw", // Treat file as raw binary
-          public_id:`${fileName}.xlsx`,
+          // public_id:`${fileName}.xlsx`,
           // folder: "excels", // Optional Cloudinary folder
           format: "xlsx",
         },
@@ -45,14 +46,18 @@ export class CloudinaryService {
       toStream(file.buffer).pipe(upload);
     });
   }
-
-  // async uploadImage(
-  //   file: Express.Multer.File,
-  //   folderName: string,
-  // ): Promise<UploadApiResponse | UploadApiErrorResponse> {
-  //    const b64 = Buffer.from(file.buffer).toString('base64');
-  //   const dataURI = 'data:' + file.mimetype + ';base64,' + b64;
-  //   const res = await v2.uploader.upload(dataURI, { folder: folderName });
-  //   return res;
-  // }
+  async uploadPdfToCloudinary(buffer: any): Promise<string> {
+    return new Promise((resolve, reject) => {
+      v2.uploader.upload_stream(
+        { resource_type: 'raw', format: 'pdf', type: 'upload' }, // Specify raw for non-image files
+        (error, result) => {
+          if (error) {
+            console.error('Error uploading to Cloudinary:', error);
+            return reject(error);
+          }
+          resolve(result.secure_url); // The URL of the uploaded PDF
+        },
+      ).end(buffer); // Pass the buffer here
+    });
+  }
 }

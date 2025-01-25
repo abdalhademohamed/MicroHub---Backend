@@ -1,17 +1,46 @@
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import * as ExcelJS from "exceljs";
+import { Response } from "express";
 import { CloudinaryService } from "src/cloudinary/cloudinary.service";
+import { InjectRepository } from "@nestjs/typeorm";
+import { FileEntity } from "./entities/file.entity";
+import { Repository } from "typeorm";
 
 @Injectable()
 export class ExcelService {
-  constructor(private cloudinaryService: CloudinaryService) {}
-
-  async generateAndUploadExcel(data: any[], fileName: string) {
-    console.log(data)
+  constructor(
+    private cloudinaryService: CloudinaryService,
+    @InjectRepository(FileEntity) private fileRepository: Repository<FileEntity>,
+  ){}
+  async getAllFiles(page: number, limit: number) {
+    page ||= 1;
+    limit ||= 10;
+    const queryBuilder = this.fileRepository.createQueryBuilder('files');
+    queryBuilder.skip((page - 1) * limit).take(limit);
+  
+    // Execute query and get results
+    const [data, total] = await queryBuilder.getManyAndCount();
+  
+    return {
+      items: data,
+      total,
+      page,
+      limit,
+    };
+  }
+  async exportFile(data: any[], res: Response, type: string){ 
+    if (type === "excel") {
+      await this.generateAndUploadExcel(data, res);
+    } else if (type === "pdf") {
+      await this.generateAndUploadPdfFromHtmlTable(data, res);
+    } else {
+      throw new BadRequestException("Unsupported file type");
+    }
+  }
+  private async generateAndUploadExcel(data: any[], res: Response) {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Sheet1");
 
-    // Extract headers
     const headers = this.extractHeaders(data);
     worksheet.addRow(headers).font = { bold: true };
 
@@ -21,12 +50,36 @@ export class ExcelService {
       worksheet.addRow(rowValues);
     });
 
-    // Generate buffer from workbook
     const arrayBuffer = await workbook.xlsx.writeBuffer();
     const buffer = Buffer.from(arrayBuffer);
+    const url = await this.cloudinaryService.uploadToCloudinary(buffer);
+    const action = this.fileRepository.create({
+      link: url,
+      type: "excel",
+      createdAt: new Date()
+    })
+    await this.fileRepository.save(action);
+    res.status(200).json({ url });
+  }
+  private async generateAndUploadPdfFromHtmlTable(data: any[], res: Response) {
+    try {
+      const htmlTable = this.generateHtmlTable(data);
 
-    const fileUrl = await this.cloudinaryService.uploadToCloudinary(buffer, fileName);
-    return { fileUrl }; // Return the Cloudinary file URL
+      const url = htmlTable;
+  
+      // Save the file metadata to the database
+      const action = this.fileRepository.create({
+        link: url,
+        type: 'pdf',
+        createdAt: new Date(),
+      });
+      await this.fileRepository.save(action);
+  
+      res.status(200).json({ url });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      res.status(500).json({ error: 'Failed to generate PDF' });
+    }
   }
 
   private extractHeaders(data: any[]): string[] {
@@ -43,6 +96,30 @@ export class ExcelService {
     }
     return value;
   }
+
+  private generateHtmlTable(data: any[]): string {
+    const headers = this.extractHeaders(data);
+    const headerRow = `<tr>${headers.map((header) => `<th>${header}</th>`).join("")}</tr>`;
+    const rows = data
+      .map((item) => {
+        const cells = headers.map((key) => `<td>${this.flattenValue(item[key])}</td>`).join("");
+        return `<tr>${cells}</tr>`;
+      })
+      .join("");
+
+    return `
+      <html>
+        <head>
+          <style>
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid black; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+          </style>
+        </head>
+        <body>
+          <table>${headerRow}${rows}</table>
+        </body>
+      </html>
+    `;
+  }
 }
-
-

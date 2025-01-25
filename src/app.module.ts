@@ -60,6 +60,8 @@ import { ActionEntity } from "./action/entities/action.entity";
 import { ActionModule } from "./action/action.module";
 import { TransactionEntity } from "./transaction/entities/transaction.entity";
 import { TransactionModule } from "./transaction/transaction.module";
+import { FileEntity } from "./excel/entities/file.entity";
+import { ExcelModule } from "./excel/excel.module";
 
 @Module({
   imports: [
@@ -103,6 +105,7 @@ import { TransactionModule } from "./transaction/transaction.module";
         GiftCouponEntity,
         ActionEntity,
         TransactionEntity,
+        FileEntity,
       ],
       synchronize: true, // Set to false in production
       ssl: true, // Neon typically requires SSL connections
@@ -152,6 +155,7 @@ import { TransactionModule } from "./transaction/transaction.module";
     GiftCouponModule,
     ActionModule,
     TransactionModule,
+    ExcelModule,
   ],
   controllers: [AppController],
   providers: [AppService, CloudinaryProvider],
