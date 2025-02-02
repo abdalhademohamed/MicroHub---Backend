@@ -172,10 +172,11 @@ export class OrdersService {
     }
 
     // Set payment status based on coupon code
-    let payStatus = PaymentStatus.PartiallyPaid;
+    let payStatus = reservation.totalPrice == reservation.deposit ? PaymentStatus.Paid : PaymentStatus.PartiallyPaid;
     if (couponCode) {
       payStatus = PaymentStatus.Paid;
     }
+    reservation.deposit 
     const invoiceNumber = await this.generateUniqueInvoiceNumber();
     console.log(coupon);
     // Create new order
