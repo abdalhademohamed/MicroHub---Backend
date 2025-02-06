@@ -367,7 +367,7 @@ export class ReservationService {
         price = price - (Number(sharableOffer.discountPercentage) / 100) * price;
 
         // Ensure image is provided
-        if (!image) {
+        if (image) {
           const folderName = "reservation";
           result = await this.CloudinaryService.uploadImage(image, folderName);
           body.deposit_Content = result.url;
@@ -433,7 +433,7 @@ export class ReservationService {
         !body.rootosh
       ) {
         // Ensure image is provided
-        if (!image) {
+        if (image) {
           const folderName = "reservation";
           result = await this.CloudinaryService.uploadImage(image, folderName);
           body.deposit_Content = result.url;
