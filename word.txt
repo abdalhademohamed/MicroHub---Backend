@@ -1,0 +1,21 @@
+//dev
+dev endpoint from my vercel account => https://easy-book-backend-two.vercel.app/
+DB_USER=EASY-BOOK_owner
+DB_PASSWORD=ILU1XNTpenB9
+DB_NAME=EASY-BOOK
+DB_HOST=ep-falling-bread-a5q2vmtv-pooler.us-east-2.aws.neon.tech
+
+
+// staging
+staging endpoint microhub vercel account https://micro-hub-dev.vercel.app/
+DB_USER=EASY-BOOK-DB_owner
+DB_PASSWORD=a3JBwp7VCHqO
+DB_NAME=EASY-BOOK-DEV
+DB_HOST=ep-solitary-moon-a5hnx4qm-pooler.us-east-2.aws.neon.tech
+
+// Production
+production endpoint microhub vercel account https://micro-hub-prod.vercel.app
+DB_USER=microhub
+DB_PASSWORD=npg_Gti4OBgZI3Ua
+DB_NAME=Easy-Book-Production
+DB_HOST=ep-calm-flower-a4ee58jz-pooler.us-east-1.aws.neon.tech
