@@ -685,7 +685,7 @@ export class OrdersService {
         newPaymentStatus === PaymentStatus.PartiallyPaid &&
         order.paymentStatus === PaymentStatus.Paid
       ) {
-        throw new BadRequestException(
+        throw new NotFoundException(
           "Payment status cannot be changed back to 'partially paid' after it has been set to 'paid'.",
         );
       }
@@ -696,18 +696,18 @@ export class OrdersService {
         newPaymentStatus === PaymentStatus.Paid &&
         order.paymentStatus !== PaymentStatus.PartiallyPaid
       ) {
-        throw new BadRequestException(
+        throw new NotFoundException(
           "Payment status can only be updated to 'paid' if the current status is 'partially paid'.",
         );
       }
       // Check if the new status is 'paid' and ensure the image is provided
       if (newPaymentStatus === PaymentStatus.Paid && !image) {
-        throw new BadRequestException(
+        throw new NotFoundException(
           "An image is required when updating the payment status to 'paid'.",
         );
       }
       if(!paymentId){
-        throw new BadRequestException(
+        throw new NotFoundException(
           "Payment ID is required when updating the payment status to 'paid'.",
         );
       }
