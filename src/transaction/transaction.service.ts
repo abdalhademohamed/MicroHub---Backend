@@ -104,7 +104,6 @@ export class TransactionService implements OnModuleInit {
   
     // Execute query and get results
     const [data, total] = await queryBuilder.getManyAndCount();
-  
     return {
       data,
       total,
@@ -186,7 +185,7 @@ export class TransactionService implements OnModuleInit {
       .addSelect('user.email', 'userEmail')  // Select user email
       .addSelect('SUM(CASE WHEN transaction.amount > 0 THEN transaction.amount ELSE 0 END)', 'totalIncome')  // Sum of income
       .addSelect('SUM(CASE WHEN transaction.amount < 0 THEN transaction.amount ELSE 0 END)', 'totalRefund')  // Sum of refund
-      .addSelect('COUNT(DISTINCT order.id)', 'orderCount')  // Count of all orders created by user
+      .addSelect('SUM(CASE WHEN createdBy.id = user.id THEN 1 ElSE 0 END )', 'orderCount')  // Count of all orders created by user
       // .addSelect('COUNT(DISTINCT CASE WHEN order.status = :cancelledStatus THEN order.id ELSE NULL END)', OrderStatus.Canceled)  // Count cancelled orders
       .innerJoin('transaction.user', 'user')  // Join user table
       .innerJoin('transaction.branch', 'branch')  // Join branch table
@@ -275,7 +274,11 @@ export class TransactionService implements OnModuleInit {
   }
   async getPaymentStaticesExcel(res: Response, type: string){
     const { items } = await this.getPaymentStatisticsWithDetails();
-    return this.excelService.exportFile(items, res, type)
+    // console.log(items, '111111111111111111111111111111111111111');
+    const result = items.map(({ methodName, totalIncome, totalRefund, numberOfTransactions })=>{
+      return { methodName, totalIncome, totalRefund, numberOfTransactions }
+    });
+    return this.excelService.exportFile(result, res, type)
   }
   async refundIncomeExcel(findTransactionDto: FindTransactionDto, res: Response, type: string){
     const { totalRefund } = await this.refundAggregations(findTransactionDto);
@@ -287,21 +290,19 @@ export class TransactionService implements OnModuleInit {
   
     const queryBuilder = this.transactionRepository
       .createQueryBuilder('transaction')
-      .select('user.id', 'userId')  // Select user ID
-      .addSelect('user.username', 'userName')  // Select user name
-      .addSelect('user.email', 'userEmail')  // Select user email
-      .addSelect('SUM(CASE WHEN transaction.amount > 0 THEN transaction.amount ELSE 0 END)', 'totalIncome')  // Sum of income
-      .addSelect('SUM(CASE WHEN transaction.amount < 0 THEN transaction.amount ELSE 0 END)', 'totalRefund')  // Sum of refund
-      .addSelect('COUNT(DISTINCT order.id)', 'orderCount')  // Count of all orders created by user
-      // .addSelect('COUNT(DISTINCT CASE WHEN order.status = :cancelledStatus THEN order.id ELSE NULL END)', OrderStatus.Canceled)  // Count cancelled orders
-      .innerJoin('transaction.user', 'user')  // Join user table
-      .innerJoin('transaction.branch', 'branch')  // Join branch table
-      .innerJoin('transaction.payment', 'payment')  // Join payment table
-      .leftJoin('transaction.order', 'order')  // Join order table (left join to include users without orders)
-      .leftJoin('order.artist', 'employee')  // Join employee (artist) table to count employees
-      .where('transaction.amount != 0');  // Exclude transactions with 0 amount
+      .select('user.id', 'userId')
+      .addSelect('user.username', 'userName')
+      .addSelect('user.email', 'userEmail')
+      .addSelect('SUM(CASE WHEN transaction.amount > 0 THEN transaction.amount ELSE 0 END)', 'totalIncome')
+      .addSelect('SUM(CASE WHEN transaction.amount < 0 THEN transaction.amount ELSE 0 END)', 'totalRefund')
+      .addSelect('SUM(CASE WHEN createdBy.id = user.id THEN 1 ElSE 0 END )', 'orderCount')
+      .innerJoin('transaction.user', 'user')
+      .innerJoin('transaction.branch', 'branch')
+      .innerJoin('transaction.payment', 'payment')
+      .leftJoin('transaction.order', 'order')
+      .leftJoin('order.createdBy', 'createdBy')
+      .where('transaction.amount != 0');
   
-    // Apply filters for branch and payment
     if (branch) {
       queryBuilder.andWhere('branch.id = :branch', { branch });
     }
@@ -319,28 +320,42 @@ export class TransactionService implements OnModuleInit {
       queryBuilder.andWhere('transaction.createdAt <= :toDate', { toDate });
     }
   
-    // Group by user to calculate total income, refund, and order counts
     queryBuilder.groupBy('user.id');
-    queryBuilder.addGroupBy('employee.id');  // Group by employee to get employee-level aggregations
+    queryBuilder.addGroupBy('user.username');
+    queryBuilder.addGroupBy('user.email');
   
     const result = await queryBuilder.getRawMany();
   
+    console.log(result);
+
     // Map the result and include the necessary fields
     const data = result.map((entry) => ({
-      userId: entry.userId,
       userName: entry.userName,
       userEmail: entry.userEmail,
       totalIncome: parseFloat(entry.totalIncome),
       totalRefund: parseFloat(entry.totalRefund),
       orderCount: parseInt(entry.orderCount, 10),  // Number of orders created by the user
-      // cancelledOrderCount: parseInt(entry.cancelledOrderCount, 10),  // Number of cancelled orders
-      employeeId: entry.employeeId,  // Employee ID
-      employeeName: entry.employeeName,  // Employee name
     }));
+
+    console.log(data);
+
     return this.excelService.exportFile(data, res, type)
   }
   async latestTransactionExcel(findTransactionDto: FindTransactionDto, res: Response, type: string){
     const { data } = await this.latestTransaction(findTransactionDto);
-    return this.excelService.exportFile(data, res, type)
+    const result = data.map(({
+      amount,
+      createdAt,
+      branch,
+      payment,
+    }) => {
+      return {
+        branchName: branch.name,
+        paymentMethod: payment.methodArabic,
+        amount,
+        createdAt: `${createdAt.getFullYear()}-${createdAt.getMonth() + 1}-${createdAt.getDate()}`,
+      };
+    })
+    return this.excelService.exportFile(result, res, type)
   }
 }
