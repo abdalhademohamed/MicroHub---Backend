@@ -720,7 +720,7 @@ export class OrdersService {
       orderDate.setHours(0, 0, 0, 0); // Reset time part to compare only date
 
       if (orderDate.getTime() !== today.getTime()) {
-        throw new BadRequestException(
+        throw new NotFoundException(
           `Order date ${orderDate.toDateString()} does not match today's date`,
         );
       }
@@ -773,7 +773,7 @@ export class OrdersService {
             });
 
             if (!order) {
-              throw new Error("Order not found");
+              throw new NotFoundException("Order not found");
             }
             // Iterate over each receipt and set the remaining balance to zero
             for (const receipt of order.receipts) {
