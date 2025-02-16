@@ -191,6 +191,7 @@ export class TransactionService implements OnModuleInit {
       .innerJoin('transaction.branch', 'branch')  // Join branch table
       .innerJoin('transaction.payment', 'payment')  // Join payment table
       .leftJoin('transaction.order', 'order')  // Join order table (left join to include users without orders)
+      .leftJoin('order.createdBy', 'createdBy')
       .leftJoin('order.artist', 'employee')  // Join employee (artist) table to count employees
       .where('transaction.amount != 0');  // Exclude transactions with 0 amount
   
