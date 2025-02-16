@@ -176,7 +176,7 @@ export class TransactionService implements OnModuleInit {
     return { totalRefund: result?.totalRefund * -1 || 0 };
   }
   async incomeAndRefundAggregations(findTransactionDto: FindTransactionDto) {
-    const { branch, fromDate, toDate, payment, page = 1, limit = 20 } = findTransactionDto;
+    const { branch, fromDate, toDate, payment, page = 1, limit = 20, keyword } = findTransactionDto;
   
     const queryBuilder = this.transactionRepository
       .createQueryBuilder('transaction')
@@ -198,6 +198,13 @@ export class TransactionService implements OnModuleInit {
     // Apply filters for branch and payment
     if (branch) {
       queryBuilder.andWhere('branch.id = :branch', { branch });
+    }
+
+    if (keyword) {
+      queryBuilder.andWhere(
+        'user.username LIKE :keyword', 
+        { keyword: `%${keyword}%` }
+      );
     }
   
     if (payment) {
@@ -250,14 +257,16 @@ export class TransactionService implements OnModuleInit {
         totalPages,
       };
   }
-  async getPaymentStatisticsWithDetails() {
-    const stats = await this.transactionRepository
+  async getPaymentStatisticsWithDetails(obj: FindTransactionDto) {
+    const { branch, fromDate, toDate,  keyword } = obj;
+    const queryBuilder = this.transactionRepository
       .createQueryBuilder("transaction")
       .innerJoinAndSelect("transaction.payment", "payment") // Join with PaymentEntity
       .select("payment.id", "paymentId")
       .addSelect("payment.methodEnglish", "methodName") // Include the method name
       .addSelect("payment.image", "methodImage") // Include the method image
       .addSelect("COUNT(transaction.id)", "numberOfTransactions")
+      .leftJoin('transaction.branch', 'branch')
       .addSelect(
         "SUM(CASE WHEN transaction.amount > 0 THEN transaction.amount ELSE 0 END)",
         "totalIncome"
@@ -265,17 +274,38 @@ export class TransactionService implements OnModuleInit {
       .addSelect(
         "SUM(CASE WHEN transaction.amount < 0 THEN ABS(transaction.amount) ELSE 0 END)",
         "totalRefund"
-      )
+      );
+
+    if (keyword) {
+      queryBuilder.where(
+        'payment.methodEnglish LIKE :keyword', 
+        { keyword: `%${keyword}%` }
+      );
+    };
+
+    if (fromDate) {
+      queryBuilder.andWhere('transaction.createdAt >= :fromDate', { fromDate });
+    };
+  
+    if (toDate) {
+      queryBuilder.andWhere('transaction.createdAt <= :toDate', { toDate });
+    };
+
+    if (branch) {
+      queryBuilder.andWhere('branch.id = :branch', { branch });
+    };
+
+    queryBuilder
       .groupBy("payment.id")
       .addGroupBy("payment.methodEnglish")
-      .addGroupBy("payment.image")
-      .getRawMany();
+      .addGroupBy("payment.image");
+
+    const stats = await queryBuilder.getRawMany();
   
     return { items: stats };
   }
-  async getPaymentStaticesExcel(res: Response, type: string){
-    const { items } = await this.getPaymentStatisticsWithDetails();
-    // console.log(items, '111111111111111111111111111111111111111');
+  async getPaymentStaticesExcel(query: FindTransactionDto, res: Response, type: string){
+    const { items } = await this.getPaymentStatisticsWithDetails(query);
     const result = items.map(({ methodName, totalIncome, totalRefund, numberOfTransactions })=>{
       return { methodName, totalIncome, totalRefund, numberOfTransactions }
     });

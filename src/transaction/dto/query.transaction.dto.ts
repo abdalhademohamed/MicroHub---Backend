@@ -34,4 +34,8 @@ export class FindTransactionDto {
   @IsOptional()
   @IsString()
   payment?: string; // New property to filter by specific service
+
+  @IsOptional()
+  @IsString()
+  keyword?: string;
 }
