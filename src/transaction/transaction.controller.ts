@@ -23,13 +23,17 @@ export class TransactionController {
     return this.transactionService.incomeAndRefundAggregations(obj);
   }
   @Get('statistics')
-  async getStatisticsWithDetails() {
-    return this.transactionService.getPaymentStatisticsWithDetails();
+  async getStatisticsWithDetails(@Query() obj: FindTransactionDto) {
+    return this.transactionService.getPaymentStatisticsWithDetails(obj);
   }
   @Get('statistics-file')
-  async getStatisticsWithExcel(@Res() res: Response, @Query('file') file: string) {
+  async getStatisticsWithExcel(
+    @Res() res: Response, 
+    @Query('file') file: string,
+    @Query() obj: FindTransactionDto,
+  ) {
     try{
-      return this.transactionService.getPaymentStaticesExcel(res, file);
+      return this.transactionService.getPaymentStaticesExcel(obj, res, file);
     }catch(e){
       console.error(e);
       return res.status(500).json({message: 'Error export file'});

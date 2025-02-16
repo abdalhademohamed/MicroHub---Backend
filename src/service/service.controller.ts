@@ -29,6 +29,7 @@ import { RolesGuard } from "../auth/guards/role.guards";
 import { Role } from "../user/utils/user.enum";
 import { Roles } from "../auth/Roles.decorator";
 import { Response } from "express";
+import { FindServiceDto } from "./dto/find.service.dto";
 @ApiTags("service")
 @Controller("service")
 export class ServiceController {
@@ -63,17 +64,18 @@ export class ServiceController {
     );
   }
   @Get("with-reservation-count")
-  async getServicesWithReservationCount(@Query('page') page: number = 1,@Query('limit') limit: number = 10) {
-    return this.serviceService.getServicesWithReservationCount(page, limit);
+  async getServicesWithReservationCount(
+    @Query() query: FindServiceDto,
+  ) {
+    return this.serviceService.getServicesWithReservationCount(query);
   }
   @Get("with-reservation-count-file")
   async getServicesWithReservationCountExcel(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
+    @Query() query: FindServiceDto,
     @Res() res: Response,
     @Query('file') file: string,
   ) {
-    return this.serviceService.serviceCountExcel(page, limit, res, file);
+    return this.serviceService.serviceCountExcel(query, res, file);
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

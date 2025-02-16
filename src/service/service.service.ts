@@ -15,6 +15,7 @@ import { UserEntity } from "../user/entities/user.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
 import { ExcelService } from "src/excel/excel.service";
 import { Response } from "express";
+import { FindServiceDto } from "./dto/find.service.dto";
 
 @Injectable()
 export class ServiceService {
@@ -29,8 +30,8 @@ export class ServiceService {
     private readonly AuditLogRepository: Repository<AuditLogEntity>,
     private readonly i18n: CustomI18nService,
   ) {}
-  async serviceCountExcel(page: number, limit: number, res: Response, type: string){
-    const { items } = await this.getServicesWithReservationCount(page, limit);
+  async serviceCountExcel(query: FindServiceDto, res: Response, type: string){
+    const { items } = await this.getServicesWithReservationCount(query);
     return this.excelService.exportFile(items, res, type);
   }
     
@@ -140,11 +141,23 @@ export class ServiceService {
       );
     }
   }
-  async getServicesWithReservationCount(page: number, limit: number) {
+  async getServicesWithReservationCount(query: FindServiceDto) {
+    const { page = 1, limit = 10, keyword, fromDate, toDate } = query;
     const skip = (page - 1) * limit;
+    const queryBuilder = this.ServiceRepository.createQueryBuilder("service")
+      .leftJoin("service.reservations", "reservation");
+    if(fromDate){
+      queryBuilder.where('reservation.start_Time >= :fromDate', { fromDate });
+    }
+    if(toDate){
+      queryBuilder.andWhere('reservation.start_Time <= :toDate', { toDate });
+    }
+    if(keyword){
+      queryBuilder.where('service.arabic_Name LIKE :keyword OR service.english_Name LIKE :keyword', { keyword: `%${keyword}%` });
+    }
     const [items, total] = 
-    await this.ServiceRepository.createQueryBuilder("service")
-      .leftJoin("service.reservations", "reservation")
+    await
+      queryBuilder
       .loadRelationCountAndMap("service.reservationCount", "service.reservations")
       .skip(skip).take(limit)
       .getManyAndCount();
