@@ -30,11 +30,22 @@ export class ServiceService {
     private readonly AuditLogRepository: Repository<AuditLogEntity>,
     private readonly i18n: CustomI18nService,
   ) {}
-  async serviceCountExcel(query: FindServiceDto, res: Response, type: string){
+  async serviceCountExcel(query: FindServiceDto, res: Response, type: string) {
     const { items } = await this.getServicesWithReservationCount(query);
-    return this.excelService.exportFile(items, res, type);
+    let reservationCount = 0;
+    let totalPrice = 0;
+    items.forEach(item => {
+      delete item.id;
+      delete item.imageUrl;
+      delete item.months_To_Expire;
+      // @ts-ignore
+      reservationCount += Number(item?.reservationCount) || 0;
+      // @ts-ignore
+      totalPrice += Number(item?.price) || 0 * Number(item?.reservationCount) || 0;
+    })
+    return this.excelService.exportFile(items, res, type, { reservationCount, price: totalPrice });
   }
-    
+
   async createService(
     createServiceDto: CreateServiceDto,
     file: Express.Multer.File, // Accept the file as a parameter
@@ -144,22 +155,28 @@ export class ServiceService {
   async getServicesWithReservationCount(query: FindServiceDto) {
     const { page = 1, limit = 10, keyword, fromDate, toDate } = query;
     const skip = (page - 1) * limit;
-    const queryBuilder = this.ServiceRepository.createQueryBuilder("service")
-      .leftJoin("service.reservations", "reservation");
-    if(fromDate){
-      queryBuilder.where('reservation.start_Time >= :fromDate', { fromDate });
+    const queryBuilder = this.ServiceRepository.createQueryBuilder(
+      "service",
+    ).leftJoin("service.reservations", "reservation");
+    if (fromDate) {
+      queryBuilder.where("reservation.start_Time >= :fromDate", { fromDate });
     }
-    if(toDate){
-      queryBuilder.andWhere('reservation.start_Time <= :toDate', { toDate });
+    if (toDate) {
+      queryBuilder.andWhere("reservation.start_Time <= :toDate", { toDate });
     }
-    if(keyword){
-      queryBuilder.where('service.arabic_Name LIKE :keyword OR service.english_Name LIKE :keyword', { keyword: `%${keyword}%` });
+    if (keyword) {
+      queryBuilder.where(
+        "service.arabic_Name LIKE :keyword OR service.english_Name LIKE :keyword",
+        { keyword: `%${keyword}%` },
+      );
     }
-    const [items, total] = 
-    await
-      queryBuilder
-      .loadRelationCountAndMap("service.reservationCount", "service.reservations")
-      .skip(skip).take(limit)
+    const [items, total] = await queryBuilder
+      .loadRelationCountAndMap(
+        "service.reservationCount",
+        "service.reservations",
+      )
+      .skip(skip)
+      .take(limit)
       .getManyAndCount();
     const totalPages = Math.ceil(total / limit);
     return { items, total, totalPages, currentPage: page };

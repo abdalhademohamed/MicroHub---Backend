@@ -786,9 +786,7 @@ export class AnalysisService {
     };
   }
 
-  async getTotalRefunds(
-    dto: GetTotalRefundsDto,
-  ): Promise<
+  async getTotalRefunds(dto: GetTotalRefundsDto): Promise<
     {
       branchId: string;
       branchName: string;

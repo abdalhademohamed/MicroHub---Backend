@@ -27,7 +27,7 @@ export class SharableOfferEntity {
   @Column({ type: "timestamp" })
   endDateTime: Date;
 
-  @Column({ type: "decimal", precision: 9, scale: 6 }) 
+  @Column({ type: "decimal", precision: 9, scale: 6 })
   discountPercentage: number;
 
   @ManyToMany(() => ServiceEntity)

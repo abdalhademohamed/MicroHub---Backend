@@ -7,48 +7,64 @@ import { Response } from "express";
 export class TransactionController {
   constructor(private transactionService: TransactionService) {}
   @Get()
-  async getTransaction(@Query() obj: FindTransactionDto){
+  async getTransaction(@Query() obj: FindTransactionDto) {
     return this.transactionService.latestTransaction(obj);
   }
-  @Get('income')
-  async incomeTransaction(@Query() obj: FindTransactionDto){
+  @Get("income")
+  async incomeTransaction(@Query() obj: FindTransactionDto) {
     return this.transactionService.incomeAggregations(obj);
   }
-  @Get('refund')
-  async refundTransaction(@Query() obj: FindTransactionDto){
+  @Get("refund")
+  async refundTransaction(@Query() obj: FindTransactionDto) {
     return this.transactionService.refundAggregations(obj);
   }
-  @Get('employee')
-  async aggregations(@Query() obj: FindTransactionDto){
+  @Get("employee")
+  async aggregations(@Query() obj: FindTransactionDto) {
     return this.transactionService.incomeAndRefundAggregations(obj);
   }
-  @Get('statistics')
+  @Get("statistics")
   async getStatisticsWithDetails(@Query() obj: FindTransactionDto) {
     return this.transactionService.getPaymentStatisticsWithDetails(obj);
   }
-  @Get('statistics-file')
+  @Get("statistics-file")
   async getStatisticsWithExcel(
-    @Res() res: Response, 
-    @Query('file') file: string,
+    @Res() res: Response,
+    @Query("file") file: string,
     @Query() obj: FindTransactionDto,
   ) {
-    try{
+    try {
       return this.transactionService.getPaymentStaticesExcel(obj, res, file);
-    }catch(e){
+    } catch (e) {
       console.error(e);
-      return res.status(500).json({message: 'Error export file'});
+      return res.status(500).json({ message: "Error export file" });
     }
   }
-  @Get('employee-file')
-  async aggregationsExcel(@Query() obj: FindTransactionDto, @Res() res: Response, @Query('file') file: string){
-    return this.transactionService.incomeAndRefundAggregationsExcel(obj, res, file);
+  @Get("employee-file")
+  async aggregationsExcel(
+    @Query() obj: FindTransactionDto,
+    @Res() res: Response,
+    @Query("file") file: string,
+  ) {
+    return this.transactionService.incomeAndRefundAggregationsExcel(
+      obj,
+      res,
+      file,
+    );
   }
-  @Get('refund-income-file')
-  async refundTransactionExcel(@Query() obj: FindTransactionDto, @Res() res: Response, @Query('file') file: string){
+  @Get("refund-income-file")
+  async refundTransactionExcel(
+    @Query() obj: FindTransactionDto,
+    @Res() res: Response,
+    @Query("file") file: string,
+  ) {
     return this.transactionService.refundIncomeExcel(obj, res, file);
   }
-  @Get('transaction-file')
-  async getTransactionExcel(@Query() obj: FindTransactionDto, @Res() res: Response, @Query('file') file: string){
+  @Get("transaction-file")
+  async getTransactionExcel(
+    @Query() obj: FindTransactionDto,
+    @Res() res: Response,
+    @Query("file") file: string,
+  ) {
     return this.transactionService.latestTransactionExcel(obj, res, file);
   }
 }

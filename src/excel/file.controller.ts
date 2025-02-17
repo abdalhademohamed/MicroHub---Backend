@@ -5,9 +5,9 @@ import { page } from "pdfkit";
 
 @Controller("report-history")
 export class ReportController {
-    constructor(private excelService: ExcelService){}
-    @Get()
-    getFileHistory(@Query('page') page: number,@Query('limit') limit: number) {
-        return this.excelService.getAllFiles(page,limit);
-    }
+  constructor(private excelService: ExcelService) {}
+  @Get()
+  getFileHistory(@Query("page") page: number, @Query("limit") limit: number) {
+    return this.excelService.getAllFiles(page, limit);
+  }
 }

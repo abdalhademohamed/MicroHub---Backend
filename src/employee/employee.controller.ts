@@ -287,10 +287,8 @@ export class EmployeeController {
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN)
   @Put("active/:employeeId")
-  async activeEmployee( @Param("employeeId") employeeId: string ) {
-    return this.employeeService.activeEmployeeByEmployeeId(
-      employeeId,
-    );
+  async activeEmployee(@Param("employeeId") employeeId: string) {
+    return this.employeeService.activeEmployeeByEmployeeId(employeeId);
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard)
