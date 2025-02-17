@@ -23,7 +23,7 @@ export class OfferEntity {
   @Column({ type: "timestamp" })
   endDateTime: Date;
 
-  @Column({ type: "decimal", precision: 9, scale: 6 }) 
+  @Column({ type: "decimal", precision: 9, scale: 6 })
   discountPercentage: number;
 
   @Column({ type: "boolean", default: true })

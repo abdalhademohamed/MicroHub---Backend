@@ -64,16 +64,14 @@ export class ServiceController {
     );
   }
   @Get("with-reservation-count")
-  async getServicesWithReservationCount(
-    @Query() query: FindServiceDto,
-  ) {
+  async getServicesWithReservationCount(@Query() query: FindServiceDto) {
     return this.serviceService.getServicesWithReservationCount(query);
   }
   @Get("with-reservation-count-file")
   async getServicesWithReservationCountExcel(
     @Query() query: FindServiceDto,
     @Res() res: Response,
-    @Query('file') file: string,
+    @Query("file") file: string,
   ) {
     return this.serviceService.serviceCountExcel(query, res, file);
   }

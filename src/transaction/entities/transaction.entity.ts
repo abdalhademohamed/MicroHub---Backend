@@ -21,11 +21,11 @@ export class TransactionEntity {
   order: OrderEntity;
 
   @ManyToOne(() => BranchEntity)
-  @JoinColumn({ name: 'branchId' }) // Explicitly set foreign key column name
+  @JoinColumn({ name: "branchId" }) // Explicitly set foreign key column name
   branch: BranchEntity;
 
   @ManyToOne(() => UserEntity)
-  @JoinColumn({ name: 'userId' }) // Explicitly set foreign key column name
+  @JoinColumn({ name: "userId" }) // Explicitly set foreign key column name
   user: UserEntity;
 
   @Column({ type: "float", nullable: true })
@@ -35,6 +35,6 @@ export class TransactionEntity {
   createdAt: Date; // Automatically set when the entity is created
 
   @ManyToOne(() => PaymentEntity) // Many orders can have one payment
-  @JoinColumn({ name: 'paymentId' }) // Explicitly set foreign key column name
+  @JoinColumn({ name: "paymentId" }) // Explicitly set foreign key column name
   payment: PaymentEntity; // Single payment associated with the order
 }

@@ -117,9 +117,7 @@ export class AuthService {
     }
   }
 
-  async signIn(
-    LoginAuthDto: LoginAuthDto,
-  ): Promise<{
+  async signIn(LoginAuthDto: LoginAuthDto): Promise<{
     accessToken: string;
     refreshToken: string;
     userName: string;

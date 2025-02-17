@@ -753,9 +753,7 @@ export class EmployeeService {
       }
     });
   }
-  async activeEmployeeByEmployeeId(
-    employeeId: string,
-  ): Promise<void> {
+  async activeEmployeeByEmployeeId(employeeId: string): Promise<void> {
     let employee: EmployeeEntity;
 
     await this.entityManager.transaction(async (transactionalEntityManager) => {

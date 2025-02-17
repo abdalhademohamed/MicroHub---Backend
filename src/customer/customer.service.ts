@@ -201,7 +201,9 @@ export class CustomerService {
         .orWhere("customer.fullName LIKE :keyword", {
           keyword: `%${keyword}%`,
         })
-        .orWhere("CAST(order.orderInvoice AS TEXT) LIKE :keyword", { keyword: `%${keyword}%` })
+        .orWhere("CAST(order.orderInvoice AS TEXT) LIKE :keyword", {
+          keyword: `%${keyword}%`,
+        });
     }
 
     // Pagination

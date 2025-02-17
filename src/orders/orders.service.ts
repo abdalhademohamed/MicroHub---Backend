@@ -172,11 +172,14 @@ export class OrdersService {
     }
 
     // Set payment status based on coupon code
-    let payStatus = reservation.totalPrice == reservation.deposit ? PaymentStatus.Paid : PaymentStatus.PartiallyPaid;
+    let payStatus =
+      reservation.totalPrice == reservation.deposit
+        ? PaymentStatus.Paid
+        : PaymentStatus.PartiallyPaid;
     if (couponCode) {
       payStatus = PaymentStatus.Paid;
     }
-    reservation.deposit 
+    reservation.deposit;
     const invoiceNumber = await this.generateUniqueInvoiceNumber();
     console.log(coupon);
     // Create new order
@@ -671,9 +674,9 @@ export class OrdersService {
       // Fetch the order by ID
       const order = await this.orderRepository.findOne({
         where: { id: orderId },
-        relations : {
+        relations: {
           reservation: true,
-        }
+        },
       });
 
       // Check if the order exists
@@ -690,7 +693,6 @@ export class OrdersService {
         );
       }
 
-
       // // Check if the current payment status allows updating to "paid"
       if (
         newPaymentStatus === PaymentStatus.Paid &&
@@ -706,7 +708,7 @@ export class OrdersService {
           "An image is required when updating the payment status to 'paid'.",
         );
       }
-      if(!paymentId){
+      if (!paymentId) {
         throw new NotFoundException(
           "Payment ID is required when updating the payment status to 'paid'.",
         );
@@ -742,7 +744,9 @@ export class OrdersService {
           order.image_order_payment_status_Url = resultImage.url;
         }
       }
-      const amount = Number(order.reservation.totalPrice) - Number(order.reservation.deposit);
+      const amount =
+        Number(order.reservation.totalPrice) -
+        Number(order.reservation.deposit);
       // Fetch the user who is updating the order
       let updatedByObj = null;
       if (userId) {
@@ -1500,15 +1504,8 @@ export class OrdersService {
     findOrdersDto: FindOrdersDto,
     userId: string,
   ): Promise<{ items: OrderEntity[]; total: number }> {
-    const {
-      page,
-      limit,
-      sort,
-      fromDate,
-      toDate,
-      paymentStatus,
-      orderStatus
-    } = findOrdersDto;
+    const { page, limit, sort, fromDate, toDate, paymentStatus, orderStatus } =
+      findOrdersDto;
     try {
       console.log(userId);
       const query = this.orderRepository
@@ -1533,7 +1530,7 @@ export class OrdersService {
         .take(limit)
         .skip((page - 1) * limit)
         .orderBy(`o.date`, sort.toUpperCase() as "ASC" | "DESC");
-      
+
       query.andWhere("cb.id = :userId", {
         userId,
       });

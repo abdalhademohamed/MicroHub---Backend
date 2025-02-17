@@ -23,7 +23,7 @@ export class CloudinaryService {
           } else {
             resolve(result.secure_url); // Return Cloudinary file URL
           }
-        }
+        },
       );
       streamifier.createReadStream(buffer).pipe(uploadStream);
     });
@@ -48,16 +48,18 @@ export class CloudinaryService {
   }
   async uploadPdfToCloudinary(buffer: any): Promise<string> {
     return new Promise((resolve, reject) => {
-      v2.uploader.upload_stream(
-        { resource_type: 'raw', format: 'pdf', type: 'upload' }, // Specify raw for non-image files
-        (error, result) => {
-          if (error) {
-            console.error('Error uploading to Cloudinary:', error);
-            return reject(error);
-          }
-          resolve(result.secure_url); // The URL of the uploaded PDF
-        },
-      ).end(buffer); // Pass the buffer here
+      v2.uploader
+        .upload_stream(
+          { resource_type: "raw", format: "pdf", type: "upload" }, // Specify raw for non-image files
+          (error, result) => {
+            if (error) {
+              console.error("Error uploading to Cloudinary:", error);
+              return reject(error);
+            }
+            resolve(result.secure_url); // The URL of the uploaded PDF
+          },
+        )
+        .end(buffer); // Pass the buffer here
     });
   }
 }

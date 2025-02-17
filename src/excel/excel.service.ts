@@ -10,30 +10,40 @@ import { Repository } from "typeorm";
 export class ExcelService {
   constructor(
     private cloudinaryService: CloudinaryService,
-    @InjectRepository(FileEntity) private fileRepository: Repository<FileEntity>,
+    @InjectRepository(FileEntity)
+    private fileRepository: Repository<FileEntity>,
   ) {}
 
   async getAllFiles(page: number, limit: number) {
     page ||= 1;
     limit ||= 10;
-    const queryBuilder = this.fileRepository.createQueryBuilder('files');
+    const queryBuilder = this.fileRepository.createQueryBuilder("files");
     queryBuilder.skip((page - 1) * limit).take(limit);
 
     const [data, total] = await queryBuilder.getManyAndCount();
     return { items: data, total, page, limit };
   }
 
-  async exportFile(data: any[], res: Response, type: string) { 
+  async exportFile(
+    data: any[],
+    res: Response,
+    type: string,
+    totalValues?: Record<string, number>,
+  ) {
     if (type === "excel") {
-      await this.generateAndUploadExcel(data, res);
+      await this.generateAndUploadExcel(data, res, totalValues);
     } else if (type === "pdf") {
-      await this.generateAndUploadPdfFromHtmlTable(data, res);
+      await this.generateAndUploadPdfFromHtmlTable(data, res, totalValues);
     } else {
       throw new BadRequestException("Unsupported file type");
     }
   }
 
-  private async generateAndUploadExcel(data: any[], res: Response) {
+  private async generateAndUploadExcel(
+    data: any[],
+    res: Response,
+    totalValues?: Record<string, number>,
+  ) {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Sheet1");
 
@@ -42,84 +52,147 @@ export class ExcelService {
 
     // Apply Header Styles (Dark Red Background, White Text)
     headerRow.eachCell((cell) => {
-      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } }; // White text
-      cell.fill = { 
-        type: 'pattern', 
-        pattern: 'solid', 
-        fgColor: { argb: 'FF800000' } // Dark Red Background
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" } }; // White text
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FF800000" }, // Dark Red Background
       };
     });
 
+    let columnSums: number[] = new Array(headers.length).fill(0);
+
     // Apply Row Styles (Alternating Dark Green & Light Pink)
     data.forEach((item, index) => {
-      const rowValues = headers.map((key) => this.flattenValue(item[key]));
+      const rowValues = headers.map((key, colIndex) => {
+        const value = item[key];
+
+        // Check if the value is a number and sum it (if totalValues is not provided)
+        if (!totalValues && !isNaN(value) && value !== "" && value !== null) {
+          columnSums[colIndex] += Number(value);
+        }
+
+        return value;
+      });
+
       const row = worksheet.addRow(rowValues);
-      
       const isOddRow = index % 2 === 0;
+
       row.eachCell((cell) => {
-        cell.fill = { 
-          type: 'pattern', 
-          pattern: 'solid', 
-          fgColor: { argb: isOddRow ? 'FF165016' : 'FFFFC0CB' } // Dark Green & Light Pink
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: isOddRow ? "FF165016" : "FFFFC0CB" }, // Dark Green & Light Pink
         };
-        cell.font = { color: { argb: isOddRow ? 'FFFFFFFF' : 'FF000000' } }; // White for green, Black for pink
+        cell.font = { color: { argb: isOddRow ? "FFFFFFFF" : "FF000000" } }; // White for green, Black for pink
       });
     });
+
+    // Append Total Row Only If totalValues is Provided
+    if (totalValues) {
+      const totalRowValues = headers.map((key, colIndex) =>
+        colIndex === 0
+          ? "Total"
+          : totalValues[key] !== undefined
+            ? totalValues[key]
+            : "",
+      );
+
+      const totalRow = worksheet.addRow(totalRowValues);
+
+      // Apply Style to Total Row (Bold, Dark Blue Background, White Text)
+      totalRow.eachCell((cell) => {
+        cell.font = { bold: true, color: { argb: "FFFFFFFF" } }; // White text
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FF00008B" }, // Dark Blue Background
+        };
+      });
+    }
 
     const arrayBuffer = await workbook.xlsx.writeBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const url = await this.cloudinaryService.uploadToCloudinary(buffer);
-    
+
     const action = this.fileRepository.create({
       link: url,
       type: "excel",
-      createdAt: new Date()
+      createdAt: new Date(),
     });
     await this.fileRepository.save(action);
+
     res.status(200).json({ url });
   }
 
-  private async generateAndUploadPdfFromHtmlTable(data: any[], res: Response) {
+  private async generateAndUploadPdfFromHtmlTable(data: any[], res: Response, totalValues?: Record<string, number>,) {
     try {
-      const htmlTable = this.generateHtmlTable(data);
+      const htmlTable = this.generateHtmlTable(data, totalValues);
       const url = htmlTable;
-  
+
       const action = this.fileRepository.create({
         link: url,
-        type: 'pdf',
+        type: "pdf",
         createdAt: new Date(),
       });
       await this.fileRepository.save(action);
-  
+
       res.status(200).json({ url });
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      res.status(500).json({ error: 'Failed to generate PDF' });
+      console.error("Error generating PDF:", error);
+      res.status(500).json({ error: "Failed to generate PDF" });
     }
   }
 
   private extractHeaders(data: any[]): string[] {
     const headers = new Set<string>();
-    data.forEach((item) => Object.keys(item).forEach((key) => headers.add(key)));
+    data.forEach((item) =>
+      Object.keys(item).forEach((key) => headers.add(key)),
+    );
     return Array.from(headers);
   }
 
   private flattenValue(value: any): string {
-    return typeof value === "object" && value !== null ? JSON.stringify(value) : value;
+    return typeof value === "object" && value !== null
+      ? JSON.stringify(value)
+      : value;
   }
 
-  private generateHtmlTable(data: any[]): string {
+  private generateHtmlTable(data: any[], totalValues?: Record<string, number>): string {
     const headers = this.extractHeaders(data);
+    
+    // Generate Table Headers
     const headerRow = `<tr>${headers.map((header) => `<th>${header}</th>`).join("")}</tr>`;
+
+    // Generate Data Rows with Alternating Colors
     const rows = data
       .map((item, index) => {
-        const cells = headers.map((key) => `<td>${this.flattenValue(item[key])}</td>`).join("");
-        const rowColor = index % 2 === 0 ? "darkgreen" : "lightpink";
-        const textColor = index % 2 === 0 ? "white" : "black";
+        const cells = headers
+          .map((key) => `<td>${this.flattenValue(item[key])}</td>`)
+          .join("");
+        
+        const isOddRow = index % 2 === 0;
+        const rowColor = isOddRow ? "#165016" : "#FFC0CB"; // Dark Green & Light Pink
+        const textColor = isOddRow ? "white" : "black";
+
         return `<tr style="background-color: ${rowColor}; color: ${textColor};">${cells}</tr>`;
       })
       .join("");
 
+    // Add Total Row If `totalValues` Is Provided
+    let totalRow = "";
+    if (totalValues) {
+      const totalRowCells = headers.map((key, colIndex) => 
+        colIndex === 0 ? "<b>Total</b>" : totalValues[key] !== undefined ? totalValues[key] : ""
+      ).join("");
+
+      totalRow = `
+        <tr style="background-color: #00008B; color: white; font-weight: bold;">
+          ${totalRowCells}
+        </tr>`;
+    }
+
+    // Final HTML Table
     return `
       <html>
         <head>
@@ -129,10 +202,11 @@ export class ExcelService {
             th { background-color: #800000; color: white; } /* Dark Red Header */
             tr:nth-child(odd) { background-color: #165016; color: white; } /* Dark Green */
             tr:nth-child(even) { background-color: #FFC0CB; color: black; } /* Light Pink */
+            tr:last-child { background-color: #00008B; color: white; font-weight: bold; } /* Dark Blue Total Row */
           </style>
         </head>
         <body>
-          <table>${headerRow}${rows}</table>
+          <table>${headerRow}${rows}${totalRow}</table>
         </body>
       </html>
     `;
