@@ -208,10 +208,17 @@ export class TransactionService implements OnModuleInit {
         "totalRefund",
       ) // Sum of refund
       .addSelect(
-        "SUM(CASE WHEN createdBy.id = user.id THEN 1 ElSE 0 END )",
-        "orderCount",
-      ) // Count of all orders created by user
-      // .addSelect('COUNT(DISTINCT CASE WHEN order.status = :cancelledStatus THEN order.id ELSE NULL END)', OrderStatus.Canceled)  // Count cancelled orders
+        "SUM(CASE WHEN createdBy.id = user.id AND order.status = 'Pending' THEN 1 ElSE 0 END )",
+        "orderPending",
+      )
+      .addSelect(
+        "SUM(CASE WHEN createdBy.id = user.id AND order.status IN ('Canceled', 'Abscent', 'Refuneded')  THEN 1 ElSE 0 END )",
+        "orderCancelled",
+      )
+      .addSelect(
+        "SUM(CASE WHEN createdBy.id = user.id AND order.status IN ('InQueue', 'Working', 'Reviewed', 'Completed')  THEN 1 ElSE 0 END )",
+        "orderCompleted",
+      )
       .innerJoin("transaction.user", "user") // Join user table
       .innerJoin("transaction.branch", "branch") // Join branch table
       .innerJoin("transaction.payment", "payment") // Join payment table
@@ -220,7 +227,6 @@ export class TransactionService implements OnModuleInit {
       .leftJoin("order.artist", "employee") // Join employee (artist) table to count employees
       .where("transaction.amount != 0"); // Exclude transactions with 0 amount
 
-    // Apply filters for branch and payment
     if (branch) {
       queryBuilder.andWhere("branch.id = :branch", { branch });
     }
@@ -267,7 +273,9 @@ export class TransactionService implements OnModuleInit {
       userEmail: entry.userEmail,
       totalIncome: parseFloat(entry.totalIncome),
       totalRefund: parseFloat(entry.totalRefund),
-      orderCount: parseInt(entry.orderCount, 10), // Number of orders created by the user
+      orderPending: parseInt(entry.orderPending, 10), // Number of orders created by the user
+      orderCancelled: parseInt(entry.orderCancelled, 10),
+      orderCompleted: parseInt(entry.orderCompleted, 10),// Number of orders created by the user
       // cancelledOrderCount: parseInt(entry.cancelledOrderCount, 10),  // Number of cancelled orders
       employeeId: entry.employeeId, // Employee ID
       employeeName: entry.employeeName, // Employee name
@@ -386,8 +394,16 @@ export class TransactionService implements OnModuleInit {
         "totalRefund",
       )
       .addSelect(
-        "SUM(CASE WHEN createdBy.id = user.id THEN 1 ElSE 0 END )",
-        "orderCount",
+        "SUM(CASE WHEN createdBy.id = user.id AND order.status = 'Pending' THEN 1 ElSE 0 END )",
+        "orderPending",
+      )
+      .addSelect(
+        "SUM(CASE WHEN createdBy.id = user.id AND order.status IN ('Canceled', 'Abscent', 'Refuneded')  THEN 1 ElSE 0 END )",
+        "orderCancelled",
+      )
+      .addSelect(
+        "SUM(CASE WHEN createdBy.id = user.id AND order.status IN ('InQueue', 'Working', 'Reviewed', 'Completed')  THEN 1 ElSE 0 END )",
+        "orderCompleted",
       )
       .innerJoin("transaction.user", "user")
       .innerJoin("transaction.branch", "branch")
@@ -424,17 +440,25 @@ export class TransactionService implements OnModuleInit {
     let totalOut = 0;
     let totalOrder = 0;
 
+    let orderPendingCount = 0;
+    let orderCancelledCount = 0;
+    let orderCompletedCount = 0;
+
     // Map the result and include the necessary fields
     const data = result.map((entry) => {
       totalIn += parseFloat(entry.totalIncome);
       totalOut +=  parseFloat(entry.totalRefund);
-      totalOrder += parseInt(entry.orderCount, 10); // Number of orders created by the user
+      orderPendingCount += parseInt(entry.orderPending, 10); // Number of orders created by the user
+      orderCancelledCount += parseInt(entry.orderCancelled, 10); 
+      orderCompletedCount += parseInt(entry.orderCompleted, 10); 
       return {
         userName: entry.userName,
         userEmail: entry.userEmail,
         totalIncome: parseFloat(entry.totalIncome),
         totalRefund: parseFloat(entry.totalRefund),
-        orderCount: parseInt(entry.orderCount, 10), // Number of orders created by the user
+        orderPending: parseInt(entry.orderPending, 10), // Number of orders created by the user
+        orderCancelled: parseInt(entry.orderCancelled, 10),
+        orderCompleted: parseInt(entry.orderCompleted, 10),
       };
     });
 
@@ -443,7 +467,9 @@ export class TransactionService implements OnModuleInit {
     return this.excelService.exportFile(data, res, type, {
       totalIncome: totalIn,
       totalRefund: totalOut,
-      orderCount: totalOrder,
+      orderPending: orderPendingCount, // Number of orders created by the user
+      orderCancelled: orderCancelledCount,
+      orderCompleted: orderCompletedCount,
     });
   }
   async latestTransactionExcel(

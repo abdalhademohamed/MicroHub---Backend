@@ -39,6 +39,91 @@ export class ExcelService {
     }
   }
 
+  // private async generateAndUploadExcel(
+  //   data: any[],
+  //   res: Response,
+  //   totalValues?: Record<string, number>,
+  // ) {
+  //   const workbook = new ExcelJS.Workbook();
+  //   const worksheet = workbook.addWorksheet("Sheet1");
+
+  //   const headers = this.extractHeaders(data);
+  //   const headerRow = worksheet.addRow(headers);
+
+  //   // Apply Header Styles (Dark Red Background, White Text)
+  //   headerRow.eachCell((cell) => {
+  //     cell.font = { bold: true, color: { argb: "FFFFFFFF" } }; // White text
+  //     cell.fill = {
+  //       type: "pattern",
+  //       pattern: "solid",
+  //       fgColor: { argb: "FF800000" }, // Dark Red Background
+  //     };
+  //   });
+
+  //   let columnSums: number[] = new Array(headers.length).fill(0);
+
+  //   // Apply Row Styles (Alternating Dark Green & Light Pink)
+  //   data.forEach((item, index) => {
+  //     const rowValues = headers.map((key, colIndex) => {
+  //       const value = item[key];
+
+  //       // Check if the value is a number and sum it (if totalValues is not provided)
+  //       if (!totalValues && !isNaN(value) && value !== "" && value !== null) {
+  //         columnSums[colIndex] += Number(value);
+  //       }
+
+  //       return value;
+  //     });
+
+  //     const row = worksheet.addRow(rowValues);
+  //     const isOddRow = index % 2 === 0;
+
+  //     row.eachCell((cell) => {
+  //       cell.fill = {
+  //         type: "pattern",
+  //         pattern: "solid",
+  //         fgColor: { argb: isOddRow ? "FF165016" : "FFFFC0CB" }, // Dark Green & Light Pink
+  //       };
+  //       cell.font = { color: { argb: isOddRow ? "FFFFFFFF" : "FF000000" } }; // White for green, Black for pink
+  //     });
+  //   });
+
+  //   // Append Total Row Only If totalValues is Provided
+  //   if (totalValues) {
+  //     const totalRowValues = headers.map((key, colIndex) =>
+  //       colIndex === 0
+  //         ? "Total"
+  //         : totalValues[key] !== undefined
+  //           ? totalValues[key]
+  //           : "",
+  //     );
+
+  //     const totalRow = worksheet.addRow(totalRowValues);
+
+  //     // Apply Style to Total Row (Bold, Dark Blue Background, White Text)
+  //     totalRow.eachCell((cell) => {
+  //       cell.font = { bold: true, color: { argb: "FFFFFFFF" } }; // White text
+  //       cell.fill = {
+  //         type: "pattern",
+  //         pattern: "solid",
+  //         fgColor: { argb: "FF00008B" }, // Dark Blue Background
+  //       };
+  //     });
+  //   }
+
+  //   const arrayBuffer = await workbook.xlsx.writeBuffer();
+  //   const buffer = Buffer.from(arrayBuffer);
+  //   const url = await this.cloudinaryService.uploadToCloudinary(buffer);
+
+  //   const action = this.fileRepository.create({
+  //     link: url,
+  //     type: "excel",
+  //     createdAt: new Date(),
+  //   });
+  //   await this.fileRepository.save(action);
+
+  //   res.status(200).json({ url });
+  // }
   private async generateAndUploadExcel(
     data: any[],
     res: Response,
@@ -46,11 +131,16 @@ export class ExcelService {
   ) {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Sheet1");
-
+  
     const headers = this.extractHeaders(data);
     const headerRow = worksheet.addRow(headers);
-
-    // Apply Header Styles (Dark Red Background, White Text)
+  
+    // **Set Column Widths** (Adjust as needed)
+    worksheet.columns = headers.map(() => ({
+      width: 20, // Increase column width
+    }));
+  
+    // **Apply Header Styles (Dark Red Background, White Text)**
     headerRow.eachCell((cell) => {
       cell.font = { bold: true, color: { argb: "FFFFFFFF" } }; // White text
       cell.fill = {
@@ -58,26 +148,30 @@ export class ExcelService {
         pattern: "solid",
         fgColor: { argb: "FF800000" }, // Dark Red Background
       };
+      cell.alignment = { horizontal: "center", vertical: "middle" }; // Center text
     });
-
+  
     let columnSums: number[] = new Array(headers.length).fill(0);
-
-    // Apply Row Styles (Alternating Dark Green & Light Pink)
+  
+    // **Apply Row Styles (Alternating Dark Green & Light Pink)**
     data.forEach((item, index) => {
       const rowValues = headers.map((key, colIndex) => {
         const value = item[key];
-
-        // Check if the value is a number and sum it (if totalValues is not provided)
+  
+        // **Check if value is a number & sum it (if totalValues is not provided)**
         if (!totalValues && !isNaN(value) && value !== "" && value !== null) {
           columnSums[colIndex] += Number(value);
         }
-
+  
         return value;
       });
-
+  
       const row = worksheet.addRow(rowValues);
       const isOddRow = index % 2 === 0;
-
+  
+      // **Set Row Height** (Increase row height)
+      row.height = 25;
+  
       row.eachCell((cell) => {
         cell.fill = {
           type: "pattern",
@@ -85,10 +179,11 @@ export class ExcelService {
           fgColor: { argb: isOddRow ? "FF165016" : "FFFFC0CB" }, // Dark Green & Light Pink
         };
         cell.font = { color: { argb: isOddRow ? "FFFFFFFF" : "FF000000" } }; // White for green, Black for pink
+        cell.alignment = { horizontal: "center", vertical: "middle" }; // Center text
       });
     });
-
-    // Append Total Row Only If totalValues is Provided
+  
+    // **Append Total Row If totalValues is Provided**
     if (totalValues) {
       const totalRowValues = headers.map((key, colIndex) =>
         colIndex === 0
@@ -97,10 +192,11 @@ export class ExcelService {
             ? totalValues[key]
             : "",
       );
-
+  
       const totalRow = worksheet.addRow(totalRowValues);
-
-      // Apply Style to Total Row (Bold, Dark Blue Background, White Text)
+      totalRow.height = 30; // **Increase Total Row Height**
+  
+      // **Apply Style to Total Row (Bold, Dark Blue Background, White Text)**
       totalRow.eachCell((cell) => {
         cell.font = { bold: true, color: { argb: "FFFFFFFF" } }; // White text
         cell.fill = {
@@ -108,22 +204,24 @@ export class ExcelService {
           pattern: "solid",
           fgColor: { argb: "FF00008B" }, // Dark Blue Background
         };
+        cell.alignment = { horizontal: "center", vertical: "middle" }; // Center text
       });
     }
-
+  
     const arrayBuffer = await workbook.xlsx.writeBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const url = await this.cloudinaryService.uploadToCloudinary(buffer);
-
+  
     const action = this.fileRepository.create({
       link: url,
       type: "excel",
       createdAt: new Date(),
     });
     await this.fileRepository.save(action);
-
+  
     res.status(200).json({ url });
   }
+  
 
   private async generateAndUploadPdfFromHtmlTable(data: any[], res: Response, totalValues?: Record<string, number>,) {
     try {
