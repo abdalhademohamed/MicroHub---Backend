@@ -434,12 +434,8 @@ export class TransactionService implements OnModuleInit {
     queryBuilder.addGroupBy("user.email");
 
     const result = await queryBuilder.getRawMany();
-
-    console.log(result);
     let totalIn = 0;
     let totalOut = 0;
-    let totalOrder = 0;
-
     let orderPendingCount = 0;
     let orderCancelledCount = 0;
     let orderCompletedCount = 0;
@@ -461,8 +457,6 @@ export class TransactionService implements OnModuleInit {
         orderCompleted: parseInt(entry.orderCompleted, 10),
       };
     });
-
-    console.log(data);
 
     return this.excelService.exportFile(data, res, type, {
       totalIncome: totalIn,

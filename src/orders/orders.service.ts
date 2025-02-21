@@ -7,6 +7,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  OnModuleInit,
 } from "@nestjs/common";
 import { InjectEntityManager, InjectRepository } from "@nestjs/typeorm";
 import { OrderEntity } from "./entities/order.entity";
@@ -76,7 +77,9 @@ export class OrdersService {
     private readonly GiftCouponRepository: Repository<GiftCouponEntity>,
     private actionService: ActionService,
     private transactionService: TransactionService,
-  ) {}
+  ) {
+    // console.log('orderRepository:', this.orderRepository);
+  }
   // Method to generate a unique incremental invoice number
   private async generateUniqueInvoiceNumber(): Promise<number> {
     const latestOrder = await this.orderRepository
@@ -1194,24 +1197,6 @@ export class OrdersService {
     }
   }
 
-  // private async clearCustomerRootoshList(customerId: string): Promise<void> {
-  //   const customer = await this.CustomerRepository.findOne({ where: { id: customerId }, relations: ['rootosh'] });
-
-  //   if (!customer || !customer.lastRootoshes) {
-  //     throw new NotFoundException('Customer or rootosh not found');
-  //   }
-
-  //   // Assuming rootosh is a list and you need to remove the last entry
-  //   const lastRootoshEntry = customer.lastRootoshes[customer.lastRootoshes.length - 1];
-  //   if (lastRootoshEntry) {
-  //     await this.RootoshRepository.remove(lastRootoshEntry);
-  //   }
-
-  //   // If you want to clear the entire list instead, you can do:
-  //   // customer.rootosh = [];
-  //   // await this.customerRepository.save(customer);
-  // }
-
   async assignOrderToArtist(
     orderId: string,
     artistId: string,
@@ -1498,71 +1483,6 @@ export class OrdersService {
     } catch (error) {
       console.error("Error fetching orders:", error);
       throw new Error("Unable to fetch orders.");
-    }
-  }
-  async findAllCreatedOrders(
-    findOrdersDto: FindOrdersDto,
-    userId: string,
-  ): Promise<{ items: OrderEntity[]; total: number }> {
-    const { page, limit, sort, fromDate, toDate, paymentStatus, orderStatus } =
-      findOrdersDto;
-    try {
-      console.log(userId);
-      const query = this.orderRepository
-        .createQueryBuilder("o")
-        .leftJoinAndSelect("o.artist", "a")
-        .leftJoinAndSelect("o.customer", "c")
-        .addSelect(["c.id", "c.fullName", "c.phoneNumber"])
-        .leftJoin("o.createdBy", "cb")
-        .leftJoin("o.confirmedBy", "confirmedBy") // Include confirmedBy relation
-        .addSelect([
-          "confirmedBy.id",
-          "confirmedBy.username",
-          "confirmedBy.role",
-        ])
-        .addSelect(["cb.id", "cb.username", "cb.email", "cb.role"])
-        .leftJoin("o.updatedBy", "ub")
-        .addSelect(["ub.id", "ub.username"])
-        .leftJoinAndSelect("o.reservation", "r")
-        .leftJoinAndSelect("r.services", "s")
-        .leftJoinAndSelect("r.rootoshes", "ro") // Adding the rootoshes join here
-        .addSelect(["r.id", "r.start_Time", "r.end_Time", "r.totalPrice"])
-        .take(limit)
-        .skip((page - 1) * limit)
-        .orderBy(`o.date`, sort.toUpperCase() as "ASC" | "DESC");
-
-      query.andWhere("cb.id = :userId", {
-        userId,
-      });
-
-      if (fromDate || toDate) {
-        if (fromDate) {
-          query.andWhere("o.date >= :fromDate", {
-            fromDate: new Date(fromDate).toISOString(),
-          });
-        }
-        if (toDate) {
-          query.andWhere("o.date < :toDate", {
-            toDate: new Date(toDate).toISOString(),
-          });
-        }
-      }
-
-      if (paymentStatus) {
-        query.andWhere("o.paymentStatus = :paymentStatus", { paymentStatus });
-      }
-
-      // // Handle multiple order statuses
-      // if (orderStatus) {
-      //   query.andWhere("o.status = :orderStatus", { orderStatus });
-      // }
-
-      const [items, total] = await query.getManyAndCount();
-
-      return { items, total };
-    } catch (error) {
-      console.error("Error fetching orders:", error);
-      throw new NotFoundException("Unable to fetch orders.");
     }
   }
   async findAllRefundedOrders(findOrdersDto: FindOrdersDto, userId: string) {

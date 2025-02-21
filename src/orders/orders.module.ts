@@ -24,7 +24,6 @@ import { TransactionModule } from "src/transaction/transaction.module";
 
 @Module({
   imports: [
-    TransactionModule,
     TypeOrmModule.forFeature([
       OrderEntity,
       ReservationEntity,
@@ -43,6 +42,7 @@ import { TransactionModule } from "src/transaction/transaction.module";
     NotificationModule,
     forwardRef(() => ReservationModule), // Use forwardRef for ReservationModule
     ActionModule,
+    TransactionModule,
   ],
   controllers: [OrdersController],
   providers: [OrdersService, CloudinaryService, CustomI18nService],
