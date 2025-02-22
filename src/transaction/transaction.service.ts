@@ -212,7 +212,7 @@ export class TransactionService implements OnModuleInit {
         "orderPending",
       )
       .addSelect(
-        "SUM(CASE WHEN createdBy.id = user.id AND order.status IN ('Canceled', 'Abscent', 'Refuneded')  THEN 1 ElSE 0 END )",
+        "SUM(CASE WHEN createdBy.id = user.id AND order.status IN ('Canceled', 'Abscent', 'Refuneded')  THEN 1 ElSE 0 END)",
         "orderCancelled",
       )
       .addSelect(
@@ -252,7 +252,6 @@ export class TransactionService implements OnModuleInit {
 
     // Group by user to calculate total income, refund, and order counts
     queryBuilder.groupBy("user.id");
-    queryBuilder.addGroupBy("employee.id"); // Group by employee to get employee-level aggregations
 
     const totalRowsQuery = queryBuilder
       .clone()
@@ -434,12 +433,8 @@ export class TransactionService implements OnModuleInit {
     queryBuilder.addGroupBy("user.email");
 
     const result = await queryBuilder.getRawMany();
-
-    console.log(result);
     let totalIn = 0;
     let totalOut = 0;
-    let totalOrder = 0;
-
     let orderPendingCount = 0;
     let orderCancelledCount = 0;
     let orderCompletedCount = 0;
@@ -461,8 +456,6 @@ export class TransactionService implements OnModuleInit {
         orderCompleted: parseInt(entry.orderCompleted, 10),
       };
     });
-
-    console.log(data);
 
     return this.excelService.exportFile(data, res, type, {
       totalIncome: totalIn,

@@ -37,32 +37,15 @@ import { FindOrdersByDayDto } from "./dto/find.orders.dto.for.artist";
 import { PaymentStatus } from "./utils/payment.status.enum";
 import { GetCommentsbycustomerDto } from "./dto/get-comments.dto";
 import { use } from "passport";
+import { ActionService } from "src/action/action.service";
 
 @ApiTags("orders")
 @Controller("order")
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
-
-  @Get("created/:emloyeeId")
-  // @UseGuards(AccessTokenGuard)
-  // // @Roles(
-  // //   Role.SUPERADMIN,
-  // //   Role.RECEPTIONIST,
-  // //   Role.COORDINATOR,
-  // //   Role.ARTISTMANAGER,
-  // // )
-  async findAllCreatedOrders(
-    @Query() findOrdersDto: FindOrdersDto,
-    @Request() req: any, // Request object to access the user
-    @Param("emloyeeId") emloyeeId: string,
-  ) {
-    // const userId = req.user.sub; // Assuming user ID is stored in the request
-    // if (!userId) {
-    //   throw new BadRequestException("User not authenticated");
-    // }
-    // console.log(userId);
-    return this.ordersService.findAllCreatedOrders(findOrdersDto, emloyeeId);
-  }
+  constructor(
+    private readonly ordersService: OrdersService,
+    private actionService: ActionService,
+  ) {}
 
   @Get("count")
   async getOrderCount(
@@ -71,14 +54,15 @@ export class OrdersController {
     const count = await this.ordersService.getOrderCount(branchId);
     return { count: count.toString() }; // Return the count as a string
   }
+  @Get('created/:userId')
+  async findAllByUserId(
+    @Query() findOrdersDto: FindOrdersDto,
+    @Param("userId") userId: string,
+  ) {
+    return await this.actionService.findAllOrdersCreatedByUser(findOrdersDto, userId);
+  }
   @Get("/refunded")
   @UseGuards(AccessTokenGuard)
-  // @Roles(
-  //   Role.SUPERADMIN,
-  //   Role.RECEPTIONIST,
-  //   Role.COORDINATOR,
-  //   Role.ARTISTMANAGER,
-  // )
   async findAllOrdersRefunded(
     @Query() findOrdersDto: FindOrdersDto,
     @Request() req: any, // Request object to access the user

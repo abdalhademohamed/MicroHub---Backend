@@ -79,6 +79,7 @@ import { ExcelModule } from "./excel/excel.module";
       database: process.env.DB_NAME,
       // entities: ["dist//*.entity.js"],
       entities: [
+        OrderEntity,
         UserEntity,
         BranchEntity,
         CustomerEntity,
@@ -95,7 +96,6 @@ import { ExcelModule } from "./excel/excel.module";
         FcmTokenEntity,
         AuditLogEntity,
         ReviewEntity,
-        OrderEntity,
         CommentEntity,
         ReceiptEntity,
         SlotsEntity,
