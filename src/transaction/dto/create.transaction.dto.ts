@@ -3,4 +3,5 @@ export class CreateTransactionDto {
   orderId: string;
   amount: number;
   userId: string;
+  type: string;
 }

@@ -31,6 +31,9 @@ export class TransactionEntity {
   @Column({ type: "float", nullable: true })
   amount: number;
 
+  @Column({ nullable: true })
+  type: string;
+
   @CreateDateColumn()
   createdAt: Date; // Automatically set when the entity is created
 
