@@ -726,11 +726,11 @@ export class OrdersService {
       const orderDate = new Date(order.date); // Assuming 'order.date' contains the order date
       orderDate.setHours(0, 0, 0, 0); // Reset time part to compare only date
 
-      // if (orderDate.getTime() !== today.getTime()) {
-      //   throw new NotFoundException(
-      //     `Order date ${orderDate.toDateString()} does not match today's date`,
-      //   );
-      // }
+      if (orderDate.getTime() !== today.getTime()) {
+        throw new NotFoundException(
+          `Order date ${orderDate.toDateString()} does not match today's date`,
+        );
+      }
       // Update the paymentStatus
       order.paymentStatus =
         newPaymentStatus === "paid"
@@ -1243,11 +1243,11 @@ export class OrdersService {
       const orderDate = new Date(order.date); // Assuming 'order.date' contains the order date
       orderDate.setHours(0, 0, 0, 0); // Reset time part to compare only date
 
-      // if (orderDate.getTime() !== today.getTime()) {
-      //   throw new BadRequestException(
-      //     `Order date ${orderDate.toDateString()} does not match today's date`,
-      //   );
-      // }
+      if (orderDate.getTime() !== today.getTime()) {
+        throw new BadRequestException(
+          `Order date ${orderDate.toDateString()} does not match today's date`,
+        );
+      }
 
       // Map the artist entity to ArtistDto
       const artistDto: ArtistDto = {
