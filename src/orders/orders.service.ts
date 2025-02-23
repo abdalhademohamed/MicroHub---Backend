@@ -789,24 +789,25 @@ export class OrdersService {
               receipt.remaining = 0;
               await this.ReceiptRepository.save(receipt);
             }
-            await this.transactionService.createTransaction({
-              orderId: savedOrder.id,
-              amount,
-              paymentId,
-              userId,
-              type: 'completed',
-            });
           }
-          await this.actionService.createAction({
-            actionEn: `payment status updated`,
-            actionAr: `تم تحديث حالة الدفع`,
-            branch: order?.branch?.id,
-            order: order.id,
-            createdBy: userId,
-          });
           return savedOrder;
         },
       );
+      await this.actionService.createAction({
+        actionEn: `payment status updated`,
+        actionAr: `تم تحديث حالة الدفع`,
+        branch: order?.branch?.id,
+        order: order.id,
+        createdBy: userId,
+      });
+      await this.transactionService.createTransaction({
+        orderId: updatedOrder.id,
+        amount,
+        paymentId,
+        userId,
+        type: 'completed'
+      });
+      return updatedOrder;
     } catch (error) {
       console.error("Error updating payment status:", error);
       if (error instanceof NotFoundException) {
