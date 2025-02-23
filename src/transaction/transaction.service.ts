@@ -201,23 +201,23 @@ export class TransactionService implements OnModuleInit {
       .addSelect("user.username", "userName") // Select user name
       .addSelect("user.email", "userEmail") // Select user email
       .addSelect(
-        "SUM(CASE WHEN transaction.amount > 0 THEN transaction.amount ELSE 0 END)",
-        "totalIncome",
-      ) // Sum of income
-      .addSelect(
-        "SUM(CASE WHEN transaction.amount < 0 THEN transaction.amount ELSE 0 END)",
+        "SUM(CASE WHEN transaction.type = 'refund' THEN transaction.amount ELSE 0 END)",
         "totalRefund",
-      ) // Sum of refund
+      )
       .addSelect(
-        "SUM(CASE WHEN createdBy.id = user.id AND order.status = 'Pending' THEN 1 ElSE 0 END )",
+        "SUM(CASE WHEN transaction.type = 'completed' OR transaction.type = 'deposit' THEN transaction.amount ELSE 0 END)",
+        "totalIncome",
+      )
+      .addSelect(
+        "SUM(CASE WHEN createdBy.id = user.id AND order.status = 'Pending' AND transaction.type = 'deposit' THEN 1 ElSE 0 END )",
         "orderPending",
       )
       .addSelect(
-        "SUM(CASE WHEN createdBy.id = user.id AND order.status IN ('Canceled', 'Abscent', 'Refuneded')  THEN 1 ElSE 0 END)",
+        "SUM(CASE WHEN createdBy.id = user.id AND order.status IN ('Canceled', 'Abscent', 'Refuneded') AND transaction.type = 'refund'  THEN 1 ElSE 0 END )",
         "orderCancelled",
       )
       .addSelect(
-        "SUM(CASE WHEN createdBy.id = user.id AND order.status IN ('InQueue', 'Working', 'Reviewed', 'Completed')  THEN 1 ElSE 0 END )",
+        "SUM(CASE WHEN createdBy.id = user.id AND order.status IN ('InQueue', 'Working', 'Reviewed', 'Completed') AND transaction.type = 'completed'  THEN 1 ElSE 0 END )",
         "orderCompleted",
       )
       .innerJoin("transaction.user", "user") // Join user table
@@ -386,16 +386,16 @@ export class TransactionService implements OnModuleInit {
       .addSelect("user.username", "userName")
       .addSelect("user.email", "userEmail")
       .addSelect(
-        "SUM(CASE WHEN transaction.type = 'deposit' AND order.status = 'Pending' THEN transaction.amount ELSE 0 END)",
+        "SUM(CASE WHEN createdBy.id = user.id AND order.status = 'Pending' AND  transaction.type = 'deposit' THEN reservation.totalPrice - reservation.deposit ELSE 0 END)",
         "totalPending",
       )
       .addSelect(
-        "SUM(CASE WHEN transaction.type = 'refund' AND order.status IN ('Canceled', 'Abscent', 'Refuneded')  THEN transaction.amount ELSE 0 END)",
+        "SUM(CASE WHEN transaction.type = 'refund' THEN transaction.amount ELSE 0 END)",
         "totalRefund",
       )
       .addSelect(
-        "SUM(CASE WHEN transaction.type = 'completed' AND order.status IN ('InQueue', 'Working', 'Reviewed', 'Completed') THEN reservation.totalPrice ELSE 0 END)",
-        "totalCompleted",
+        "SUM(CASE WHEN transaction.type = 'completed' OR transaction.type = 'deposit' THEN transaction.amount ELSE 0 END)",
+        "totalIncome",
       )
       .addSelect(
         "SUM(CASE WHEN createdBy.id = user.id AND order.status = 'Pending' AND transaction.type = 'deposit' THEN 1 ElSE 0 END )",
@@ -440,7 +440,7 @@ export class TransactionService implements OnModuleInit {
 
     const result = await queryBuilder.getRawMany();
     let totalRef = 0;
-    let totalCom = 0;
+    let totalInc = 0;
     let totalPen = 0;
     let orderPendingCount = 0;
     let orderCancelledCount = 0;
@@ -449,7 +449,7 @@ export class TransactionService implements OnModuleInit {
     // Map the result and include the necessary fields
     const data = result.map((entry) => {
       totalRef += parseFloat(entry.totalRefund) * -1;
-      totalCom +=  parseFloat(entry.totalCompleted);
+      totalInc +=  parseFloat(entry.totalIncome);
       totalPen +=  parseFloat(entry.totalPending);
       orderPendingCount += parseInt(entry.orderPending, 10); // Number of orders created by the user
       orderCancelledCount += parseInt(entry.orderCancelled, 10); 
@@ -457,7 +457,7 @@ export class TransactionService implements OnModuleInit {
       return {
         userName: entry.userName,
         userEmail: entry.userEmail,
-        totalCompleted: parseFloat(entry.totalCompleted),
+        totalIncome: parseFloat(entry.totalIncome),
         totalPending: parseFloat(entry.totalPending),
         totalRefund: parseFloat(entry.totalRefund)* -1,
         orderPending: parseInt(entry.orderPending, 10), // Number of orders created by the user
@@ -467,7 +467,7 @@ export class TransactionService implements OnModuleInit {
     });
 
     return this.excelService.exportFile(data, res, type, {
-      totalCompleted: totalCom,
+      totalIncome: totalInc,
       totalPending: totalPen,
       totalRefund: totalRef,
       orderPending: orderPendingCount, // Number of orders created by the user
