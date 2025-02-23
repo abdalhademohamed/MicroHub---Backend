@@ -47,6 +47,7 @@ export class TransactionService implements OnModuleInit {
       order,
       amount: Number(body.amount),
       createdAt: new Date(),
+      type: body.type,
     });
     transaction.user = await this.userRepository.findOne({
       where: { id: body.userId },
