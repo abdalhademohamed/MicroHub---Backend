@@ -387,15 +387,15 @@ export class TransactionService implements OnModuleInit {
       .addSelect("user.email", "userEmail")
       .addSelect(
         "SUM(CASE WHEN transaction.type = 'deposit' AND order.status = 'Pending' THEN transaction.amount ELSE 0 END)",
-        "totalCompleted",
+        "totalPending",
       )
       .addSelect(
         "SUM(CASE WHEN transaction.type = 'refund' AND order.status IN ('Canceled', 'Abscent', 'Refuneded')  THEN transaction.amount ELSE 0 END)",
         "totalRefund",
       )
       .addSelect(
-        "SUM(CASE WHEN transaction.type = 'completed' AND order.status IN ('InQueue', 'Working', 'Reviewed', 'Completed') THEN transaction.amount ELSE 0 END)",
-        "totalPending",
+        "SUM(CASE WHEN transaction.type = 'completed' AND order.status IN ('InQueue', 'Working', 'Reviewed', 'Completed') THEN reservation.totalPrice ELSE 0 END)",
+        "totalCompleted",
       )
       .addSelect(
         "SUM(CASE WHEN createdBy.id = user.id AND order.status = 'Pending' AND transaction.type = 'deposit' THEN 1 ElSE 0 END )",
@@ -413,6 +413,7 @@ export class TransactionService implements OnModuleInit {
       .innerJoin("transaction.branch", "branch")
       .innerJoin("transaction.payment", "payment")
       .leftJoin("transaction.order", "order")
+      .leftJoin("order.reservation", "reservation")
       .leftJoin("order.createdBy", "createdBy")
       .where("transaction.amount != 0");
 
