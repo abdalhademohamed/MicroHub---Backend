@@ -272,7 +272,7 @@ export class TransactionService implements OnModuleInit {
       userName: entry.userName,
       userEmail: entry.userEmail,
       totalIncome: parseFloat(entry.totalIncome),
-      totalRefund: parseFloat(entry.totalRefund),
+      totalRefund: parseFloat(entry.totalRefund) * -1,
       orderPending: parseInt(entry.orderPending, 10), // Number of orders created by the user
       orderCancelled: parseInt(entry.orderCancelled, 10),
       orderCompleted: parseInt(entry.orderCompleted, 10),// Number of orders created by the user
