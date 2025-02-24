@@ -128,7 +128,7 @@ export class TransactionService implements OnModuleInit {
       .select("SUM(transaction.amount)", "totalIncome")
       .innerJoin("transaction.branch", "branch")
       .innerJoin("transaction.payment", "payment")
-      .where("transaction.amount > 0"); // Filter income transactions
+      .where("transaction.type = 'completed' OR transaction.type = 'deposit'"); // Filter income transactions
 
     // Apply filters for branch and payment
     if (branch) {
@@ -160,7 +160,7 @@ export class TransactionService implements OnModuleInit {
       .select("SUM(transaction.amount)", "totalRefund")
       .innerJoin("transaction.branch", "branch")
       .innerJoin("transaction.payment", "payment")
-      .where("transaction.amount < 0"); // Filter refund transactions
+      .where("transaction.type = 'refund'"); // Filter refund transactions
 
     // Apply filters for branch and payment
     if (branch) {
@@ -182,7 +182,7 @@ export class TransactionService implements OnModuleInit {
 
     // Execute query
     const result = await queryBuilder.getRawOne();
-    return { totalRefund: result?.totalRefund * -1 || 0 };
+    return { totalRefund: result?.totalRefund || 0 };
   }
   async incomeAndRefundAggregations(findTransactionDto: FindTransactionDto) {
     const {
@@ -226,7 +226,6 @@ export class TransactionService implements OnModuleInit {
       .leftJoin("transaction.order", "order") // Join order table (left join to include users without orders)
       .leftJoin("order.createdBy", "createdBy")
       .leftJoin("order.artist", "employee") // Join employee (artist) table to count employees
-      .where("transaction.amount != 0"); // Exclude transactions with 0 amount
 
     if (branch) {
       queryBuilder.andWhere("branch.id = :branch", { branch });
@@ -272,7 +271,7 @@ export class TransactionService implements OnModuleInit {
       userName: entry.userName,
       userEmail: entry.userEmail,
       totalIncome: parseFloat(entry.totalIncome),
-      totalRefund: parseFloat(entry.totalRefund) * -1,
+      totalRefund: parseFloat(entry.totalRefund),
       orderPending: parseInt(entry.orderPending, 10), // Number of orders created by the user
       orderCancelled: parseInt(entry.orderCancelled, 10),
       orderCompleted: parseInt(entry.orderCompleted, 10),// Number of orders created by the user
@@ -302,11 +301,11 @@ export class TransactionService implements OnModuleInit {
       .addSelect("COUNT(transaction.id)", "numberOfTransactions")
       .leftJoin("transaction.branch", "branch")
       .addSelect(
-        "SUM(CASE WHEN transaction.amount > 0 THEN transaction.amount ELSE 0 END)",
+        "SUM(CASE WHEN transaction.type = 'completed' OR transaction.type = 'deposit' THEN transaction.amount ELSE 0 END)",
         "totalIncome",
       )
       .addSelect(
-        "SUM(CASE WHEN transaction.amount < 0 THEN ABS(transaction.amount) ELSE 0 END)",
+        "SUM(CASE WHEN transaction.type = 'refund' THEN transaction.amount ELSE 0 END)",
         "totalRefund",
       );
 
@@ -448,7 +447,7 @@ export class TransactionService implements OnModuleInit {
 
     // Map the result and include the necessary fields
     const data = result.map((entry) => {
-      totalRef += parseFloat(entry.totalRefund) * -1;
+      totalRef += parseFloat(entry.totalRefund);
       totalInc +=  parseFloat(entry.totalIncome);
       totalPen +=  parseFloat(entry.totalPending);
       orderPendingCount += parseInt(entry.orderPending, 10); // Number of orders created by the user
@@ -459,7 +458,7 @@ export class TransactionService implements OnModuleInit {
         userEmail: entry.userEmail,
         totalIncome: parseFloat(entry.totalIncome),
         totalPending: parseFloat(entry.totalPending),
-        totalRefund: parseFloat(entry.totalRefund)* -1,
+        totalRefund: parseFloat(entry.totalRefund),
         orderPending: parseInt(entry.orderPending, 10), // Number of orders created by the user
         orderCancelled: parseInt(entry.orderCancelled, 10),
         orderCompleted: parseInt(entry.orderCompleted, 10),

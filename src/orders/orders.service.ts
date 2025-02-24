@@ -2319,7 +2319,7 @@ export class OrdersService {
         });
         await this.transactionService.createTransaction({
           orderId,
-          amount: -refundAmount,
+          amount: refundAmount,
           paymentId,
           userId,
           type: "refund",
