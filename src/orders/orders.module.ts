@@ -21,6 +21,7 @@ import { GiftCouponEntity } from "../gift-coupon/entities/gift-coupon.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
 import { ActionModule } from "../action/action.module";
 import { TransactionModule } from "src/transaction/transaction.module";
+import { GiftCouponModule } from "src/gift-coupon/gift-coupon.module";
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { TransactionModule } from "src/transaction/transaction.module";
     forwardRef(() => ReservationModule), // Use forwardRef for ReservationModule
     ActionModule,
     TransactionModule,
+    GiftCouponModule,
   ],
   controllers: [OrdersController],
   providers: [OrdersService, CloudinaryService, CustomI18nService],
