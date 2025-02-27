@@ -943,6 +943,7 @@ export class OrdersService {
       let paymentAmount: number;
       order.status = OrderStatus.Abscent;
       await this.orderRepository.save(order);
+      await this.removeRotoshFromCustomer(order.customer.id, order.reservation.id);
     }
 
     // Restrict changes once the status is 'Completed'
