@@ -5,7 +5,6 @@ import {
   InternalServerErrorException,
 } from "@nestjs/common";
 import { CreateGiftCouponDto } from "./dto/create-gift-coupon.dto";
-import { UpdateGiftCouponDto } from "./dto/update-gift-coupon.dto";
 import { GiftCouponEntity } from "./entities/gift-coupon.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { SharableOfferEntity } from "../sharable-offer/entities/sharable-offer.entity";
@@ -14,8 +13,6 @@ import { CustomerEntity } from "../customer/entities/customer.entity";
 import { v4 as uuidv4 } from "uuid";
 import { OrderEntity } from "../orders/entities/order.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
-import { In } from "typeorm";
-import { OrderStatus } from "../orders/utils/order.status.enum";
 import { ReceiptEntity } from "../receipt/entities/receipt.entity";
 import { UserEntity } from "../user/entities/user.entity";
 
@@ -41,9 +38,8 @@ export class GiftCouponService {
 
   async createGiftCoupon(
     createGiftCouponDto: CreateGiftCouponDto,
-  ): Promise<GiftCouponEntity> {
+  ) {
     const { orderId, customerId } = createGiftCouponDto;
-
     try {
       const Order = await this.orderRepository.findOne({
         where: { id: orderId },
@@ -56,9 +52,7 @@ export class GiftCouponService {
       });
 
       if (!sharableOffer) {
-        throw new NotFoundException(
-          this.i18n.translate("test.GIFT_COUPON.SHARABLE_OFFER_NOT_FOUND"),
-        );
+        return false;
       }
 
       const customer = await this.customerRepository.findOne({
@@ -66,9 +60,7 @@ export class GiftCouponService {
       });
 
       if (!customer) {
-        throw new NotFoundException(
-          this.i18n.translate("test.GIFT_COUPON.CUSTOMER_NOT_FOUND"),
-        );
+        return false;
       }
       // Get the IDs of services in the order
       const orderServiceIds = Order.reservation.services.map(
@@ -136,23 +128,6 @@ export class GiftCouponService {
         this.i18n.translate("test.GIFT_COUPON.EXPIRED"),
       );
     }
-
-    // // Get all services from sharable offer
-    // const allServices = giftCoupon.sharableOffer.services;
-
-    // // Get remaining services from coupon
-    // const leftServices = giftCoupon.services || [];
-
-    // // Calculate used services by finding services that are in allServices but not in leftServices
-    // const usedServices = allServices.filter(
-    //   (service) =>
-    //     !leftServices.some((leftService) => leftService.id === service.id)
-    // );
-
-    // // Sort usage history by date
-    // const sortedUsageHistory = [...(giftCoupon.usageHistory || [])].sort(
-    //   (a, b) => new Date(b.usedAt).getTime() - new Date(a.usedAt).getTime()
-    // );
 
     return {
       id: giftCoupon.id,

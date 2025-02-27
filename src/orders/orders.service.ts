@@ -39,8 +39,8 @@ import { GiftCouponEntity } from "../gift-coupon/entities/gift-coupon.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
 import { ActionService } from "../action/action.service";
 import { TransactionService } from "src/transaction/transaction.service";
-import { Z_STREAM_END } from "zlib";
-
+import { GiftCouponService } from "src/gift-coupon/gift-coupon.service";
+// couponId
 @Injectable()
 export class OrdersService {
   constructor(
@@ -77,6 +77,7 @@ export class OrdersService {
     private readonly GiftCouponRepository: Repository<GiftCouponEntity>,
     private actionService: ActionService,
     private transactionService: TransactionService,
+    private giftCouponService: GiftCouponService,
   ) {
     // console.log('orderRepository:', this.orderRepository);
   }
@@ -818,8 +819,6 @@ export class OrdersService {
         );
       }
     }
-
-    return updatedOrder;
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Method to update the status of an order
@@ -1190,6 +1189,11 @@ export class OrdersService {
       if (newStatus == OrderStatus.Working) {
         updatedOrder.startWorkingAt = new Date();
         await this.orderRepository.save(updatedOrder);
+      } else if (newStatus == OrderStatus.Completed && order.sharableOfferId) {
+        await this.giftCouponService.createGiftCoupon({
+          orderId: orderId,
+          customerId: order.customer.id,
+        })
       }
 
       return updatedOrder;

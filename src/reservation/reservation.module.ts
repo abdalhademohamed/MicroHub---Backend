@@ -25,6 +25,7 @@ import { ReceiptEntity } from "../receipt/entities/receipt.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
 import { ActionModule } from "../action/action.module";
 import { TransactionModule } from "src/transaction/transaction.module";
+import { GiftCouponModule } from "src/gift-coupon/gift-coupon.module";
 // import { ActionEntity } from "src/action/entities/action.entity";
 
 @Module({
@@ -52,6 +53,7 @@ import { TransactionModule } from "src/transaction/transaction.module";
     NotificationModule,
     ActionModule,
     TransactionModule,
+    GiftCouponModule,
   ],
   controllers: [ReservationController],
   providers: [
