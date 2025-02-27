@@ -681,6 +681,7 @@ export class OrdersService {
         where: { id: orderId },
         relations: {
           reservation: true,
+          createdBy: true,
         },
       });
 
@@ -804,7 +805,7 @@ export class OrdersService {
         orderId: order.id,
         amount,
         paymentId,
-        userId,
+        userId: order.createdBy.id,
         type: 'completed'
       });
       return updatedOrder;
@@ -2337,7 +2338,7 @@ export class OrdersService {
         actionAr: `تم استرداد مبلغ الطلب`,
         branch: order.branch.id,
         order: order.id,
-        createdBy: userId,
+        createdBy: order.createdBy.id,
       });
 
       return {
