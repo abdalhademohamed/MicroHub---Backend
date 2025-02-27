@@ -166,12 +166,10 @@ export class ReceiptService {
         }
 
         totalPayment = reservation.totalPrice;
-        let discountPayment = totalPayment; // Default to totalPayment
 
-        // Apply discount if offer exists
-        discountPercentage = offer ? offer.discountPercentage : 0; // Set discount to 0 if no offer
-        discountPayment -= totalPayment * (discountPercentage / 100);
-        remaining = discountPayment - reservation.deposit;
+        discountPercentage = offer ? offer.discountPercentage : 0;
+  
+        remaining = Number(totalPayment) - Number(reservation.deposit);
       }
 
       // Format the reservation time slot as "startTime-endTime"
@@ -365,12 +363,11 @@ export class ReceiptService {
         }
 
         totalPayment = reservation.totalPrice;
-        let discountPayment = totalPayment; // Default to totalPayment
 
         // Apply discount if offer exists
         discountPercentage = offer ? offer.discountPercentage : 0; // Set discount to 0 if no offer
-        discountPayment -= totalPayment * (discountPercentage / 100);
-        remaining = discountPayment - reservation.deposit;
+  
+        remaining = Number(totalPayment) - Number(reservation.deposit);
       }
 
       // Format the reservation time slot as "startTime-endTime"
