@@ -7,7 +7,6 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
-  OnModuleInit,
 } from "@nestjs/common";
 import { InjectEntityManager, InjectRepository } from "@nestjs/typeorm";
 import { OrderEntity } from "./entities/order.entity";
@@ -40,6 +39,7 @@ import { GiftCouponEntity } from "../gift-coupon/entities/gift-coupon.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
 import { ActionService } from "../action/action.service";
 import { TransactionService } from "src/transaction/transaction.service";
+import { Z_STREAM_END } from "zlib";
 
 @Injectable()
 export class OrdersService {
@@ -114,8 +114,6 @@ export class OrdersService {
     if (!reservation) {
       throw new NotFoundException("Reservation not found");
     }
-    console.log(reservation);
-
     // Fetch the user who is creating the order, limiting the fields returned
     const createdBy = await this.userRepository.findOne({
       where: { id: userId },
@@ -837,7 +835,7 @@ export class OrdersService {
       // Fetch the order by ID
       order = await this.orderRepository.findOne({
         where: { id: orderId },
-        relations: ["receipts", "reservation", "createdBy", "artist"], // Ensure that the receipts and reservation relations are loaded
+        relations: ["receipts", "reservation", "createdBy", "artist", 'customer'], // Ensure that the receipts and reservation relations are loaded
       });
 
       if (!order) {
@@ -900,6 +898,7 @@ export class OrdersService {
         const deposit = order.reservation.deposit; // Get deposit from the reservation
         let paymentAmount: number;
         order.status = OrderStatus.Canceled;
+        
 
         if (order.paymentStatus === PaymentStatus.Paid) {
           if (order.receipts.length === 0) {
@@ -918,6 +917,7 @@ export class OrdersService {
         }
 
         await this.orderRepository.save(order);
+        await this.removeRotoshFromCustomer(order.customer.id, order.reservation.id);
         return { order, paymentAmount };
       } catch (error) {
         console.error("Error processing payment details:", error);
@@ -1542,6 +1542,41 @@ export class OrdersService {
       throw new NotFoundException("Unable to fetch orders.");
     }
   }
+   async removeRotoshFromCustomer(id: string, reservationId: string) {
+    const customer = await this.CustomerRepository.findOne({
+        where: { id },
+        relations: ["lastServices", "lastRootoshes"], // Load last services and rootoshes
+      },
+    );
+    const reservationWithServices = await this.reservationRepository.findOne({
+      where: { id: reservationId },
+      relations: ["services", "services.rootosh"],
+    });
+
+    if (customer && reservationWithServices) {
+  
+      const services = reservationWithServices.services;
+
+      const servicesIds = services?.map (service => service.id);
+
+      // Update last services list
+      if (customer.lastServices) {
+        customer.lastServices = customer.lastServices.filter(( service ) => !servicesIds.includes(service.id));
+      }
+
+      // Gather rootosh list from services
+      const rootoshList = services.flatMap((service) => service.rootosh);
+      const rootoshIds = rootoshList?.map (rootosh => rootosh.id);
+      // Update last rootoshes and handle expiration dates
+
+      if (customer.lastRootoshes) {
+        customer.lastRootoshes = customer.lastRootoshes.filter(( rootosh ) => !rootoshIds.includes(rootosh.id));
+      }
+      // Save the updated customer
+      await this.CustomerRepository.save(customer);
+    }
+
+   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Method to get the count of each order status
