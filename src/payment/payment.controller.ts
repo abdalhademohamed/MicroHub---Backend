@@ -26,7 +26,7 @@ export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.ACCOUNTANT)
+  @Roles(Role.SUPERADMIN, Role.ACCOUNTANT, Role.ADMIN)
   @UseInterceptors(FileInterceptor("image"))
   @Post()
   create(
@@ -43,6 +43,7 @@ export class PaymentController {
     Role.ARTISTMANAGER,
     Role.RECEPTIONIST,
     Role.ACCOUNTANT,
+    Role.ADMIN
   )
   @Get()
   async getAllPayments(): Promise<PaymentEntity[]> {
@@ -50,14 +51,14 @@ export class PaymentController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.ACCOUNTANT)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.ACCOUNTANT, Role.ADMIN)
   @Get(":id")
   async getPaymentById(@Param("id") id: string): Promise<PaymentEntity> {
     return this.paymentService.getPaymentById(id);
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.ACCOUNTANT)
+  @Roles(Role.SUPERADMIN, Role.ACCOUNTANT, Role.ADMIN)
   @Put(":id")
   @UseInterceptors(FileInterceptor("image"))
   async updatePayment(
@@ -73,7 +74,7 @@ export class PaymentController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.ACCOUNTANT)
+  @Roles(Role.SUPERADMIN, Role.ACCOUNTANT, Role.ADMIN)
   @Delete(":id")
   async removePayment(@Param("id") id: string): Promise<void> {
     return this.paymentService.removePayment(id);

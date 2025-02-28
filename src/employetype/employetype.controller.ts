@@ -25,7 +25,7 @@ export class EmployetypeController {
   constructor(private readonly EmployetypeService: EmployetypeService) {}
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
   @Post()
   async create(
     @Body() createEmployeeTypeDto: CreateEmployeeTypeDto,
@@ -34,21 +34,21 @@ export class EmployetypeController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
   @Get()
   async findAll(): Promise<EmployeeTypeEntity[]> {
     return this.EmployetypeService.findAll();
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
   @Get(":id")
   async findOne(@Param("id") id: string): Promise<EmployeeTypeEntity> {
     return this.EmployetypeService.findOne(id);
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
   @Put(":id")
   async update(
     @Param("id") id: string,
@@ -58,7 +58,7 @@ export class EmployetypeController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
   @Delete(":id")
   async remove(@Param("id") id: string): Promise<void> {
     return this.EmployetypeService.remove(id);

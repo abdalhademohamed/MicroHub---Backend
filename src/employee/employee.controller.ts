@@ -115,6 +115,7 @@ export class EmployeeController {
     Role.ACCOUNTANT,
     Role.ARTIST,
     Role.ARTISTMANAGER,
+    Role.ADMIN
   )
   async getTopArtists(
     @Query("fromDate") fromDate?: string,
@@ -145,6 +146,7 @@ export class EmployeeController {
     Role.ADMIN,
     Role.ARTIST,
     Role.ARTISTMANAGER,
+    Role.ADMIN
   )
   @UseGuards(AccessTokenGuard)
   async getArtistsWithSearch(
@@ -163,7 +165,7 @@ export class EmployeeController {
     return this.employeeService.getArtistsWithReviews();
   }
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST, Role.ACCOUNTANT)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST, Role.ACCOUNTANT, Role.ADMIN)
   @Get("/count")
   async getEmployeeCount(
     @Query("branchId") branchId?: string,
@@ -172,7 +174,7 @@ export class EmployeeController {
     return { count };
   }
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
   @UseInterceptors(FileInterceptor("image")) // 'file' is the name of the field in the form-data
   @Post()
   async createEmployee(
@@ -203,6 +205,7 @@ export class EmployeeController {
     Role.RECEPTIONIST,
     Role.ARTISTMANAGER,
     Role.ACCOUNTANT,
+    Role.ADMIN
   )
   @Get()
   async getAllEmployees(
@@ -236,14 +239,14 @@ export class EmployeeController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.ARTISTMANAGER, Role.ACCOUNTANT)
+  @Roles(Role.SUPERADMIN, Role.ARTISTMANAGER, Role.ACCOUNTANT, Role.ADMIN)
   @Get(":id")
   async getEmployeeById(@Param("id") id: string): Promise<EmployeeEntity> {
     return await this.employeeService.getEmployeeById(id);
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
   @Put(":id")
   @UseInterceptors(FileInterceptor("image")) // Use interceptor for file uploads
   async updateEmployee(
@@ -268,7 +271,7 @@ export class EmployeeController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
   @Delete(":employeeId")
   async deleteEmployee(
     @Request() req: any, // Request object to access the user
@@ -285,13 +288,13 @@ export class EmployeeController {
     );
   }
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
   @Put("active/:employeeId")
   async activeEmployee(@Param("employeeId") employeeId: string) {
     return this.employeeService.activeEmployeeByEmployeeId(employeeId);
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  @UseGuards(AccessTokenGuard, RolesGuard)
+  @UseGuards(AccessTokenGuard)
   @Get("show/profile")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get user profile with reviews" })

@@ -124,14 +124,14 @@ export class BranchController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER, Role.ACCOUNTANT)
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER, Role.ACCOUNTANT, Role.ADMIN)
   @Get("count")
   async getBranchCount(): Promise<{ count: number }> {
     const count = await this.branchService.countBranches();
     return { count };
   }
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER, Role.ACCOUNTANT)
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER, Role.ACCOUNTANT, Role.ADMIN)
   @Post()
   @UseInterceptors(FileInterceptor("image")) // 'file' is the name of the field in the form-data
   async createBranch(
@@ -255,7 +255,7 @@ export class BranchController {
 
   @Put(":id")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER)
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER, Role.ADMIN)
   @UseInterceptors(FileInterceptor("image")) // Use multer for image upload
   async updateBranch(
     @Param("id") id: string,
@@ -282,7 +282,7 @@ export class BranchController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER)
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER, Role.ADMIN)
   @Delete(":branchId")
   async deleteBranch(
     @Param("branchId") branchId: string,

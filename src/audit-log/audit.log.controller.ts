@@ -14,7 +14,7 @@ export class AuditLogController {
   constructor(private readonly AuditLogService: AuditLogService) {}
 
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER)
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER, Role.ADMIN)
   @Get()
   @ApiOperation({ summary: "Retrieve a list of audit logs" })
   @ApiQuery({

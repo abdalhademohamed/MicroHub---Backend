@@ -3,9 +3,7 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
-  Delete,
   Request,
   UseGuards,
   BadRequestException,
@@ -27,7 +25,7 @@ export class SharableOfferController {
   constructor(private readonly sharableOfferService: SharableOfferService) {}
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
   @Put(":sharableOfferId")
   async update(
     @Request() req: any, // Request object to access the user
@@ -73,14 +71,14 @@ export class SharableOfferController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.ACCOUNTANT, Role.COORDINATOR, Role.RECEPTIONIST)
+  @Roles(Role.SUPERADMIN, Role.ACCOUNTANT, Role.COORDINATOR, Role.RECEPTIONIST, Role.ADMIN)
   @Get("active") // Route to get active sharable offers
   async findActiveSharableOffer(): Promise<SharableOfferEntity[]> {
     return await this.sharableOfferService.findActiveSharableOffer();
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.ACCOUNTANT, Role.COORDINATOR, Role.RECEPTIONIST)
+  @Roles(Role.SUPERADMIN, Role.ACCOUNTANT, Role.COORDINATOR, Role.RECEPTIONIST, Role.ADMIN)
   @Get("count") // GET request to /sharable-offers/count
   @ApiResponse({
     status: 200,
@@ -91,7 +89,7 @@ export class SharableOfferController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.ACCOUNTANT, Role.COORDINATOR, Role.RECEPTIONIST)
+  @Roles(Role.SUPERADMIN, Role.ACCOUNTANT, Role.COORDINATOR, Role.RECEPTIONIST, Role.ADMIN)
   @Get() // GET request to /sharable-offers
   async getAllSharableOffers(): Promise<SharableOfferEntity[]> {
     return await this.sharableOfferService.findAllSharableOffers();
