@@ -320,6 +320,12 @@ export class OrdersService {
           // return savedOrder;
         },
       );
+      if (newOrder.paymentStatus ==  PaymentStatus.Paid && newOrder.sharableOfferId) {
+        await this.giftCouponService.createGiftCoupon({
+          orderId: newOrder.id,
+          customerId: newOrder.customer.id,
+        })
+      }
       await this.actionService.createAction({
         actionEn: `reservation created`,
         actionAr: `تم إنشاء الحجز`,
@@ -681,6 +687,7 @@ export class OrdersService {
         relations: {
           reservation: true,
           createdBy: true,
+          customer: true,
         },
       });
 
@@ -793,6 +800,12 @@ export class OrdersService {
           return savedOrder;
         },
       );
+      if (order.paymentStatus ==  PaymentStatus.Paid && order.sharableOfferId) {
+        await this.giftCouponService.createGiftCoupon({
+          orderId: order.id,
+          customerId: order.customer.id,
+        })
+      }
       await this.actionService.createAction({
         actionEn: `payment status updated`,
         actionAr: `تم تحديث حالة الدفع`,
@@ -1190,11 +1203,6 @@ export class OrdersService {
       if (newStatus == OrderStatus.Working) {
         updatedOrder.startWorkingAt = new Date();
         await this.orderRepository.save(updatedOrder);
-      } else if (newStatus == OrderStatus.Completed && order.sharableOfferId) {
-        await this.giftCouponService.createGiftCoupon({
-          orderId: orderId,
-          customerId: order.customer.id,
-        })
       }
 
       return updatedOrder;
