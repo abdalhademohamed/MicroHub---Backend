@@ -26,7 +26,7 @@ export class PostionController {
   constructor(private readonly postionService: PostionService) {}
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
   // Create a new position
   @Post()
   async createPosition(
@@ -43,7 +43,7 @@ export class PostionController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
   // Get all positions
   @Get()
   async getAllPositions(): Promise<PositionEntity[]> {
@@ -51,7 +51,7 @@ export class PostionController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
   @Put(":id")
   async updatePosition(
     @Request() req: any, // Request object to access the user
@@ -68,7 +68,7 @@ export class PostionController {
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
   @Delete(":id")
   async removePosition(@Param("id") id: string): Promise<void> {
     return this.postionService.removePosition(id);

@@ -30,7 +30,7 @@ export class OfferController {
   constructor(private readonly offerService: OfferService) {}
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
   @Post()
   async create(
     @Request() req: any, // Request object to access the user
@@ -46,7 +46,7 @@ export class OfferController {
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.ACCOUNTANT)
+  @Roles(Role.SUPERADMIN, Role.ACCOUNTANT, Role.ADMIN)
   @Get("count") // GET request to /sharable-offers/count
   @ApiResponse({
     status: 200,
@@ -62,6 +62,7 @@ export class OfferController {
     Role.RECEPTIONIST,
     Role.ARTISTMANAGER,
     Role.ACCOUNTANT,
+    Role.ADMIN
   )
   @Get("active") // Route to get active sharable offers
   async findActiveSharableOffer(
@@ -79,6 +80,7 @@ export class OfferController {
     Role.RECEPTIONIST,
     Role.ARTISTMANAGER,
     Role.ACCOUNTANT,
+    Role.ADMIN
   )
   @Get()
   async findAll(
@@ -92,7 +94,7 @@ export class OfferController {
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST, Role.ACCOUNTANT)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST, Role.ACCOUNTANT, Role.ADMIN)
   @Get(":id")
   async findOne(@Param("id") id: string): Promise<OfferEntity> {
     return await this.offerService.findOne(id);
@@ -100,7 +102,7 @@ export class OfferController {
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.ACCOUNTANT)
+  @Roles(Role.SUPERADMIN, Role.ACCOUNTANT, Role.ADMIN)
   @Put(":offerId")
   async update(
     @Request() req: any, // Request object to access the user
@@ -116,7 +118,7 @@ export class OfferController {
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
   @Put("update/active/:id")
   async updateOfferIsActive(
     @Param("id") id: string,
@@ -126,7 +128,7 @@ export class OfferController {
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
   @Delete(":offerId")
   async remove(
     @Request() req: any, // Request object to access the user

@@ -1,19 +1,12 @@
 import {
   Controller,
   Get,
-  Post,
-  Body,
-  Patch,
   Param,
-  Delete,
   NotFoundException,
-  InternalServerErrorException,
   Query,
   UseGuards,
 } from "@nestjs/common";
 import { CustomerService } from "./customer.service";
-import { CreateCustomerDto } from "./dto/create.customer.dto";
-import { UpdateCustomerDto } from "./dto/update.customer.dto";
 import { GetCustomerDto } from "./dto/get.customer.dto";
 import { ApiTags } from "@nestjs/swagger";
 import { GetCustomerPaginatedsDto } from "./dto/get.customers.paginated.dto";
@@ -33,6 +26,7 @@ export class CustomerController {
     Role.RECEPTIONIST,
     Role.ACCOUNTANT,
     Role.ARTISTMANAGER,
+    Role.ADMIN
   )
   @Get("sorted")
   async getCustomers(@Query() filters: GetCustomerPaginatedsDto) {
@@ -56,6 +50,7 @@ export class CustomerController {
     Role.RECEPTIONIST,
     Role.ACCOUNTANT,
     Role.ARTISTMANAGER,
+    Role.ADMIN
   )
   @Get(":phoneNumber")
   async getCustomerByPhoneNumber(

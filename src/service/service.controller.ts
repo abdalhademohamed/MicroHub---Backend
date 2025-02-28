@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
   Query,
@@ -36,14 +35,14 @@ export class ServiceController {
   constructor(private readonly serviceService: ServiceService) {}
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.ACCOUNTANT)
+  @Roles(Role.SUPERADMIN, Role.ACCOUNTANT, Role.ADMIN)
   @Get("/count")
   async getServiceCount(): Promise<{ count: number }> {
     const count = await this.serviceService.countServices();
     return { count };
   }
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @UseInterceptors(FileInterceptor("image")) // Use the FileInterceptor to handle file uploads
@@ -84,6 +83,7 @@ export class ServiceController {
     Role.RECEPTIONIST,
     Role.ARTISTMANAGER,
     Role.ACCOUNTANT,
+    Role.ADMIN
   )
   @Get("sort")
   async getAllServices(
@@ -98,7 +98,7 @@ export class ServiceController {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
   @Put(":id")
   @UseInterceptors(FileInterceptor("image")) // Use interceptor for file uploads
   async updateService(
@@ -123,7 +123,7 @@ export class ServiceController {
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
   @Delete(":id")
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteService(@Param("id") id: string): Promise<void> {

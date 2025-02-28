@@ -32,6 +32,7 @@ export class SlotController {
     Role.COORDINATOR,
     Role.RECEPTIONIST,
     Role.ARTISTMANAGER,
+    Role.ADMIN
   )
   @Get("/available/:branchId")
   async getAllAvailableSlots(
@@ -48,6 +49,7 @@ export class SlotController {
     Role.COORDINATOR,
     Role.RECEPTIONIST,
     Role.ARTISTMANAGER,
+    Role.ADMIN
   )
   @Get("/nearest")
   async getFirstSlotAvailable(@Query() query: GetNearestSlot) {

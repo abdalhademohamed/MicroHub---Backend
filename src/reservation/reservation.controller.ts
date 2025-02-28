@@ -39,7 +39,7 @@ export class ReservationController {
 
   @Get("top5")
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST, Role.ACCOUNTANT)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST, Role.ACCOUNTANT, Role.ADMIN)
   async getTop5Reservations(
     @Request() req: any, // Request object to access the user
     @Query("fromDate") fromDate: string,
@@ -74,6 +74,7 @@ export class ReservationController {
     Role.COORDINATOR,
     Role.RECEPTIONIST,
     Role.ARTISTMANAGER,
+    Role.ADMIN
   )
   @Post()
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
@@ -115,6 +116,7 @@ export class ReservationController {
     Role.COORDINATOR,
     Role.RECEPTIONIST,
     Role.ARTISTMANAGER,
+    Role.ADMIN
   )
   @Get()
   async getAllReservations(
@@ -137,6 +139,7 @@ export class ReservationController {
     Role.RECEPTIONIST,
     Role.COORDINATOR,
     Role.ARTISTMANAGER,
+    Role.ADMIN
   )
   // Update a reservation by ID
   @Post("customer")
@@ -144,7 +147,7 @@ export class ReservationController {
     return this.reservationService.registerOrLookupCustomer(body);
   }
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST, Role.ADMIN)
   @Patch("update-branch/:id")
   async updateReservationBranch(
     @Request() req: any, // Request object to access the user
@@ -166,7 +169,7 @@ export class ReservationController {
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.ADMIN)
   @Put(":id")
   async updateReservationServices(
     @Request() req: any, // Request object to access the user
@@ -187,7 +190,7 @@ export class ReservationController {
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST, Role.ADMIN)
   @Put("time/:id")
   async updateReservationStartTime(
     @Request() req: any, // Request object to access the user
@@ -202,7 +205,7 @@ export class ReservationController {
     return this.reservationService.updateTime(id, updateReservationDto, userId);
   } /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST, Role.ADMIN)
   @Put("rootosh/time/:id")
   async updateReservationStartTimeForRootosh(
     @Request() req: any, // Request object to access the user

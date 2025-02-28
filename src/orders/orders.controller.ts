@@ -101,6 +101,7 @@ export class OrdersController {
     Role.BRANCHMANAGER,
     Role.RECEPTIONIST,
     Role.ACCOUNTANT,
+    Role.ADMIN
   )
   @UseInterceptors(FileInterceptor("image"))
   async refundOrder(
@@ -132,6 +133,7 @@ export class OrdersController {
     Role.COORDINATOR,
     Role.BRANCHMANAGER,
     Role.RECEPTIONIST,
+    Role.ADMIN
   )
   @UseInterceptors(FileInterceptor("image")) // Use multer for image upload
   @ApiOperation({ summary: "Update the payment status of an order" })
@@ -155,7 +157,6 @@ export class OrdersController {
     paymentStatus: PaymentStatus.Paid | PaymentStatus.PartiallyPaid, // Enum-like string values for payment status
     @UploadedFile() image: Express.Multer.File, // File uploads cannot be passed as query parameters
     @Body("paymentId") paymentId: string,
-    // @Body('paymentId') paymentId: string,
   ) {
     const userId = req.user.sub; // Extract user ID from request
     console.log(userId);
@@ -164,7 +165,6 @@ export class OrdersController {
     }
     return await this.ordersService.updatePaymentStatus(
       orderId,
-      // paymentId,
       paymentStatus,
       image,
       userId,
@@ -174,7 +174,7 @@ export class OrdersController {
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Patch("status/:orderId")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST, Role.ARTIST)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST, Role.ARTIST, Role.ADMIN)
   @UseInterceptors(FileInterceptor("image")) // Use multer for image upload
   async updateOrderStatus(
     @Request() req: any, // Request object to access the user
@@ -206,6 +206,7 @@ export class OrdersController {
     Role.COORDINATOR,
     Role.RECEPTIONIST,
     Role.ARTISTMANAGER,
+    Role.ADMIN
   )
   async assignOrderToArtist(
     @Request() req: any, // Request object to access the user
@@ -234,6 +235,7 @@ export class OrdersController {
     Role.ACCOUNTANT,
     Role.ARTIST,
     Role.BRANCHMANAGER,
+    Role.ADMIN
   )
   @Get("status/count-statics")
   async getOrderStatusCountByBranch(
@@ -258,6 +260,7 @@ export class OrdersController {
     Role.ACCOUNTANT,
     Role.ARTIST,
     Role.BRANCHMANAGER,
+    Role.ADMIN
   )
   @Get("status/count")
   async getOrderStatusCount(
@@ -306,7 +309,7 @@ export class OrdersController {
 
   @Put("payment/:orderId")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR)
+  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.ADMIN)
   @ApiOperation({ summary: "Update the payment for a specific order" })
   @ApiParam({
     name: "orderId",

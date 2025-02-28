@@ -41,7 +41,7 @@ export class ReviewsController {
 
   @Post()
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER, Role.ARTISTMANAGER)
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER, Role.ARTISTMANAGER, Role.ADMIN)
   @HttpCode(HttpStatus.CREATED)
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -69,7 +69,7 @@ export class ReviewsController {
     return { isFirstTime };
   }
 
-  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @UseGuards(AccessTokenGuard) // Ensure AccessTokenGuard is first
   // @Roles(Role.ARTIST)
   @Get("mine")
   async getEmployeeReviewsAndComments(
@@ -85,7 +85,7 @@ export class ReviewsController {
   }
   @Get("sorted")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER, Role.ARTISTMANAGER)
+  @Roles(Role.SUPERADMIN, Role.BRANCHMANAGER, Role.ARTISTMANAGER, Role.ADMIN)
   @ApiResponse({
     status: 200,
     description: "Get all reviews",
@@ -102,6 +102,7 @@ export class ReviewsController {
     Role.BRANCHMANAGER,
     Role.ARTISTMANAGER,
     Role.RECEPTIONIST,
+    Role.ADMIN
   )
   @ApiParam({
     name: "employeeId",
