@@ -155,7 +155,13 @@ export class WorkingBranchService {
   ): Promise<{ id: string; dayOfWeek: string; workingHours: string[] }> {
     let { dayOfWeek, workingHours } = createWorkingBranchDto;
 
-    workingHours = workingHours.sort((a, b) => a.localeCompare(b));
+    console.log(dayOfWeek, workingHours);
+
+    workingHours = Array.from(new Set(workingHours)).sort((a, b) => {
+      const [ah, am] = a.split(':').map(Number);
+      const [bh, bm] = b.split(':').map(Number);
+      return ah - bh || am - bm;
+    });
 
     console.log(dayOfWeek, workingHours);
 
