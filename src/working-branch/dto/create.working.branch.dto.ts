@@ -1,9 +1,7 @@
 import {
   IsString,
-  IsUUID,
   IsArray,
   ArrayNotEmpty,
-  IsIn,
   IsEnum,
   IsNotEmpty,
 } from "class-validator";
