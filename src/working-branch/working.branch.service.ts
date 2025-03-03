@@ -155,6 +155,8 @@ export class WorkingBranchService {
   ): Promise<{ id: string; dayOfWeek: string; workingHours: string[] }> {
     const { dayOfWeek, workingHours } = createWorkingBranchDto;
 
+    console.log(dayOfWeek, workingHours);
+
     // Convert dayOfWeek from string to WeekDays enum
     const weekDayEnum = WeekDays[dayOfWeek as keyof typeof WeekDays];
     if (!weekDayEnum) {
