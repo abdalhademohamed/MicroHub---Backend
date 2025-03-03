@@ -153,7 +153,9 @@ export class WorkingBranchService {
     branchId: string,
     createWorkingBranchDto: CreateWorkingBranchDto,
   ): Promise<{ id: string; dayOfWeek: string; workingHours: string[] }> {
-    const { dayOfWeek, workingHours } = createWorkingBranchDto;
+    let { dayOfWeek, workingHours } = createWorkingBranchDto;
+
+    workingHours = workingHours.sort((a, b) => a.localeCompare(b));
 
     console.log(dayOfWeek, workingHours);
 
