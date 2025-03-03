@@ -249,7 +249,7 @@ export class WorkingBranchService {
     await this.slotService.getNextFourWeeksDatesForDay(
       createWorkingBranchDto.dayOfWeek,
       branchId,
-      createWorkingBranchDto.workingHours,
+      workingHours,
     );
 
     // Return only the required fields (id, dayOfWeek, and workingHours)
