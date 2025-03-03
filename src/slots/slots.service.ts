@@ -104,6 +104,7 @@ export class SlotService {
     branch: string,
     workingHours: string[],
   ) {
+    console.log(workingHours, weekday);
     const today = new Date();
     const todayDayOfWeek = today.getDay();
     const daysOfWeek = [
@@ -422,10 +423,11 @@ export class SlotService {
       year: body.year,
       branch,
     });
+
     // Save the new slot entity
     slot = await this.SlotRepository.save(slot);
     const artists = await this.artistCount(branch.id);
-    // Loop through the working hours in pairs (start and end times)
+
     const date = new Date(body.year, body.month - 1, body.day);
     const workingEntities = this.createWorkingHoursCalender(
       body.workingHours,
