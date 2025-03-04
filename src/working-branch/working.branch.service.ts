@@ -64,6 +64,7 @@ export class WorkingBranchService {
       });
     }
     for (const { day, year, month } of resultDates) {
+      console.log(day, year, month);
       const reservation = await this.ReservationRepository.findOne({
         where: {
           reservationDay: day,
@@ -76,7 +77,7 @@ export class WorkingBranchService {
         },
       });
       if (reservation) {
-        throw new NotFoundException(`Reservation ${day-month-year} on ${weekday} already exists with id ${reservation.id}`);
+        throw new NotFoundException(`Reservation ${day}-${month}-${year} on ${weekday} already exists with id ${reservation.id}`);
       }
     }
   }
