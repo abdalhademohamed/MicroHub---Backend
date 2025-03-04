@@ -162,20 +162,29 @@ export class SlotService {
   ) {
     const workingEntities: WorkingEntity[] = [];
     for (let i = 0; i < workingHours.length; i += 2) {
-      // console.log(workingHours[i], workingHours[i + 1]);
-      const from = this.createDate(
+
+      let from = this.createDate(
         nextDate.getFullYear(),
         nextDate.getMonth() + 1,
         nextDate.getDate(),
         workingHours[i],
       );
+
       let to = this.createDate(
         nextDate.getFullYear(),
         nextDate.getMonth() + 1,
         nextDate.getDate(),
         workingHours[i + 1],
       );
+
+      if(from > to) {
+        from = new Date(from.getTime() - 24 * 3600 * 1000); 
+      }
+
       let duration = Math.floor((to.getTime() - from.getTime()) / (1000 * 60));
+
+      console.log(duration);
+
       // console.log(duration, artistCount);
       for (let j = 0; j < artists.length; j++) {
         const noOfHours = Math.floor(duration / 60);

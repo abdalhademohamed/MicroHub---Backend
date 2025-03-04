@@ -152,18 +152,8 @@ export class WorkingBranchService {
   async createWorkingBranch(
     branchId: string,
     createWorkingBranchDto: CreateWorkingBranchDto,
-  ): Promise<{ id: string; dayOfWeek: string; workingHours: string[] }> {
-    let { dayOfWeek, workingHours } = createWorkingBranchDto;
-
-    console.log(dayOfWeek, workingHours);
-
-    workingHours = Array.from(new Set(workingHours)).sort((a, b) => {
-      const [ah, am] = a.split(':').map(Number);
-      const [bh, bm] = b.split(':').map(Number);
-      return ah - bh || am - bm;
-    });
-
-    console.log(dayOfWeek, workingHours);
+  ) {
+    const { dayOfWeek, workingHours } = createWorkingBranchDto;
 
     // Convert dayOfWeek from string to WeekDays enum
     const weekDayEnum = WeekDays[dayOfWeek as keyof typeof WeekDays];
