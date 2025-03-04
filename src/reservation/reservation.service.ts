@@ -496,15 +496,17 @@ export class ReservationService {
         deposit: body.deposit,
         start_Time: startTime,
         end_Time: endTime,
-        reservationDay: startTime.getDate(),
-        reservationMonth: startTime.getMonth() + 1,
-        reservationYear: startTime.getFullYear(),
+        reservationDay: workingHours[index].slot.day,
+        reservationMonth: workingHours[index].slot.month,
+        reservationYear: workingHours[index].slot.year,
         branch,
         deposit_Content: body.deposit_Content,
         services,
         rootoshes,
         createdBy: userId,
       });
+
+      console.log(workingHours[index].slot.day, workingHours[index].slot.month, workingHours[index].slot.year)
       await this.ReservationRepository.save(reservation);
 
       if (body.rootosh) {
