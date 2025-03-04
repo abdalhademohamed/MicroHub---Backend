@@ -191,7 +191,9 @@ export class SlotService {
         if (artists[j].workingHours <= 0) {
           continue;
         }
-        // const time = artists[j].workingHours - noOfHours;
+
+        console.log(artists.length);
+
         let time = artists[j].workingHours - noOfHours;
 
         if (time < 0) {
