@@ -252,6 +252,7 @@ export class ReservationService {
     image: Express.Multer.File,
     userId: string,
   ) {
+    console.log(body);
     console.log('reservation time is ', body.customStartTime);
     try {
       // Validate branch existence
