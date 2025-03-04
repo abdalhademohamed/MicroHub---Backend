@@ -16,6 +16,7 @@ import { WeekDays } from "../branch/utils/days.enum";
 import { SlotService } from "../slots/slots.service";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { Postion } from "../postion/utils/postion.enum";
+import { ReservationEntity } from "src/reservation/entities/reservation.entity";
 
 @Injectable()
 export class WorkingBranchService {
@@ -28,132 +29,65 @@ export class WorkingBranchService {
 
     private slotService: SlotService,
     // private eventEmitter: EventEmitter2,
+    @InjectRepository(ReservationEntity)
+    private readonly ReservationRepository: Repository<ReservationEntity>,
   ) {}
 
-  // async createWorkingBranch(
-  //   branchId: string,
-  //   createWorkingBranchDto: CreateWorkingBranchDto,
-  // ): Promise<{ id: string; dayOfWeek: string; workingHours: string[] }> {
-  //   const { dayOfWeek, workingHours } = createWorkingBranchDto;
-
-  //   // Convert dayOfWeek from string to WeekDays enum
-  //   const weekDayEnum = WeekDays[dayOfWeek as keyof typeof WeekDays];
-  //   if (!weekDayEnum) {
-  //     throw new BadRequestException({
-  //       error: 'InvalidDayOfWeek',
-  //       message: `Invalid dayOfWeek: ${dayOfWeek}`,
-  //     });
-  //   }
-
-  //   // Fetch the branch with the related working branches and employees
-  //   let branch;
-  //   try {
-  //     branch = await this.branchRepository.findOne({
-  //       where: { id: branchId },
-  //       relations: ['workingbranch', 'employees', 'employees.position'],
-  //     });
-  //   } catch (error) {
-  //     console.error('Error fetching branch:', error);
-  //     throw new HttpException({
-  //       error: 'BranchFetchError',
-  //       message: 'An error occurred while fetching the branch. Please try again later.',
-  //     }, HttpStatus.INTERNAL_SERVER_ERROR);
-  //   }
-
-  //   if (!branch) {
-  //     throw new NotFoundException({
-  //       error: 'BranchNotFound',
-  //       message: `Branch with ID ${branchId} not found`,
-  //     });
-  //   }
-
-  //   // Check if there is at least one employee with the position of "Artist"
-  //   const hasArtist = branch.employees.some(
-  //     (employee) => employee.position?.postion === Postion.ARTIST,
-  //   );
-
-  //   if (!hasArtist) {
-  //     throw new BadRequestException({
-  //       error: 'ArtistNotFound',
-  //       message: 'At least one employee with the position of Artist is required to create working hours.',
-  //     });
-  //   }
-
-  //   // Find existing WorkingBranchEntity for the specified dayOfWeek
-  //   let workingBranchEntity;
-  //   try {
-  //     workingBranchEntity = branch.workingbranch.find(
-  //       (wb) => wb.dayOfWeek === weekDayEnum,
-  //     );
-  //   } catch (error) {
-  //     console.error('Error finding working branch:', error);
-  //     throw new HttpException({
-  //       error: error.Process.error,
-  //       message: 'An error occurred while fetching the working branch. Please try again later.',
-  //     }, HttpStatus.INTERNAL_SERVER_ERROR);
-  //   }
-
-  //   if (workingBranchEntity) {
-  //     // Update existing WorkingBranchEntity
-  //     workingBranchEntity.workingHours = workingHours;
-  //   } else {
-  //     // Create new WorkingBranchEntity
-  //     try {
-  //       workingBranchEntity = this.WorkingBranchsRepository.create({
-  //         dayOfWeek: weekDayEnum,
-  //         workingHours,
-  //         branch,
-  //       });
-  //       branch.workingbranch.push(workingBranchEntity);
-  //     } catch (error) {
-  //       console.error('Error creating new working branch entity:', error);
-  //       throw new HttpException({
-  //         error: 'WorkingBranchCreateError',
-  //         message: 'An error occurred while creating the new working branch entity. Please try again.',
-  //       }, HttpStatus.INTERNAL_SERVER_ERROR);
-  //     }
-  //   }
-
-  //   // Save the WorkingBranchEntity
-  //   let savedWorkingBranch;
-  //   try {
-  //     savedWorkingBranch = await this.WorkingBranchsRepository.save(workingBranchEntity);
-  //   } catch (error) {
-  //     console.error('Error saving working branch:', error);
-  //     throw new HttpException({
-  //       error: 'WorkingBranchSaveError',
-  //       message: 'An error occurred while saving the working branch. Please check your data and try again.',
-  //     }, HttpStatus.INTERNAL_SERVER_ERROR);
-  //   }
-
-  //   // Call the slot service to manage time slots for the branch
-  //   try {
-  //     await this.slotService.getNextFourWeeksDatesForDay(
-  //       createWorkingBranchDto.dayOfWeek,
-  //       branchId,
-  //       createWorkingBranchDto.workingHours,
-  //     );
-  //   } catch (error) {
-  //     console.error('Error managing time slots:', error);
-  //     throw new HttpException({
-  //       error: 'SlotManagementError',
-  //       message: 'An error occurred while managing time slots. Please try again later.',
-  //     }, HttpStatus.INTERNAL_SERVER_ERROR);
-  //   }
-
-  //   // Return only the required fields (id, dayOfWeek, and workingHours)
-  //   return {
-  //     id: savedWorkingBranch.id,
-  //     dayOfWeek: savedWorkingBranch.dayOfWeek,
-  //     workingHours: savedWorkingBranch.workingHours,
-  //   };
-  // }
+  async getNextFourWeeksDatesForDay(
+    weekday: WeekDays,
+    branch: string,
+  ) {
+    const today = new Date();
+    const todayDayOfWeek = today.getDay();
+    const daysOfWeek = [
+      WeekDays.Sunday,
+      WeekDays.Monday,
+      WeekDays.Tuesday,
+      WeekDays.Wednesday,
+      WeekDays.Thursday,
+      WeekDays.Friday,
+      WeekDays.Saturday,
+    ];
+    const targetDayOfWeek = daysOfWeek.indexOf(weekday);
+    let daysToAdd = targetDayOfWeek - todayDayOfWeek;
+    if (daysToAdd < 0) {
+      daysToAdd += 7;
+    }
+    const resultDates: { day: number; month: number; year: number }[] = [];
+    for (let i = 0; i < 4; i++) {
+      const nextDate = new Date();
+      nextDate.setDate(today.getDate() + daysToAdd + i * 7);
+      resultDates.push({
+        day: nextDate.getDate(),
+        year: nextDate.getFullYear(),
+        month: nextDate.getMonth() + 1,
+      });
+    }
+    for (const { day, year, month } of resultDates) {
+      const reservation = await this.ReservationRepository.findOne({
+        where: {
+          reservationDay: day,
+          reservationMonth: month,
+          reservationYear: year,
+          branch: { id: branch },
+        },
+        relations: {
+          branch: true,
+        },
+      });
+      if (reservation) {
+        throw new NotFoundException(`Reservation ${day-month-year} on ${weekday} already exists with id ${reservation.id}`);
+      }
+    }
+  }
 
   async createWorkingBranch(
     branchId: string,
     createWorkingBranchDto: CreateWorkingBranchDto,
   ) {
     const { dayOfWeek, workingHours } = createWorkingBranchDto;
+
+    await this.getNextFourWeeksDatesForDay(createWorkingBranchDto.dayOfWeek, branchId);
 
     // Convert dayOfWeek from string to WeekDays enum
     const weekDayEnum = WeekDays[dayOfWeek as keyof typeof WeekDays];
@@ -190,19 +124,8 @@ export class WorkingBranchService {
       });
     }
 
-    // // Validate working hours format
-    // const isValidHours = this.validateWorkingHours(workingHours);
-    // if (!isValidHours) {
-    //   throw new BadRequestException({
-    //     error: "InvalidWorkingHours",
-    //     message: "Working hours must be in valid format without duplicates.",
-    //   });
-    // }
-
-    // Calculate total working hours from the input
     const totalWorkingHours = this.calculateTotalWorkingHours(workingHours);
 
-    // Check if at least one artist employee has sufficient working hours
     const hasSufficientHours = artistEmployees.some((employee) => {
       return employee.workingHours >= totalWorkingHours;
     });
@@ -214,7 +137,6 @@ export class WorkingBranchService {
       });
     }
 
-    // Find existing WorkingBranchEntity for the specified dayOfWeek
     let workingBranchEntity = branch.workingbranch.find(
       (wb) => wb.dayOfWeek === weekDayEnum,
     );
