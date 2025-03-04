@@ -19,7 +19,6 @@ export class CreateWorkingBranchDto {
     example: ["09:00", "10:00", "11:00"],
   })
   @IsArray()
-  @ArrayNotEmpty()
   @IsString({ each: true })
   readonly workingHours: string[];
 }

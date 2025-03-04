@@ -399,17 +399,8 @@ export class SlotService {
     }
   }
   async createSlot(body: CreateSlotDto) {
-    // Get the day of the week for the provided date
-    // const dayOfWeek = this.getDayFromDate(body.year, body.month, body.day);
     const branch = await this.BranchRepository.findOneBy({ id: body.branch });
-    // Find the working branch details for the given day and branch
-    // const workingBranch = await this.branchWorkingHours(branch.id, dayOfWeek);
-
-    // if (!workingBranch) {
-    //   throw new Error(
-    //     "Working hours for the selected branch and day not found.",
-    //   );
-    // }
+  
     let slot = await this.SlotRepository.findOne({
       where: {
         day: body.day,
@@ -421,8 +412,13 @@ export class SlotService {
         workingEntity: true,
       },
     });
+
     if (slot) {
       await this.SlotRepository.remove(slot);
+    }
+
+    if(body.workingHours.length == 0) {
+      return 1;
     }
 
     // If no slot exists, create a new one
