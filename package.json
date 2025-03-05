@@ -47,7 +47,6 @@
     "exceljs": "^4.4.0",
     "express-session": "^1.18.0",
     "firebase-admin": "^12.4.0",
-    "geoip-lite": "^1.4.10",
     "html-pdf": "^3.0.1",
     "html-pdf-node": "^1.0.8",
     "nestjs-i18n": "^10.4.5",
