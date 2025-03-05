@@ -66,15 +66,8 @@ export class CreateReservationDto {
   })
   customStartTime?: string;
 
-  // @ApiProperty()
-  // @IsDateString(
-  //   {},
-  //   { message: "customEndTime must be a valid ISO 8601 date string" },
-  // )
-  // @IsNotEmpty({
-  //   message: "customEndTime must be provided if customStartTime is provided",
-  // })
-  // customEndTime?: string;
+  @IsDateString()
+  day: string;
 
   @ApiProperty()
   @IsString()

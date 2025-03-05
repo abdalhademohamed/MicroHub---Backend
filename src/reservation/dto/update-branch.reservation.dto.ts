@@ -7,4 +7,7 @@ export class UpdateBranchReservationDto {
   @IsOptional()
   @IsString()
   startTime: string;
+
+  @IsString()
+  day: string;
 }

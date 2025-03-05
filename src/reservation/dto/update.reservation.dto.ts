@@ -12,6 +12,10 @@ export class UpdateReservationDto {
   @ArrayNotEmpty()
   @IsString({ each: true })
   services: string[];
+
   @IsDateString()
   startTime: string;
+
+  @IsString()
+  day: string;
 }
