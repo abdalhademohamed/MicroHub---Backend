@@ -88,6 +88,7 @@ export class ReservationService {
     if (toUser < toOriginal) {
       intervals.push({ from: toUser, to: toOriginal });
     }
+    console.log(intervals);
     return intervals;
   }
   async selectBranch(branchId: string): Promise<BranchEntity> {
@@ -448,14 +449,19 @@ export class ReservationService {
 
       // Handle custom time
       const startTime = new Date(body.customStartTime);
+
       const endTime = new Date(startTime.getTime() + duration * 1000 * 60);
 
+      const workingDate = new Date(body.day);
+  
       // Get working hours for the branch on the specific date
       const workingHours = await this.getWorkingHoursAtSpecificDate(
         body.branch,
-        startTime,
+        workingDate,
       );
 
+      console.log(workingHours);
+  
       // Check if the working hours allow the reservation
       const index = workingHours.findIndex(
         (w) => w.from <= startTime && w.to >= endTime,
@@ -857,14 +863,18 @@ export class ReservationService {
     );
     const startTime = new Date(body.startTime);
     const endTime = new Date(startTime.getTime() + duration * 60 * 1000);
+
+    const workingDate = new Date(body.day);
+
     const workingHours = await this.getWorkingHoursAtSpecificDate(
       reservation.branch.id,
-      startTime,
+      workingDate,
     );
 
     const index = workingHours.findIndex(
       (w) => w.from <= startTime && w.to >= endTime,
     );
+
     if (index === -1) {
       throw new BadRequestException(
         this.i18n.translate("test.RESERVATION.SCHEDULE_CONFLICT"),
@@ -882,10 +892,14 @@ export class ReservationService {
     );
 
     await this.cancelReservationAndAddSlot(
+      reservation.reservationDay,
+      reservation.reservationMonth,
+      reservation.reservationYear,
       reservation.start_Time,
       reservation.end_Time,
       reservation.branch.id,
     );
+
     await this.WorkingHourEntity.save(newWorkingHours);
     await this.WorkingHourEntity.delete({ id: workingHours[index].id });
 
@@ -895,6 +909,9 @@ export class ReservationService {
     reservation.end_Time = endTime;
     reservation.services = services;
     reservation.totalPrice = price;
+    reservation.reservationDay = workingDate.getDate();
+    reservation.reservationMonth = workingDate.getMonth() + 1;
+    reservation.reservationYear = workingDate.getFullYear();
 
     await this.ReservationRepository.save(reservation);
 
@@ -961,24 +978,29 @@ export class ReservationService {
       (1000 * 60);
     const startTime = new Date(body.startTime);
     const endTime = new Date(startTime.getTime() + duration * 60 * 1000);
+
+    const workingDate = new Date(body.day);
+
     const workingHours = await this.getWorkingHoursAtSpecificDate(
       reservation.branch.id,
-      startTime,
+      workingDate,
     );
 
     const index = workingHours.findIndex(
       (w) => w.from <= startTime && w.to >= endTime,
     );
+
     if (index === -1) {
       throw new BadRequestException(
         this.i18n.translate("test.RESERVATION.SCHEDULE_CONFLICT"),
       );
     }
+
     reservation.start_Time = startTime;
     reservation.end_Time = endTime;
-    reservation.reservationDay = startTime.getDate() * 1;
-    reservation.reservationMonth = startTime.getMonth() * 1 + 1;
-    reservation.reservationYear = startTime.getFullYear() * 1;
+    reservation.reservationDay = workingDate.getDate() * 1;
+    reservation.reservationMonth = workingDate.getMonth() * 1 + 1;
+    reservation.reservationYear = workingDate.getFullYear() * 1;
 
     await this.ReservationRepository.save(reservation);
     const newWorkingHours = this.newAddedWorkingHours(
@@ -995,6 +1017,9 @@ export class ReservationService {
     await this.WorkingHourEntity.delete({ id: workingHours[index].id });
 
     await this.cancelReservationAndAddSlot(
+      reservation.reservationDay,
+      reservation.reservationMonth,
+      reservation.reservationYear,
       oldReservation.start_Time,
       oldReservation.end_Time,
       oldReservation.branch.id,
@@ -1035,9 +1060,11 @@ export class ReservationService {
       const startTime = new Date(body.startTime);
       const endTime = new Date(startTime.getTime() + acc.duration * 60 * 1000);
 
+      const workingDate = new Date(body.day);
+
       const workingHours = await this.getWorkingHoursAtSpecificDate(
         reservation.branch.id,
-        startTime,
+        workingDate,
       );
 
       const index = workingHours.findIndex(
@@ -1048,9 +1075,13 @@ export class ReservationService {
           "The custom schedule conflicts with an existing reservation.",
         );
       }
+
       // Update the reservation with new times
       reservation.start_Time = startTime;
       reservation.end_Time = endTime;
+      reservation.reservationDay = workingDate.getDate();
+      reservation.reservationMonth = workingDate.getMonth() + 1;
+      reservation.reservationYear = workingDate.getFullYear();
 
       await this.ReservationRepository.save(reservation);
       const newWorkingHours = this.newAddedWorkingHours(
@@ -1067,6 +1098,9 @@ export class ReservationService {
       await this.WorkingHourEntity.delete({ id: workingHours[index].id });
 
       await this.cancelReservationAndAddSlot(
+        reservation.reservationDay,
+        reservation.reservationMonth,
+        reservation.reservationYear,
         oldReservation.start_Time,
         oldReservation.end_Time,
         oldReservation.branch.id,
@@ -1153,6 +1187,9 @@ export class ReservationService {
       return { status: "deleted" };
     }
     await this.cancelReservationAndAddSlot(
+      reservation.reservationDay,
+      reservation.reservationMonth,
+      reservation.reservationYear,
       reservation.start_Time,
       reservation.end_Time,
       reservation.branch.id,
@@ -1184,7 +1221,7 @@ export class ReservationService {
       if (reservation.branch.id == body.branch) {
         const result = await this.updateTime(
           reservationId,
-          { startTime: body.startTime },
+          { startTime: body.startTime, day: body.day },
           userId,
         );
         console.log(result, "result");
@@ -1207,10 +1244,12 @@ export class ReservationService {
       const startTime = new Date(csutomStartTime);
       const endTime = new Date(startTime.getTime() + duration * 1000 * 60);
 
+      const workingDate = new Date(body.day);
+
       // Get working hours for the branch on the specific date
       const workingHours = await this.getWorkingHoursAtSpecificDate(
         body.branch,
-        startTime,
+        workingDate,
       );
 
       // Check if the working hours allow the reservation
@@ -1237,6 +1276,9 @@ export class ReservationService {
       console.log(reservation);
 
       await this.cancelReservationAndAddSlot(
+        reservation.reservationDay,
+        reservation.reservationMonth,
+        reservation.reservationYear,
         reservation.start_Time,
         reservation.end_Time,
         reservation.branch.id,
@@ -1244,9 +1286,9 @@ export class ReservationService {
       reservation.start_Time = startTime;
       reservation.end_Time = endTime;
       reservation.branch = branch;
-      reservation.reservationDay = startTime.getDate();
-      reservation.reservationMonth = startTime.getMonth() + 1;
-      reservation.reservationYear = startTime.getFullYear();
+      reservation.reservationDay = workingDate.getDate();
+      reservation.reservationMonth = workingDate.getMonth() + 1;
+      reservation.reservationYear = workingDate.getFullYear();
       const order = await this.OrderRepo.findOne({
         where: { id: reservation.order.id },
       });
@@ -1281,12 +1323,19 @@ export class ReservationService {
       }
     }
   }
-  async cancelReservationAndAddSlot(start: Date, end: Date, branchId: string) {
+  async cancelReservationAndAddSlot(
+    day: number,
+    month: number,
+    year: number,
+    start: Date, 
+    end: Date, 
+    branchId: string
+  ) {
     const slot = await this.SlotRepository.findOne({
       where: {
-        day: start.getDate(),
-        month: start.getMonth() + 1,
-        year: start.getFullYear(),
+        day,
+        month,
+        year,
         branch: {
           id: branchId,
         },

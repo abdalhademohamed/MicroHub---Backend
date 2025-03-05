@@ -456,10 +456,10 @@ export class SlotService {
     // };
   }
 
-  createTimeSlots(intervals: { from: Date; to: Date }[], duration: number) {
+  createTimeSlots(intervals: { from: Date; to: Date, id: number }[], duration: number) {
     const result = [];
 
-    intervals.map(({ from, to }) => {
+    intervals.map(({ from, to, id }) => {
       let currentStartTime =
         new Date(from) > new Date()
           ? new Date(from)
@@ -479,6 +479,7 @@ export class SlotService {
           break; // Stop if the next slot exceeds the endTime
         }
         const obj = {
+          id,
           startTime: currentStartTime,
           endTime: nextSlotEnd,
         };
