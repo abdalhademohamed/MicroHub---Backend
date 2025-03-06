@@ -255,65 +255,65 @@ export class SlotService {
 
     return workingEntities;
   }
-  @OnEvent("artist:created")
-  async createSlotsForArtist(artist: EmployeeEntity) {
-    const today = new Date();
-    let loopOn = true;
-    // console.log(artist)
-    while (loopOn) {
-      console.log(today.getDate(), today.getMonth() + 1, today.getFullYear());
-      const slot = await this.SlotRepository.findOne({
-        where: {
-          day: today.getUTCDate(),
-          month: today.getUTCMonth() + 1,
-          year: today.getFullYear(),
-          branch: {
-            id: artist.branch.id,
-          },
-        },
-        relations: ["branch"],
-      });
-      // console.log(slot);
-      const day = this.getDayFromDate(
-        today.getFullYear(),
-        today.getMonth() + 1,
-        today.getDate(),
-      );
-      if (!slot) {
-        const count = await this.SlotRepository.count({
-          where: {
-            day: MoreThan(today.getDate()),
-            month: MoreThanOrEqual(today.getMonth() + 1),
-            year: MoreThanOrEqual(today.getFullYear()),
-            branch: {
-              id: artist.branch.id,
-            },
-          },
-        });
-        // console.log(count);
-        if (count === 0) {
-          loopOn = false;
-          continue;
-        }
-        today.setDate(today.getDate() + 1);
-        continue;
-      }
-      const workingHours = (
-        await this.branchWorkingHours(artist.branch.id, day)
-      ).workingHours;
+  // @OnEvent("artist:created")
+  // async createSlotsForArtist(artist: EmployeeEntity) {
+  //   const today = new Date();
+  //   let loopOn = true;
+  //   // console.log(artist)
+  //   while (loopOn) {
+  //     console.log(today.getDate(), today.getMonth() + 1, today.getFullYear());
+  //     const slot = await this.SlotRepository.findOne({
+  //       where: {
+  //         day: today.getUTCDate(),
+  //         month: today.getUTCMonth() + 1,
+  //         year: today.getFullYear(),
+  //         branch: {
+  //           id: artist.branch.id,
+  //         },
+  //       },
+  //       relations: ["branch"],
+  //     });
+  //     // console.log(slot);
+  //     const day = this.getDayFromDate(
+  //       today.getFullYear(),
+  //       today.getMonth() + 1,
+  //       today.getDate(),
+  //     );
+  //     if (!slot) {
+  //       const count = await this.SlotRepository.count({
+  //         where: {
+  //           day: MoreThan(today.getDate()),
+  //           month: MoreThanOrEqual(today.getMonth() + 1),
+  //           year: MoreThanOrEqual(today.getFullYear()),
+  //           branch: {
+  //             id: artist.branch.id,
+  //           },
+  //         },
+  //       });
+  //       // console.log(count);
+  //       if (count === 0) {
+  //         loopOn = false;
+  //         continue;
+  //       }
+  //       today.setDate(today.getDate() + 1);
+  //       continue;
+  //     }
+  //     const workingHours = (
+  //       await this.branchWorkingHours(artist.branch.id, day)
+  //     ).workingHours;
   
-      const workingEntities = this.createWorkingHoursSlotsForArtist(
-        workingHours,
-        today,
-        slot,
-        artist,
-      );
+  //     const workingEntities = this.createWorkingHoursSlotsForArtist(
+  //       workingHours,
+  //       today,
+  //       slot,
+  //       artist,
+  //     );
 
-      // console.log(workingEntities);
-      await this.WorkingRepository.save(workingEntities);
-      today.setDate(today.getDate() + 1);
-    }
-  }
+  //     // console.log(workingEntities);
+  //     await this.WorkingRepository.save(workingEntities);
+  //     today.setDate(today.getDate() + 1);
+  //   }
+  // }
   createWorkingHoursSlotsForArtist(
     workingHours: string[],
     nextDate: Date,
@@ -380,68 +380,68 @@ export class SlotService {
     const dayIndex = date.getDay();
     return daysOfWeek[dayIndex];
   }
-  @OnEvent("artist:hours")
-  async removeWorkingHours({ duration, branchId }) {
-    const today = new Date();
-    let loopOn = true;
-    while (loopOn) {
-      const slot = await this.SlotRepository.findOne({
-        where: {
-          day: today.getDate(),
-          month: today.getMonth() + 1,
-          year: today.getFullYear(),
-          branch: {
-            id: branchId,
-          },
-        },
-        relations: ["branch", "workingEntity"],
-      });
-      if (!slot) {
-        const count = await this.SlotRepository.count({
-          where: {
-            day: MoreThan(today.getDate()),
-            month: MoreThanOrEqual(today.getMonth() + 1),
-            year: MoreThanOrEqual(today.getFullYear()),
-            branch: {
-              id: branchId,
-            },
-          },
-        });
-        if (count === 0) {
-          loopOn = false;
-          continue;
-        }
-        continue;
-      }
-      let sum = 0;
-      const ids = [];
-      for (const wE of slot.workingEntity) {
-        if (wE.duration == duration) {
-          await this.WorkingRepository.remove(wE);
-          break;
-        }
-        if (wE.duration >= duration) {
-          wE.from = new Date(duration * 1000 * 60 + wE.from.getTime());
-          await this.WorkingRepository.save(wE);
-          break;
-        }
-        sum += wE.duration;
-        ids.push(wE.id);
-        if (sum == duration) {
-          await this.WorkingRepository.delete({ id: In(ids) });
-          break;
-        }
-        if (sum > duration) {
-          wE.from = new Date((sum - duration) * 1000 * 60 + wE.from.getTime());
-          await this.WorkingRepository.save(wE);
-          ids.pop();
-          await this.WorkingRepository.delete({ id: In(ids) });
-          break;
-        }
-      }
-      today.setDate(today.getDate() + 1);
-    }
-  }
+  // @OnEvent("artist:hours")
+  // async removeWorkingHours({ duration, branchId }) {
+  //   const today = new Date();
+  //   let loopOn = true;
+  //   while (loopOn) {
+  //     const slot = await this.SlotRepository.findOne({
+  //       where: {
+  //         day: today.getDate(),
+  //         month: today.getMonth() + 1,
+  //         year: today.getFullYear(),
+  //         branch: {
+  //           id: branchId,
+  //         },
+  //       },
+  //       relations: ["branch", "workingEntity"],
+  //     });
+  //     if (!slot) {
+  //       const count = await this.SlotRepository.count({
+  //         where: {
+  //           day: MoreThan(today.getDate()),
+  //           month: MoreThanOrEqual(today.getMonth() + 1),
+  //           year: MoreThanOrEqual(today.getFullYear()),
+  //           branch: {
+  //             id: branchId,
+  //           },
+  //         },
+  //       });
+  //       if (count === 0) {
+  //         loopOn = false;
+  //         continue;
+  //       }
+  //       continue;
+  //     }
+  //     let sum = 0;
+  //     const ids = [];
+  //     for (const wE of slot.workingEntity) {
+  //       if (wE.duration == duration) {
+  //         await this.WorkingRepository.remove(wE);
+  //         break;
+  //       }
+  //       if (wE.duration >= duration) {
+  //         wE.from = new Date(duration * 1000 * 60 + wE.from.getTime());
+  //         await this.WorkingRepository.save(wE);
+  //         break;
+  //       }
+  //       sum += wE.duration;
+  //       ids.push(wE.id);
+  //       if (sum == duration) {
+  //         await this.WorkingRepository.delete({ id: In(ids) });
+  //         break;
+  //       }
+  //       if (sum > duration) {
+  //         wE.from = new Date((sum - duration) * 1000 * 60 + wE.from.getTime());
+  //         await this.WorkingRepository.save(wE);
+  //         ids.pop();
+  //         await this.WorkingRepository.delete({ id: In(ids) });
+  //         break;
+  //       }
+  //     }
+  //     today.setDate(today.getDate() + 1);
+  //   }
+  // }
   async createSlot(body: CreateSlotDto, timezone: string) {
     const branch = await this.BranchRepository.findOneBy({ id: body.branch });
 

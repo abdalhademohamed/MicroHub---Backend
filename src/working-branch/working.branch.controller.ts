@@ -3,9 +3,7 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
-  Delete,
   HttpCode,
   HttpStatus,
   Put,
@@ -16,7 +14,6 @@ import { CreateWorkingBranchDto } from "./dto/create.working.branch.dto";
 import { UpdateWorkingBranchDto } from "./dto/update.working.branch.dto";
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { WorkingBranchEntity } from "./entities/working.branch.entity";
-import { BranchEntity } from "../branch/entities/branch.entity";
 
 ApiTags("working/branch");
 @Controller("working/branch")
@@ -28,7 +25,7 @@ export class WorkingBranchController {
   async createWorkingBranch(
     @Param("branchId") branchId: string,
     @Body() createWorkingBranchDto: CreateWorkingBranchDto,
-    @Query('timezone') timezone: string,
+    @Body('timezone') timezone: string,
   ): Promise<any> {
     return this.workingBranchService.createWorkingBranch(
       branchId,
@@ -58,14 +55,6 @@ export class WorkingBranchController {
   ): Promise<Omit<WorkingBranchEntity, "branch">[]> {
     return this.workingBranchService.findAll(branchId);
   }
-
-  // @Get(':id')
-  // @ApiOperation({ summary: 'Get a specific working branch by ID' })
-  // @ApiResponse({ status: 200, description: 'The working branch', type: WorkingBranchEntity })
-  // @ApiResponse({ status: 404, description: 'Working branch not found' })
-  // async findOne(@Param('id') id: string): Promise<WorkingBranchEntity> {
-  //   return this.workingBranchService.findOne(id);
-  // }
 
   @Put(":branchId")
   async updateWorkingBranches(
