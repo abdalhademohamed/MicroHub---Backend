@@ -121,6 +121,8 @@ export class WorkingBranchService {
       "Asia/Riyadh",
     );
 
+    const times = createWorkingBranchDto.workingHours;
+
     
 
     // Convert dayOfWeek from string to WeekDays enum
@@ -199,7 +201,7 @@ export class WorkingBranchService {
     await this.slotService.getNextFourWeeksDatesForDay(
       createWorkingBranchDto.dayOfWeek,
       branchId,
-      workingHours,
+      times,
       timezone,
     );
 

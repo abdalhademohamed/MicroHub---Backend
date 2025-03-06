@@ -61,7 +61,9 @@ export class SlotService {
 
   }
   convertToUtc(day: number, month: number, year: number, times: string[], timeZone: string): string[] {
-    console.log('date and times and timezone', day, month, year);
+    console.log('date is =>', day, month, year);
+    console.log('times is =>', times)
+    console.log('time zone is', timeZone);
     const result = times.map(time => {
       const localDateTime = DateTime.fromObject(
         {
@@ -77,6 +79,9 @@ export class SlotService {
       // Convert to UTC
       return localDateTime.toUTC().toISO();
     });
+  
+    console.log(result);
+
     return this.splitOvernightIntervals(result);
   }
 
@@ -105,13 +110,15 @@ export class SlotService {
     const resultDates: { day: number; month: number; year: number }[] = [];
     for (let i = 0; i < 4; i++) {
       const nextDate = new Date();
+      nextDate.setUTCHours(0,0,0,0);
       nextDate.setDate(today.getDate() + daysToAdd + i * 7);
+
       resultDates.push({
         day: nextDate.getUTCDate(),
         year: nextDate.getUTCFullYear(),
         month: nextDate.getUTCMonth() + 1,
       });
-      console.log('this is next date', nextDate);
+
     }
     for (const { day, year, month } of resultDates) {
       await this.createSlot({ day, year, month, branch, workingHours }, timezone);
@@ -199,7 +206,6 @@ export class SlotService {
     branch: BranchEntity,
     timezone: string,
   ) {
-
     workingHours = this.convertToUtc(day, month, year, workingHours, timezone);
 
     console.log(workingHours);
@@ -208,6 +214,9 @@ export class SlotService {
     for (let i = 0; i < workingHours.length; i += 2) {
 
       let from = new Date(workingHours[i]);
+
+      console.log('working[i] is', workingHours[i]);
+      console.log('from time is', from);
 
       let to = new Date(workingHours[i + 1]);
 
@@ -531,6 +540,8 @@ export class SlotService {
       .andWhere("working.from BETWEEN :startOfDayUTC AND :endOfDayUTC", { startOfDayUTC, endOfDayUTC })
       .orderBy("working.from", "ASC")
       .getMany();
+
+    console.log(slots);
 
     if (slots.length === 0) {
       return [];
