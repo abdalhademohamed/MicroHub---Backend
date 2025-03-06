@@ -30,13 +30,9 @@ import { GetReservationsTimesDto } from "./dto/get.reservations.timings.dto";
 import { SharableOfferEntity } from "../sharable-offer/entities/sharable-offer.entity";
 import { GiftCouponEntity } from "../gift-coupon/entities/gift-coupon.entity";
 import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
-import { NotificationService } from "../notification/notification.service";
-import { EmployeeEntity } from "../employee/entities/employee.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
-import { GiftCouponService } from "../gift-coupon/gift-coupon.service";
 import { UpdateBranchReservationDto } from "./dto/update-branch.reservation.dto";
 import { ActionService } from "src/action/action.service";
-import { of } from "rxjs";
 
 @Injectable()
 export class ReservationService {
@@ -1076,7 +1072,7 @@ export class ReservationService {
       const startTime = new Date(body.startTime);
       const endTime = new Date(startTime.getTime() + acc.duration * 60 * 1000);
 
-      const workingDate = new Date(body.day);
+      const workingDate = startTime;
 
       const workingHours = await this.getWorkingHoursAtSpecificDate(
         reservation.branch.id,
@@ -1302,9 +1298,9 @@ export class ReservationService {
       reservation.start_Time = startTime;
       reservation.end_Time = endTime;
       reservation.branch = branch;
-      reservation.reservationDay = workingDate.getDate();
-      reservation.reservationMonth = workingDate.getMonth() + 1;
-      reservation.reservationYear = workingDate.getFullYear();
+      reservation.reservationDay = workingDate.getUTCDate();
+      reservation.reservationMonth = workingDate.getUTCMonth() + 1;
+      reservation.reservationYear = workingDate.getUTCFullYear();
       const order = await this.OrderRepo.findOne({
         where: { id: reservation.order.id },
       });

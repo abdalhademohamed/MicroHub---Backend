@@ -112,7 +112,7 @@ export class ReservationController {
   async getAllBookings(
     @Param("branchId") branchId: string,
     @Query() getReservationsDto: GetReservationsDto,
-    @Query('timezone') timezone: string,
+    @Query('timezone') timezone: string = 'Asia/Riyadh',
   ) {
     return this.reservationService.getBookingBranch(
       branchId,
@@ -135,7 +135,7 @@ export class ReservationController {
   async getAllReservations(
     @Request() req: any, // Request object to access the user
     @Query() getReservationsDto: GetReservationsDto,
-    @Query('timezone') timezone: string,
+    @Query('timezone') timezone: string = 'Asia/Riyadh',
   ): Promise<{
     items: ReservationEntity[];
     total: number;
