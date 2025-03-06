@@ -45,7 +45,7 @@ export class ReceiptController {
     Role.COORDINATOR,
     Role.RECEPTIONIST,
     Role.ARTISTMANAGER,
-    Role.ADMIN
+    Role.ADMIN,
   )
   @Post("reservation")
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
@@ -74,7 +74,7 @@ export class ReceiptController {
     Role.COORDINATOR,
     Role.RECEPTIONIST,
     Role.ARTISTMANAGER,
-    Role.ADMIN
+    Role.ADMIN,
   )
   // Endpoint to create a receipt
   @Post()
@@ -100,7 +100,7 @@ export class ReceiptController {
     Role.COORDINATOR,
     Role.RECEPTIONIST,
     Role.ARTISTMANAGER,
-    Role.ADMIN
+    Role.ADMIN,
   )
   @Get(":orderId")
   async getReceiptByOrderId(
@@ -114,7 +114,7 @@ export class ReceiptController {
     Role.COORDINATOR,
     Role.RECEPTIONIST,
     Role.ARTISTMANAGER,
-    Role.ADMIN
+    Role.ADMIN,
   )
   @Get("reservation/:reservationId")
   async getReceiptByReservationId(

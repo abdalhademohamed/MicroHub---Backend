@@ -43,7 +43,7 @@ export class PaymentController {
     Role.ARTISTMANAGER,
     Role.RECEPTIONIST,
     Role.ACCOUNTANT,
-    Role.ADMIN
+    Role.ADMIN,
   )
   @Get()
   async getAllPayments(): Promise<PaymentEntity[]> {

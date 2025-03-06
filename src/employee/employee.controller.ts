@@ -115,7 +115,7 @@ export class EmployeeController {
     Role.ACCOUNTANT,
     Role.ARTIST,
     Role.ARTISTMANAGER,
-    Role.ADMIN
+    Role.ADMIN,
   )
   async getTopArtists(
     @Query("fromDate") fromDate?: string,
@@ -146,7 +146,7 @@ export class EmployeeController {
     Role.ADMIN,
     Role.ARTIST,
     Role.ARTISTMANAGER,
-    Role.ADMIN
+    Role.ADMIN,
   )
   @UseGuards(AccessTokenGuard)
   async getArtistsWithSearch(
@@ -165,7 +165,13 @@ export class EmployeeController {
     return this.employeeService.getArtistsWithReviews();
   }
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST, Role.ACCOUNTANT, Role.ADMIN)
+  @Roles(
+    Role.SUPERADMIN,
+    Role.COORDINATOR,
+    Role.RECEPTIONIST,
+    Role.ACCOUNTANT,
+    Role.ADMIN,
+  )
   @Get("/count")
   async getEmployeeCount(
     @Query("branchId") branchId?: string,
@@ -205,7 +211,7 @@ export class EmployeeController {
     Role.RECEPTIONIST,
     Role.ARTISTMANAGER,
     Role.ACCOUNTANT,
-    Role.ADMIN
+    Role.ADMIN,
   )
   @Get()
   async getAllEmployees(

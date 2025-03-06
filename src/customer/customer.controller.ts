@@ -26,7 +26,7 @@ export class CustomerController {
     Role.RECEPTIONIST,
     Role.ACCOUNTANT,
     Role.ARTISTMANAGER,
-    Role.ADMIN
+    Role.ADMIN,
   )
   @Get("sorted")
   async getCustomers(@Query() filters: GetCustomerPaginatedsDto) {
@@ -50,7 +50,7 @@ export class CustomerController {
     Role.RECEPTIONIST,
     Role.ACCOUNTANT,
     Role.ARTISTMANAGER,
-    Role.ADMIN
+    Role.ADMIN,
   )
   @Get(":phoneNumber")
   async getCustomerByPhoneNumber(

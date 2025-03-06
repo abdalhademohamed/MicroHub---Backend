@@ -34,16 +34,21 @@ export class ServiceService {
     const { items } = await this.getServicesWithReservationCount(query);
     let reservationCount = 0;
     let totalPrice = 0;
-    items.forEach(item => {
+    items.forEach((item) => {
       delete item.id;
       delete item.imageUrl;
       delete item.months_To_Expire;
       // @ts-ignore
       reservationCount += Number(item?.reservationCount) || 0;
       // @ts-ignore
-      totalPrice += Number(item?.price) || 0 * Number(item?.reservationCount) || 0;
-    })
-    return this.excelService.exportFile(items, res, type, { reservationCount, price: totalPrice });
+      totalPrice +=
+        // @ts-ignore
+        Number(item?.price) || 0 * Number(item?.reservationCount) || 0;
+    });
+    return this.excelService.exportFile(items, res, type, {
+      reservationCount,
+      price: totalPrice,
+    });
   }
 
   async createService(

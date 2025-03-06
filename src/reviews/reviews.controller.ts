@@ -102,7 +102,7 @@ export class ReviewsController {
     Role.BRANCHMANAGER,
     Role.ARTISTMANAGER,
     Role.RECEPTIONIST,
-    Role.ADMIN
+    Role.ADMIN,
   )
   @ApiParam({
     name: "employeeId",

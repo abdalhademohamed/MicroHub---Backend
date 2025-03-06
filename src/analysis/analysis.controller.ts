@@ -35,7 +35,7 @@ export class AnalysisController {
     Role.BRANCHMANAGER,
     Role.ACCOUNTANT,
     Role.RECEPTIONIST,
-    Role.ADMIN
+    Role.ADMIN,
   )
   @Get("offer")
   @ApiResponse({ status: 200, description: "Retrieve offers report" })
@@ -52,7 +52,7 @@ export class AnalysisController {
     Role.BRANCHMANAGER,
     Role.ACCOUNTANT,
     Role.RECEPTIONIST,
-    Role.ADMIN
+    Role.ADMIN,
   )
   @Get("service")
   async getServiceReport(@Query() GetServiceReportDto: GetServiceReportDto) {
@@ -141,7 +141,7 @@ export class AnalysisController {
     Role.ACCOUNTANT,
     Role.COORDINATOR,
     Role.RECEPTIONIST,
-    Role.ADMIN
+    Role.ADMIN,
   )
   @Get("order")
   async getOrderReport(
@@ -192,7 +192,7 @@ export class AnalysisController {
     Role.BRANCHMANAGER,
     Role.ACCOUNTANT,
     Role.ARTISTMANAGER,
-    Role.ADMIN
+    Role.ADMIN,
   )
   @Get("total/deposit")
   async getTotalDeposits(@Query() dto: GetTotalDepositsDto) {

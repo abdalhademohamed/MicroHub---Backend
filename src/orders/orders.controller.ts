@@ -54,12 +54,15 @@ export class OrdersController {
     const count = await this.ordersService.getOrderCount(branchId);
     return { count: count.toString() }; // Return the count as a string
   }
-  @Get('created/:userId')
+  @Get("created/:userId")
   async findAllByUserId(
     @Query() findOrdersDto: FindOrdersDto,
     @Param("userId") userId: string,
   ) {
-    return await this.actionService.findAllOrdersCreatedByUser(findOrdersDto, userId);
+    return await this.actionService.findAllOrdersCreatedByUser(
+      findOrdersDto,
+      userId,
+    );
   }
   @Get("/refunded")
   @UseGuards(AccessTokenGuard)
@@ -101,7 +104,7 @@ export class OrdersController {
     Role.BRANCHMANAGER,
     Role.RECEPTIONIST,
     Role.ACCOUNTANT,
-    Role.ADMIN
+    Role.ADMIN,
   )
   @UseInterceptors(FileInterceptor("image"))
   async refundOrder(
@@ -133,7 +136,7 @@ export class OrdersController {
     Role.COORDINATOR,
     Role.BRANCHMANAGER,
     Role.RECEPTIONIST,
-    Role.ADMIN
+    Role.ADMIN,
   )
   @UseInterceptors(FileInterceptor("image")) // Use multer for image upload
   @ApiOperation({ summary: "Update the payment status of an order" })
@@ -174,7 +177,13 @@ export class OrdersController {
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @Patch("status/:orderId")
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST, Role.ARTIST, Role.ADMIN)
+  @Roles(
+    Role.SUPERADMIN,
+    Role.COORDINATOR,
+    Role.RECEPTIONIST,
+    Role.ARTIST,
+    Role.ADMIN,
+  )
   @UseInterceptors(FileInterceptor("image")) // Use multer for image upload
   async updateOrderStatus(
     @Request() req: any, // Request object to access the user
@@ -206,7 +215,7 @@ export class OrdersController {
     Role.COORDINATOR,
     Role.RECEPTIONIST,
     Role.ARTISTMANAGER,
-    Role.ADMIN
+    Role.ADMIN,
   )
   async assignOrderToArtist(
     @Request() req: any, // Request object to access the user
@@ -235,7 +244,7 @@ export class OrdersController {
     Role.ACCOUNTANT,
     Role.ARTIST,
     Role.BRANCHMANAGER,
-    Role.ADMIN
+    Role.ADMIN,
   )
   @Get("status/count-statics")
   async getOrderStatusCountByBranch(
@@ -260,7 +269,7 @@ export class OrdersController {
     Role.ACCOUNTANT,
     Role.ARTIST,
     Role.BRANCHMANAGER,
-    Role.ADMIN
+    Role.ADMIN,
   )
   @Get("status/count")
   async getOrderStatusCount(

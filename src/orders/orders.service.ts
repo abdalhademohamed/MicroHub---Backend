@@ -320,11 +320,14 @@ export class OrdersService {
           // return savedOrder;
         },
       );
-      if (newOrder.paymentStatus ==  PaymentStatus.Paid && newOrder.sharableOfferId) {
+      if (
+        newOrder.paymentStatus == PaymentStatus.Paid &&
+        newOrder.sharableOfferId
+      ) {
         await this.giftCouponService.createGiftCoupon({
           orderId: newOrder.id,
           customerId: newOrder.customer.id,
-        })
+        });
       }
       await this.actionService.createAction({
         actionEn: `reservation created`,
@@ -338,7 +341,7 @@ export class OrdersService {
         amount: reservation.deposit,
         paymentId,
         userId,
-        type: 'deposit',
+        type: "deposit",
       });
       return newOrder;
     } catch (error) {
@@ -539,7 +542,7 @@ export class OrdersService {
         amount: reservation.deposit,
         paymentId,
         userId,
-        type: 'deposit'
+        type: "deposit",
       });
       return newOrder;
     } catch (error) {
@@ -800,11 +803,11 @@ export class OrdersService {
           return savedOrder;
         },
       );
-      if (order.paymentStatus ==  PaymentStatus.Paid && order.sharableOfferId) {
+      if (order.paymentStatus == PaymentStatus.Paid && order.sharableOfferId) {
         await this.giftCouponService.createGiftCoupon({
           orderId: order.id,
           customerId: order.customer.id,
-        })
+        });
       }
       await this.actionService.createAction({
         actionEn: `payment status updated`,
@@ -818,7 +821,7 @@ export class OrdersService {
         amount,
         paymentId,
         userId: order.createdBy.id,
-        type: 'completed'
+        type: "completed",
       });
       return updatedOrder;
     } catch (error) {
@@ -847,7 +850,13 @@ export class OrdersService {
       // Fetch the order by ID
       order = await this.orderRepository.findOne({
         where: { id: orderId },
-        relations: ["receipts", "reservation", "createdBy", "artist", 'customer'], // Ensure that the receipts and reservation relations are loaded
+        relations: [
+          "receipts",
+          "reservation",
+          "createdBy",
+          "artist",
+          "customer",
+        ], // Ensure that the receipts and reservation relations are loaded
       });
 
       if (!order) {
@@ -910,7 +919,6 @@ export class OrdersService {
         const deposit = order.reservation.deposit; // Get deposit from the reservation
         let paymentAmount: number;
         order.status = OrderStatus.Canceled;
-        
 
         if (order.paymentStatus === PaymentStatus.Paid) {
           if (order.receipts.length === 0) {
@@ -929,7 +937,10 @@ export class OrdersService {
         }
 
         await this.orderRepository.save(order);
-        await this.removeRotoshFromCustomer(order.customer.id, order.reservation.id);
+        await this.removeRotoshFromCustomer(
+          order.customer.id,
+          order.reservation.id,
+        );
         return { order, paymentAmount };
       } catch (error) {
         console.error("Error processing payment details:", error);
@@ -956,7 +967,10 @@ export class OrdersService {
       let paymentAmount: number;
       order.status = OrderStatus.Abscent;
       await this.orderRepository.save(order);
-      await this.removeRotoshFromCustomer(order.customer.id, order.reservation.id);
+      await this.removeRotoshFromCustomer(
+        order.customer.id,
+        order.reservation.id,
+      );
     }
 
     // Restrict changes once the status is 'Completed'
@@ -1555,41 +1569,42 @@ export class OrdersService {
       throw new NotFoundException("Unable to fetch orders.");
     }
   }
-   async removeRotoshFromCustomer(id: string, reservationId: string) {
+  async removeRotoshFromCustomer(id: string, reservationId: string) {
     const customer = await this.CustomerRepository.findOne({
-        where: { id },
-        relations: ["lastServices", "lastRootoshes"], // Load last services and rootoshes
-      },
-    );
+      where: { id },
+      relations: ["lastServices", "lastRootoshes"], // Load last services and rootoshes
+    });
     const reservationWithServices = await this.reservationRepository.findOne({
       where: { id: reservationId },
       relations: ["services", "services.rootosh"],
     });
 
     if (customer && reservationWithServices) {
-  
       const services = reservationWithServices.services;
 
-      const servicesIds = services?.map (service => service.id);
+      const servicesIds = services?.map((service) => service.id);
 
       // Update last services list
       if (customer.lastServices) {
-        customer.lastServices = customer.lastServices.filter(( service ) => !servicesIds.includes(service.id));
+        customer.lastServices = customer.lastServices.filter(
+          (service) => !servicesIds.includes(service.id),
+        );
       }
 
       // Gather rootosh list from services
       const rootoshList = services.flatMap((service) => service.rootosh);
-      const rootoshIds = rootoshList?.map (rootosh => rootosh.id);
+      const rootoshIds = rootoshList?.map((rootosh) => rootosh.id);
       // Update last rootoshes and handle expiration dates
 
       if (customer.lastRootoshes) {
-        customer.lastRootoshes = customer.lastRootoshes.filter(( rootosh ) => !rootoshIds.includes(rootosh.id));
+        customer.lastRootoshes = customer.lastRootoshes.filter(
+          (rootosh) => !rootoshIds.includes(rootosh.id),
+        );
       }
       // Save the updated customer
       await this.CustomerRepository.save(customer);
     }
-
-   }
+  }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Method to get the count of each order status
