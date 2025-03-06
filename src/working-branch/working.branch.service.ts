@@ -34,7 +34,6 @@ export class WorkingBranchService {
 
   getLocalTime(day: number, month: number, year: number, timezone: string) {
     // Create the date in the specified timezone
-    console.log('day month year logs', day , month, year);
     const startOfDayLocal = DateTime.fromObject(
         { year, month, day, hour: 0, minute: 0, second: 0 },
         { zone: timezone }
@@ -121,10 +120,6 @@ export class WorkingBranchService {
       "Asia/Riyadh",
     );
 
-    workingHours = createWorkingBranchDto.workingHours.map((result) => {
-      return this.getUtcTime(result, "Asia/Riyadh");
-    });
-
     
 
     // Convert dayOfWeek from string to WeekDays enum
@@ -178,6 +173,10 @@ export class WorkingBranchService {
     let workingBranchEntity = branch.workingbranch.find(
       (wb) => wb.dayOfWeek === weekDayEnum,
     );
+
+    workingHours = createWorkingBranchDto.workingHours.map((result) => {
+      return this.getUtcTime(result, "Asia/Riyadh");
+    });
 
     if (workingBranchEntity) {
       // Update existing WorkingBranchEntity
@@ -245,24 +244,6 @@ export class WorkingBranchService {
     return date;
   }
 
-  // Method to validate working hours
-  // private validateWorkingHours(workingHours: string[]): boolean {
-  //   // Check for valid time format and duplicates
-  //   const timePattern = /^([01]\d|2[0-3]):([0-5]\d)$/; // HH:MM format
-  //   const seenHours = new Set<string>();
-
-  //   for (const hour of workingHours) {
-  //     if (!timePattern.test(hour)) {
-  //       return false; // Invalid time format
-  //     }
-  //     if (seenHours.has(hour)) {
-  //       return false; // Duplicate time
-  //     }
-  //     seenHours.add(hour);
-  //   }
-
-  //   return true; // All checks passed
-  // }
 
   async findAll(
     branchId?: string,
