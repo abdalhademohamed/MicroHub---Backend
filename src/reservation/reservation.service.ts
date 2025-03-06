@@ -6,6 +6,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from "@nestjs/common";
+import { DateTime } from 'luxon';
 import { InjectEntityManager, InjectRepository } from "@nestjs/typeorm";
 import { EntityManager, In, Repository } from "typeorm";
 import { ReservationEntity } from "./entities/reservation.entity";
@@ -29,13 +30,9 @@ import { GetReservationsTimesDto } from "./dto/get.reservations.timings.dto";
 import { SharableOfferEntity } from "../sharable-offer/entities/sharable-offer.entity";
 import { GiftCouponEntity } from "../gift-coupon/entities/gift-coupon.entity";
 import { RootoshEntity } from "../rootosh/entities/rootosh.entity";
-import { NotificationService } from "../notification/notification.service";
-import { EmployeeEntity } from "../employee/entities/employee.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
-import { GiftCouponService } from "../gift-coupon/gift-coupon.service";
 import { UpdateBranchReservationDto } from "./dto/update-branch.reservation.dto";
 import { ActionService } from "src/action/action.service";
-import { of } from "rxjs";
 
 @Injectable()
 export class ReservationService {
@@ -760,8 +757,28 @@ export class ReservationService {
     return serviceEntity;
   }
 
+  getLocalTime(day: number, month: number, year: number, timezone: string) {
+    // Create the date in the specified timezone
+    console.log('day month year logs', day , month, year);
+    const startOfDayLocal = DateTime.fromObject(
+        { year, month, day, hour: 0, minute: 0, second: 0 },
+        { zone: timezone }
+    );
+
+    const endOfDayLocal = startOfDayLocal.set({ hour: 23, minute: 59, second: 59 });
+
+    // Convert to UTC in ISO format (best for databases)
+    const startOfDayUTC = startOfDayLocal.toUTC().toISO(); // "2025-03-06T00:00:00.000Z"
+    const endOfDayUTC = endOfDayLocal.toUTC().toISO(); // "2025-03-06T23:59:59.999Z"
+
+    console.log(startOfDayUTC, endOfDayUTC);
+    return { startOfDayUTC, endOfDayUTC };
+  }
+
+
   async getAllReservations(
     getReservationsDto: GetReservationsDto,
+    timezone: string,
     branchId?: string,
   ): Promise<{
     items: ReservationEntity[];
@@ -776,15 +793,14 @@ export class ReservationService {
       .leftJoinAndSelect("reservation.services", "services")
       .leftJoinAndSelect("reservation.customer", "customer");
 
-    // Apply filters
-    if (day) {
-      query.andWhere("reservation.reservationDay = :day", { day });
-    }
-    if (month) {
-      query.andWhere("reservation.reservationMonth = :month", { month });
-    }
-    if (year) {
-      query.andWhere("reservation.reservationYear = :year", { year });
+    if(day && month && year){
+      const { startOfDayUTC, endOfDayUTC } = this.getLocalTime(day, month, year, timezone);
+      query.andWhere("reservation.start_Time >= :fromDate", {
+        fromDate: startOfDayUTC,
+      });
+      query.andWhere("reservation.start_Time <= :fromDate", {
+        fromDate: endOfDayUTC,
+      });
     }
 
     // Optional branchId filter
@@ -804,7 +820,7 @@ export class ReservationService {
       limit,
     };
   }
-  async getBookingBranch(branchId: string, query: GetReservationsDto) {
+  async getBookingBranch(branchId: string, query: GetReservationsDto, timezone: string) {
     const { day, month, year, page = 1, limit = 10 } = query;
 
     const reservationQuery = this.ReservationRepository.createQueryBuilder(
@@ -818,21 +834,15 @@ export class ReservationService {
       .innerJoin("reservation.branch", "branch")
       .where("branch.id = :branchId", { branchId });
 
-    if (day) {
-      reservationQuery.andWhere("reservation.reservationDay = :day", { day });
-    }
-
-    if (month) {
-      reservationQuery.andWhere("reservation.reservationMonth = :month", {
-        month,
-      });
-    }
-
-    if (year) {
-      reservationQuery.andWhere("reservation.reservationYear = :year", {
-        year,
-      });
-    }
+      if(day && month && year){
+        const { startOfDayUTC, endOfDayUTC } = this.getLocalTime(day, month, year, timezone);
+        reservationQuery.andWhere("reservation.start_Time >= :fromDate", {
+          fromDate: startOfDayUTC,
+        });
+        reservationQuery.andWhere("reservation.start_Time <= :fromDate", {
+          fromDate: endOfDayUTC,
+        });
+      }
 
     reservationQuery.skip((page - 1) * limit).take(limit);
 
@@ -1062,7 +1072,7 @@ export class ReservationService {
       const startTime = new Date(body.startTime);
       const endTime = new Date(startTime.getTime() + acc.duration * 60 * 1000);
 
-      const workingDate = new Date(body.day);
+      const workingDate = startTime;
 
       const workingHours = await this.getWorkingHoursAtSpecificDate(
         reservation.branch.id,
@@ -1288,9 +1298,9 @@ export class ReservationService {
       reservation.start_Time = startTime;
       reservation.end_Time = endTime;
       reservation.branch = branch;
-      reservation.reservationDay = workingDate.getDate();
-      reservation.reservationMonth = workingDate.getMonth() + 1;
-      reservation.reservationYear = workingDate.getFullYear();
+      reservation.reservationDay = workingDate.getUTCDate();
+      reservation.reservationMonth = workingDate.getUTCMonth() + 1;
+      reservation.reservationYear = workingDate.getUTCFullYear();
       const order = await this.OrderRepo.findOne({
         where: { id: reservation.order.id },
       });

@@ -84,6 +84,7 @@ export class SlotService {
     weekday: WeekDays,
     branch: string,
     workingHours: string[],
+    timezone: string,
   ) {
     const today = new Date();
     const todayDayOfWeek = today.getDay();
@@ -113,7 +114,7 @@ export class SlotService {
       console.log('this is next date', nextDate);
     }
     for (const { day, year, month } of resultDates) {
-      await this.createSlot({ day, year, month, branch, workingHours });
+      await this.createSlot({ day, year, month, branch, workingHours }, timezone);
       console.log('this is day an d', day, year, month);
     }
   }
@@ -196,9 +197,10 @@ export class SlotService {
     year: number,
     artists: EmployeeEntity[],
     branch: BranchEntity,
+    timezone: string,
   ) {
 
-    workingHours = this.convertToUtc(day, month, year, workingHours, "Asia/Riyadh");
+    workingHours = this.convertToUtc(day, month, year, workingHours, timezone);
 
     console.log(workingHours);
 
@@ -262,8 +264,8 @@ export class SlotService {
       console.log(today.getDate(), today.getMonth() + 1, today.getFullYear());
       const slot = await this.SlotRepository.findOne({
         where: {
-          day: today.getDate(),
-          month: today.getMonth() + 1,
+          day: today.getUTCDate(),
+          month: today.getUTCMonth() + 1,
           year: today.getFullYear(),
           branch: {
             id: artist.branch.id,
@@ -299,12 +301,14 @@ export class SlotService {
       const workingHours = (
         await this.branchWorkingHours(artist.branch.id, day)
       ).workingHours;
+  
       const workingEntities = this.createWorkingHoursSlotsForArtist(
         workingHours,
         today,
         slot,
         artist,
       );
+
       // console.log(workingEntities);
       await this.WorkingRepository.save(workingEntities);
       today.setDate(today.getDate() + 1);
@@ -438,20 +442,10 @@ export class SlotService {
       today.setDate(today.getDate() + 1);
     }
   }
-  async createSlot(body: CreateSlotDto) {
+  async createSlot(body: CreateSlotDto, timezone: string) {
     const branch = await this.BranchRepository.findOneBy({ id: body.branch });
 
-    const { startOfDayUTC, endOfDayUTC } = this.getLocalTime(body.day, body.month, body.year, "Asia/Riyadh");
-
-    // const recordsToDelete = await this.WorkingRepository.find({
-    //   where: {
-    //     from: Between(new Date(startOfDayUTC), new Date(endOfDayUTC)),
-    //   },
-    // });
-
-    // console.log('notice that', startOfDayUTC, endOfDayUTC, recordsToDelete);
-    
-    // await this.WorkingRepository.remove(recordsToDelete);
+    const { startOfDayUTC, endOfDayUTC } = this.getLocalTime(body.day, body.month, body.year, timezone);
     
     const slots = await this.WorkingRepository.createQueryBuilder("working")
       .leftJoinAndSelect("working.slot", "slot")
@@ -473,6 +467,7 @@ export class SlotService {
       body.year,
       artists,
       branch,
+      timezone,
     );
 
     await this.WorkingRepository.save(workingEntities);
@@ -524,9 +519,10 @@ export class SlotService {
 
   async getAllAvailableSlots(
     branchId: string,
-    { day, month, year, duration }: AvailableQueryDto
+    { day, month, year, duration }: AvailableQueryDto,
+    timezone: string,
 ) {
-    const { startOfDayUTC, endOfDayUTC } = this.getLocalTime(day, month, year, "Asia/Riyadh");
+    const { startOfDayUTC, endOfDayUTC } = this.getLocalTime(day, month, year, timezone);
 
     const slots = await this.WorkingRepository.createQueryBuilder("working")
       .leftJoinAndSelect("working.slot", "slot")

@@ -19,12 +19,6 @@ import { Role } from "../user/utils/user.enum";
 export class SlotController {
   constructor(private readonly slotService: SlotService) {}
 
-  // Create a slot for a branch on a specific date
-  @Post()
-  async createSlot(@Body() body: CreateSlotDto) {
-    return this.slotService.createSlot(body);
-  }
-
   // Get all available slots that have working entities
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(
@@ -38,8 +32,9 @@ export class SlotController {
   async getAllAvailableSlots(
     @Param("branchId") branchId: string,
     @Query() query: AvailableQueryDto,
+    @Query('timezone') timezone: string = 'Asia/Riyadh',
   ) {
-    return this.slotService.getAllAvailableSlots(branchId, query);
+    return this.slotService.getAllAvailableSlots(branchId, query, timezone);
   }
 
   // Get the first available slot for a given branch and duration

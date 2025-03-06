@@ -28,10 +28,12 @@ export class WorkingBranchController {
   async createWorkingBranch(
     @Param("branchId") branchId: string,
     @Body() createWorkingBranchDto: CreateWorkingBranchDto,
+    @Query('timezone') timezone: string,
   ): Promise<any> {
     return this.workingBranchService.createWorkingBranch(
       branchId,
       createWorkingBranchDto,
+      timezone,
     );
   }
 

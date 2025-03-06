@@ -110,6 +110,7 @@ export class WorkingBranchService {
   async createWorkingBranch(
     branchId: string,
     createWorkingBranchDto: CreateWorkingBranchDto,
+    timezone: string,
   ) {
 
     let { dayOfWeek, workingHours } = createWorkingBranchDto;
@@ -199,6 +200,7 @@ export class WorkingBranchService {
       createWorkingBranchDto.dayOfWeek,
       branchId,
       workingHours,
+      timezone,
     );
 
     // Return only the required fields (id, dayOfWeek, and workingHours)

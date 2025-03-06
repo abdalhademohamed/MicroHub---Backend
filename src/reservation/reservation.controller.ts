@@ -64,6 +64,7 @@ export class ReservationController {
     );
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
   @Get("times")
   async getReservations(
     @Query() GetReservationsTimesDto: GetReservationsTimesDto,
@@ -74,6 +75,7 @@ export class ReservationController {
     return result;
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(
     Role.SUPERADMIN,
@@ -105,17 +107,21 @@ export class ReservationController {
     );
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
   @Get("booking/:branchId")
   async getAllBookings(
     @Param("branchId") branchId: string,
     @Query() getReservationsDto: GetReservationsDto,
+    @Query('timezone') timezone: string = 'Asia/Riyadh',
   ) {
     return this.reservationService.getBookingBranch(
       branchId,
       getReservationsDto,
+      timezone,
     );
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(
     Role.SUPERADMIN,
@@ -124,11 +130,12 @@ export class ReservationController {
     Role.ARTISTMANAGER,
     Role.ADMIN,
   )
+
   @Get()
   async getAllReservations(
     @Request() req: any, // Request object to access the user
-
     @Query() getReservationsDto: GetReservationsDto,
+    @Query('timezone') timezone: string = 'Asia/Riyadh',
   ): Promise<{
     items: ReservationEntity[];
     total: number;
@@ -136,8 +143,9 @@ export class ReservationController {
     limit: number;
   }> {
     const { branchId, ...filterDto } = getReservationsDto;
-    return this.reservationService.getAllReservations(filterDto, branchId);
+    return this.reservationService.getAllReservations(filterDto, timezone, branchId);
   }
+
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(
