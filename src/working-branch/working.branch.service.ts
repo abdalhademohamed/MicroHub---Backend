@@ -3,20 +3,19 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
 } from "@nestjs/common";
 import { CreateWorkingBranchDto } from "./dto/create.working.branch.dto";
 import { UpdateWorkingBranchDto } from "./dto/update.working.branch.dto";
 import { InjectRepository } from "@nestjs/typeorm";
 import { BranchEntity } from "../branch/entities/branch.entity";
-import { FindOptionsWhere, QueryFailedError, Repository } from "typeorm";
+import { Between, FindOptionsWhere, QueryFailedError, Repository } from "typeorm";
 import { WorkingBranchEntity } from "./entities/working.branch.entity";
 import { WeekDays } from "../branch/utils/days.enum";
 import { SlotService } from "../slots/slots.service";
-import { EventEmitter2 } from "@nestjs/event-emitter";
 import { Postion } from "../postion/utils/postion.enum";
 import { ReservationEntity } from "src/reservation/entities/reservation.entity";
+import { DateTime } from "luxon";
 
 @Injectable()
 export class WorkingBranchService {
@@ -33,10 +32,35 @@ export class WorkingBranchService {
     private readonly ReservationRepository: Repository<ReservationEntity>,
   ) {}
 
-  async getNextFourWeeksDatesForDay(
-    weekday: WeekDays,
-    branch: string,
-  ) {
+  getLocalTime(day: number, month: number, year: number, timezone: string) {
+    // Create the date in the specified timezone
+    console.log('day month year logs', day , month, year);
+    const startOfDayLocal = DateTime.fromObject(
+        { year, month, day, hour: 0, minute: 0, second: 0 },
+        { zone: timezone }
+    );
+
+    const endOfDayLocal = startOfDayLocal.set({ hour: 23, minute: 59, second: 59 });
+
+    // Convert to UTC in ISO format (best for databases)
+    const startOfDayUTC = startOfDayLocal.toUTC().toISO(); // "2025-03-06T00:00:00.000Z"
+    const endOfDayUTC = endOfDayLocal.toUTC().toISO(); // "2025-03-06T23:59:59.999Z"
+
+    console.log(startOfDayUTC, endOfDayUTC);
+    return { startOfDayUTC, endOfDayUTC };
+  }
+
+  getUtcTime(localTime: string, timeZone: string): string {
+    // Convert local time to UTC
+    const utcTime = DateTime.fromFormat(localTime, "HH:mm", {
+      zone: timeZone,
+    }).toUTC();
+
+    // Return UTC time in ISO format and hour
+    return utcTime.toFormat("HH:mm");
+  }
+
+  async getNextFourWeeksDatesForDay(weekday: WeekDays, branch: string, timezone: string) {
     const today = new Date();
     const todayDayOfWeek = today.getDay();
     const daysOfWeek = [
@@ -65,19 +89,21 @@ export class WorkingBranchService {
     }
     for (const { day, year, month } of resultDates) {
       console.log(day, year, month);
+      const {startOfDayUTC, endOfDayUTC} = this.getLocalTime(day, month, year, timezone);
       const reservation = await this.ReservationRepository.findOne({
         where: {
-          reservationDay: day,
-          reservationMonth: month,
-          reservationYear: year,
+          start_Time: Between(new Date(startOfDayUTC), new Date(endOfDayUTC)),
           branch: { id: branch },
         },
         relations: {
           branch: true,
         },
       });
+
       if (reservation) {
-        throw new NotFoundException(`Reservation ${day}-${month}-${year} on ${weekday} already exists with id ${reservation.id}`);
+        throw new NotFoundException(
+          `Reservation ${day}-${month}-${year} on ${weekday} already exists with id ${reservation.id}`,
+        );
       }
     }
   }
@@ -86,9 +112,20 @@ export class WorkingBranchService {
     branchId: string,
     createWorkingBranchDto: CreateWorkingBranchDto,
   ) {
-    const { dayOfWeek, workingHours } = createWorkingBranchDto;
 
-    await this.getNextFourWeeksDatesForDay(createWorkingBranchDto.dayOfWeek, branchId);
+    let { dayOfWeek, workingHours } = createWorkingBranchDto;
+
+    await this.getNextFourWeeksDatesForDay(
+      createWorkingBranchDto.dayOfWeek,
+      branchId,
+      "Asia/Riyadh",
+    );
+
+    workingHours = createWorkingBranchDto.workingHours.map((result) => {
+      return this.getUtcTime(result, "Asia/Riyadh");
+    });
+
+    
 
     // Convert dayOfWeek from string to WeekDays enum
     const weekDayEnum = WeekDays[dayOfWeek as keyof typeof WeekDays];

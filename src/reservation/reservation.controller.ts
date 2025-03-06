@@ -39,7 +39,13 @@ export class ReservationController {
 
   @Get("top5")
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST, Role.ACCOUNTANT, Role.ADMIN)
+  @Roles(
+    Role.SUPERADMIN,
+    Role.COORDINATOR,
+    Role.RECEPTIONIST,
+    Role.ACCOUNTANT,
+    Role.ADMIN,
+  )
   async getTop5Reservations(
     @Request() req: any, // Request object to access the user
     @Query("fromDate") fromDate: string,
@@ -74,7 +80,7 @@ export class ReservationController {
     Role.COORDINATOR,
     Role.RECEPTIONIST,
     Role.ARTISTMANAGER,
-    Role.ADMIN
+    Role.ADMIN,
   )
   @Post()
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
@@ -116,7 +122,7 @@ export class ReservationController {
     Role.COORDINATOR,
     Role.RECEPTIONIST,
     Role.ARTISTMANAGER,
-    Role.ADMIN
+    Role.ADMIN,
   )
   @Get()
   async getAllReservations(
@@ -139,7 +145,7 @@ export class ReservationController {
     Role.RECEPTIONIST,
     Role.COORDINATOR,
     Role.ARTISTMANAGER,
-    Role.ADMIN
+    Role.ADMIN,
   )
   // Update a reservation by ID
   @Post("customer")

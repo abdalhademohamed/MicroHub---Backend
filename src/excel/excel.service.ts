@@ -46,15 +46,15 @@ export class ExcelService {
   ) {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Sheet1");
-  
+
     const headers = this.extractHeaders(data);
     const headerRow = worksheet.addRow(headers);
-  
+
     // **Set Column Widths** (Adjust as needed)
     worksheet.columns = headers.map(() => ({
       width: 20, // Increase column width
     }));
-  
+
     // **Apply Header Styles (Dark Red Background, White Text)**
     headerRow.eachCell((cell) => {
       cell.font = { bold: true, color: { argb: "FFFFFFFF" } }; // White text
@@ -65,28 +65,28 @@ export class ExcelService {
       };
       cell.alignment = { horizontal: "center", vertical: "middle" }; // Center text
     });
-  
+
     let columnSums: number[] = new Array(headers.length).fill(0);
-  
+
     // **Apply Row Styles (Alternating Dark Green & Light Pink)**
     data.forEach((item, index) => {
       const rowValues = headers.map((key, colIndex) => {
         const value = item[key];
-  
+
         // **Check if value is a number & sum it (if totalValues is not provided)**
         if (!totalValues && !isNaN(value) && value !== "" && value !== null) {
           columnSums[colIndex] += Number(value);
         }
-  
+
         return value;
       });
-  
+
       const row = worksheet.addRow(rowValues);
       const isOddRow = index % 2 === 0;
-  
+
       // **Set Row Height** (Increase row height)
       row.height = 25;
-  
+
       row.eachCell((cell) => {
         cell.fill = {
           type: "pattern",
@@ -97,7 +97,7 @@ export class ExcelService {
         cell.alignment = { horizontal: "center", vertical: "middle" }; // Center text
       });
     });
-  
+
     // **Append Total Row If totalValues is Provided**
     if (totalValues) {
       const totalRowValues = headers.map((key, colIndex) =>
@@ -107,10 +107,10 @@ export class ExcelService {
             ? totalValues[key]
             : "",
       );
-  
+
       const totalRow = worksheet.addRow(totalRowValues);
       totalRow.height = 30; // **Increase Total Row Height**
-  
+
       // **Apply Style to Total Row (Bold, Dark Blue Background, White Text)**
       totalRow.eachCell((cell) => {
         cell.font = { bold: true, color: { argb: "FFFFFFFF" } }; // White text
@@ -122,23 +122,26 @@ export class ExcelService {
         cell.alignment = { horizontal: "center", vertical: "middle" }; // Center text
       });
     }
-  
+
     const arrayBuffer = await workbook.xlsx.writeBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const url = await this.cloudinaryService.uploadToCloudinary(buffer);
-  
+
     const action = this.fileRepository.create({
       link: url,
       type: "excel",
       createdAt: new Date(),
     });
     await this.fileRepository.save(action);
-  
+
     res.status(200).json({ url });
   }
-  
 
-  private async generateAndUploadPdfFromHtmlTable(data: any[], res: Response, totalValues?: Record<string, number>,) {
+  private async generateAndUploadPdfFromHtmlTable(
+    data: any[],
+    res: Response,
+    totalValues?: Record<string, number>,
+  ) {
     try {
       const htmlTable = this.generateHtmlTable(data, totalValues);
       const url = htmlTable;
@@ -171,9 +174,12 @@ export class ExcelService {
       : value;
   }
 
-  private generateHtmlTable(data: any[], totalValues?: Record<string, number>): string {
+  private generateHtmlTable(
+    data: any[],
+    totalValues?: Record<string, number>,
+  ): string {
     const headers = this.extractHeaders(data);
-    
+
     // Generate Table Headers
     const headerRow = `<tr>${headers.map((header) => `<th>${header}</th>`).join("")}</tr>`;
 
@@ -183,7 +189,7 @@ export class ExcelService {
         const cells = headers
           .map((key) => `<td>${this.flattenValue(item[key])}</td>`)
           .join("");
-        
+
         const isOddRow = index % 2 === 0;
         const rowColor = isOddRow ? "#165016" : "#FFC0CB"; // Dark Green & Light Pink
         const textColor = isOddRow ? "white" : "black";
@@ -195,9 +201,15 @@ export class ExcelService {
     // Add Total Row If `totalValues` Is Provided
     let totalRow = "";
     if (totalValues) {
-      const totalRowCells = headers.map((key, colIndex) => 
-        colIndex === 0 ? "<b>Total</b>" : totalValues[key] !== undefined ? totalValues[key] : ""
-      ).join("");
+      const totalRowCells = headers
+        .map((key, colIndex) =>
+          colIndex === 0
+            ? "<b>Total</b>"
+            : totalValues[key] !== undefined
+              ? totalValues[key]
+              : "",
+        )
+        .join("");
 
       totalRow = `
         <tr style="background-color: #00008B; color: white; font-weight: bold;">

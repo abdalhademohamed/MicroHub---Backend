@@ -62,7 +62,7 @@ export class OfferController {
     Role.RECEPTIONIST,
     Role.ARTISTMANAGER,
     Role.ACCOUNTANT,
-    Role.ADMIN
+    Role.ADMIN,
   )
   @Get("active") // Route to get active sharable offers
   async findActiveSharableOffer(
@@ -80,7 +80,7 @@ export class OfferController {
     Role.RECEPTIONIST,
     Role.ARTISTMANAGER,
     Role.ACCOUNTANT,
-    Role.ADMIN
+    Role.ADMIN,
   )
   @Get()
   async findAll(
@@ -94,7 +94,13 @@ export class OfferController {
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
-  @Roles(Role.SUPERADMIN, Role.COORDINATOR, Role.RECEPTIONIST, Role.ACCOUNTANT, Role.ADMIN)
+  @Roles(
+    Role.SUPERADMIN,
+    Role.COORDINATOR,
+    Role.RECEPTIONIST,
+    Role.ACCOUNTANT,
+    Role.ADMIN,
+  )
   @Get(":id")
   async findOne(@Param("id") id: string): Promise<OfferEntity> {
     return await this.offerService.findOne(id);

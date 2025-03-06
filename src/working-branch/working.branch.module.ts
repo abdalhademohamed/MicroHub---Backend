@@ -9,7 +9,11 @@ import { ReservationEntity } from "src/reservation/entities/reservation.entity";
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([BranchEntity, WorkingBranchEntity, ReservationEntity]),
+    TypeOrmModule.forFeature([
+      BranchEntity,
+      WorkingBranchEntity,
+      ReservationEntity,
+    ]),
     SlotModule,
   ],
   controllers: [WorkingBranchController],

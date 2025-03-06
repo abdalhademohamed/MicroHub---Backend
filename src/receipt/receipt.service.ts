@@ -168,7 +168,7 @@ export class ReceiptService {
         totalPayment = reservation.totalPrice;
 
         discountPercentage = offer ? offer.discountPercentage : 0;
-  
+
         remaining = Number(totalPayment) - Number(reservation.deposit);
       }
 
@@ -366,7 +366,7 @@ export class ReceiptService {
 
         // Apply discount if offer exists
         discountPercentage = offer ? offer.discountPercentage : 0; // Set discount to 0 if no offer
-  
+
         remaining = Number(totalPayment) - Number(reservation.deposit);
       }
 

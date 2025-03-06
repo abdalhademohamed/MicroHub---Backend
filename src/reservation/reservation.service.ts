@@ -186,9 +186,9 @@ export class ReservationService {
           branch: {
             id: branchId,
           },
-          day: day.getDate(),
-          month: day.getMonth() + 1,
-          year: day.getFullYear(),
+          day: day.getUTCDate(),
+          month: day.getUTCMonth() + 1,
+          year: day.getUTCFullYear(),
         },
       },
       relations: {
@@ -232,9 +232,9 @@ export class ReservationService {
   async getBranchSlot(branchId: string, date: Date) {
     const slot = await this.SlotRepository.findOne({
       where: {
-        day: date.getDate(),
-        month: date.getMonth() + 1,
-        year: date.getFullYear(),
+        day: date.getUTCDate(),
+        month: date.getUTCMonth() + 1,
+        year: date.getUTCFullYear(),
         branch: {
           id: branchId,
         },
@@ -253,8 +253,6 @@ export class ReservationService {
     image: Express.Multer.File,
     userId: string,
   ) {
-    console.log(body);
-    console.log('reservation time is ', body.customStartTime);
     try {
       // Validate branch existence
       const branch = await this.BranchRepository.findOne({
@@ -452,8 +450,8 @@ export class ReservationService {
 
       const endTime = new Date(startTime.getTime() + duration * 1000 * 60);
 
-      const workingDate = new Date(body.day);
-  
+      const workingDate = startTime;
+
       // Get working hours for the branch on the specific date
       const workingHours = await this.getWorkingHoursAtSpecificDate(
         body.branch,
@@ -461,7 +459,7 @@ export class ReservationService {
       );
 
       console.log(workingHours);
-  
+
       // Check if the working hours allow the reservation
       const index = workingHours.findIndex(
         (w) => w.from <= startTime && w.to >= endTime,
@@ -513,7 +511,11 @@ export class ReservationService {
         createdBy: userId,
       });
 
-      console.log(workingHours[index].slot.day, workingHours[index].slot.month, workingHours[index].slot.year)
+      console.log(
+        workingHours[index].slot.day,
+        workingHours[index].slot.month,
+        workingHours[index].slot.year,
+      );
       await this.ReservationRepository.save(reservation);
 
       if (body.rootosh) {
@@ -864,7 +866,7 @@ export class ReservationService {
     const startTime = new Date(body.startTime);
     const endTime = new Date(startTime.getTime() + duration * 60 * 1000);
 
-    const workingDate = new Date(body.day);
+    const workingDate = startTime;
 
     const workingHours = await this.getWorkingHoursAtSpecificDate(
       reservation.branch.id,
@@ -979,7 +981,7 @@ export class ReservationService {
     const startTime = new Date(body.startTime);
     const endTime = new Date(startTime.getTime() + duration * 60 * 1000);
 
-    const workingDate = new Date(body.day);
+    const workingDate = startTime;
 
     const workingHours = await this.getWorkingHoursAtSpecificDate(
       reservation.branch.id,
@@ -998,9 +1000,9 @@ export class ReservationService {
 
     reservation.start_Time = startTime;
     reservation.end_Time = endTime;
-    reservation.reservationDay = workingDate.getDate() * 1;
-    reservation.reservationMonth = workingDate.getMonth() * 1 + 1;
-    reservation.reservationYear = workingDate.getFullYear() * 1;
+    reservation.reservationDay = workingDate.getUTCDate() * 1;
+    reservation.reservationMonth = workingDate.getUTCMonth() * 1 + 1;
+    reservation.reservationYear = workingDate.getUTCFullYear() * 1;
 
     await this.ReservationRepository.save(reservation);
     const newWorkingHours = this.newAddedWorkingHours(
@@ -1079,9 +1081,9 @@ export class ReservationService {
       // Update the reservation with new times
       reservation.start_Time = startTime;
       reservation.end_Time = endTime;
-      reservation.reservationDay = workingDate.getDate();
-      reservation.reservationMonth = workingDate.getMonth() + 1;
-      reservation.reservationYear = workingDate.getFullYear();
+      reservation.reservationDay = workingDate.getUTCDate();
+      reservation.reservationMonth = workingDate.getUTCMonth() + 1;
+      reservation.reservationYear = workingDate.getUTCFullYear();
 
       await this.ReservationRepository.save(reservation);
       const newWorkingHours = this.newAddedWorkingHours(
@@ -1244,7 +1246,7 @@ export class ReservationService {
       const startTime = new Date(csutomStartTime);
       const endTime = new Date(startTime.getTime() + duration * 1000 * 60);
 
-      const workingDate = new Date(body.day);
+      const workingDate = startTime;
 
       // Get working hours for the branch on the specific date
       const workingHours = await this.getWorkingHoursAtSpecificDate(
@@ -1327,9 +1329,9 @@ export class ReservationService {
     day: number,
     month: number,
     year: number,
-    start: Date, 
-    end: Date, 
-    branchId: string
+    start: Date,
+    end: Date,
+    branchId: string,
   ) {
     const slot = await this.SlotRepository.findOne({
       where: {

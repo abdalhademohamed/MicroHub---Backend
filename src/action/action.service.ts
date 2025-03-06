@@ -24,19 +24,11 @@ export class ActionService {
     findOrdersDto: FindOrdersDto,
     userId: string,
   ): Promise<{ items: OrderEntity[]; total: number }> {
-    const {
-      page,
-      limit,
-      fromDate,
-      toDate,
-      paymentStatus,
-      orderStatus,
-    } = findOrdersDto;
+    const { page, limit, fromDate, toDate, paymentStatus, orderStatus } =
+      findOrdersDto;
 
     try {
-
-      const query = this.OrderRepository
-        .createQueryBuilder("o")
+      const query = this.OrderRepository.createQueryBuilder("o")
         .leftJoinAndSelect("o.artist", "a")
         .leftJoinAndSelect("o.customer", "c")
         .addSelect(["c.id", "c.fullName", "c.phoneNumber"])
@@ -54,9 +46,9 @@ export class ActionService {
         .leftJoinAndSelect("r.services", "s")
         .leftJoinAndSelect("r.rootoshes", "ro") // Adding the rootoshes join here
         .addSelect(["r.id", "r.start_Time", "r.end_Time", "r.totalPrice"])
-        .andWhere('cb.id = :userId', { userId })
+        .andWhere("cb.id = :userId", { userId })
         .take(limit)
-        .skip((page - 1) * limit)
+        .skip((page - 1) * limit);
 
       if (fromDate || toDate) {
         if (fromDate) {

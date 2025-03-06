@@ -36,9 +36,7 @@ export class GiftCouponService {
     private readonly userRepository: Repository<UserEntity>,
   ) {}
 
-  async createGiftCoupon(
-    createGiftCouponDto: CreateGiftCouponDto,
-  ) {
+  async createGiftCoupon(createGiftCouponDto: CreateGiftCouponDto) {
     const { orderId, customerId } = createGiftCouponDto;
     try {
       const Order = await this.orderRepository.findOne({

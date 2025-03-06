@@ -83,7 +83,7 @@ export class ServiceController {
     Role.RECEPTIONIST,
     Role.ARTISTMANAGER,
     Role.ACCOUNTANT,
-    Role.ADMIN
+    Role.ADMIN,
   )
   @Get("sort")
   async getAllServices(

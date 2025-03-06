@@ -225,7 +225,7 @@ export class TransactionService implements OnModuleInit {
       .innerJoin("transaction.payment", "payment") // Join payment table
       .leftJoin("transaction.order", "order") // Join order table (left join to include users without orders)
       .leftJoin("order.createdBy", "createdBy")
-      .leftJoin("order.artist", "employee") // Join employee (artist) table to count employees
+      .leftJoin("order.artist", "employee"); // Join employee (artist) table to count employees
 
     if (branch) {
       queryBuilder.andWhere("branch.id = :branch", { branch });
@@ -274,7 +274,7 @@ export class TransactionService implements OnModuleInit {
       totalRefund: parseFloat(entry.totalRefund),
       orderPending: parseInt(entry.orderPending, 10), // Number of orders created by the user
       orderCancelled: parseInt(entry.orderCancelled, 10),
-      orderCompleted: parseInt(entry.orderCompleted, 10),// Number of orders created by the user
+      orderCompleted: parseInt(entry.orderCompleted, 10), // Number of orders created by the user
       // cancelledOrderCount: parseInt(entry.cancelledOrderCount, 10),  // Number of cancelled orders
       employeeId: entry.employeeId, // Employee ID
       employeeName: entry.employeeName, // Employee name
@@ -448,11 +448,11 @@ export class TransactionService implements OnModuleInit {
     // Map the result and include the necessary fields
     const data = result.map((entry) => {
       totalRef += parseFloat(entry.totalRefund);
-      totalInc +=  parseFloat(entry.totalIncome);
-      totalPen +=  parseFloat(entry.totalPending);
+      totalInc += parseFloat(entry.totalIncome);
+      totalPen += parseFloat(entry.totalPending);
       orderPendingCount += parseInt(entry.orderPending, 10); // Number of orders created by the user
-      orderCancelledCount += parseInt(entry.orderCancelled, 10); 
-      orderCompletedCount += parseInt(entry.orderCompleted, 10); 
+      orderCancelledCount += parseInt(entry.orderCancelled, 10);
+      orderCompletedCount += parseInt(entry.orderCompleted, 10);
       return {
         userName: entry.userName,
         userEmail: entry.userEmail,
