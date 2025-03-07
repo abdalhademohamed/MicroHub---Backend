@@ -28,6 +28,7 @@ export class SlotService {
     private readonly EmployeeRepository: Repository<EmployeeEntity>,
     private reservationService: ReservationService,
   ) {}
+
   splitOvernightIntervals(utcDateTimes: string[]): string[] {
 
     const result: string[] = [];
@@ -56,6 +57,7 @@ export class SlotService {
     return result;
 
   }
+
   processTimes(times: string[]): string[] {
     // Step 1: Sort times in ascending order
     const sortedTimes = [...times].sort();
@@ -81,6 +83,7 @@ export class SlotService {
   
     return result;
   }
+
   convertToUtc(day: number, month: number, year: number, times: string[], timeZone: string): string[] {
     console.log('date is =>', day, month, year);
     console.log('times is =>', times)
@@ -149,6 +152,7 @@ export class SlotService {
       console.log('this is day an d', day, year, month);
     }
   }
+
   async artistCount(branchId: string) {
     const artists = await this.EmployeeRepository.find({
       where: {
@@ -160,6 +164,7 @@ export class SlotService {
     });
     return artists;
   }
+
   branchWorkingHours(branchId: string, dayOfWeek: WeekDays) {
     return this.WorkingBranchRepository.findOne({
       where: {
@@ -175,6 +180,7 @@ export class SlotService {
     // Return the hour in HH:mm format
     return localTime.toFormat('HH:mm');
   }
+
   async getSlotForDay(day: Date, branch: BranchEntity) {
     let slot = await this.SlotRepository.findOne({
       where: {
@@ -242,6 +248,8 @@ export class SlotService {
       console.log('working[i] is', workingHours[i]);
       console.log('from time is', from);
 
+      console.log('artist base time is', artists[0].workingHours);
+
       let to = new Date(workingHours[i + 1]);
 
       let duration = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60));
@@ -258,9 +266,6 @@ export class SlotService {
         if (artists[j].workingHours <= 0) {
           continue;
         }
-
-        console.log(artists.length);
-
         let time = artists[j].workingHours - noOfHours;
 
         if (time < 0) {
@@ -347,58 +352,58 @@ export class SlotService {
   //     today.setDate(today.getDate() + 1);
   //   }
   // }
-  createWorkingHoursSlotsForArtist(
-    workingHours: string[],
-    nextDate: Date,
-    slot: SlotsEntity,
-    artist: EmployeeEntity,
-  ) {
-    let workingHoursOfEmployees = artist.workingHours;
-    const workingEntities: WorkingEntity[] = [];
-    for (let i = 0; i < workingHours.length; i += 2) {
-      // console.log(workingHours[i], workingHours[i + 1]);
-      const from = this.createDate(
-        nextDate.getFullYear(),
-        nextDate.getMonth() + 1,
-        nextDate.getDate(),
-        workingHours[i],
-      );
-      let to = this.createDate(
-        nextDate.getFullYear(),
-        nextDate.getMonth() + 1,
-        nextDate.getDate(),
-        workingHours[i + 1],
-      );
-      let duration = Math.floor((to.getTime() - from.getTime()) / (1000 * 60));
-      const noOfHours = Math.floor(duration / 60);
-      if (workingHoursOfEmployees <= 0) {
-        break;
-      }
-      let time = workingHoursOfEmployees - noOfHours;
-      if (time < 0) {
-        to = new Date(from.getTime() + workingHoursOfEmployees * 3600 * 1000);
-        duration = Math.floor((to.getTime() - from.getTime()) / (1000 * 60));
-        time = 0;
-      }
-      workingHoursOfEmployees = time;
-      const workingEntity = this.WorkingRepository.create({
-        from,
-        to,
-        slot: slot,
-        duration,
-      });
-      console.log(workingEntity);
-      workingEntities.push(workingEntity);
-    }
-    // console.log(workingEntities);
-    return workingEntities;
-  }
-  createDate(year: number, month: number, day: number, time: string) {
-    const [hour, minute] = time.split(":");
-    return new Date(
-      Date.UTC(year, month - 1, day, parseInt(hour, 10), parseInt(minute, 10)),
-    );
-  }
+  // createWorkingHoursSlotsForArtist(
+  //   workingHours: string[],
+  //   nextDate: Date,
+  //   slot: SlotsEntity,
+  //   artist: EmployeeEntity,
+  // ) {
+  //   let workingHoursOfEmployees = artist.workingHours;
+  //   const workingEntities: WorkingEntity[] = [];
+  //   for (let i = 0; i < workingHours.length; i += 2) {
+  //     // console.log(workingHours[i], workingHours[i + 1]);
+  //     const from = this.createDate(
+  //       nextDate.getFullYear(),
+  //       nextDate.getMonth() + 1,
+  //       nextDate.getDate(),
+  //       workingHours[i],
+  //     );
+  //     let to = this.createDate(
+  //       nextDate.getFullYear(),
+  //       nextDate.getMonth() + 1,
+  //       nextDate.getDate(),
+  //       workingHours[i + 1],
+  //     );
+  //     let duration = Math.floor((to.getTime() - from.getTime()) / (1000 * 60));
+  //     const noOfHours = Math.floor(duration / 60);
+  //     if (workingHoursOfEmployees <= 0) {
+  //       break;
+  //     }
+  //     let time = workingHoursOfEmployees - noOfHours;
+  //     if (time < 0) {
+  //       to = new Date(from.getTime() + workingHoursOfEmployees * 3600 * 1000);
+  //       duration = Math.floor((to.getTime() - from.getTime()) / (1000 * 60));
+  //       time = 0;
+  //     }
+  //     workingHoursOfEmployees = time;
+  //     const workingEntity = this.WorkingRepository.create({
+  //       from,
+  //       to,
+  //       slot: slot,
+  //       duration,
+  //     });
+  //     console.log(workingEntity);
+  //     workingEntities.push(workingEntity);
+  //   }
+  //   // console.log(workingEntities);
+  //   return workingEntities;
+  // }
+  // createDate(year: number, month: number, day: number, time: string) {
+  //   const [hour, minute] = time.split(":");
+  //   return new Date(
+  //     Date.UTC(year, month - 1, day, parseInt(hour, 10), parseInt(minute, 10)),
+  //   );
+  // }
   getDayFromDate(year: number, month: number, day: number) {
     const date = new Date(year, month - 1, day);
     const daysOfWeek = [

@@ -79,11 +79,13 @@ export class WorkingBranchService {
     const resultDates: { day: number; month: number; year: number }[] = [];
     for (let i = 0; i < 4; i++) {
       const nextDate = new Date();
+      nextDate.setUTCHours(0,0,0,0);
       nextDate.setDate(today.getDate() + daysToAdd + i * 7);
+
       resultDates.push({
-        day: nextDate.getDate(),
-        year: nextDate.getFullYear(),
-        month: nextDate.getMonth() + 1,
+        day: nextDate.getUTCDate(),
+        year: nextDate.getUTCFullYear(),
+        month: nextDate.getUTCMonth() + 1,
       });
     }
     for (const { day, year, month } of resultDates) {
@@ -107,17 +109,20 @@ export class WorkingBranchService {
     }
   }
 
-  formatTimeArray(times: string[]): string[] {
-    return times.map(time => {
-      let [hour, minute] = time.split(":");
+  formatAndSortTimeArray(times: string[]): string[] {
+    return times
+      .map(time => {
+        let [hour, minute] = time.split(":");
   
-      // Pad hours and minutes to always be two digits
-      hour = hour.padStart(2, "0");
-      minute = minute.padStart(2, "0");
-  
-      return `${hour}:${minute}`;
-    });
-  }
+        // Convert to numbers for correct sorting
+        return { hour: Number(hour), minute: Number(minute) };
+      })
+      .sort((a, b) => a.hour - b.hour || a.minute - b.minute) // Sort by hour first, then by minute
+      .map(({ hour, minute }) => {
+        // Format with leading zeros
+        return `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+      });
+  };
 
   async createWorkingBranch(
     branchId: string,
@@ -127,7 +132,7 @@ export class WorkingBranchService {
 
     let { dayOfWeek, workingHours } = createWorkingBranchDto;
 
-    createWorkingBranchDto.workingHours = this.formatTimeArray(createWorkingBranchDto.workingHours);
+    createWorkingBranchDto.workingHours = this.formatAndSortTimeArray(createWorkingBranchDto.workingHours);
 
     console.log('new working hours', createWorkingBranchDto.workingHours);
 
