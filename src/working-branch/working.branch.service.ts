@@ -109,17 +109,20 @@ export class WorkingBranchService {
     }
   }
 
-  formatTimeArray(times: string[]): string[] {
-    return times.map(time => {
-      let [hour, minute] = time.split(":");
+  formatAndSortTimeArray(times: string[]): string[] {
+    return times
+      .map(time => {
+        let [hour, minute] = time.split(":");
   
-      // Pad hours and minutes to always be two digits
-      hour = hour.padStart(2, "0");
-      minute = minute.padStart(2, "0");
-  
-      return `${hour}:${minute}`;
-    });
-  }
+        // Convert to numbers for correct sorting
+        return { hour: Number(hour), minute: Number(minute) };
+      })
+      .sort((a, b) => a.hour - b.hour || a.minute - b.minute) // Sort by hour first, then by minute
+      .map(({ hour, minute }) => {
+        // Format with leading zeros
+        return `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+      });
+  };
 
   async createWorkingBranch(
     branchId: string,
@@ -129,7 +132,7 @@ export class WorkingBranchService {
 
     let { dayOfWeek, workingHours } = createWorkingBranchDto;
 
-    createWorkingBranchDto.workingHours = this.formatTimeArray(createWorkingBranchDto.workingHours);
+    createWorkingBranchDto.workingHours = this.formatAndSortTimeArray(createWorkingBranchDto.workingHours);
 
     console.log('new working hours', createWorkingBranchDto.workingHours);
 
