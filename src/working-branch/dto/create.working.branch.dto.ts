@@ -20,5 +20,5 @@ export class CreateWorkingBranchDto {
   })
   @IsArray()
   @IsString({ each: true })
-  readonly workingHours: string[];
+  workingHours: string[];
 }

@@ -107,6 +107,18 @@ export class WorkingBranchService {
     }
   }
 
+  formatTimeArray(times: string[]): string[] {
+    return times.map(time => {
+      let [hour, minute] = time.split(":");
+  
+      // Pad hours and minutes to always be two digits
+      hour = hour.padStart(2, "0");
+      minute = minute.padStart(2, "0");
+  
+      return `${hour}:${minute}`;
+    });
+  }
+
   async createWorkingBranch(
     branchId: string,
     createWorkingBranchDto: CreateWorkingBranchDto,
@@ -115,10 +127,14 @@ export class WorkingBranchService {
 
     let { dayOfWeek, workingHours } = createWorkingBranchDto;
 
+    createWorkingBranchDto.workingHours = this.formatTimeArray(createWorkingBranchDto.workingHours);
+
+    console.log('new working hours', createWorkingBranchDto.workingHours);
+
     await this.getNextFourWeeksDatesForDay(
       createWorkingBranchDto.dayOfWeek,
       branchId,
-      "Asia/Riyadh",
+      timezone,
     );
 
     const times = createWorkingBranchDto.workingHours;
