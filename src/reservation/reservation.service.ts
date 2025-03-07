@@ -53,12 +53,9 @@ export class ReservationService {
     private readonly OrdersService: OrdersService, // Inject the new service
     @InjectRepository(UserEntity)
     private UserRepository: Repository<UserEntity>,
-
     @InjectRepository(OfferEntity)
     private OfferRepository: Repository<OfferEntity>,
-
     @InjectEntityManager() private readonly entityManager: EntityManager,
-
     @InjectRepository(SharableOfferEntity)
     private SharableOfferRepository: Repository<SharableOfferEntity>,
     @InjectRepository(GiftCouponEntity)
@@ -67,7 +64,6 @@ export class ReservationService {
     private RootoshRepository: Repository<RootoshEntity>,
     // @InjectRepository(EmployeeEntity)
     private readonly i18n: CustomI18nService,
-
     @InjectRepository(OrderEntity)
     private OrderRepo: Repository<OrderEntity>,
     private actionService: ActionService,
@@ -820,6 +816,7 @@ export class ReservationService {
       limit,
     };
   }
+
   async getBookingBranch(branchId: string, query: GetReservationsDto, timezone: string) {
     const { day, month, year, page = 1, limit = 10 } = query;
 
@@ -921,9 +918,9 @@ export class ReservationService {
     reservation.end_Time = endTime;
     reservation.services = services;
     reservation.totalPrice = price;
-    reservation.reservationDay = workingDate.getDate();
-    reservation.reservationMonth = workingDate.getMonth() + 1;
-    reservation.reservationYear = workingDate.getFullYear();
+    reservation.reservationDay = workingHours[index].slot.day;
+    reservation.reservationMonth = workingHours[index].slot.month;
+    reservation.reservationYear = workingHours[index].slot.year;
 
     await this.ReservationRepository.save(reservation);
 
@@ -1010,9 +1007,9 @@ export class ReservationService {
 
     reservation.start_Time = startTime;
     reservation.end_Time = endTime;
-    reservation.reservationDay = workingDate.getUTCDate() * 1;
-    reservation.reservationMonth = workingDate.getUTCMonth() * 1 + 1;
-    reservation.reservationYear = workingDate.getUTCFullYear() * 1;
+    reservation.reservationDay = workingHours[index].slot.day;
+    reservation.reservationMonth = workingHours[index].slot.month;
+    reservation.reservationYear = workingHours[index].slot.year;
 
     await this.ReservationRepository.save(reservation);
     const newWorkingHours = this.newAddedWorkingHours(
@@ -1091,9 +1088,9 @@ export class ReservationService {
       // Update the reservation with new times
       reservation.start_Time = startTime;
       reservation.end_Time = endTime;
-      reservation.reservationDay = workingDate.getUTCDate();
-      reservation.reservationMonth = workingDate.getUTCMonth() + 1;
-      reservation.reservationYear = workingDate.getUTCFullYear();
+      reservation.reservationDay = workingHours[index].slot.day;
+      reservation.reservationMonth = workingHours[index].slot.month;
+      reservation.reservationYear = workingHours[index].slot.year;
 
       await this.ReservationRepository.save(reservation);
       const newWorkingHours = this.newAddedWorkingHours(
@@ -1298,9 +1295,11 @@ export class ReservationService {
       reservation.start_Time = startTime;
       reservation.end_Time = endTime;
       reservation.branch = branch;
-      reservation.reservationDay = workingDate.getUTCDate();
-      reservation.reservationMonth = workingDate.getUTCMonth() + 1;
-      reservation.reservationYear = workingDate.getUTCFullYear();
+
+      reservation.reservationDay = workingHours[index].slot.day;
+      reservation.reservationMonth = workingHours[index].slot.month;
+      reservation.reservationYear = workingHours[index].slot.year;
+
       const order = await this.OrderRepo.findOne({
         where: { id: reservation.order.id },
       });
