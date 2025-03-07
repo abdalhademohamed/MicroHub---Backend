@@ -284,8 +284,6 @@ export class SlotService {
           duration,
         });
 
-        console.log('artist second time is', artists[0].workingHours);
-
         workingEntities.push(workingEntity);
 
       }

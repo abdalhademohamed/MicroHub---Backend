@@ -79,11 +79,13 @@ export class WorkingBranchService {
     const resultDates: { day: number; month: number; year: number }[] = [];
     for (let i = 0; i < 4; i++) {
       const nextDate = new Date();
+      nextDate.setUTCHours(0,0,0,0);
       nextDate.setDate(today.getDate() + daysToAdd + i * 7);
+
       resultDates.push({
-        day: nextDate.getDate(),
-        year: nextDate.getFullYear(),
-        month: nextDate.getMonth() + 1,
+        day: nextDate.getUTCDate(),
+        year: nextDate.getUTCFullYear(),
+        month: nextDate.getUTCMonth() + 1,
       });
     }
     for (const { day, year, month } of resultDates) {
