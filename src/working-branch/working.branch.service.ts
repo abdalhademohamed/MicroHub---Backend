@@ -201,7 +201,7 @@ export class WorkingBranchService {
     );
 
     workingHours = createWorkingBranchDto.workingHours.map((result) => {
-      return this.getUtcTime(result, "Asia/Riyadh");
+      return this.getUtcTime(result, timezone);
     });
 
     if (workingBranchEntity) {
