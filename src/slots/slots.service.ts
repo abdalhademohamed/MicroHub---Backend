@@ -3,7 +3,7 @@ import { WeekDays } from "../branch/utils/days.enum";
 import { CreateSlotDto } from "./dto/create.slot.dto";
 import { InjectRepository } from "@nestjs/typeorm";
 import { WorkingBranchEntity } from "../working-branch/entities/working.branch.entity";
-import { Brackets, In, MoreThan, MoreThanOrEqual, Repository } from "typeorm";
+import { Brackets, Repository } from "typeorm";
 import { BranchEntity } from "../branch/entities/branch.entity";
 import { Role } from "../user/utils/user.enum";
 import { ReservationService } from "../reservation/reservation.service";
@@ -12,7 +12,6 @@ import { WorkingEntity } from "./entities/working.entity";
 import { AvailableQueryDto } from "./dto/query.available.dto";
 import { EmployeeEntity } from "../employee/entities/employee.entity";
 import { DateTime } from 'luxon';
-import { OnEvent } from "@nestjs/event-emitter";
 
 @Injectable()
 export class SlotService {
@@ -33,6 +32,7 @@ export class SlotService {
 
     const result: string[] = [];
 
+    console.log(utcDateTimes);
     for (let i = 0; i < utcDateTimes.length; i += 2) {
         const fromDate = new Date(utcDateTimes[i]);
         const toDate = new Date(utcDateTimes[i + 1]);
@@ -41,15 +41,11 @@ export class SlotService {
 
         if (fromDate.toISOString().split("T")[0] !== toDate.toISOString().split("T")[0]) {
             // If dates are different, split at midnight
-            const endOfDay = new Date(fromDate);
-
-            endOfDay.setUTCHours(23, 59, 59, 999);
-
-            result.push(endOfDay.toISOString()); // Add "to" as end of the day
-
             const startOfNextDay = new Date(toDate);
 
             startOfNextDay.setUTCHours(0, 0, 0, 0);
+
+            result.push(startOfNextDay.toISOString()); // Add "to" as end of the day
 
             result.push(startOfNextDay.toISOString()); // Add "from" as start of the next day
         }
@@ -60,11 +56,40 @@ export class SlotService {
     return result;
 
   }
+  processTimes(times: string[]): string[] {
+    // Step 1: Sort times in ascending order
+    const sortedTimes = [...times].sort();
+  
+    const result: string[] = [];
+    let skipNext = false;
+  
+    for (let i = 0; i < sortedTimes.length; i++) {
+      if (skipNext) {
+        skipNext = false;
+        continue;
+      }
+  
+      // If next element is duplicate, skip it and skip the next hour
+      if (sortedTimes[i] === sortedTimes[i + 1]) {
+        skipNext = true; // Skip the next duplicate and the next element after it
+        continue;
+      }
+  
+      // Push the current time to the result
+      result.push(sortedTimes[i]);
+    }
+  
+    return result;
+  }
   convertToUtc(day: number, month: number, year: number, times: string[], timeZone: string): string[] {
     console.log('date is =>', day, month, year);
     console.log('times is =>', times)
     console.log('time zone is', timeZone);
-    const result = times.map(time => {
+
+    const workingTimes = this.processTimes(times);
+    console.log('working time is', workingTimes);
+
+    const result = workingTimes.map(time => {
       const localDateTime = DateTime.fromObject(
         {
           year: year,
@@ -75,12 +100,11 @@ export class SlotService {
         },
         { zone: timeZone }
       );
-  
       // Convert to UTC
       return localDateTime.toUTC().toISO();
     });
-  
-    console.log(result);
+
+    console.log('slot result =>', result);
 
     return this.splitOvernightIntervals(result);
   }
@@ -501,9 +525,13 @@ export class SlotService {
         // console.log(nextSlotEnd , currentEndTime, currentStartTime, duration);
 
         // Ensure that we don't exceed the endTime
+
+        console.log(nextSlotEnd.getTime());
+
         if (nextSlotEnd > currentEndTime) {
           break; // Stop if the next slot exceeds the endTime
         }
+
         const obj = {
           id,
           startTime: currentStartTime,
@@ -513,6 +541,7 @@ export class SlotService {
         const idx = result.findIndex(
           ({ startTime }) => startTime.getTime() == obj.startTime.getTime(),
         );
+
         if (idx == -1) {
           result.push(obj);
         }
