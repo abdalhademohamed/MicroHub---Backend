@@ -89,7 +89,9 @@ export class SlotService {
     console.log('times is =>', times)
     console.log('time zone is', timeZone);
 
-    const workingTimes = this.processTimes(times);
+    // const workingTimes = this.processTimes(times);
+
+    const workingTimes = times;
     console.log('working time is', workingTimes);
 
     const result = workingTimes.map(time => {
