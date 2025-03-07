@@ -32,8 +32,11 @@ export class SlotController {
   async getAllAvailableSlots(
     @Param("branchId") branchId: string,
     @Query() query: AvailableQueryDto,
-    @Body('timezone') timezone: string = 'Asia/Riyadh',
+    @Body('timezone') timezone: string,
   ) {
+    if(!timezone){
+      timezone = 'Asia/Riyadh'
+    }
     return this.slotService.getAllAvailableSlots(branchId, query, timezone);
   }
 
