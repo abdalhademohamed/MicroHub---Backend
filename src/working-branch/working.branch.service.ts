@@ -268,9 +268,17 @@ export class WorkingBranchService {
     return date;
   }
 
+  getLocalTimeFromUtc(utcTime: string, timeZone: string): string {
+    // Convert UTC time to the given time zone
+    const localTime = DateTime.fromFormat(utcTime, "HH:mm", { zone: "utc" }).setZone(timeZone);
+  
+    // Return local time in HH:mm format
+    return localTime.toFormat("HH:mm");
+  }
 
   async findAll(
     branchId?: string,
+    timezone?: string,
   ): Promise<Omit<WorkingBranchEntity, "branch">[]> {
     // Validate branchId format if necessary
     if (branchId && typeof branchId !== "string") {
@@ -300,6 +308,12 @@ export class WorkingBranchService {
       // Optionally handle case where no results are found
       if (workingBranches.length === 0) {
         throw new NotFoundException("No working branches found");
+      }
+
+      for(let i = 0; i < workingBranches.length; i++) {
+        workingBranches[i].workingHours = workingBranches[i].workingHours.map((result) => {
+          return this.getUtcTime(result, timezone);
+        });
       }
 
       return workingBranches; // Return the modified result without the branch object

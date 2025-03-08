@@ -55,7 +55,11 @@ export class WorkingBranchController {
   })
   async findAll(
     @Query("branchId") branchId?: string,
+    @Query('timezone') timezone?: string,
   ): Promise<Omit<WorkingBranchEntity, "branch">[]> {
+    if(!timezone){
+      timezone = 'Asia/Riyadh'
+    }
     return this.workingBranchService.findAll(branchId);
   }
 
