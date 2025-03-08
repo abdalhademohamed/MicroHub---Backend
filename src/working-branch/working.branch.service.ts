@@ -312,7 +312,7 @@ export class WorkingBranchService {
 
       for(let i = 0; i < workingBranches.length; i++) {
         workingBranches[i].workingHours = workingBranches[i].workingHours.map((result) => {
-          return this.getUtcTime(result, timezone);
+          return this.getLocalTimeFromUtc(result, timezone);
         });
       }
 
