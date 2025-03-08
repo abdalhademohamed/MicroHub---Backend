@@ -35,21 +35,28 @@ export class SlotService {
 
     console.log(utcDateTimes);
     for (let i = 0; i < utcDateTimes.length; i += 2) {
-        const fromDate = new Date(utcDateTimes[i]);
         const toDate = new Date(utcDateTimes[i + 1]);
 
         result.push(utcDateTimes[i]); // Always add the "from" timestamp
 
-        if (fromDate.toISOString().split("T")[0] !== toDate.toISOString().split("T")[0]) {
-            // If dates are different, split at midnight
-            const startOfNextDay = new Date(toDate);
+        if (toDate.getUTCHours() === 23 && toDate.getUTCMinutes() === 59) {
+          toDate.setUTCHours(0, 0, 0, 0);
 
-            startOfNextDay.setUTCHours(0, 0, 0, 0);
+          result.push(toDate.toISOString());
 
-            result.push(startOfNextDay.toISOString()); // Add "to" as end of the day
-
-            result.push(startOfNextDay.toISOString()); // Add "from" as start of the next day
+          continue;
         }
+
+        // if (fromDate.toISOString().split("T")[0] !== toDate.toISOString().split("T")[0]) {
+        //     // If dates are different, split at midnight
+        //     const startOfNextDay = new Date(toDate);
+
+        //     startOfNextDay.setUTCHours(0, 0, 0, 0);
+
+        //     result.push(startOfNextDay.toISOString()); // Add "to" as end of the day
+
+        //     result.push(startOfNextDay.toISOString()); // Add "from" as start of the next day
+        // }
 
         result.push(utcDateTimes[i + 1]); // Always add the "to" timestamp
     }
