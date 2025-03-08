@@ -133,7 +133,10 @@ export class WorkingBranchService {
     let { dayOfWeek, workingHours } = createWorkingBranchDto;
 
 
+    console.log('coming working hours', createWorkingBranchDto.workingHours);
+
     createWorkingBranchDto.workingHours = this.formatAndSortTimeArray(createWorkingBranchDto.workingHours);
+
 
     // console.log('new working hours', createWorkingBranchDto.workingHours);
 
