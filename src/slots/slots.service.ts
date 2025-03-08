@@ -40,9 +40,9 @@ export class SlotService {
 
       result.push(utcDateTimes[i]); // Always add the "from" timestamp
 
-      if (toDate.getUTCHours() === 23 && toDate.getUTCMinutes() === 59) {
+      if (toDate.getUTCMinutes() === 59) {
         toDate.setUTCMinutes(toDate.getUTCMinutes() + 1);
-        result.push(toDate.toISOString()); 
+        result.push(toDate.toISOString());
         continue;
       }
 
