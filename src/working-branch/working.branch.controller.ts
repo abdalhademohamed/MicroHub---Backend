@@ -60,7 +60,7 @@ export class WorkingBranchController {
     if(!timezone){
       timezone = 'Asia/Riyadh'
     }
-    return this.workingBranchService.findAll(branchId);
+    return this.workingBranchService.findAll(branchId, timezone);
   }
 
   @Put(":branchId")
