@@ -42,6 +42,7 @@ export class SlotService {
 
       if (toDate.getUTCHours() === 23 && toDate.getUTCMinutes() === 59) {
         toDate.setUTCMinutes(toDate.getUTCMinutes() + 1);
+        result.push(toDate.toISOString()); 
         continue;
       }
 
