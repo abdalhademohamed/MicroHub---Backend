@@ -132,9 +132,10 @@ export class WorkingBranchService {
 
     let { dayOfWeek, workingHours } = createWorkingBranchDto;
 
+
     createWorkingBranchDto.workingHours = this.formatAndSortTimeArray(createWorkingBranchDto.workingHours);
 
-    console.log('new working hours', createWorkingBranchDto.workingHours);
+    // console.log('new working hours', createWorkingBranchDto.workingHours);
 
     await this.getNextFourWeeksDatesForDay(
       createWorkingBranchDto.dayOfWeek,
@@ -143,8 +144,6 @@ export class WorkingBranchService {
     );
 
     const times = createWorkingBranchDto.workingHours;
-
-    
 
     // Convert dayOfWeek from string to WeekDays enum
     const weekDayEnum = WeekDays[dayOfWeek as keyof typeof WeekDays];
@@ -199,9 +198,9 @@ export class WorkingBranchService {
     );
 
     workingHours = createWorkingBranchDto.workingHours.map((result) => {
-      return this.getUtcTime(result, "Asia/Riyadh");
+      return this.getUtcTime(result, timezone);
     });
-
+    console.log('working hours before save', workingHours)
     if (workingBranchEntity) {
       // Update existing WorkingBranchEntity
       workingBranchEntity.workingHours = workingHours;
@@ -269,9 +268,17 @@ export class WorkingBranchService {
     return date;
   }
 
+  getLocalTimeFromUtc(utcTime: string, timeZone: string): string {
+    // Convert UTC time to the given time zone
+    const localTime = DateTime.fromFormat(utcTime, "HH:mm", { zone: "utc" }).setZone(timeZone);
+  
+    // Return local time in HH:mm format
+    return localTime.toFormat("HH:mm");
+  }
 
   async findAll(
     branchId?: string,
+    timezone?: string,
   ): Promise<Omit<WorkingBranchEntity, "branch">[]> {
     // Validate branchId format if necessary
     if (branchId && typeof branchId !== "string") {
@@ -301,6 +308,12 @@ export class WorkingBranchService {
       // Optionally handle case where no results are found
       if (workingBranches.length === 0) {
         throw new NotFoundException("No working branches found");
+      }
+
+      for(let i = 0; i < workingBranches.length; i++) {
+        workingBranches[i].workingHours = workingBranches[i].workingHours.map((result) => {
+          return this.getUtcTime(result, timezone);
+        });
       }
 
       return workingBranches; // Return the modified result without the branch object
