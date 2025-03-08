@@ -133,9 +133,12 @@ export class WorkingBranchService {
     let { dayOfWeek, workingHours } = createWorkingBranchDto;
 
 
+    console.log('coming working hours', createWorkingBranchDto.workingHours);
+
     createWorkingBranchDto.workingHours = this.formatAndSortTimeArray(createWorkingBranchDto.workingHours);
 
-    // console.log('new working hours', createWorkingBranchDto.workingHours);
+
+    console.log('new working hours', createWorkingBranchDto.workingHours);
 
     await this.getNextFourWeeksDatesForDay(
       createWorkingBranchDto.dayOfWeek,
@@ -200,6 +203,7 @@ export class WorkingBranchService {
     workingHours = createWorkingBranchDto.workingHours.map((result) => {
       return this.getUtcTime(result, timezone);
     });
+
     console.log('working hours before save', workingHours)
     if (workingBranchEntity) {
       // Update existing WorkingBranchEntity
