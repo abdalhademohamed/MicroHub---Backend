@@ -117,7 +117,7 @@ export class WorkingBranchService {
         // Convert to numbers for correct sorting
         return { hour: Number(hour), minute: Number(minute) };
       })
-      // .sort((a, b) => a.hour - b.hour || a.minute - b.minute) // Sort by hour first, then by minute
+      .sort((a, b) => a.hour - b.hour || a.minute - b.minute) // Sort by hour first, then by minute
       .map(({ hour, minute }) => {
         // Format with leading zeros
         return `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
@@ -138,7 +138,7 @@ export class WorkingBranchService {
     createWorkingBranchDto.workingHours = this.formatAndSortTimeArray(createWorkingBranchDto.workingHours);
 
 
-    // console.log('new working hours', createWorkingBranchDto.workingHours);
+    console.log('new working hours', createWorkingBranchDto.workingHours);
 
     await this.getNextFourWeeksDatesForDay(
       createWorkingBranchDto.dayOfWeek,
