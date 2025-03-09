@@ -12,6 +12,7 @@ import { WorkingEntity } from "./entities/working.entity";
 import { AvailableQueryDto } from "./dto/query.available.dto";
 import { EmployeeEntity } from "../employee/entities/employee.entity";
 import { DateTime } from 'luxon';
+import { ReservationEntity } from "src/reservation/entities/reservation.entity";
 
 @Injectable()
 export class SlotService {
@@ -27,6 +28,8 @@ export class SlotService {
     @InjectRepository(EmployeeEntity)
     private readonly EmployeeRepository: Repository<EmployeeEntity>,
     private reservationService: ReservationService,
+    @InjectRepository(ReservationEntity)
+    private readonly ReservationRepository: Repository<ReservationEntity>,
   ) {}
 
   splitOvernightIntervals(utcDateTimes: string[]): string[] {
@@ -35,7 +38,6 @@ export class SlotService {
 
     console.log(utcDateTimes);
     for (let i = 0; i < utcDateTimes.length; i += 2) {
-      const fromDate = new Date(utcDateTimes[i]);
       const toDate = new Date(utcDateTimes[i + 1]);
 
       result.push(utcDateTimes[i]); // Always add the "from" timestamp
@@ -235,9 +237,8 @@ export class SlotService {
   ) {
     workingHours = this.convertToUtc(day, month, year, workingHours, timezone);
 
-    console.log(workingHours);
-
     const workingEntities: WorkingEntity[] = [];
+
     for (let i = 0; i < workingHours.length; i += 2) {
 
       let from = new Date(workingHours[i]);
@@ -257,32 +258,103 @@ export class SlotService {
 
       const slot = await this.getSlotForDay(from, branch);
 
-      // console.log(duration, artistCount);
+      const reservations = await this.ReservationRepository.createQueryBuilder('reservation')
+        .leftJoinAndSelect('reservation.branch', 'branch')
+        .where('branch.id = :id', { id: branch.id })
+        .where(
+          '(reservation.start_Time < :endTime AND reservation.end_Time > :startTime)', 
+          { startTime: workingHours[i], endTime: workingHours[i+1] }
+        )
+        .getMany();
+
       for (let j = 0; j < artists.length; j++) {
-        const noOfHours = Math.floor(duration / 60);
+
         if (artists[j].workingHours <= 0) {
           continue;
         }
+
+        let reservationHours = 0;
+
+        const index = reservations.findIndex((value)=>{
+          reservationHours = Math.floor((new Date(value.end_Time).getTime() - new Date(value.start_Time).getTime()) / 1000 * 60 * 60);
+          return artists[j].workingHours >= duration;
+        });
+
+        let intervals = [];
+        let totalDuration = 0;
+
+        if(index > -1) {
+          intervals = this.splitIntervals(
+            new Date(workingHours[i]),
+            new Date(workingHours[i+1]),
+            new Date(reservations[index].start_Time),
+            new Date(reservations[index].end_Time),
+          )
+          intervals.forEach((value)=>{
+            totalDuration += value.duration;
+          })
+          reservations.splice(index, 1);
+        } else {
+          totalDuration = duration;
+          intervals.push({
+            from,
+            to,
+            duration,
+          })
+        }
+
+        if(totalDuration == 0) {
+          artists[j].workingHours = artists[j].workingHours - reservationHours;
+          continue;
+        }
+
+        const noOfHours = Math.floor(totalDuration / 60);
+
         let time = artists[j].workingHours - noOfHours;
 
         if (time < 0) {
-          to = new Date(from.getTime() + artists[j].workingHours * 3600 * 1000);
-          duration = Math.floor((to.getTime() - from.getTime()) / (1000 * 60));
-          // artists[j].workingHours = 0;
-          time = 0;
+          // If remaining artist hours are less than required, adjust the last interval
+
+          let remainingMinutes = artists[j].workingHours * 60;
+          let adjustedIntervals: { from: Date; to: Date; duration: number }[] = [];
+          let usedMinutes = 0;
+  
+          for (const interval of intervals) {
+            if (usedMinutes + interval.duration <= remainingMinutes) {
+              // If we have enough time, keep the whole interval
+              adjustedIntervals.push(interval);
+              usedMinutes += interval.duration;
+            } else {
+              // Trim the interval to fit the remaining artist hours
+              let newTo = new Date(interval.from.getTime() + (remainingMinutes - usedMinutes) * 60000);
+              let newDuration = Math.floor((newTo.getTime() - interval.from.getTime()) / (1000 * 60));
+  
+              if (newDuration > 0) {
+                adjustedIntervals.push({
+                  from: interval.from,
+                  to: newTo,
+                  duration: newDuration,
+                });
+              }
+              break;
+            }
+          }
+  
+          intervals = adjustedIntervals;
+          time = 0; // Artist has no remaining hours after this
         }
 
         artists[j].workingHours = time;
 
-        const workingEntity = this.WorkingRepository.create({
-          from,
-          to,
-          slot: slot,
-          duration,
-        });
-
-        workingEntities.push(workingEntity);
-
+        intervals.forEach((value)=>{
+          const workingEntity = this.WorkingRepository.create({
+            from: value.from,
+            to: value.to,
+            slot: slot,
+            duration: value.duration,
+          });
+          workingEntities.push(workingEntity);
+        })
       }
     }
 
@@ -290,6 +362,29 @@ export class SlotService {
 
     return workingEntities;
   }
+  splitIntervals(
+    fromOriginal: Date,
+    toOriginal: Date,
+    fromReservation: Date,
+    toReservation: Date
+  ) {
+    const intervals = [];
+  
+    // If reservation starts after the original interval's start, keep the first part
+    if (fromReservation > fromOriginal) {
+      const duration = Math.floor(new Date(fromReservation).getTime() - fromOriginal.getTime() / 1000 * 60);
+      intervals.push({ from: fromOriginal, to: new Date(fromReservation), duration });
+    }
+  
+    // If reservation ends before the original interval's end, keep the last part
+    if (toReservation < toOriginal) {
+      const duration = Math.floor(new Date(toReservation).getTime() - toOriginal.getTime() / 1000 * 60);
+      intervals.push({ from: new Date(toReservation), to: toOriginal, duration });
+    }
+  
+    return intervals;
+  }
+  
   // @OnEvent("artist:created")
   // async createSlotsForArtist(artist: EmployeeEntity) {
   //   const today = new Date();
