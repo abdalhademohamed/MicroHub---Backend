@@ -170,7 +170,7 @@ export class SlotService {
       },
     });
     console.log(branchWorking);
-    return { workingHours: branchWorking.clientWorkingHours, timezone: branchWorking.timezone };
+    return { workingHours: branchWorking?.clientWorkingHours || [], timezone: branchWorking?.timezone || 'Asia/Riyadh' };
   }
 
   getLocalHour(utcTime: string, timeZone: string): string {
