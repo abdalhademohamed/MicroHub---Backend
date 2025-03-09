@@ -350,6 +350,7 @@ export class SlotService {
   
       workingHours = this.convertToUtc(today.getUTCDate(), today.getUTCMonth() + 1, today.getUTCFullYear(), workingHours, timezone);
 
+      // console.log()
       const workingEntities: WorkingEntity[] = [];
       let artistWorkingHours = artist.workingHours * 1;
 
@@ -396,7 +397,11 @@ export class SlotService {
 
         console.log('working entity is', workingEntities);
       }
-      await this.WorkingRepository.save(workingEntities);
+      const saved = await this.WorkingRepository.save(workingEntities);
+      console.log(saved);
+      while(true){
+        
+      }
       today.setUTCDate(today.getUTCDate() + 1);
     }
   }
