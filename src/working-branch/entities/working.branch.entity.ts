@@ -22,6 +22,12 @@ export class WorkingBranchEntity {
   @Column("simple-array")
   workingHours: string[]; // List of working hours like '09:00', '10:00'
 
+  @Column("simple-array", { nullable: true })
+  clientWorkingHours: string[];
+
+  @Column({ nullable: true })
+  timezone: string;
+
   @ManyToOne(() => BranchEntity, (BranchEntity) => BranchEntity.workingbranch, {
     onDelete: "CASCADE",
   })

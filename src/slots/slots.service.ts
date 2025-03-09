@@ -3,7 +3,7 @@ import { WeekDays } from "../branch/utils/days.enum";
 import { CreateSlotDto } from "./dto/create.slot.dto";
 import { InjectRepository } from "@nestjs/typeorm";
 import { WorkingBranchEntity } from "../working-branch/entities/working.branch.entity";
-import { Brackets, Repository } from "typeorm";
+import { Brackets, MoreThan, MoreThanOrEqual, Repository } from "typeorm";
 import { BranchEntity } from "../branch/entities/branch.entity";
 import { Role } from "../user/utils/user.enum";
 import { ReservationService } from "../reservation/reservation.service";
@@ -12,7 +12,7 @@ import { WorkingEntity } from "./entities/working.entity";
 import { AvailableQueryDto } from "./dto/query.available.dto";
 import { EmployeeEntity } from "../employee/entities/employee.entity";
 import { DateTime } from 'luxon';
-import { ReservationEntity } from "src/reservation/entities/reservation.entity";
+import { OnEvent } from "@nestjs/event-emitter";
 
 @Injectable()
 export class SlotService {
@@ -28,8 +28,6 @@ export class SlotService {
     @InjectRepository(EmployeeEntity)
     private readonly EmployeeRepository: Repository<EmployeeEntity>,
     private reservationService: ReservationService,
-    @InjectRepository(ReservationEntity)
-    private readonly ReservationRepository: Repository<ReservationEntity>,
   ) {}
 
   splitOvernightIntervals(utcDateTimes: string[]): string[] {
@@ -164,13 +162,14 @@ export class SlotService {
     return artists;
   }
 
-  branchWorkingHours(branchId: string, dayOfWeek: WeekDays) {
-    return this.WorkingBranchRepository.findOne({
+  async branchWorkingHours(branchId: string, dayOfWeek: WeekDays) {
+    const branchWorking = await this.WorkingBranchRepository.findOne({
       where: {
         branch: { id: branchId },
         dayOfWeek,
       },
     });
+    return { workingHours: branchWorking.clientWorkingHours, timezone: branchWorking.timezone };
   }
 
   getLocalHour(utcTime: string, timeZone: string): string {
@@ -291,225 +290,100 @@ export class SlotService {
 
     return workingEntities;
   }
-
-  // async createWorkingHoursCalender(
-  //   workingHours: string[],
-  //   day: number,
-  //   month: number,
-  //   year: number,
-  //   artists: EmployeeEntity[],
-  //   branch: BranchEntity,
-  //   timezone: string,
-  // ) {
-  //   workingHours = this.convertToUtc(day, month, year, workingHours, timezone);
-
-  //   const workingEntities: WorkingEntity[] = [];
-
-  //   for (let i = 0; i < workingHours.length; i += 2) {
-
-  //     let from = new Date(workingHours[i]);
-
-  //     console.log('working[i] is', workingHours[i]);
-  //     console.log('from time is', from);
-
-  //     console.log('artist base time is', artists[0].workingHours);
-
-  //     let to = new Date(workingHours[i + 1]);
-
-  //     let duration = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60));
-
-  //     if(duration <= 0){
-  //       continue;
-  //     }
-
-  //     const slot = await this.getSlotForDay(from, branch);
-
-  //     const reservations = await this.ReservationRepository.createQueryBuilder('reservation')
-  //       .leftJoinAndSelect('reservation.branch', 'branch')
-  //       .where('branch.id = :id', { id: branch.id })
-  //       .where(
-  //         '(reservation.start_Time < :endTime AND reservation.end_Time > :startTime)', 
-  //         { startTime: workingHours[i], endTime: workingHours[i+1] }
-  //       )
-  //       .getMany();
-
-  //     for (let j = 0; j < artists.length; j++) {
-
-  //       if (artists[j].workingHours <= 0) {
-  //         continue;
-  //       }
-
-  //       let reservationHours = 0;
-
-  //       const index = reservations.findIndex((value)=>{
-  //         reservationHours = Math.floor((new Date(value.end_Time).getTime() - new Date(value.start_Time).getTime()) / 1000 * 60 * 60);
-  //         return artists[j].workingHours >= duration;
-  //       });
-
-  //       let intervals = [];
-  //       let totalDuration = 0;
-
-  //       if(index > -1) {
-  //         intervals = this.splitIntervals(
-  //           new Date(workingHours[i]),
-  //           new Date(workingHours[i+1]),
-  //           new Date(reservations[index].start_Time),
-  //           new Date(reservations[index].end_Time),
-  //         )
-  //         intervals.forEach((value)=>{
-  //           totalDuration += value.duration;
-  //         })
-  //         reservations.splice(index, 1);
-  //       } else {
-  //         totalDuration = duration;
-  //         intervals.push({
-  //           from,
-  //           to,
-  //           duration,
-  //         })
-  //       }
-
-  //       if(totalDuration == 0) {
-  //         artists[j].workingHours = artists[j].workingHours - reservationHours;
-  //         continue;
-  //       }
-
-  //       const noOfHours = Math.floor(totalDuration / 60);
-
-  //       let time = artists[j].workingHours - noOfHours;
-
-  //       if (time < 0) {
-  //         // If remaining artist hours are less than required, adjust the last interval
-
-  //         let remainingMinutes = artists[j].workingHours * 60;
-  //         let adjustedIntervals: { from: Date; to: Date; duration: number }[] = [];
-  //         let usedMinutes = 0;
   
-  //         for (const interval of intervals) {
-  //           if (usedMinutes + interval.duration <= remainingMinutes) {
-  //             // If we have enough time, keep the whole interval
-  //             adjustedIntervals.push(interval);
-  //             usedMinutes += interval.duration;
-  //           } else {
-  //             // Trim the interval to fit the remaining artist hours
-  //             let newTo = new Date(interval.from.getTime() + (remainingMinutes - usedMinutes) * 60000);
-  //             let newDuration = Math.floor((newTo.getTime() - interval.from.getTime()) / (1000 * 60));
+  @OnEvent("artist:created")
+  async createSlotsForArtist(artist: EmployeeEntity) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let loopOn = true;
+    // console.log(artist)
+    while (loopOn) {
+      console.log(today.getDate(), today.getMonth() + 1, today.getFullYear());
+      const slot = await this.SlotRepository.findOne({
+        where: {
+          day: today.getUTCDate(),
+          month: today.getUTCMonth() + 1,
+          year: today.getFullYear(),
+          branch: {
+            id: artist.branch.id,
+          },
+        },
+        relations: ["branch"],
+      });
+      // console.log(slot);
+      const day = this.getDayFromDate(
+        today.getUTCFullYear(),
+        today.getUTCMonth() + 1,
+        today.getUTCDate(),
+      );
+      if (!slot) {
+        const count = await this.SlotRepository.count({
+          where: {
+            day: MoreThan(today.getUTCDate()),
+            month: MoreThanOrEqual(today.getUTCMonth() + 1),
+            year: MoreThanOrEqual(today.getUTCFullYear()),
+            branch: {
+              id: artist.branch.id,
+            },
+          },
+        });
+        // console.log(count);
+        if (count === 0) {
+          loopOn = false;
+          continue;
+        }
+        today.setUTCDate(today.getUTCDate() + 1);
+        continue;
+      }
+      let { workingHours, timezone }= await this.branchWorkingHours(artist.branch.id, day);
   
-  //             if (newDuration > 0) {
-  //               adjustedIntervals.push({
-  //                 from: interval.from,
-  //                 to: newTo,
-  //                 duration: newDuration,
-  //               });
-  //             }
-  //             break;
-  //           }
-  //         }
+      workingHours = this.convertToUtc(today.getUTCDate(), today.getUTCMonth(), today.getUTCFullYear(), workingHours, timezone);
+
+      const workingEntities: WorkingEntity[] = [];
+      let artistWorkingHours = artist.workingHours;
+      for (let i = 0; i < workingHours.length; i += 2) {
   
-  //         intervals = adjustedIntervals;
-  //         time = 0; // Artist has no remaining hours after this
-  //       }
+        if (artistWorkingHours <= 0) {
+          break;
+        }
 
-  //       artists[j].workingHours = time;
-
-  //       intervals.forEach((value)=>{
-  //         const workingEntity = this.WorkingRepository.create({
-  //           from: value.from,
-  //           to: value.to,
-  //           slot: slot,
-  //           duration: value.duration,
-  //         });
-  //         workingEntities.push(workingEntity);
-  //       })
-  //     }
-  //   }
-
-  //   console.log(workingEntities);
-
-  //   return workingEntities;
-  // }
-  splitIntervals(
-    fromOriginal: Date,
-    toOriginal: Date,
-    fromReservation: Date,
-    toReservation: Date
-  ) {
-    const intervals = [];
+        let from = new Date(workingHours[i]);
   
-    // If reservation starts after the original interval's start, keep the first part
-    if (fromReservation > fromOriginal) {
-      const duration = Math.floor(new Date(fromReservation).getTime() - fromOriginal.getTime() / 1000 * 60);
-      intervals.push({ from: fromOriginal, to: new Date(fromReservation), duration });
+        let to = new Date(workingHours[i + 1]);
+  
+        let duration = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60));
+  
+        if(duration <= 0){
+          continue;
+        }
+  
+        const slot = await this.getSlotForDay(from, artist.branch);
+  
+        const noOfHours = Math.floor(duration / 60);
+
+        let time = artistWorkingHours - noOfHours;
+  
+        if (time < 0) {
+          to = new Date(from.getTime() + artistWorkingHours * 3600 * 1000);
+          duration = Math.floor((to.getTime() - from.getTime()) / (1000 * 60));
+          time = 0;
+        }
+  
+        artistWorkingHours = time;
+  
+        const workingEntity = this.WorkingRepository.create({
+          from,
+          to,
+          slot: slot,
+          duration,
+        });
+  
+        workingEntities.push(workingEntity);
+      }
+      await this.WorkingRepository.save(workingEntities);
+      today.setUTCDate(today.getUTCDate() + 1);
     }
-  
-    // If reservation ends before the original interval's end, keep the last part
-    if (toReservation < toOriginal) {
-      const duration = Math.floor(new Date(toReservation).getTime() - toOriginal.getTime() / 1000 * 60);
-      intervals.push({ from: new Date(toReservation), to: toOriginal, duration });
-    }
-  
-    return intervals;
   }
-  
-  // @OnEvent("artist:created")
-  // async createSlotsForArtist(artist: EmployeeEntity) {
-  //   const today = new Date();
-  //   let loopOn = true;
-  //   // console.log(artist)
-  //   while (loopOn) {
-  //     console.log(today.getDate(), today.getMonth() + 1, today.getFullYear());
-  //     const slot = await this.SlotRepository.findOne({
-  //       where: {
-  //         day: today.getUTCDate(),
-  //         month: today.getUTCMonth() + 1,
-  //         year: today.getFullYear(),
-  //         branch: {
-  //           id: artist.branch.id,
-  //         },
-  //       },
-  //       relations: ["branch"],
-  //     });
-  //     // console.log(slot);
-  //     const day = this.getDayFromDate(
-  //       today.getFullYear(),
-  //       today.getMonth() + 1,
-  //       today.getDate(),
-  //     );
-  //     if (!slot) {
-  //       const count = await this.SlotRepository.count({
-  //         where: {
-  //           day: MoreThan(today.getDate()),
-  //           month: MoreThanOrEqual(today.getMonth() + 1),
-  //           year: MoreThanOrEqual(today.getFullYear()),
-  //           branch: {
-  //             id: artist.branch.id,
-  //           },
-  //         },
-  //       });
-  //       // console.log(count);
-  //       if (count === 0) {
-  //         loopOn = false;
-  //         continue;
-  //       }
-  //       today.setDate(today.getDate() + 1);
-  //       continue;
-  //     }
-  //     const workingHours = (
-  //       await this.branchWorkingHours(artist.branch.id, day)
-  //     ).workingHours;
-  
-  //     const workingEntities = this.createWorkingHoursSlotsForArtist(
-  //       workingHours,
-  //       today,
-  //       slot,
-  //       artist,
-  //     );
-
-  //     // console.log(workingEntities);
-  //     await this.WorkingRepository.save(workingEntities);
-  //     today.setDate(today.getDate() + 1);
-  //   }
-  // }
   // createWorkingHoursSlotsForArtist(
   //   workingHours: string[],
   //   nextDate: Date,
