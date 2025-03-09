@@ -317,16 +317,7 @@ export class SlotService {
         },
       });
       // console.log(slot);
-
-      const day = this.getDayFromDate(
-        today.getUTCFullYear(),
-        today.getUTCMonth() + 1,
-        today.getUTCDate(),
-      );
       console.log('slot is', slot);
-
-      console.log('day is', day);
-
       if (!slot) {
         const count = await this.SlotRepository.count({
           where: {
@@ -346,6 +337,11 @@ export class SlotService {
         today.setUTCDate(today.getUTCDate() + 1);
         continue;
       }
+      const day = this.getDayFromDate(
+        today.getUTCFullYear(),
+        today.getUTCMonth() + 1,
+        today.getUTCDate(),
+      );
       let { workingHours, timezone }= await this.branchWorkingHours(artist.branch.id, day);
   
       workingHours = this.convertToUtc(today.getUTCDate(), today.getUTCMonth() + 1, today.getUTCFullYear(), workingHours, timezone);
@@ -399,9 +395,6 @@ export class SlotService {
       }
       const saved = await this.WorkingRepository.save(workingEntities);
       console.log(saved);
-      while(true){
-        
-      }
       today.setUTCDate(today.getUTCDate() + 1);
     }
   }
