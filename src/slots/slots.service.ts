@@ -293,6 +293,7 @@ export class SlotService {
   
   @OnEvent("artist:created")
   async createSlotsForArtist(artist: EmployeeEntity) {
+    console.log('artist is', artist);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     let loopOn = true;
@@ -311,11 +312,15 @@ export class SlotService {
         relations: ["branch"],
       });
       // console.log(slot);
+
       const day = this.getDayFromDate(
         today.getUTCFullYear(),
         today.getUTCMonth() + 1,
         today.getUTCDate(),
       );
+
+      console.log('slot is', slot);
+
       if (!slot) {
         const count = await this.SlotRepository.count({
           where: {
@@ -327,7 +332,7 @@ export class SlotService {
             },
           },
         });
-        // console.log(count);
+        console.log('count is', count);
         if (count === 0) {
           loopOn = false;
           continue;
@@ -340,7 +345,8 @@ export class SlotService {
       workingHours = this.convertToUtc(today.getUTCDate(), today.getUTCMonth(), today.getUTCFullYear(), workingHours, timezone);
 
       const workingEntities: WorkingEntity[] = [];
-      let artistWorkingHours = artist.workingHours;
+      let artistWorkingHours = artist.workingHours * 1;
+
       for (let i = 0; i < workingHours.length; i += 2) {
   
         if (artistWorkingHours <= 0) {
@@ -362,6 +368,8 @@ export class SlotService {
         const noOfHours = Math.floor(duration / 60);
 
         let time = artistWorkingHours - noOfHours;
+
+        console.log('artsit working hours', artistWorkingHours);
   
         if (time < 0) {
           to = new Date(from.getTime() + artistWorkingHours * 3600 * 1000);
@@ -379,6 +387,8 @@ export class SlotService {
         });
   
         workingEntities.push(workingEntity);
+
+        console.log('working entity is', workingEntities);
       }
       await this.WorkingRepository.save(workingEntities);
       today.setUTCDate(today.getUTCDate() + 1);
