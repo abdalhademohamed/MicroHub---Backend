@@ -9,13 +9,14 @@ import { CreateWorkingBranchDto } from "./dto/create.working.branch.dto";
 import { UpdateWorkingBranchDto } from "./dto/update.working.branch.dto";
 import { InjectRepository } from "@nestjs/typeorm";
 import { BranchEntity } from "../branch/entities/branch.entity";
-import { Between, FindOptionsWhere, QueryFailedError, Repository } from "typeorm";
+import { Between, FindOptionsWhere, In, QueryFailedError, Repository } from "typeorm";
 import { WorkingBranchEntity } from "./entities/working.branch.entity";
 import { WeekDays } from "../branch/utils/days.enum";
 import { SlotService } from "../slots/slots.service";
 import { Postion } from "../postion/utils/postion.enum";
 import { ReservationEntity } from "src/reservation/entities/reservation.entity";
 import { DateTime } from "luxon";
+import { OrderStatus } from "src/orders/utils/order.status.enum";
 
 @Injectable()
 export class WorkingBranchService {
@@ -95,9 +96,13 @@ export class WorkingBranchService {
         where: {
           start_Time: Between(new Date(startOfDayUTC), new Date(endOfDayUTC)),
           branch: { id: branch },
+          order: {
+            status: In([OrderStatus.Completed, OrderStatus.Working, OrderStatus.InQueue, OrderStatus.Pending, OrderStatus.Reviewed]),
+          }
         },
         relations: {
           branch: true,
+          order: true,
         },
       });
 
