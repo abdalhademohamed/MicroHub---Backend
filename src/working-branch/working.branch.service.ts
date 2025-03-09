@@ -140,11 +140,11 @@ export class WorkingBranchService {
 
     console.log('new working hours', createWorkingBranchDto.workingHours);
 
-    await this.getNextFourWeeksDatesForDay(
-      createWorkingBranchDto.dayOfWeek,
-      branchId,
-      timezone,
-    );
+    // await this.getNextFourWeeksDatesForDay(
+    //   createWorkingBranchDto.dayOfWeek,
+    //   branchId,
+    //   timezone,
+    // );
 
     const times = createWorkingBranchDto.workingHours;
 
