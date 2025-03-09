@@ -208,12 +208,16 @@ export class WorkingBranchService {
     if (workingBranchEntity) {
       // Update existing WorkingBranchEntity
       workingBranchEntity.workingHours = workingHours;
+      workingBranchEntity.clientWorkingHours = times;
+      workingBranchEntity.timezone = timezone;
     } else {
       // Create new WorkingBranchEntity
       workingBranchEntity = this.WorkingBranchsRepository.create({
         dayOfWeek: weekDayEnum,
         workingHours,
         branch,
+        clientWorkingHours: times,
+        timezone,
       });
       branch.workingbranch.push(workingBranchEntity);
     }
