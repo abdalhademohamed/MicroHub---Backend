@@ -311,7 +311,7 @@ export class ReservationService {
 
         console.log((Number(offer.discountPercentage) / 100) * price);
 
-        price = price - (Number(offer.discountPercentage) / 100) * price;
+        price = Math.floor(price - (Number(offer.discountPercentage) / 100) * price);
 
         // Ensure image is provided
         if (image) {
@@ -357,7 +357,7 @@ export class ReservationService {
         price += fullServiceTotals.price;
 
         price =
-          price - (Number(sharableOffer.discountPercentage) / 100) * price;
+          Math.floor(price - (Number(sharableOffer.discountPercentage) / 100) * price);
 
         // Ensure image is provided
         if (image) {
