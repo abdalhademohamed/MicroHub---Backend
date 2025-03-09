@@ -169,6 +169,7 @@ export class SlotService {
         dayOfWeek,
       },
     });
+    console.log(branchWorking);
     return { workingHours: branchWorking.clientWorkingHours, timezone: branchWorking.timezone };
   }
 
@@ -295,11 +296,13 @@ export class SlotService {
   async createSlotsForArtist(artist: EmployeeEntity) {
     console.log('artist is', artist);
     const today = new Date();
+    console.log(today.getUTCDate(), today.getUTCMonth() + 1, today.getUTCFullYear());
     today.setHours(0, 0, 0, 0);
+    console.log(today.getUTCDate(), today.getUTCMonth() + 1, today.getUTCFullYear());
     let loopOn = true;
     // console.log(artist)
     while (loopOn) {
-      console.log(today.getDate(), today.getMonth() + 1, today.getFullYear());
+      console.log(today.getUTCDate(), today.getUTCMonth() + 1, today.getUTCFullYear());
       const slot = await this.SlotRepository.findOne({
         where: {
           day: today.getUTCDate(),
@@ -309,7 +312,9 @@ export class SlotService {
             id: artist.branch.id,
           },
         },
-        relations: ["branch"],
+        relations: {
+          branch: true,
+        },
       });
       // console.log(slot);
 
@@ -318,8 +323,9 @@ export class SlotService {
         today.getUTCMonth() + 1,
         today.getUTCDate(),
       );
-
       console.log('slot is', slot);
+
+      console.log('day is', day);
 
       if (!slot) {
         const count = await this.SlotRepository.count({
@@ -342,7 +348,7 @@ export class SlotService {
       }
       let { workingHours, timezone }= await this.branchWorkingHours(artist.branch.id, day);
   
-      workingHours = this.convertToUtc(today.getUTCDate(), today.getUTCMonth(), today.getUTCFullYear(), workingHours, timezone);
+      workingHours = this.convertToUtc(today.getUTCDate(), today.getUTCMonth() + 1, today.getUTCFullYear(), workingHours, timezone);
 
       const workingEntities: WorkingEntity[] = [];
       let artistWorkingHours = artist.workingHours * 1;
