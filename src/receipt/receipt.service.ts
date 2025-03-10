@@ -281,6 +281,8 @@ export class ReceiptService {
         );
       }
 
+      console.log('reservation is', reservation);
+
       if (order.sharableOfferId) {
         const sharableOffer = await this.sharableOfferRepository.findOne({
           where: { id: order.sharableOfferId },
@@ -364,6 +366,7 @@ export class ReceiptService {
 
         totalPayment = reservation.totalPrice;
 
+        console.log('total payment is', totalPayment);
         // Apply discount if offer exists
         discountPercentage = offer ? offer.discountPercentage : 0; // Set discount to 0 if no offer
 
