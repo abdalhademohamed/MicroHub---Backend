@@ -357,7 +357,10 @@ export class TransactionService implements OnModuleInit {
       totalIncome: totalIn,
       totalRefund: totalOut,
       numberOfTransactions: total,
-    });
+    },
+    query.fromDate,
+    query.toDate,
+  );
   }
   async refundIncomeExcel(
     findTransactionDto: FindTransactionDto,
@@ -370,6 +373,9 @@ export class TransactionService implements OnModuleInit {
       [{ totalIncome, totalRefund }],
       res,
       type,
+      {},
+      findTransactionDto.fromDate,
+      findTransactionDto.toDate,
     );
   }
   async incomeAndRefundAggregationsExcel(
@@ -472,7 +478,10 @@ export class TransactionService implements OnModuleInit {
       orderPending: orderPendingCount, // Number of orders created by the user
       orderCancelled: orderCancelledCount,
       orderCompleted: orderCompletedCount,
-    });
+    },
+    findTransactionDto.fromDate,
+    findTransactionDto.toDate,
+  );
   }
   async latestTransactionExcel(
     findTransactionDto: FindTransactionDto,
@@ -492,6 +501,9 @@ export class TransactionService implements OnModuleInit {
     });
     return this.excelService.exportFile(result, res, type, {
       amount: totalAmount,
-    });
+    },
+    findTransactionDto.fromDate,
+    findTransactionDto.toDate,
+  );
   }
 }
