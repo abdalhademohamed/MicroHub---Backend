@@ -329,7 +329,7 @@ export class ReceiptService {
       let remaining = 0;
 
       // Handle coupon logic: If couponId exists, set payment values to 0
-      if (order.couponId) {
+      if (order.couponId && !order.sharableOfferId) {
         totalPayment = 0;
         discountPercentage = 0;
         remaining = 0;
