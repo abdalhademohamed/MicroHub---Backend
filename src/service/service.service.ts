@@ -46,9 +46,12 @@ export class ServiceService {
         Number(item?.price) || 0 * Number(item?.reservationCount) || 0;
     });
     return this.excelService.exportFile(items, res, type, {
-      reservationCount,
-      price: totalPrice,
-    });
+        reservationCount,
+        price: totalPrice,
+      },
+      query.fromDate,
+      query.toDate,
+    );
   }
 
   async createService(
