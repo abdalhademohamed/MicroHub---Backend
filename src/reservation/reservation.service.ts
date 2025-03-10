@@ -311,7 +311,7 @@ export class ReservationService {
 
         console.log((Number(offer.discountPercentage) / 100) * price);
 
-        price = Math.floor(price - (Number(offer.discountPercentage) / 100) * price);
+        price = Math.floor(price - ((Number(offer.discountPercentage) / 100) * price));
 
         // Ensure image is provided
         if (image) {
@@ -357,8 +357,9 @@ export class ReservationService {
         price += fullServiceTotals.price;
 
         price =
-          Math.floor(price - (Number(sharableOffer.discountPercentage) / 100) * price);
+          Math.floor(price - ((Number(sharableOffer.discountPercentage) / 100) * price));
 
+        console.log(price);
         // Ensure image is provided
         if (image) {
           const folderName = "reservation";
@@ -503,6 +504,8 @@ export class ReservationService {
         rootoshes,
         createdBy: userId,
       });
+
+      console.log('reservation is', reservation);
 
       console.log(
         workingHours[index].slot.day,
