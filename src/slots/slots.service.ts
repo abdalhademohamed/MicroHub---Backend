@@ -81,7 +81,7 @@ export class SlotService {
             .orderBy("working.from", "ASC")
             .getMany();
           if(slots && slots.length > 0) {
-              continue;
+            continue;
           }
 
           const workingEntity =

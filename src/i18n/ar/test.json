@@ -201,5 +201,8 @@
     "CREATE_FAILED": "فشل في إنشاء العرض القابل للمشاركة",
     "UPDATE_FAILED": "فشل في تحديث العرض القابل للمشاركة",
     "FETCH_FAILED": "فشل في جلب العروض القابلة للمشاركة"
+  },
+  "working_hour": {
+    "reservation_exist": "الحجز في {{day}}-{{month}}-{{year}} موجود بالفعل برقم المعرف {{reservationId}}."
   }
 }

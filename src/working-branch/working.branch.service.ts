@@ -16,7 +16,8 @@ import { SlotService } from "../slots/slots.service";
 import { Postion } from "../postion/utils/postion.enum";
 import { ReservationEntity } from "src/reservation/entities/reservation.entity";
 import { DateTime } from "luxon";
-import { OrderStatus } from "src/orders/utils/order.status.enum";
+import { OrderStatus } from "../orders/utils/order.status.enum";
+import { CustomI18nService } from "../common/custom.18n.service";
 
 @Injectable()
 export class WorkingBranchService {
@@ -31,6 +32,8 @@ export class WorkingBranchService {
     // private eventEmitter: EventEmitter2,
     @InjectRepository(ReservationEntity)
     private readonly ReservationRepository: Repository<ReservationEntity>,
+
+    private i18n: CustomI18nService,
   ) {}
 
   getLocalTime(day: number, month: number, year: number, timezone: string) {
@@ -107,9 +110,7 @@ export class WorkingBranchService {
       });
 
       if (reservation) {
-        throw new NotFoundException(
-          `Reservation ${day}-${month}-${year} on ${weekday} already exists with id ${reservation.id}`,
-        );
+        throw new NotFoundException(this.i18n.translate('test.working_hour.reservation_exist', { day, month, year, reservation: reservation.id }));
       }
     }
   }

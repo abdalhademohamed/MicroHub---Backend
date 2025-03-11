@@ -207,5 +207,8 @@
     "CREATE_FAILED": "Failed to create sharable offer",
     "UPDATE_FAILED": "Failed to update sharable offer",
     "FETCH_FAILED": "Failed to fetch sharable offers"
+  },
+  "working_hour": {
+    "reservation_exist": "Reservation {{day}}-{{month}}-{{year}} already exists with ID {{reservationId}}."
   }
 }
