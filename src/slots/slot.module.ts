@@ -11,6 +11,7 @@ import { SlotsEntity } from "./entities/slots.entity";
 import { WorkingEntity } from "./entities/working.entity";
 import { EmployeeEntity } from "../employee/entities/employee.entity";
 import { ReservationEntity } from "src/reservation/entities/reservation.entity";
+import { ScheduleModule } from "@nestjs/schedule";
 // import { ScheduleModule } from "@nestjs/schedule";
 
 @Module({
@@ -25,7 +26,7 @@ import { ReservationEntity } from "src/reservation/entities/reservation.entity";
       ReservationEntity,
     ]), // Register the necessary entities with TypeORM
     ReservationModule,
-    // ScheduleModule.forRoot(),
+    ScheduleModule.forRoot(),
   ],
   controllers: [SlotController], // Register the controller
   providers: [SlotService], // Register the service
