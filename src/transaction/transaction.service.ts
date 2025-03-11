@@ -197,9 +197,13 @@ export class TransactionService implements OnModuleInit {
 
     const queryBuilder = this.transactionRepository
       .createQueryBuilder("transaction")
-      .select("user.id", "userId") // Select user ID
-      .addSelect("user.username", "userName") // Select user name
-      .addSelect("user.email", "userEmail") // Select user email
+      .select("user.id", "userId")
+      .addSelect("user.username", "userName")
+      .addSelect("user.email", "userEmail")
+      .addSelect(
+        "SUM(CASE WHEN createdBy.id = user.id AND order.status = 'Pending' AND  transaction.type = 'deposit' THEN reservation.totalPrice - reservation.deposit ELSE 0 END)",
+        "totalPending",
+      )
       .addSelect(
         "SUM(CASE WHEN transaction.type = 'refund' THEN transaction.amount ELSE 0 END)",
         "totalRefund",
@@ -220,21 +224,16 @@ export class TransactionService implements OnModuleInit {
         "SUM(CASE WHEN createdBy.id = user.id AND order.status IN ('InQueue', 'Working', 'Reviewed', 'Completed') AND transaction.type = 'completed'  THEN 1 ElSE 0 END )",
         "orderCompleted",
       )
-      .innerJoin("transaction.user", "user") // Join user table
-      .innerJoin("transaction.branch", "branch") // Join branch table
-      .innerJoin("transaction.payment", "payment") // Join payment table
-      .leftJoin("transaction.order", "order") // Join order table (left join to include users without orders)
+      .innerJoin("transaction.user", "user")
+      .innerJoin("transaction.branch", "branch")
+      .innerJoin("transaction.payment", "payment")
+      .leftJoin("transaction.order", "order")
+      .leftJoin("order.reservation", "reservation")
       .leftJoin("order.createdBy", "createdBy")
-      .leftJoin("order.artist", "employee"); // Join employee (artist) table to count employees
+      .where("transaction.amount != 0");
 
     if (branch) {
       queryBuilder.andWhere("branch.id = :branch", { branch });
-    }
-
-    if (keyword) {
-      queryBuilder.andWhere("user.username LIKE :keyword", {
-        keyword: `%${keyword}%`,
-      });
     }
 
     if (payment) {
@@ -246,12 +245,19 @@ export class TransactionService implements OnModuleInit {
       queryBuilder.andWhere("transaction.createdAt >= :fromDate", { fromDate });
     }
 
+    if (keyword) {
+      queryBuilder.andWhere("user.username LIKE :keyword", {
+        keyword: `%${keyword}%`,
+      });
+    }
+
     if (toDate) {
       queryBuilder.andWhere("transaction.createdAt <= :toDate", { toDate });
     }
 
-    // Group by user to calculate total income, refund, and order counts
     queryBuilder.groupBy("user.id");
+    queryBuilder.addGroupBy("user.username");
+    queryBuilder.addGroupBy("user.email");
 
     const totalRowsQuery = queryBuilder
       .clone()
@@ -267,19 +273,16 @@ export class TransactionService implements OnModuleInit {
 
     // Map the result and include the necessary fields
     const data = result.map((entry) => ({
-      userId: entry.userId,
       userName: entry.userName,
       userEmail: entry.userEmail,
       totalIncome: parseFloat(entry.totalIncome),
+      totalPending: parseFloat(entry.totalPending),
       totalRefund: parseFloat(entry.totalRefund),
       orderPending: parseInt(entry.orderPending, 10), // Number of orders created by the user
       orderCancelled: parseInt(entry.orderCancelled, 10),
-      orderCompleted: parseInt(entry.orderCompleted, 10), // Number of orders created by the user
-      // cancelledOrderCount: parseInt(entry.cancelledOrderCount, 10),  // Number of cancelled orders
-      employeeId: entry.employeeId, // Employee ID
-      employeeName: entry.employeeName, // Employee name
+      orderCompleted: parseInt(entry.orderCompleted, 10),
     }));
-    console.log(totalRowsResult);
+
     const totalPages = Math.ceil(totalRowsResult?.totalRows || 0 / limit);
 
     // Return paginated and sorted result
@@ -383,7 +386,7 @@ export class TransactionService implements OnModuleInit {
     res: Response,
     type: string,
   ) {
-    const { branch, fromDate, toDate, payment } = findTransactionDto;
+    const { branch, fromDate, toDate, payment, keyword } = findTransactionDto;
 
     const queryBuilder = this.transactionRepository
       .createQueryBuilder("transaction")
@@ -428,6 +431,12 @@ export class TransactionService implements OnModuleInit {
 
     if (payment) {
       queryBuilder.andWhere("payment.id = :payment", { payment });
+    }
+
+    if (keyword) {
+      queryBuilder.andWhere("user.username LIKE :keyword", {
+        keyword: `%${keyword}%`,
+      });
     }
 
     // Apply date filters

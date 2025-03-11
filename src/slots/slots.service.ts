@@ -13,6 +13,7 @@ import { AvailableQueryDto } from "./dto/query.available.dto";
 import { EmployeeEntity } from "../employee/entities/employee.entity";
 import { DateTime } from 'luxon';
 import { OnEvent } from "@nestjs/event-emitter";
+import { Cron, CronExpression } from "@nestjs/schedule";
 
 @Injectable()
 export class SlotService {
@@ -29,6 +30,68 @@ export class SlotService {
     private readonly EmployeeRepository: Repository<EmployeeEntity>,
     private reservationService: ReservationService,
   ) {}
+
+  async getAllBranch() {
+    const branchs = await this.BranchRepository.find();
+    return branchs;
+  }
+  @Cron('0 0 */14 * *') // Runs every 14 days at midnight
+  async handleCronJop() {
+    const branchs = await this.getAllBranch();
+    for(const branch of branchs ) {
+      const artists = await this.artistCount(branch.id);
+      const today = new Date();
+      const todayDayOfWeek = today.getDay();
+      const daysOfWeek = [
+        WeekDays.Sunday,
+        WeekDays.Monday,
+        WeekDays.Tuesday,
+        WeekDays.Wednesday,
+        WeekDays.Thursday,
+        WeekDays.Friday,
+        WeekDays.Saturday,
+      ];
+      for(let i=0; i < daysOfWeek.length; i++) {
+        const {timezone, workingHours} = await this.branchWorkingHours(branch.id, daysOfWeek[i])
+        const targetDayOfWeek = daysOfWeek.indexOf(daysOfWeek[i]);
+        let daysToAdd = targetDayOfWeek - todayDayOfWeek;
+        if (daysToAdd < 0) {
+          daysToAdd += 7;
+        }
+        const resultDates: { day: number; month: number; year: number }[] = [];
+        for (let i = 0; i < 4; i++) {
+          const nextDate = new Date();
+          nextDate.setUTCHours(0,0,0,0);
+          nextDate.setDate(today.getDate() + daysToAdd + i * 7);
+
+          resultDates.push({
+            day: nextDate.getUTCDate(),
+            year: nextDate.getUTCFullYear(),
+            month: nextDate.getUTCMonth() + 1,
+          });
+        }
+        for (const { day, year, month } of resultDates) {
+          const { startOfDayUTC, endOfDayUTC } = this.getLocalTime(day, month, year, timezone);
+    
+          const slots = await this.WorkingRepository.createQueryBuilder("working")
+            .leftJoinAndSelect("working.slot", "slot")
+            .leftJoinAndSelect("slot.branch", "branch")
+            .where("slot.branch.id = :branchId", { branchId: branch.id })
+            .andWhere("working.from BETWEEN :startOfDayUTC AND :endOfDayUTC", { startOfDayUTC, endOfDayUTC })
+            .orderBy("working.from", "ASC")
+            .getMany();
+          if(slots && slots.length > 0) {
+            continue;
+          }
+
+          const workingEntity =
+            await this.createWorkingHoursCalender(workingHours, day, month, year, artists, branch, timezone);
+
+          await this.WorkingRepository.save(workingEntity);
+      }
+    }  
+    }
+  }
 
   splitOvernightIntervals(utcDateTimes: string[]): string[] {
 
