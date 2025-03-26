@@ -189,17 +189,17 @@ export class EmployeeController {
     @Body() createEmployeeDto: CreateEmployeeDto,
     @UploadedFile() image: Express.Multer.File,
   ): Promise<EmployeeEntity> {
-    // if (!image) {
-    //   throw new BadRequestException("Photo is required");
-    // }
+    if (!image) {
+      throw new BadRequestException("Photo is required");
+    }
     const userId = req.user.sub; // Extract user ID from request
 
     if (!userId) {
       throw new BadRequestException("User not authenticated");
     }
-    // const folderName = "employees"; // or any other dynamic name based on context
-    // const imageUrl = await this.employeeService.uploadImage(image, folderName);
-    createEmployeeDto.image = 'imageUrl';
+    const folderName = "employees"; // or any other dynamic name based on context
+    const imageUrl = await this.employeeService.uploadImage(image, folderName);
+    createEmployeeDto.image = imageUrl;
 
     return await this.employeeService.createEmployee(createEmployeeDto, userId);
   }
