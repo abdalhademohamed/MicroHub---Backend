@@ -85,15 +85,14 @@ export class ReservationController {
     Role.ADMIN,
   )
   @Post()
-  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   @UseInterceptors(FileInterceptor("deposit_Content")) // Intercept the file upload
   async createReservations(
     @Request() req: any, // Request object to access the user
-
     @Body() CreateCustomerDto: CreateReservationDto, // Array of customer DTOs
     @UploadedFile() image: Express.Multer.File, // Handle the uploaded file
   ): Promise<any> {
     console.log('body is ', CreateCustomerDto);
+    console.log('upload image is ', image);
     // Call the service to create reservations
     // console.log("data:",CreateCustomerDto)
     const userId = req.user.sub; // Extract user ID from request
