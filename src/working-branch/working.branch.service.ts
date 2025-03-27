@@ -36,6 +36,133 @@ export class WorkingBranchService {
     private i18n: CustomI18nService,
   ) {}
 
+  processTimes(times: string[]): string[] {
+    // Step 1: Sort times in ascending order
+    const sortedTimes = [...times].sort();
+  
+    const result: string[] = [];
+    let skipNext = false;
+  
+    for (let i = 0; i < sortedTimes.length; i++) {
+      if (skipNext) {
+        skipNext = false;
+        continue;
+      }
+  
+      // If next element is duplicate, skip it and skip the next hour
+      if (sortedTimes[i] === sortedTimes[i + 1]) {
+        skipNext = true; // Skip the next duplicate and the next element after it
+        continue;
+      }
+  
+      // Push the current time to the result
+      result.push(sortedTimes[i]);
+    }
+  
+    return result;
+  }
+
+  convertToUtc(day: number, month: number, year: number, times: string[], timeZone: string): string[] {
+    console.log('date is =>', day, month, year);
+    console.log('times is =>', times)
+    console.log('time zone is', timeZone);
+
+    const workingTimes = this.processTimes(times);
+
+    // const workingTimes = times;
+    console.log('working time is', workingTimes);
+
+    const result = workingTimes.map(time => {
+      const localDateTime = DateTime.fromObject(
+        {
+          year: year,
+          month: month,
+          day: day,
+          hour: parseInt(time.split(":")[0], 10),
+          minute: parseInt(time.split(":")[1], 10),
+        },
+        { zone: timeZone }
+      );
+      // Convert to UTC
+      return localDateTime.toUTC().toISO();
+    });
+
+    console.log('slot result =>', result);
+
+    return this.splitOvernightIntervals(result);
+  }
+  splitOvernightIntervals(utcDateTimes: string[]): string[] {
+
+    const result: string[] = [];
+
+    console.log(utcDateTimes);
+    for (let i = 0; i < utcDateTimes.length; i += 2) {
+      const toDate = new Date(utcDateTimes[i + 1]);
+
+      result.push(utcDateTimes[i]); // Always add the "from" timestamp
+
+      if (toDate.getUTCMinutes() === 59) {
+        toDate.setUTCMinutes(toDate.getUTCMinutes() + 1);
+        result.push(toDate.toISOString());
+        continue;
+      }
+
+      result.push(utcDateTimes[i + 1]); // Always add the "to" timestamp
+    }
+
+    return result;
+
+  }
+
+  async checkReservationsOutsideIntervals(
+    day: number,
+    month: number,
+    year: number,
+    workingIntervals: string[], // Array of UTC intervals
+  ) {
+  // Fetch all reservations on this day
+      const reservations = await this.ReservationRepository.find({
+        where: {
+          reservationDay: day,
+          reservationMonth: month,
+          reservationYear: year,
+        },
+      });
+
+      const workingSlots = [];
+      for (let i = 0; i < workingIntervals.length; i += 2) {
+        workingSlots.push({
+          start: new Date(workingIntervals[i]), // Even index (From)
+          end: new Date(workingIntervals[i + 1]), // Odd index (To)
+        });
+      }
+
+    const invalidReservations = reservations.filter((res) => {
+      const resStart = new Date(res.start_Time);
+      const resEnd = new Date(res.end_Time);
+
+      return !workingSlots.some((slot) => {
+        return resStart >= slot.start && resEnd <= slot.end;
+      });
+
+    });
+
+    console.log("Invalid Reservations:", invalidReservations);
+
+    // 🚨 Throw an error if any invalid reservation exists
+
+    if (invalidReservations.length > 0) {
+      throw new BadRequestException(
+        `Some reservations are outside the allowed working intervals: ${invalidReservations.map(
+          (res) => `Reservation from ${res.start_Time} to ${res.end_Time}`
+        ).join(", ")}`
+      );
+    }
+    return true; // ✅ All reservations are valid
+}
+
+  
+
   getLocalTime(day: number, month: number, year: number, timezone: string) {
     // Create the date in the specified timezone
     const startOfDayLocal = DateTime.fromObject(
@@ -63,7 +190,7 @@ export class WorkingBranchService {
     return utcTime.toFormat("HH:mm");
   }
 
-  async getNextFourWeeksDatesForDay(weekday: WeekDays, branch: string, timezone: string) {
+  async getNextFourWeeksDatesForDay(weekday: WeekDays, branch: string, timezone: string, workingHours: string[]) {
     const today = new Date();
     const todayDayOfWeek = today.getDay();
     const daysOfWeek = [
@@ -92,27 +219,10 @@ export class WorkingBranchService {
         month: nextDate.getUTCMonth() + 1,
       });
     }
-    // for (const { day, year, month } of resultDates) {
-    //   console.log(day, year, month);
-    //   const {startOfDayUTC, endOfDayUTC} = this.getLocalTime(day, month, year, timezone);
-    //   const reservation = await this.ReservationRepository.findOne({
-    //     where: {
-    //       start_Time: Between(new Date(startOfDayUTC), new Date(endOfDayUTC)),
-    //       branch: { id: branch },
-    //       order: {
-    //         status: In([OrderStatus.Completed, OrderStatus.Working, OrderStatus.InQueue, OrderStatus.Pending, OrderStatus.Reviewed]),
-    //       }
-    //     },
-    //     relations: {
-    //       branch: true,
-    //       order: true,
-    //     },
-    //   });
-
-    //   if (reservation) {
-    //     throw new NotFoundException(this.i18n.translate('test.working_hour.reservation_exist', { day, month, year, reservation: reservation.id }));
-    //   }
-    // }
+    for (const { day, year, month } of resultDates) {
+      const utcDateTime = this.convertToUtc(day, month, year, workingHours, timezone);
+      await this.checkReservationsOutsideIntervals(day, month, year, utcDateTime);
+    }
   }
 
   formatAndSortTimeArray(times: string[]): string[] {
@@ -146,13 +256,14 @@ export class WorkingBranchService {
 
     console.log('new working hours', createWorkingBranchDto.workingHours);
 
+    const times = createWorkingBranchDto.workingHours;
+
     await this.getNextFourWeeksDatesForDay(
       createWorkingBranchDto.dayOfWeek,
       branchId,
       timezone,
+      times,
     );
-
-    const times = createWorkingBranchDto.workingHours;
 
     // Convert dayOfWeek from string to WeekDays enum
     const weekDayEnum = WeekDays[dayOfWeek as keyof typeof WeekDays];
