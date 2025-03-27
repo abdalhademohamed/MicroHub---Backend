@@ -26,7 +26,7 @@ import { ScheduleModule } from "@nestjs/schedule";
       ReservationEntity,
     ]), // Register the necessary entities with TypeORM
     ReservationModule,
-    ScheduleModule.forRoot(),
+    // ScheduleModule.forRoot(),
   ],
   controllers: [SlotController], // Register the controller
   providers: [SlotService], // Register the service

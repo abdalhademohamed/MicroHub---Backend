@@ -62,6 +62,7 @@ import { TransactionEntity } from "./transaction/entities/transaction.entity";
 import { TransactionModule } from "./transaction/transaction.module";
 import { FileEntity } from "./excel/entities/file.entity";
 import { ExcelModule } from "./excel/excel.module";
+import { ScheduleModule } from "@nestjs/schedule";
 
 @Module({
   imports: [
@@ -148,6 +149,7 @@ import { ExcelModule } from "./excel/excel.module";
     OrdersModule,
     ReviewsModule,
     ReceiptModule,
+    ScheduleModule.forRoot(),
     SlotModule,
     AnalysisModule,
     EventEmitterModule.forRoot({ global: true }),
