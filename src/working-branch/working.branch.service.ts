@@ -119,6 +119,7 @@ export class WorkingBranchService {
     month: number,
     year: number,
     workingIntervals: string[], // Array of UTC intervals
+    timezone: string,
   ) {
   // Fetch all reservations on this day
       const reservations = await this.ReservationRepository.find({
@@ -153,9 +154,17 @@ export class WorkingBranchService {
 
     if (invalidReservations.length > 0) {
       throw new BadRequestException(
-        `Some reservations are outside the allowed working intervals: ${invalidReservations.map(
-          (res) => `Reservation from ${res.start_Time} to ${res.end_Time}`
-        ).join(", ")}`
+        `بعض الحجوزات خارج الفترات الزمنية المسموح بها: ${invalidReservations
+          .map((res) => {
+            const startTime = DateTime.fromISO(res.start_Time.toISOString(), { zone: 'utc' })
+              .setZone('Asia/Riyadh')
+              .toFormat(timezone);
+            const endTime = DateTime.fromISO(res.end_Time.toISOString(), { zone: 'utc' })
+              .setZone(timezone)
+              .toFormat('HH:mm');
+            return `الحجز من ${startTime} إلى ${endTime}`;
+          })
+          .join(', ')}`
       );
     }
     return true; // ✅ All reservations are valid
@@ -221,7 +230,7 @@ export class WorkingBranchService {
     }
     for (const { day, year, month } of resultDates) {
       const utcDateTime = this.convertToUtc(day, month, year, workingHours, timezone);
-      await this.checkReservationsOutsideIntervals(day, month, year, utcDateTime);
+      await this.checkReservationsOutsideIntervals(day, month, year, utcDateTime, timezone);
     }
   }
 
