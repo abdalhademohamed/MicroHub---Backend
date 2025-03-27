@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { AuthModule } from "./auth/auth.module";
@@ -63,6 +63,7 @@ import { TransactionModule } from "./transaction/transaction.module";
 import { FileEntity } from "./excel/entities/file.entity";
 import { ExcelModule } from "./excel/excel.module";
 import { ScheduleModule } from "@nestjs/schedule";
+import { LoggerMiddleware } from "./middleware/logger_middleware";
 
 @Module({
   imports: [
@@ -162,5 +163,9 @@ import { ScheduleModule } from "@nestjs/schedule";
   controllers: [AppController],
   providers: [AppService, CloudinaryProvider],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggerMiddleware).forRoutes("*");
+  }
+}
 console.log(process.env.NODE_ENV);
