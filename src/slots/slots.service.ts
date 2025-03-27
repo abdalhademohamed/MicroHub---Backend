@@ -3,7 +3,7 @@ import { WeekDays } from "../branch/utils/days.enum";
 import { CreateSlotDto } from "./dto/create.slot.dto";
 import { InjectRepository } from "@nestjs/typeorm";
 import { WorkingBranchEntity } from "../working-branch/entities/working.branch.entity";
-import { Brackets, Repository } from "typeorm";
+import { Brackets, In, Repository } from "typeorm";
 import { BranchEntity } from "../branch/entities/branch.entity";
 import { Role } from "../user/utils/user.enum";
 import { ReservationService } from "../reservation/reservation.service";
@@ -14,6 +14,7 @@ import { EmployeeEntity } from "../employee/entities/employee.entity";
 import { DateTime } from 'luxon';
 import { Cron } from "@nestjs/schedule";
 import { ReservationEntity } from "src/reservation/entities/reservation.entity";
+import { OrderStatus } from "src/orders/utils/order.status.enum";
 
 @Injectable()
 export class SlotService {
@@ -662,10 +663,16 @@ export class SlotService {
         reservationDay: body.day,
         reservationMonth: body.month,
         reservationYear: body.year,
+        order: {
+          status: In([OrderStatus.Completed, OrderStatus.Working, OrderStatus.InQueue, OrderStatus.Pending, OrderStatus.Reviewed]),
+        }
       },
       order: {
         createdAt: "ASC", // Sort by createdAt in ascending order (oldest first)
       },
+      relations: {
+        order: true,
+      }
     });
     for (const reservation of reservations) {
       await this.addReservation(body.branch, reservation.start_Time, reservation.end_Time);

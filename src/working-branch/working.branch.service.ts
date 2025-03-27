@@ -127,7 +127,13 @@ export class WorkingBranchService {
           reservationDay: day,
           reservationMonth: month,
           reservationYear: year,
+          order: {
+            status: In([OrderStatus.Completed, OrderStatus.Working, OrderStatus.InQueue, OrderStatus.Pending, OrderStatus.Reviewed]),
+          }
         },
+        relations: {
+          order: true,
+        }
       });
 
       const workingSlots = [];
@@ -157,8 +163,8 @@ export class WorkingBranchService {
         `بعض الحجوزات خارج الفترات الزمنية المسموح بها: ${invalidReservations
           .map((res) => {
             const startTime = DateTime.fromISO(res.start_Time.toISOString(), { zone: 'utc' })
-              .setZone('Asia/Riyadh')
-              .toFormat(timezone);
+              .setZone(timezone)
+              .toFormat('HH:mm');
             const endTime = DateTime.fromISO(res.end_Time.toISOString(), { zone: 'utc' })
               .setZone(timezone)
               .toFormat('HH:mm');
