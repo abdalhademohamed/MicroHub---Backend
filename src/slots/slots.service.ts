@@ -663,6 +663,9 @@ export class SlotService {
         reservationMonth: body.month,
         reservationYear: body.year,
       },
+      order: {
+        createdAt: "ASC", // Sort by createdAt in ascending order (oldest first)
+      },
     });
     for (const reservation of reservations) {
       await this.addReservation(body.branch, reservation.start_Time, reservation.end_Time);
