@@ -93,6 +93,7 @@ export class ReservationController {
     @Body() CreateCustomerDto: CreateReservationDto, // Array of customer DTOs
     @UploadedFile() image: Express.Multer.File, // Handle the uploaded file
   ): Promise<any> {
+    console.log('body is ', CreateCustomerDto);
     // Call the service to create reservations
     // console.log("data:",CreateCustomerDto)
     const userId = req.user.sub; // Extract user ID from request
@@ -100,11 +101,16 @@ export class ReservationController {
     if (!userId) {
       throw new BadRequestException("User not authenticated");
     }
-    return await this.reservationService.createReservation(
-      CreateCustomerDto,
-      image,
-      userId,
-    );
+    try {
+      return await this.reservationService.createReservation(
+        CreateCustomerDto,
+        image,
+        userId,
+      );
+    } catch(e) {
+      console.error('Error creating reservation: ', e);
+      throw e;
+    }
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
