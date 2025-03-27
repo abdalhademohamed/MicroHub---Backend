@@ -257,6 +257,8 @@ export class ReservationService {
         );
       }
 
+      console.log('branch is', branch);
+
       let serviceIds: string[] = [];
       let services: ServiceEntity[] = [];
       let rootoshIds: string[] = []; // Initialize rootoshIds array
@@ -323,6 +325,8 @@ export class ReservationService {
         // Upload image to Cloudinary
       }
 
+      console.log('offer id is', body.offerId);
+
       // Check for sharable offer and add its services if applicable
       if (body.sharableOfferId && body.services && body.services.length > 0) {
         serviceIds = body.services;
@@ -369,6 +373,8 @@ export class ReservationService {
 
         // Upload image to Cloudinary
       }
+
+      console.log('coupon id is', body.couponCode);
 
       // Check for coupon code and add its services if applicable
       if (body.couponCode && body.services && body.services.length > 0) {
