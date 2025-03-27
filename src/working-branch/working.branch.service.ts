@@ -92,27 +92,27 @@ export class WorkingBranchService {
         month: nextDate.getUTCMonth() + 1,
       });
     }
-    for (const { day, year, month } of resultDates) {
-      console.log(day, year, month);
-      const {startOfDayUTC, endOfDayUTC} = this.getLocalTime(day, month, year, timezone);
-      const reservation = await this.ReservationRepository.findOne({
-        where: {
-          start_Time: Between(new Date(startOfDayUTC), new Date(endOfDayUTC)),
-          branch: { id: branch },
-          order: {
-            status: In([OrderStatus.Completed, OrderStatus.Working, OrderStatus.InQueue, OrderStatus.Pending, OrderStatus.Reviewed]),
-          }
-        },
-        relations: {
-          branch: true,
-          order: true,
-        },
-      });
+    // for (const { day, year, month } of resultDates) {
+    //   console.log(day, year, month);
+    //   const {startOfDayUTC, endOfDayUTC} = this.getLocalTime(day, month, year, timezone);
+    //   const reservation = await this.ReservationRepository.findOne({
+    //     where: {
+    //       start_Time: Between(new Date(startOfDayUTC), new Date(endOfDayUTC)),
+    //       branch: { id: branch },
+    //       order: {
+    //         status: In([OrderStatus.Completed, OrderStatus.Working, OrderStatus.InQueue, OrderStatus.Pending, OrderStatus.Reviewed]),
+    //       }
+    //     },
+    //     relations: {
+    //       branch: true,
+    //       order: true,
+    //     },
+    //   });
 
-      if (reservation) {
-        throw new NotFoundException(this.i18n.translate('test.working_hour.reservation_exist', { day, month, year, reservation: reservation.id }));
-      }
-    }
+    //   if (reservation) {
+    //     throw new NotFoundException(this.i18n.translate('test.working_hour.reservation_exist', { day, month, year, reservation: reservation.id }));
+    //   }
+    // }
   }
 
   formatAndSortTimeArray(times: string[]): string[] {
