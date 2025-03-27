@@ -16,6 +16,6 @@ export class UpdateReservationDto {
   @IsDateString()
   startTime: string;
 
-  @IsString()
-  day: string;
+  // @IsString()
+  // day: string;
 }

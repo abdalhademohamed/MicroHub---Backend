@@ -66,8 +66,8 @@ export class CreateReservationDto {
   })
   customStartTime?: string;
 
-  @IsDateString()
-  @IsOptional()
+  // @IsDateString()
+  // @IsOptional()
   day: string;
 
   @ApiProperty()

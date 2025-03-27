@@ -8,6 +8,6 @@ export class UpdateBranchReservationDto {
   @IsString()
   startTime: string;
 
-  @IsString()
-  day: string;
+  // @IsString()
+  // day: string;
 }
