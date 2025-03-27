@@ -101,11 +101,16 @@ export class ReservationController {
     if (!userId) {
       throw new BadRequestException("User not authenticated");
     }
-    return await this.reservationService.createReservation(
-      CreateCustomerDto,
-      image,
-      userId,
-    );
+    try {
+      return await this.reservationService.createReservation(
+        CreateCustomerDto,
+        image,
+        userId,
+      );
+    } catch(e) {
+      console.error('Error creating reservation: ', e);
+      throw e;
+    }
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
