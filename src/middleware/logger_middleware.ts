@@ -1,11 +1,12 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import { Injectable, Logger, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
-    console.log(req.body);
-    console.log(`[${req.method}] ${req.url}`);
+    const logger = new Logger(LoggerMiddleware.name, { timestamp: true })
+    console.log('from middleware request body is', req.body as any);
+    logger.log(`[${req.method}] ${req.url}`);
     next(); // Call the next middleware or controller
   }
 }
