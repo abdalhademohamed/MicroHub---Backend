@@ -68,6 +68,7 @@ export class ReservationService {
     private OrderRepo: Repository<OrderEntity>,
     private actionService: ActionService,
   ) {}
+  
   splitIntervals(
     fromOriginal: Date,
     toOriginal: Date,
@@ -172,26 +173,17 @@ export class ReservationService {
 
     return { price, duration, rootosh };
   }
-  async getWorkingHoursAtSpecificDate(branchId: string, day: Date) {
-    const workingHours = await this.WorkingHourEntity.find({
-      where: {
-        slot: {
-          branch: {
-            id: branchId,
-          },
-          day: day.getUTCDate(),
-          month: day.getUTCMonth() + 1,
-          year: day.getUTCFullYear(),
-        },
-      },
-      relations: {
-        slot: {
-          branch: true,
-        },
-      },
-    });
+  async getWorkingHoursAtSpecificDate(branchId: string, startTime: Date) {
+    const workingHours = await this.WorkingHourEntity.createQueryBuilder("working")
+      .leftJoinAndSelect("working.slot", "slot")
+      .leftJoinAndSelect("slot.branch", "branch")
+      .where("branch.id = :branchId", { branchId })
+      .andWhere("working.from <= :startTime", { startTime })
+      .andWhere("working.to > :startTime", { startTime })
+      .getMany();
+
     return workingHours;
-  }
+}
   newAddedWorkingHours(
     body: {
       fromUser: Date;
