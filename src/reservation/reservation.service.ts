@@ -1231,6 +1231,7 @@ export class ReservationService {
       if (reservation.branch.id == body.branch) {
         const result = await this.updateTime(
           reservationId,// @ts-ignore
+          // @ts-ignore
           { startTime: body.startTime, day: body.day },
           userId,
         );
