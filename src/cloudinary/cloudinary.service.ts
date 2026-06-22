@@ -3,6 +3,7 @@ import { UploadApiErrorResponse, UploadApiResponse, v2 } from "cloudinary";
 import toStream = require("buffer-to-stream");
 import * as streamifier from "streamifier";
 import { v4 } from "uuid";
+import 'multer';
 
 @Injectable()
 export class CloudinaryService {
@@ -12,8 +13,6 @@ export class CloudinaryService {
       const uploadStream = v2.uploader.upload_stream(
         {
           resource_type: "raw", // Treat file as raw binary
-          // public_id:`${fileName}.xlsx`,
-          // folder: "excels", // Optional Cloudinary folder
           format: "xlsx",
         },
         (error, result) => {
@@ -28,6 +27,7 @@ export class CloudinaryService {
       streamifier.createReadStream(buffer).pipe(uploadStream);
     });
   }
+
   async uploadImage(
     file: Express.Multer.File,
     folderName: string,
@@ -36,6 +36,8 @@ export class CloudinaryService {
       const upload = v2.uploader.upload_stream(
         {
           folder: `${folderName}`, // Dynamic folder based on branch name
+          type: "upload",          // 👈 الإضافة الأولى: تأكيد إن الملف عام
+          access_mode: "public",   // 👈 الإضافة التانية: فتح الصلاحية للجميع 
         },
         (error, result) => {
           if (error) return reject(error);
@@ -46,6 +48,7 @@ export class CloudinaryService {
       toStream(file.buffer).pipe(upload);
     });
   }
+
   async uploadPdfToCloudinary(buffer: any): Promise<string> {
     return new Promise((resolve, reject) => {
       v2.uploader
