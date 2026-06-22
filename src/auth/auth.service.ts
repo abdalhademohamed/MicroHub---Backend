@@ -101,7 +101,7 @@ export class AuthService {
       const newUser = await this.UserRepository.save(user);
 
       return newUser;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error("Failed to sign up user", error.stack);
 
       if (error.code === "23505") {
@@ -158,14 +158,14 @@ export class AuthService {
               userName: user.username,
               role: user.role,
             };
-          } catch (updateError) {
+          } catch (updateError: any) {
             console.error("Error updating refresh token:", updateError.message);
             throw new InternalServerErrorException(
               "Failed to update the refresh token. Please try again later.",
               updateError.stack,
             );
           }
-        } catch (generateTokensError) {
+        } catch (generateTokensError: any) {
           console.error(
             "Error generating tokens:",
             generateTokensError.message,
@@ -175,7 +175,7 @@ export class AuthService {
             generateTokensError.stack,
           );
         }
-      } catch (invalidateTokenError) {
+      } catch (invalidateTokenError: any) {
         console.error(
           "Error invalidating old refresh token:",
           invalidateTokenError.message,
@@ -185,7 +185,7 @@ export class AuthService {
           invalidateTokenError.stack,
         );
       }
-    } catch (validateUserError) {
+    } catch (validateUserError: any) {
       console.error("Error validating user:", validateUserError.message);
       throw new UnauthorizedException(
         this.i18nService.translate("test.auth.INVALID_CREDENTIALS"),
@@ -202,7 +202,7 @@ export class AuthService {
       await this.UserRepository.update(userId, { refreshToken: null });
 
       console.log(`invalidateOldRefreshToken: ${Date.now() - startTime}ms`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error invalidating old refresh token:", error.message);
       throw new InternalServerErrorException(
         "Failed to invalidate old refresh token. Please try again later.",
@@ -216,13 +216,18 @@ export class AuthService {
 
     // Validate user existence and password
     if (user && (await bcrypt.compare(password, user.password))) {
+      // [تعديل هام جداً]: مزامنة الصلاحية من جدول الموظفين عشان مشكلة הـ ADMIN المعلقة تتحل
+      const employee = await this.EmployeeRepository.findOne({ where: { id: user.id } });
+      if (employee && employee.role && employee.role !== user.role) {
+        user.role = employee.role; // سحب الصلاحية الجديدة (الفريش)
+        // تحديث الصلاحية في جدول المستخدمين عشان ميعلقش تاني
+        await this.UserRepository.update(user.id, { role: employee.role });
+      }
       return user;
     }
     throw new UnauthorizedException(
       this.i18nService.translate("test.auth.INVALID_CREDENTIALS"),
     );
-
-    // throw new UnauthorizedException("Please check your login credentials");
   }
 
   async sendOtpEmail(email: string, otp: string): Promise<void> {
@@ -235,12 +240,10 @@ export class AuthService {
 
     try {
       await this.MailService.transporter.sendMail(mailOptions);
-    } catch (error) {
+    } catch (error: any) {
       throw new InternalServerErrorException(
         this.i18nService.translate("test.auth.OTP_EMAIL_FAILED"),
       );
-
-      //  throw new InternalServerErrorException("Failed to send OTP email");
     }
   }
 
@@ -273,15 +276,14 @@ export class AuthService {
         message: this.i18nService.translate("test.auth.RESET_EMAIL_SENT"),
         resetToken: token,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       throw new InternalServerErrorException(
         this.i18nService.translate("test.auth.RESET_EMAIL_FAILED"),
       );
-
-      //  throw new InternalServerErrorException("Failed to send Password Reset Request email");
     }
   }
+  
   async setResetPasswordToken(userId: string, token: string): Promise<void> {
     await this.UserRepository.update(userId, {
       resetPasswordToken: token,
@@ -297,7 +299,7 @@ export class AuthService {
       decoded = this.JwtService.verify(token, {
         secret: process.env.JWT_RESET_SECRET,
       });
-    } catch (error) {
+    } catch (error: any) {
       throw new BadRequestException(
         this.i18nService.translate("test.auth.INVALID_TOKEN"),
       );
@@ -317,8 +319,6 @@ export class AuthService {
       throw new NotFoundException(
         this.i18nService.translate("test.auth.USER_NOT_FOUND"),
       );
-
-      // throw new NotFoundException('User not found or token has expired');
     }
 
     // Compare the provided token with the hashed token stored in the database
@@ -327,8 +327,6 @@ export class AuthService {
       throw new BadRequestException(
         this.i18nService.translate("test.auth.INVALID_TOKEN_OR_OTP"),
       );
-
-      // throw new BadRequestException('Invalid token or OTP');
     }
 
     return user;
@@ -342,12 +340,10 @@ export class AuthService {
       decoded = this.JwtService.verify(token, {
         secret: process.env.JWT_RESET_SECRET,
       });
-    } catch (error) {
+    } catch (error: any) {
       throw new BadRequestException(
         this.i18nService.translate("test.auth.INVALID_TOKEN"),
       );
-
-      // throw new BadRequestException('Invalid or expired token');
     }
 
     // Retrieve user by checking if the reset token is valid and not expired
@@ -364,8 +360,6 @@ export class AuthService {
       throw new NotFoundException(
         this.i18nService.translate("test.auth.USER_NOT_FOUND"),
       );
-
-      // throw new NotFoundException('User not found or token has expired');
     }
 
     // Compare the provided token with the hashed token stored in the database
@@ -374,8 +368,6 @@ export class AuthService {
       throw new BadRequestException(
         this.i18nService.translate("test.auth.INVALID_TOKEN_OR_OTP"),
       );
-
-      // throw new BadRequestException('Invalid token or OTP');
     }
 
     return user;
@@ -401,12 +393,10 @@ export class AuthService {
 
     try {
       await this.MailService.transporter.sendMail(mailOptions);
-    } catch (error) {
+    } catch (error: any) {
       throw new InternalServerErrorException(
         this.i18nService.translate("test.auth.CONFIRMATION_EMAIL_FAILED"),
       );
-
-      //  throw new InternalServerErrorException("Failed to send confirmation email");
     }
   }
 
@@ -418,9 +408,6 @@ export class AuthService {
       });
 
       if (result.affected === 0) {
-        // If no rows were affected, it means the user was not found or the update failed
-        // throw new NotFoundException('User not found');
-        // throw new NotFoundException( this.i18nService.translate('test.USER_NOT_FOUND'));
         throw new NotFoundException(
           this.i18nService.translate("test.auth.USER_NOT_FOUND"),
         );
@@ -428,14 +415,14 @@ export class AuthService {
 
       // Return a success message
       return { message: "lOGOUT SUCCESSFULLY" };
-    } catch (error) {
-      // Return a user-friendly message without exposing internal details
+    } catch (error: any) {
       throw new InternalServerErrorException(
         "Failed to logout. Please try again later.",
         this.i18nService.translate("test.auth.LOGOUT_FAILED"),
       );
     }
   }
+  
   async refreshTokens(userId: string, providedRefreshToken: string) {
     // Fetch user from the database by UUID
     const user = await this.UserRepository.findOne({ where: { id: userId } });
@@ -505,7 +492,7 @@ export class AuthService {
       console.log(`generateTokens: ${Date.now() - startTime}ms`);
 
       return { accessToken, refreshToken };
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating tokens:", error.message);
       throw new InternalServerErrorException(
         "Failed to generate tokens. Please try again later.",
@@ -513,6 +500,7 @@ export class AuthService {
       );
     }
   }
+  
   async updateRefreshToken(
     userId: string,
     refreshToken: string,
@@ -623,11 +611,10 @@ export class AuthService {
 
           await transactionalEntityManager.save(AuditLogEntity, log);
           if (newEmployee.role == Role.ARTIST) {
-            // await this.slotService.createSlotsForArtist(newEmployee);
             this.eventEmitter.emit("artist:created", newEmployee);
           }
           return newEmployee;
-        } catch (error) {
+        } catch (error: any) {
           console.error("Failed to create employee:", error);
           throw new InternalServerErrorException(
             this.i18nService.translate("test.auth.EMPLOYEE_CREATE_FAILED"),
@@ -703,8 +690,8 @@ export class AuthService {
     const user = this.UserRepository.create(userData);
     return await entityManager.save(UserEntity, user);
   }
+  
   private determineRoleFromPosition(position: PositionEntity): Role {
-    // Example mapping logic based on the Postion enum
     switch (position.postion) {
       case Postion.ADMIN:
         return Role.ADMIN;
@@ -734,7 +721,7 @@ export class AuthService {
     const {
       english_Name,
       arabic_Name,
-      position: positionId, // This will determine if it's ADMIN or SUPERADMIN
+      position: positionId, 
       workingHours,
       email,
       countryCode,
@@ -829,7 +816,7 @@ export class AuthService {
                 : "test.auth.SUPERADMIN_CREATED_SUCCESS",
             ),
           };
-        } catch (error) {
+        } catch (error: any) {
           console.error("Failed to create admin/superadmin:", error);
           if (
             error instanceof ForbiddenException ||
