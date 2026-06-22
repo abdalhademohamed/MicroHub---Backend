@@ -216,18 +216,13 @@ export class AuthService {
 
     // Validate user existence and password
     if (user && (await bcrypt.compare(password, user.password))) {
-      // [تعديل هام جداً]: مزامنة الصلاحية من جدول الموظفين عشان مشكلة הـ ADMIN المعلقة تتحل
-      const employee = await this.EmployeeRepository.findOne({ where: { id: user.id } });
-      if (employee && employee.role && employee.role !== user.role) {
-        user.role = employee.role; // سحب الصلاحية الجديدة (الفريش)
-        // تحديث الصلاحية في جدول المستخدمين عشان ميعلقش تاني
-        await this.UserRepository.update(user.id, { role: employee.role });
-      }
       return user;
     }
     throw new UnauthorizedException(
       this.i18nService.translate("test.auth.INVALID_CREDENTIALS"),
     );
+
+    // throw new UnauthorizedException("Please check your login credentials");
   }
 
   async sendOtpEmail(email: string, otp: string): Promise<void> {
@@ -244,6 +239,8 @@ export class AuthService {
       throw new InternalServerErrorException(
         this.i18nService.translate("test.auth.OTP_EMAIL_FAILED"),
       );
+
+      //  throw new InternalServerErrorException("Failed to send OTP email");
     }
   }
 
@@ -281,9 +278,10 @@ export class AuthService {
       throw new InternalServerErrorException(
         this.i18nService.translate("test.auth.RESET_EMAIL_FAILED"),
       );
+
+      //  throw new InternalServerErrorException("Failed to send Password Reset Request email");
     }
   }
-  
   async setResetPasswordToken(userId: string, token: string): Promise<void> {
     await this.UserRepository.update(userId, {
       resetPasswordToken: token,
@@ -319,6 +317,8 @@ export class AuthService {
       throw new NotFoundException(
         this.i18nService.translate("test.auth.USER_NOT_FOUND"),
       );
+
+      // throw new NotFoundException('User not found or token has expired');
     }
 
     // Compare the provided token with the hashed token stored in the database
@@ -327,6 +327,8 @@ export class AuthService {
       throw new BadRequestException(
         this.i18nService.translate("test.auth.INVALID_TOKEN_OR_OTP"),
       );
+
+      // throw new BadRequestException('Invalid token or OTP');
     }
 
     return user;
@@ -344,6 +346,8 @@ export class AuthService {
       throw new BadRequestException(
         this.i18nService.translate("test.auth.INVALID_TOKEN"),
       );
+
+      // throw new BadRequestException('Invalid or expired token');
     }
 
     // Retrieve user by checking if the reset token is valid and not expired
@@ -360,6 +364,8 @@ export class AuthService {
       throw new NotFoundException(
         this.i18nService.translate("test.auth.USER_NOT_FOUND"),
       );
+
+      // throw new NotFoundException('User not found or token has expired');
     }
 
     // Compare the provided token with the hashed token stored in the database
@@ -368,6 +374,8 @@ export class AuthService {
       throw new BadRequestException(
         this.i18nService.translate("test.auth.INVALID_TOKEN_OR_OTP"),
       );
+
+      // throw new BadRequestException('Invalid token or OTP');
     }
 
     return user;
@@ -397,6 +405,8 @@ export class AuthService {
       throw new InternalServerErrorException(
         this.i18nService.translate("test.auth.CONFIRMATION_EMAIL_FAILED"),
       );
+
+      //  throw new InternalServerErrorException("Failed to send confirmation email");
     }
   }
 
@@ -408,6 +418,9 @@ export class AuthService {
       });
 
       if (result.affected === 0) {
+        // If no rows were affected, it means the user was not found or the update failed
+        // throw new NotFoundException('User not found');
+        // throw new NotFoundException( this.i18nService.translate('test.USER_NOT_FOUND'));
         throw new NotFoundException(
           this.i18nService.translate("test.auth.USER_NOT_FOUND"),
         );
@@ -416,13 +429,13 @@ export class AuthService {
       // Return a success message
       return { message: "lOGOUT SUCCESSFULLY" };
     } catch (error: any) {
+      // Return a user-friendly message without exposing internal details
       throw new InternalServerErrorException(
         "Failed to logout. Please try again later.",
         this.i18nService.translate("test.auth.LOGOUT_FAILED"),
       );
     }
   }
-  
   async refreshTokens(userId: string, providedRefreshToken: string) {
     // Fetch user from the database by UUID
     const user = await this.UserRepository.findOne({ where: { id: userId } });
@@ -500,7 +513,6 @@ export class AuthService {
       );
     }
   }
-  
   async updateRefreshToken(
     userId: string,
     refreshToken: string,
@@ -611,6 +623,7 @@ export class AuthService {
 
           await transactionalEntityManager.save(AuditLogEntity, log);
           if (newEmployee.role == Role.ARTIST) {
+            // await this.slotService.createSlotsForArtist(newEmployee);
             this.eventEmitter.emit("artist:created", newEmployee);
           }
           return newEmployee;
@@ -690,8 +703,8 @@ export class AuthService {
     const user = this.UserRepository.create(userData);
     return await entityManager.save(UserEntity, user);
   }
-  
   private determineRoleFromPosition(position: PositionEntity): Role {
+    // Example mapping logic based on the Postion enum
     switch (position.postion) {
       case Postion.ADMIN:
         return Role.ADMIN;
@@ -721,7 +734,7 @@ export class AuthService {
     const {
       english_Name,
       arabic_Name,
-      position: positionId, 
+      position: positionId, // This will determine if it's ADMIN or SUPERADMIN
       workingHours,
       email,
       countryCode,

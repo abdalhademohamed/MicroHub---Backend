@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    "types": ["jest", "node"],
+    "ignoreDeprecations": "6.0",
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "module": "commonjs",
