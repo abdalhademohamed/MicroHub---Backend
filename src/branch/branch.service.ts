@@ -316,7 +316,7 @@ export class BranchService {
         currentPage: page,
         totalPages,
       };
-    } catch (error) {
+    } catch (error: any) {
       throw new InternalServerErrorException(
         "Failed to get branches",
         error.stack,

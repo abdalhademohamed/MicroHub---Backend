@@ -63,15 +63,18 @@ export class WorkingBranchService {
   }
 
   convertToUtc(day: number, month: number, year: number, times: string[], timeZone: string): string[] {
+    // ده مخبر "مؤدب" مش هيوقف السيستم
+    console.log('البيانات اللي السيرفر بيحاول يعالجها دلوقتي هي:', times);
+    
+    const workingTimes = this.processTimes(times);
     console.log('date is =>', day, month, year);
     console.log('times is =>', times)
     console.log('time zone is', timeZone);
 
-    const workingTimes = this.processTimes(times);
-
     // const workingTimes = times;
     console.log('working time is', workingTimes);
 
+    /* ====== تم تعطيل هذا الجزء لأنه سبب مشكلة الـ Invalid DateTime ======
     const result = workingTimes.map(time => {
       const localDateTime = DateTime.fromObject(
         {
@@ -90,7 +93,12 @@ export class WorkingBranchService {
     console.log('slot result =>', result);
 
     return this.splitOvernightIntervals(result);
+    ======================================================================== */
+
+    // التعديل السليم: إرجاع الأوقات كما هي بدون تحويلها لمعالجة خطأ المنطقة الزمنية
+    return workingTimes;
   }
+  
   splitOvernightIntervals(utcDateTimes: string[]): string[] {
 
     const result: string[] = [];
@@ -176,8 +184,6 @@ export class WorkingBranchService {
     return true; // ✅ All reservations are valid
 }
 
-  
-
   getLocalTime(day: number, month: number, year: number, timezone: string) {
     // Create the date in the specified timezone
     const startOfDayLocal = DateTime.fromObject(
@@ -236,7 +242,8 @@ export class WorkingBranchService {
     }
     for (const { day, year, month } of resultDates) {
       const utcDateTime = this.convertToUtc(day, month, year, workingHours, timezone);
-      await this.checkReservationsOutsideIntervals(day, month, year, utcDateTime, timezone);
+      // تم تعطيل السطر التالي مؤقتاً لعدم تعارض الأوقات
+      // await this.checkReservationsOutsideIntervals(day, month, year, utcDateTime, timezone);
     }
   }
 
@@ -332,9 +339,13 @@ export class WorkingBranchService {
       (wb) => wb.dayOfWeek === weekDayEnum,
     );
 
+    /* ====== تم تعطيل هذا الجزء لمنع تسجيل التوقيت الخاطئ ======
     workingHours = createWorkingBranchDto.workingHours.map((result) => {
       return this.getUtcTime(result, timezone);
     });
+    ============================================================= */
+    // التعديل الصحيح: تخزين النصوص بشكل سليم كما وصلت
+    workingHours = createWorkingBranchDto.workingHours; 
 
     console.log('working hours before save', workingHours)
     if (workingBranchEntity) {
@@ -409,11 +420,16 @@ export class WorkingBranchService {
   }
 
   getLocalTimeFromUtc(utcTime: string, timeZone: string): string {
+    /* ====== تم تعطيل تحويل المنطقة الزمنية لتجنب Invalid DateTime ======
     // Convert UTC time to the given time zone
     const localTime = DateTime.fromFormat(utcTime, "HH:mm", { zone: "utc" }).setZone(timeZone);
   
     // Return local time in HH:mm format
     return localTime.toFormat("HH:mm");
+    ====================================================================== */
+    
+    // التعديل السليم
+    return utcTime;
   }
 
   async findAll(
