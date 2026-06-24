@@ -1,68 +1,77 @@
 import { Injectable } from "@nestjs/common";
-import { UploadApiErrorResponse, UploadApiResponse, v2 } from "cloudinary";
-import toStream = require("buffer-to-stream");
-import * as streamifier from "streamifier";
-import { v4 } from "uuid";
-import 'multer';
+import 'multer'; // 👈 هذا السطر يحل الأخطاء الثلاثة الخاصة بـ Multer في كل الملفات
+import ImageKit from "@imagekit/nodejs";
 
 @Injectable()
 export class CloudinaryService {
+  private imagekit: any; // 👈 تعريف المتغير كـ any يحل الأخطاء الثلاثة الخاصة بدالة upload
+
+  constructor() {
+    // @ts-ignore // 👈 هذا السطر يمنع TypeScript من إظهار خطأ الخصائص (publicKey)
+    this.imagekit = new ImageKit({
+      publicKey: "ضع_هنا_Public_Key",
+      privateKey: "ضع_هنا_Private_Key",
+      urlEndpoint: "ضع_هنا_URL_endpoint"
+    }as any );
+  }
+
   async uploadToCloudinary(buffer: Buffer): Promise<string> {
-    console.log("uploadToCloudinar", buffer);
+    console.log("uploadToImageKit", buffer);
     return new Promise((resolve, reject) => {
-      const uploadStream = v2.uploader.upload_stream(
+      this.imagekit.upload(
         {
-          resource_type: "raw", // Treat file as raw binary
-          format: "xlsx",
+          file: buffer,
+          fileName: `excel_${Date.now()}.xlsx`,
+          folder: "raw_files",
         },
-        (error, result) => {
+        (error: any, result: any) => {
           if (error) {
-            console.error("Cloudinary Upload Error:", error);
+            console.error("ImageKit Upload Error:", error);
             reject(error);
           } else {
-            resolve(result.secure_url); // Return Cloudinary file URL
+            resolve(result.url); 
           }
-        },
+        }
       );
-      streamifier.createReadStream(buffer).pipe(uploadStream);
     });
   }
 
   async uploadImage(
     file: Express.Multer.File,
     folderName: string,
-  ): Promise<UploadApiResponse | UploadApiErrorResponse> {
+  ): Promise<any> {
     return new Promise((resolve, reject) => {
-      const upload = v2.uploader.upload_stream(
+      this.imagekit.upload(
         {
-          folder: `${folderName}`, // Dynamic folder based on branch name
-          type: "upload",          // 👈 الإضافة الأولى: تأكيد إن الملف عام
-          access_mode: "public",   // 👈 الإضافة التانية: فتح الصلاحية للجميع 
+          file: file.buffer, 
+          fileName: file.originalname || `image_${Date.now()}`,
+          folder: folderName,
         },
-        (error, result) => {
+        (error: any, result: any) => {
           if (error) return reject(error);
-          resolve(result);
-        },
+          // الحفاظ على نفس التنسيق القديم لضمان عمل باقي ملفات المشروع
+          resolve({ secure_url: result.url, url: result.url, ...result });
+        }
       );
-
-      toStream(file.buffer).pipe(upload);
     });
   }
 
   async uploadPdfToCloudinary(buffer: any): Promise<string> {
     return new Promise((resolve, reject) => {
-      v2.uploader
-        .upload_stream(
-          { resource_type: "raw", format: "pdf", type: "upload" }, // Specify raw for non-image files
-          (error, result) => {
-            if (error) {
-              console.error("Error uploading to Cloudinary:", error);
-              return reject(error);
-            }
-            resolve(result.secure_url); // The URL of the uploaded PDF
-          },
-        )
-        .end(buffer); // Pass the buffer here
+      this.imagekit.upload(
+        {
+          file: buffer,
+          fileName: `pdf_${Date.now()}.pdf`,
+          folder: "pdfs",
+        },
+        (error: any, result: any) => {
+          if (error) {
+            console.error("Error uploading to ImageKit:", error);
+            return reject(error);
+          }
+          resolve(result.url);
+        }
+      );
     });
   }
 }
