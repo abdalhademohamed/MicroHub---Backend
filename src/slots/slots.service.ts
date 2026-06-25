@@ -38,7 +38,6 @@ export class SlotService {
     const branchs = await this.BranchRepository.find();
     return branchs;
   }
-  
   @Cron('0 0 */14 * *') // Runs every 14 days at midnight
   async handleCronJop() {
     const branchs = await this.getAllBranch();
@@ -57,10 +56,8 @@ export class SlotService {
       for(let i=0; i < daysOfWeek.length; i++) {
         const {timezone, workingHours} = await this.branchWorkingHours(branch.id, daysOfWeek[i])
         
-        // التعديل: تخطي الأيام التي ليس لها دوام (أيام الإجازة مثل الإثنين)
-        if (!workingHours || workingHours.length === 0) {
-          continue;
-        }
+        // التعديل: تخطي أيام الإجازة التي ليس لها مواعيد دوام (مثل يوم الإثنين)
+        if (!workingHours || workingHours.length === 0) continue;
 
         const targetDayOfWeek = daysOfWeek.indexOf(daysOfWeek[i]);
         let daysToAdd = targetDayOfWeek - todayDayOfWeek;
@@ -68,8 +65,7 @@ export class SlotService {
           daysToAdd += 7;
         }
         const resultDates: { day: number; month: number; year: number }[] = [];
-        
-        // التعديل: تغيير i إلى j لتجنب التداخل مع اللوب الخارجي
+        // التعديل: تغيير المتغير i إلى j لمنع التداخل مع اللوب الخارجي
         for (let j = 0; j < 4; j++) {
           const nextDate = new Date();
           nextDate.setUTCHours(0,0,0,0);
@@ -95,7 +91,7 @@ export class SlotService {
             continue;
           }
 
-          // التعديل: جلب بيانات الموظفين (Artists) لكل يوم لتجديد ساعات العمل الخاصة بهم
+          // التعديل: جلب بيانات الموظفين لكل يوم لكي تتجدد ساعات العمل الخاصة بهم
           const dailyArtists = await this.artistCount(branch.id);
 
           const workingEntity =
@@ -404,11 +400,169 @@ export class SlotService {
     await this.WorkingRepository.delete({ id: workingHours[index].id });
   }
   
+  // --- جزء خامل: إنشاء مواعيد للموظف عند إضافته (يمكن مسحه لاحقاً) ---
   // @OnEvent("artist:created")
-  // async createSlotsForArtist(artist: EmployeeEntity) { ... }
-  // createWorkingHoursSlotsForArtist(...) { ... }
-  // createDate(year: number, month: number, day: number, time: string) { ... }
+  // async createSlotsForArtist(artist: EmployeeEntity) {
+  //   console.log('artist is', artist);
+  //   const today = new Date();
+  //   console.log(today.getUTCDate(), today.getUTCMonth() + 1, today.getUTCFullYear());
+  //   today.setHours(0, 0, 0, 0);
+  //   console.log(today.getUTCDate(), today.getUTCMonth() + 1, today.getUTCFullYear());
+  //   let loopOn = true;
+  //   // console.log(artist)
+  //   while (loopOn) {
+  //     console.log(today.getUTCDate(), today.getUTCMonth() + 1, today.getUTCFullYear());
+  //     const slot = await this.SlotRepository.findOne({
+  //       where: {
+  //         day: today.getUTCDate(),
+  //         month: today.getUTCMonth() + 1,
+  //         year: today.getFullYear(),
+  //         branch: {
+  //           id: artist.branch.id,
+  //         },
+  //       },
+  //       relations: {
+  //         branch: true,
+  //       },
+  //     });
+  //     // console.log(slot);
+  //     console.log('slot is', slot);
+  //     if (!slot) {
+  //       const count = await this.SlotRepository.count({
+  //         where: {
+  //           day: MoreThan(today.getUTCDate()),
+  //           month: MoreThanOrEqual(today.getUTCMonth() + 1),
+  //           year: MoreThanOrEqual(today.getUTCFullYear()),
+  //           branch: {
+  //             id: artist.branch.id,
+  //           },
+  //         },
+  //       });
+  //       console.log('count is', count);
+  //       if (count === 0) {
+  //         loopOn = false;
+  //         continue;
+  //       }
+  //       today.setUTCDate(today.getUTCDate() + 1);
+  //       continue;
+  //     }
+  //     const day = this.getDayFromDate(
+  //       today.getUTCFullYear(),
+  //       today.getUTCMonth() + 1,
+  //       today.getUTCDate(),
+  //     );
+  //     let { workingHours, timezone }= await this.branchWorkingHours(artist.branch.id, day);
   
+  //     workingHours = this.convertToUtc(today.getUTCDate(), today.getUTCMonth() + 1, today.getUTCFullYear(), workingHours, timezone);
+
+  //     // console.log()
+  //     const workingEntities: WorkingEntity[] = [];
+  //     let artistWorkingHours = artist.workingHours * 1;
+
+  //     for (let i = 0; i < workingHours.length; i += 2) {
+  
+  //       if (artistWorkingHours <= 0) {
+  //         break;
+  //       }
+
+  //       let from = new Date(workingHours[i]);
+  
+  //       let to = new Date(workingHours[i + 1]);
+  
+  //       let duration = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60));
+  
+  //       if(duration <= 0){
+  //         continue;
+  //       }
+  
+  //       const slot = await this.getSlotForDay(from, artist.branch);
+  
+  //       const noOfHours = Math.floor(duration / 60);
+
+  //       let time = artistWorkingHours - noOfHours;
+
+  //       console.log('artsit working hours', artistWorkingHours);
+  
+  //       if (time < 0) {
+  //         to = new Date(from.getTime() + artistWorkingHours * 3600 * 1000);
+  //         duration = Math.floor((to.getTime() - from.getTime()) / (1000 * 60));
+  //         time = 0;
+  //       }
+  
+  //       artistWorkingHours = time;
+  
+  //       const workingEntity = this.WorkingRepository.create({
+  //         from,
+  //         to,
+  //         slot: slot,
+  //         duration,
+  //       });
+  
+  //       workingEntities.push(workingEntity);
+
+  //       console.log('working entity is', workingEntities);
+  //     }
+  //     const saved = await this.WorkingRepository.save(workingEntities);
+  //     console.log(saved);
+  //     today.setUTCDate(today.getUTCDate() + 1);
+  //   }
+  // }
+  
+  // --- جزء خامل: دالة إنشاء فترات عمل إضافية للموظف (يمكن مسحها لاحقاً) ---
+  // createWorkingHoursSlotsForArtist(
+  //   workingHours: string[],
+  //   nextDate: Date,
+  //   slot: SlotsEntity,
+  //   artist: EmployeeEntity,
+  // ) {
+  //   let workingHoursOfEmployees = artist.workingHours;
+  //   const workingEntities: WorkingEntity[] = [];
+  //   for (let i = 0; i < workingHours.length; i += 2) {
+  //     // console.log(workingHours[i], workingHours[i + 1]);
+  //     const from = this.createDate(
+  //       nextDate.getFullYear(),
+  //       nextDate.getMonth() + 1,
+  //       nextDate.getDate(),
+  //       workingHours[i],
+  //     );
+  //     let to = this.createDate(
+  //       nextDate.getFullYear(),
+  //       nextDate.getMonth() + 1,
+  //       nextDate.getDate(),
+  //       workingHours[i + 1],
+  //     );
+  //     let duration = Math.floor((to.getTime() - from.getTime()) / (1000 * 60));
+  //     const noOfHours = Math.floor(duration / 60);
+  //     if (workingHoursOfEmployees <= 0) {
+  //       break;
+  //     }
+  //     let time = workingHoursOfEmployees - noOfHours;
+  //     if (time < 0) {
+  //       to = new Date(from.getTime() + workingHoursOfEmployees * 3600 * 1000);
+  //       duration = Math.floor((to.getTime() - from.getTime()) / (1000 * 60));
+  //       time = 0;
+  //     }
+  //     workingHoursOfEmployees = time;
+  //     const workingEntity = this.WorkingRepository.create({
+  //       from,
+  //       to,
+  //       slot: slot,
+  //       duration,
+  //     });
+  //     console.log(workingEntity);
+  //     workingEntities.push(workingEntity);
+  //   }
+  //   // console.log(workingEntities);
+  //   return workingEntities;
+  // }
+  
+  // --- جزء خامل: إنشاء كائن التاريخ من نصوص التوقيت (يمكن مسحه لاحقاً) ---
+  // createDate(year: number, month: number, day: number, time: string) {
+  //   const [hour, minute] = time.split(":");
+  //   return new Date(
+  //     Date.UTC(year, month - 1, day, parseInt(hour, 10), parseInt(minute, 10)),
+  //   );
+  // }
   getDayFromDate(year: number, month: number, day: number) {
     const date = new Date(year, month - 1, day);
     const daysOfWeek = [
@@ -424,9 +578,69 @@ export class SlotService {
     return daysOfWeek[dayIndex];
   }
   
+  // --- جزء خامل: حذف ساعات العمل (يمكن مسحه لاحقاً) ---
   // @OnEvent("artist:hours")
-  // async removeWorkingHours({ duration, branchId }) { ... }
-  
+  // async removeWorkingHours({ duration, branchId }) {
+  //   const today = new Date();
+  //   let loopOn = true;
+  //   while (loopOn) {
+  //     const slot = await this.SlotRepository.findOne({
+  //       where: {
+  //         day: today.getDate(),
+  //         month: today.getMonth() + 1,
+  //         year: today.getFullYear(),
+  //         branch: {
+  //           id: branchId,
+  //         },
+  //       },
+  //       relations: ["branch", "workingEntity"],
+  //     });
+  //     if (!slot) {
+  //       const count = await this.SlotRepository.count({
+  //         where: {
+  //           day: MoreThan(today.getDate()),
+  //           month: MoreThanOrEqual(today.getMonth() + 1),
+  //           year: MoreThanOrEqual(today.getFullYear()),
+  //           branch: {
+  //             id: branchId,
+  //           },
+  //         },
+  //       });
+  //       if (count === 0) {
+  //         loopOn = false;
+  //         continue;
+  //       }
+  //       continue;
+  //     }
+  //     let sum = 0;
+  //     const ids = [];
+  //     for (const wE of slot.workingEntity) {
+  //       if (wE.duration == duration) {
+  //         await this.WorkingRepository.remove(wE);
+  //         break;
+  //       }
+  //       if (wE.duration >= duration) {
+  //         wE.from = new Date(duration * 1000 * 60 + wE.from.getTime());
+  //         await this.WorkingRepository.save(wE);
+  //         break;
+  //       }
+  //       sum += wE.duration;
+  //       ids.push(wE.id);
+  //       if (sum == duration) {
+  //         await this.WorkingRepository.delete({ id: In(ids) });
+  //         break;
+  //       }
+  //       if (sum > duration) {
+  //         wE.from = new Date((sum - duration) * 1000 * 60 + wE.from.getTime());
+  //         await this.WorkingRepository.save(wE);
+  //         ids.pop();
+  //         await this.WorkingRepository.delete({ id: In(ids) });
+  //         break;
+  //       }
+  //     }
+  //     today.setDate(today.getDate() + 1);
+  //   }
+  // }
   async createSlot(body: CreateSlotDto, timezone: string) {
     const branch = await this.BranchRepository.findOneBy({ id: body.branch });
 
