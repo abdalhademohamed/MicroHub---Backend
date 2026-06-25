@@ -42,6 +42,7 @@ export class SlotService {
   async handleCronJop() {
     const branchs = await this.getAllBranch();
     for(const branch of branchs ) {
+      const artists = await this.artistCount(branch.id);
       const today = new Date();
       const todayDayOfWeek = today.getDay();
       const daysOfWeek = [
@@ -86,9 +87,6 @@ export class SlotService {
             continue;
           }
 
-          // تم الاستدعاء هنا لضمان تجديد ساعات عمل الموظفين لكل يوم
-          const artists = await this.artistCount(branch.id);
-          
           const workingEntity =
             await this.createWorkingHoursCalender(workingHours, day, month, year, artists, branch, timezone);
 
@@ -781,7 +779,7 @@ export class SlotService {
       const { duration } =
         await this.reservationService.calculateTotalDuration(serviceIds);
 
-      const workingHoursList = await this.WorkingRepository.createQueryBuilder(
+      const workingHour = await this.WorkingRepository.createQueryBuilder(
         "working",
       )
         .leftJoinAndSelect("working.slot", "slot")
@@ -801,22 +799,16 @@ export class SlotService {
         .addOrderBy("slot.month", "ASC")
         .addOrderBy("slot.day", "ASC")
         .addOrderBy("working.from", "ASC")
-        .getMany();
+        .getOne();
 
-      if (!workingHoursList || workingHoursList.length === 0) {
+      if (!workingHour) {
         throw new HttpException(
           "No available slots found for the given services.",
           400,
         );
       }
 
-      for (const workingHour of workingHoursList) {
-        const slots = this.createTimeSlots([workingHour], duration);
-        if (slots && slots.length > 0) {
-          return slots[0];
-        }
-      }
-      return null;
+      return this.createTimeSlots([workingHour], duration)[0] || null;
     }
 
     if (rootoshIds.length > 0) {
@@ -824,7 +816,7 @@ export class SlotService {
       const { duration } =
         await this.reservationService.calculateRootoshTotalDuration(rootoshIds);
 
-      const workingHoursList = await this.WorkingRepository.createQueryBuilder(
+      const workingHour = await this.WorkingRepository.createQueryBuilder(
         "working",
       )
         .leftJoinAndSelect("working.slot", "slot")
@@ -844,22 +836,15 @@ export class SlotService {
         .addOrderBy("slot.month", "ASC")
         .addOrderBy("slot.day", "ASC")
         .addOrderBy("working.from", "ASC")
-        .getMany();
+        .getOne();
 
-      if (!workingHoursList || workingHoursList.length === 0) {
+      if (!workingHour) {
         throw new HttpException(
           "No available slots found for the given rootosh IDs.",
           400,
         );
       }
-
-      for (const workingHour of workingHoursList) {
-        const slots = this.createTimeSlots([workingHour], duration);
-        if (slots && slots.length > 0) {
-          return slots[0];
-        }
-      }
-      return null;
+      return this.createTimeSlots([workingHour], duration)[0] ?? null;
     }
 
     throw new HttpException(
