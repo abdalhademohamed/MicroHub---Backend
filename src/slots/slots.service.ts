@@ -56,7 +56,6 @@ export class SlotService {
       for(let i=0; i < daysOfWeek.length; i++) {
         const {timezone, workingHours} = await this.branchWorkingHours(branch.id, daysOfWeek[i])
         
-        // التعديل: تخطي أيام الإجازة التي ليس لها مواعيد دوام (مثل يوم الإثنين)
         if (!workingHours || workingHours.length === 0) continue;
 
         const targetDayOfWeek = daysOfWeek.indexOf(daysOfWeek[i]);
@@ -65,7 +64,6 @@ export class SlotService {
           daysToAdd += 7;
         }
         const resultDates: { day: number; month: number; year: number }[] = [];
-        // التعديل: تغيير المتغير i إلى j لمنع التداخل مع اللوب الخارجي
         for (let j = 0; j < 4; j++) {
           const nextDate = new Date();
           nextDate.setUTCHours(0,0,0,0);
@@ -91,7 +89,6 @@ export class SlotService {
             continue;
           }
 
-          // التعديل: جلب بيانات الموظفين لكل يوم لكي تتجدد ساعات العمل الخاصة بهم
           const dailyArtists = await this.artistCount(branch.id);
 
           const workingEntity =
@@ -318,31 +315,31 @@ export class SlotService {
 
       console.log('working[i] is', workingHours[i]);
       console.log('from time is', from);
+      console.log('artist base time is', artists.length > 0 ? artists[0].workingHours : 0);
 
-      console.log('artist base time is', artists[0].workingHours);
+      let baseTo = new Date(workingHours[i + 1]);
+      let baseDuration = Math.ceil((baseTo.getTime() - from.getTime()) / (1000 * 60));
 
-      let to = new Date(workingHours[i + 1]);
-
-      let duration = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60));
-
-      if(duration <= 0){
+      if(baseDuration <= 0){
         continue;
       }
 
       const slot = await this.getSlotForDay(from, branch);
 
-      // console.log(duration, artistCount);
       for (let j = 0; j < artists.length; j++) {
-        const noOfHours = Math.floor(duration / 60);
+        // التعديل الرئيسي: فصل الـ Date والـ duration لكل موظف لكي لا تتأثر مواعيد موظف بسبب موظف آخر
+        let artistTo = new Date(baseTo);
+        let artistDuration = baseDuration;
+
+        const noOfHours = Math.floor(artistDuration / 60);
         if (artists[j].workingHours <= 0) {
           continue;
         }
         let time = artists[j].workingHours - noOfHours;
 
         if (time < 0) {
-          to = new Date(from.getTime() + artists[j].workingHours * 3600 * 1000);
-          duration = Math.floor((to.getTime() - from.getTime()) / (1000 * 60));
-          // artists[j].workingHours = 0;
+          artistTo = new Date(from.getTime() + artists[j].workingHours * 3600 * 1000);
+          artistDuration = Math.floor((artistTo.getTime() - from.getTime()) / (1000 * 60));
           time = 0;
         }
 
@@ -350,13 +347,12 @@ export class SlotService {
 
         const workingEntity = this.WorkingRepository.create({
           from,
-          to,
+          to: artistTo,
           slot: slot,
-          duration,
+          duration: artistDuration,
         });
 
         workingEntities.push(workingEntity);
-
       }
     }
 
@@ -400,7 +396,6 @@ export class SlotService {
     await this.WorkingRepository.delete({ id: workingHours[index].id });
   }
   
-  // --- جزء خامل: إنشاء مواعيد للموظف عند إضافته (يمكن مسحه لاحقاً) ---
   // @OnEvent("artist:created")
   // async createSlotsForArtist(artist: EmployeeEntity) {
   //   console.log('artist is', artist);
@@ -507,8 +502,6 @@ export class SlotService {
   //     today.setUTCDate(today.getUTCDate() + 1);
   //   }
   // }
-  
-  // --- جزء خامل: دالة إنشاء فترات عمل إضافية للموظف (يمكن مسحها لاحقاً) ---
   // createWorkingHoursSlotsForArtist(
   //   workingHours: string[],
   //   nextDate: Date,
@@ -555,8 +548,6 @@ export class SlotService {
   //   // console.log(workingEntities);
   //   return workingEntities;
   // }
-  
-  // --- جزء خامل: إنشاء كائن التاريخ من نصوص التوقيت (يمكن مسحه لاحقاً) ---
   // createDate(year: number, month: number, day: number, time: string) {
   //   const [hour, minute] = time.split(":");
   //   return new Date(
@@ -577,8 +568,6 @@ export class SlotService {
     const dayIndex = date.getDay();
     return daysOfWeek[dayIndex];
   }
-  
-  // --- جزء خامل: حذف ساعات العمل (يمكن مسحه لاحقاً) ---
   // @OnEvent("artist:hours")
   // async removeWorkingHours({ duration, branchId }) {
   //   const today = new Date();

@@ -610,7 +610,7 @@ export class ReservationService {
       } else {
         console.log(error);
         throw new InternalServerErrorException({
-          message: error.message || "Unexpected error occurred",
+          message: (error as any).message || "Unexpected error occurred",
           category: "InternalServerError", // Custom error category for unexpected errors
         });
       }
@@ -1158,11 +1158,11 @@ export class ReservationService {
       // Categorize and log errors
       if (error instanceof NotFoundException) {
         // Log specific error for not found exception
-        console.error(`Error: ${error.message}`, { error });
+        console.error(`Error: ${(error as any).message}`, { error });
         throw error; // Re-throw to preserve the original exception
       } else if (error instanceof BadRequestException) {
         // Log specific error for bad request exception
-        console.error(`Error: ${error.message}`, { error });
+        console.error(`Error: ${(error as any).message}`, { error });
         throw error; // Re-throw to preserve the original exception
       } else {
         // Log unexpected errors
@@ -1327,11 +1327,11 @@ export class ReservationService {
     } catch (error) {
       if (error instanceof NotFoundException) {
         // Log specific error for not found exception
-        console.error(`Error: ${error.message}`, { error });
+        console.error(`Error: ${(error as any).message}`, { error });
         throw error; // Re-throw to preserve the original exception
       } else if (error instanceof BadRequestException) {
         // Log specific error for bad request exception
-        console.error(`Error: ${error.message}`, { error });
+        console.error(`Error: ${(error as any).message}`, { error });
         throw error; // Re-throw to preserve the original exception
       }
     }
