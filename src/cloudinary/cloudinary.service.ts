@@ -38,11 +38,16 @@ export class CloudinaryService {
     folderName: string,
   ): Promise<any> {
     return new Promise((resolve, reject) => {
+      console.log("=== START UPLOAD ===");
+      console.log("File received:", file ? "Yes" : "No");
+      
       if (!file || !file.buffer) {
+        console.log("❌ MULTER ERROR: file or file.buffer is undefined. Vercel Serverless issue!");
         return reject(new Error('No valid file provided for upload'));
       }
 
       const fileBase64 = file.buffer.toString('base64');
+      console.log("Buffer converted to base64 successfully.");
 
       this.imagekit.upload(
         {
@@ -51,8 +56,12 @@ export class CloudinaryService {
           folder: folderName,
         },
         (error: any, result: any) => {
-          if (error) return reject(error);
+          if (error) {
+            console.log("❌ IMAGEKIT ERROR DETAILS:", error);
+            return reject(error);
+          }
           
+          console.log("✅ ImageKit upload success:", result.url);
           resolve({ 
             secure_url: result.url, 
             url: result.url,
