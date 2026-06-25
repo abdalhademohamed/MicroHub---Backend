@@ -64,7 +64,9 @@ export class SlotService {
           daysToAdd += 7;
         }
         const resultDates: { day: number; month: number; year: number }[] = [];
-        for (let j = 0; j < 4; j++) {
+        
+        // التعديل الرياضي: تم التكبير من 4 إلى 6 أسابيع لتغطية الشهر بالكامل (42 يوم)
+        for (let j = 0; j < 6; j++) {
           const nextDate = new Date();
           nextDate.setUTCHours(0,0,0,0);
           nextDate.setDate(today.getDate() + daysToAdd + j * 7);
@@ -202,7 +204,9 @@ export class SlotService {
       daysToAdd += 7;
     }
     const resultDates: { day: number; month: number; year: number }[] = [];
-    for (let i = 0; i < 4; i++) {
+    
+    // التعديل الرياضي: تم التكبير من 4 إلى 6 أسابيع لضمان عدم سقوط أيام آخر الشهر
+    for (let i = 0; i < 6; i++) {
       const nextDate = new Date();
       nextDate.setUTCHours(0,0,0,0);
       nextDate.setDate(today.getDate() + daysToAdd + i * 7);
@@ -327,7 +331,6 @@ export class SlotService {
       const slot = await this.getSlotForDay(from, branch);
 
       for (let j = 0; j < artists.length; j++) {
-        // التعديل الرئيسي: فصل الـ Date والـ duration لكل موظف لكي لا تتأثر مواعيد موظف بسبب موظف آخر
         let artistTo = new Date(baseTo);
         let artistDuration = baseDuration;
 
