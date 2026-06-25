@@ -16,9 +16,12 @@ export class CloudinaryService {
 
   async uploadToCloudinary(buffer: Buffer): Promise<string> {
     return new Promise((resolve, reject) => {
+      if (!buffer) return reject(new Error('Buffer is empty'));
+      
+      const fileBase64 = buffer.toString('base64');
       this.imagekit.upload(
         {
-          file: buffer,
+          file: fileBase64,
           fileName: `excel_${Date.now()}.xlsx`,
           folder: "raw_files",
         },
@@ -35,15 +38,21 @@ export class CloudinaryService {
     folderName: string,
   ): Promise<any> {
     return new Promise((resolve, reject) => {
+      if (!file || !file.buffer) {
+        return reject(new Error('No valid file provided for upload'));
+      }
+
+      const fileBase64 = file.buffer.toString('base64');
+
       this.imagekit.upload(
         {
-          file: file.buffer, 
-          fileName: file.originalname || `image_${Date.now()}`,
+          file: fileBase64, 
+          fileName: file.originalname || `image_${Date.now()}.jpg`,
           folder: folderName,
         },
         (error: any, result: any) => {
           if (error) return reject(error);
-          // محاكاة شاملة 100% لرد كلاوديناري لضمان عدم حدوث كراش في الفلتر
+          
           resolve({ 
             secure_url: result.url, 
             url: result.url,
@@ -63,9 +72,12 @@ export class CloudinaryService {
 
   async uploadPdfToCloudinary(buffer: any): Promise<string> {
     return new Promise((resolve, reject) => {
+      if (!buffer) return reject(new Error('Buffer is empty'));
+      
+      const fileBase64 = buffer.toString('base64');
       this.imagekit.upload(
         {
-          file: buffer,
+          file: fileBase64,
           fileName: `pdf_${Date.now()}.pdf`,
           folder: "pdfs",
         },
@@ -77,9 +89,7 @@ export class CloudinaryService {
     });
   }
 
-  // 🚨 دوال وهمية لمنع الباك إند من الانهيار إذا حاول مسح الصورة القديمة أثناء التعديل
   async deleteImage(publicId: string): Promise<any> {
-    console.log("Dummy delete for:", publicId);
     return Promise.resolve({ result: 'ok' });
   }
 
