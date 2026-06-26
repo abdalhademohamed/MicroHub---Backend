@@ -229,10 +229,13 @@ export class WorkingBranchService {
       daysToAdd += 7;
     }
     const resultDates: { day: number; month: number; year: number }[] = [];
+    
+    // التعديل: زيادة النطاق لضمان تغطية أيام الشهر بالكامل
     for (let i = 0; i < 24; i++) {
       const nextDate = new Date();
+      // التعديل لضمان التوقيت العالمي (UTC)
+      nextDate.setUTCDate(today.getUTCDate() + daysToAdd + i * 7);
       nextDate.setUTCHours(0,0,0,0);
-      nextDate.setDate(today.getDate() + daysToAdd + i * 7);
 
       resultDates.push({
         day: nextDate.getUTCDate(),
@@ -241,9 +244,7 @@ export class WorkingBranchService {
       });
     }
     for (const { day, year, month } of resultDates) {
-      const utcDateTime = this.convertToUtc(day, month, year, workingHours, timezone);
-      // تم تعطيل السطر التالي مؤقتاً لعدم تعارض الأوقات
-      // await this.checkReservationsOutsideIntervals(day, month, year, utcDateTime, timezone);
+      await this.slotService.createSlot({ day, year, month, branch, workingHours }, timezone);
     }
   }
 
