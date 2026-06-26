@@ -19,6 +19,12 @@ import { Role } from "../user/utils/user.enum";
 export class SlotController {
   constructor(private readonly slotService: SlotService) {}
 
+  @Get('force-generate')
+  async forceGenerate() {
+    await this.slotService.handleCronJop();
+    return { message: "تم توليد المواعيد بنجاح" };
+  }
+
   // Get all available slots that have working entities
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(
