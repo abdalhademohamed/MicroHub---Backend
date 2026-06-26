@@ -38,7 +38,7 @@ export class SlotService {
     const branchs = await this.BranchRepository.find();
     return branchs;
   }
-  @Cron('0 0 */14 * *') // Runs every 14 days at midnight
+  @Cron('0 0 * * *') // Runs every 14 days at midnight
   async handleCronJop() {
     const branchs = await this.getAllBranch();
     for(const branch of branchs ) {
