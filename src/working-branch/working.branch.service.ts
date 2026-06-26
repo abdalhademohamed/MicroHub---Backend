@@ -229,7 +229,7 @@ export class WorkingBranchService {
       daysToAdd += 7;
     }
     const resultDates: { day: number; month: number; year: number }[] = [];
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 24; i++) {
       const nextDate = new Date();
       nextDate.setUTCHours(0,0,0,0);
       nextDate.setDate(today.getDate() + daysToAdd + i * 7);
