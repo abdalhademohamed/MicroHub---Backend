@@ -307,14 +307,14 @@ export class SlotService {
     const workingEntities: WorkingEntity[] = [];
     for (let i = 0; i < workingHours.length; i += 2) {
 
-      let from = new Date(workingHours[i]);
+      const from = new Date(workingHours[i]);
 
       console.log('working[i] is', workingHours[i]);
       console.log('from time is', from);
       console.log('artist base time is', artists.length > 0 ? artists[0].workingHours : 0);
 
-      let baseTo = new Date(workingHours[i + 1]);
-      let baseDuration = Math.ceil((baseTo.getTime() - from.getTime()) / (1000 * 60));
+      const baseTo = new Date(workingHours[i + 1]);
+      const baseDuration = Math.ceil((baseTo.getTime() - from.getTime()) / (1000 * 60));
 
       if(baseDuration <= 0){
         continue;

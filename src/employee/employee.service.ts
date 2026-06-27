@@ -559,7 +559,7 @@ export class EmployeeService {
         },
         relations: ["branch", "workingEntity"],
       });
-      for (var i = 0; i < slots.length; i++) {
+      for (let i = 0; i < slots.length; i++) {
         const sum = slots[i].workingEntity.reduce((acc, slot) => {
           return acc + slot.duration;
         }, 0);

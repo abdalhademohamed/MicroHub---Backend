@@ -27,7 +27,7 @@ export class TransactionService implements OnModuleInit {
     private excelService: ExcelService,
   ) {}
   async onModuleInit() {
-    let payment = await this.paymentRepository.findOne({
+    const payment = await this.paymentRepository.findOne({
       where: { methodEnglish: "free" },
     });
     if (!payment) {

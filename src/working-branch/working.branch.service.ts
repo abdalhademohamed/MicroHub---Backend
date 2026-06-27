@@ -251,7 +251,7 @@ export class WorkingBranchService {
   formatAndSortTimeArray(times: string[]): string[] {
     return times
       .map(time => {
-        let [hour, minute] = time.split(":");
+        const [hour, minute] = time.split(":");
   
         // Convert to numbers for correct sorting
         return { hour: Number(hour), minute: Number(minute) };

@@ -51,7 +51,7 @@ export class ReviewsService {
   @OnEvent("review:changed")
   async onHandleReviewChanged({ ids }: { ids: string[] }) {
     console.log(ids);
-    for (let id of ids) {
+    for (const id of ids) {
       const aggregationResult = await this.reviewRepository
         .createQueryBuilder("review")
         .select("review.orderFirstTime", "orderFirstTime") // Group by orderFirstTime (true/false)
@@ -140,7 +140,7 @@ export class ReviewsService {
         relations: ["reservation.customer", "artist"],
       });
 
-      let reviews = [];
+      const reviews = [];
       const ids = [];
 
       // Create the first review (for the newest order)
