@@ -109,14 +109,14 @@ import { LoggerMiddleware } from "./middleware/logger_middleware";
         TransactionEntity,
         FileEntity,
       ],
-      synchronize: true, // Set to false in production
-      ssl: true, // Neon typically requires SSL connections
+      synchronize: false, // Set to false in production
+      ssl: false, // Neon typically requires SSL connections
       extra: {
         ssl: {
-          rejectUnauthorized: true, // Required for self-signed certificates
+          rejectUnauthorized: false, // Required for self-signed certificates
         },
       },
-      // logging: true,
+      // logging: false,
     }),
 
     I18nModule.forRoot({
