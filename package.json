@@ -6,6 +6,9 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
+    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
+    "migration:generate": "npm run typeorm -- migration:generate -d src/data-source.ts",
+    "migration:run": "npm run typeorm -- migration:run -d src/data-source.ts",
     "build": "nest build",
     "postbuild": "cp -r src/i18n dist/i18n",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
