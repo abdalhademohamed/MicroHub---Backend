@@ -2,12 +2,8 @@ import {
   Column,
   DeleteDateColumn,
   Entity,
-  JoinColumn,
-  JoinTable,
-  ManyToMany,
   OneToMany,
   PrimaryGeneratedColumn,
-  TableInheritance,
 } from "typeorm";
 import { Role } from "../utils/user.enum";
 import { NotificationEntity } from "../../notification/entities/notification.entity";
