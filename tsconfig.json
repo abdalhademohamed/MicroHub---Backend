@@ -1,9 +1,5 @@
 {
   "compilerOptions": {
-    "types": ["jest", "node"],
-    "ignoreDeprecations": "6.0",
-    "resolveJsonModule": true,
-    "esModuleInterop": true,
     "module": "commonjs",
     "declaration": true,
     "removeComments": true,
@@ -13,13 +9,21 @@
     "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./",
+    "rootDir": "./src",
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": false,
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false
-  }
+    "noFallthroughCasesInSwitch": false,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "types": ["node", "jest", "multer"],
+    "paths": {
+      "src/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "test"]
 }

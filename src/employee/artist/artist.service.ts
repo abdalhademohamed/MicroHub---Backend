@@ -88,7 +88,7 @@ export class ArtistService {
     } catch (error) {
       throw new InternalServerErrorException(
         "Failed to add comment",
-        error.stack,
+        (error as any).stack,
       );
     }
   }

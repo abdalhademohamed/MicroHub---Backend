@@ -120,7 +120,7 @@ export class CommentService {
     } catch (error) {
       throw new InternalServerErrorException(
         this.i18n.translate("test.COMMENT.RETRIEVE_FAILED"),
-        error.stack,
+        (error as any).stack,
       );
     }
   }
@@ -261,7 +261,7 @@ export class CommentService {
       console.error("Error in getCustomerComments:", error);
       throw new InternalServerErrorException(
         "Failed to retrieve customer comments",
-        error.stack,
+        (error as any).stack,
       );
     }
   }
@@ -373,7 +373,7 @@ export class CommentService {
       console.error("Error in getArtistComments:", error);
       throw new InternalServerErrorException(
         "Failed to retrieve artist comments",
-        error.stack,
+        (error as any).stack,
       );
     }
   }

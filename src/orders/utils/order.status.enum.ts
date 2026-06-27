@@ -5,6 +5,6 @@ export enum OrderStatus {
   Reviewed = "Reviewed",
   Completed = "Completed",
   Canceled = "Canceled",
-  Abscent = "Abscent",
-  Refuneded = "Refuneded",
+  Absent = "Absent",
+  Refunded = "Refunded",
 }

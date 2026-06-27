@@ -213,7 +213,7 @@ export class BranchService {
   //       totalPages,
   //     };
   //   } catch (error) {
-  //     throw new InternalServerErrorException('Failed to get branches', error.stack);
+  //     throw new InternalServerErrorException('Failed to get branches', (error as any).stack);
   //   }
   // }
 
@@ -319,7 +319,7 @@ export class BranchService {
     } catch (error: any) {
       throw new InternalServerErrorException(
         "Failed to get branches",
-        error.stack,
+        (error as any).stack,
       );
     }
   }

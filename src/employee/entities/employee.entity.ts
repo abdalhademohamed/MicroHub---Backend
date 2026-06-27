@@ -46,6 +46,9 @@ export class EmployeeEntity extends UserEntity {
   @Column({ default: true })
   available: boolean; // Indicates if the employee is available or not
 
+  @Column({ type: "boolean", default: true })
+  isActive: boolean; // New boolean for active/inactive status
+
   @ManyToOne(
     () => EmployeeTypeEntity,
     (EmployeeTypeEntity) => EmployeeTypeEntity.employees,
@@ -88,7 +91,7 @@ export class EmployeeEntity extends UserEntity {
   reviews: ReviewEntity[]; // Reviews made by the employee
 
   // Add a soft delete column
-  @Column({ nullable: true, default: null })
+  @DeleteDateColumn({ name: "deleted_at", nullable: true })
   deletedAt?: Date;
 
   @Column({ default: false })

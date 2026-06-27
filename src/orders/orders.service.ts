@@ -345,10 +345,10 @@ export class OrdersService {
       });
       return newOrder;
     } catch (error) {
-      console.log(error.stack);
+      console.log((error as any).stack);
       throw new InternalServerErrorException(
         "Failed to create order",
-        error.stack,
+        (error as any).stack,
       );
     }
   }
@@ -549,7 +549,7 @@ export class OrdersService {
       console.log(error);
       throw new InternalServerErrorException(
         "Failed to create order",
-        error.stack,
+        (error as any).stack,
       );
     }
   }
@@ -639,7 +639,7 @@ export class OrdersService {
     } catch (error) {
       throw new InternalServerErrorException(
         "Failed to update order",
-        error.stack,
+        (error as any).stack,
       );
     }
   }
@@ -831,7 +831,7 @@ export class OrdersService {
       } else {
         throw new InternalServerErrorException(
           "Error updating payment status",
-          error.stack,
+          (error as any).stack,
         );
       }
     }
@@ -863,7 +863,7 @@ export class OrdersService {
         throw new NotFoundException(`Order with ID ${orderId} not found`);
       }
       // Add check for Refunded status
-      if (order.status === OrderStatus.Refuneded) {
+      if (order.status === OrderStatus.Refunded) {
         throw new BadRequestException(
           this.i18n.translate("test.ORDER.CANNOT_CHANGE_REFUNDED_STATUS"),
         );
@@ -875,7 +875,7 @@ export class OrdersService {
       } else {
         throw new InternalServerErrorException(
           "Error fetching the order",
-          error.stack,
+          (error as any).stack,
         );
       }
     }
@@ -888,9 +888,9 @@ export class OrdersService {
       newStatus === OrderStatus.Reviewed ||
       newStatus === OrderStatus.Canceled
     ) {
-      if (order.status === OrderStatus.Abscent) {
+      if (order.status === OrderStatus.Absent) {
         throw new BadRequestException(
-          "Order status cannot be changed from 'Abscent' to any other status.",
+          "Order status cannot be changed from 'Absent' to any other status.",
         );
       }
     }
@@ -949,14 +949,14 @@ export class OrdersService {
         } else {
           throw new InternalServerErrorException(
             "Error processing payment details",
-            error.stack,
+            (error as any).stack,
           );
         }
       }
     }
 
     // Ensure that an image is provided when canceling the order
-    if (newStatus === OrderStatus.Abscent) {
+    if (newStatus === OrderStatus.Absent) {
       if (!order.reservation) {
         throw new NotFoundException(
           `No reservation found for order with ID ${orderId}`,
@@ -965,7 +965,7 @@ export class OrdersService {
       await this.reservationService.deleteReservation(order.reservation.id);
       const deposit = order.reservation.deposit; // Get deposit from the reservation
       let paymentAmount: number;
-      order.status = OrderStatus.Abscent;
+      order.status = OrderStatus.Absent;
       await this.orderRepository.save(order);
       await this.removeRotoshFromCustomer(
         order.customer.id,
@@ -1111,7 +1111,7 @@ export class OrdersService {
       } else {
         throw new InternalServerErrorException(
           "Error fetching user details",
-          error.stack,
+          (error as any).stack,
         );
       }
     }
@@ -1224,7 +1224,7 @@ export class OrdersService {
       console.error("Failed to update order status:", error);
       throw new InternalServerErrorException(
         "Failed to update order status",
-        error.stack,
+        (error as any).stack,
       );
     }
   }
@@ -1379,7 +1379,7 @@ export class OrdersService {
       console.error("Failed to assign order to artist:", error);
       throw new InternalServerErrorException(
         "Failed to assign order to artist",
-        error.stack,
+        (error as any).stack,
       );
     }
   }
@@ -1681,8 +1681,8 @@ export class OrdersService {
       [OrderStatus.Reviewed]: 0,
       [OrderStatus.Completed]: 0,
       [OrderStatus.Canceled]: 0,
-      [OrderStatus.Abscent]: 0,
-      [OrderStatus.Refuneded]: 0,
+      [OrderStatus.Absent]: 0,
+      [OrderStatus.Refunded]: 0,
     };
 
     // Populate counts
@@ -1737,8 +1737,8 @@ export class OrdersService {
       [OrderStatus.Reviewed]: 0,
       [OrderStatus.Completed]: 0,
       [OrderStatus.Canceled]: 0,
-      [OrderStatus.Abscent]: 0,
-      [OrderStatus.Refuneded]: 0,
+      [OrderStatus.Absent]: 0,
+      [OrderStatus.Refunded]: 0,
     };
 
     // Populate the orderStatusCounts object with the results from the query
@@ -1804,8 +1804,8 @@ export class OrdersService {
       [OrderStatus.Reviewed]: 0,
       [OrderStatus.Completed]: 0,
       [OrderStatus.Canceled]: 0,
-      [OrderStatus.Abscent]: 0,
-      [OrderStatus.Refuneded]: 0,
+      [OrderStatus.Absent]: 0,
+      [OrderStatus.Refunded]: 0,
     };
 
     // Populate the orderStatusCounts object with the results from the query
@@ -1987,7 +1987,7 @@ export class OrdersService {
       console.error("Failed to retrieve orders for employee:", error);
       throw new InternalServerErrorException(
         "Failed to retrieve orders for employee",
-        error.stack,
+        (error as any).stack,
       );
     }
   }
@@ -2014,7 +2014,7 @@ export class OrdersService {
     } catch (error) {
       throw new InternalServerErrorException(
         "Failed to retrieve the order",
-        error.stack,
+        (error as any).stack,
       );
     }
   }
@@ -2052,7 +2052,7 @@ export class OrdersService {
     } catch (error) {
       throw new InternalServerErrorException(
         "Failed to update payment for order",
-        error.stack,
+        (error as any).stack,
       );
     }
   }
@@ -2138,8 +2138,8 @@ export class OrdersService {
       [OrderStatus.Reviewed]: 0,
       [OrderStatus.Completed]: 0,
       [OrderStatus.Canceled]: 0,
-      [OrderStatus.Abscent]: 0,
-      [OrderStatus.Refuneded]: 0,
+      [OrderStatus.Absent]: 0,
+      [OrderStatus.Refunded]: 0,
     };
 
     // Retrieve the user based on userId
@@ -2291,7 +2291,7 @@ export class OrdersService {
       console.log(error);
       throw new InternalServerErrorException(
         "Failed to retrieve customer comments",
-        error.stack,
+        (error as any).stack,
       );
     }
   }
@@ -2390,11 +2390,11 @@ export class OrdersService {
         });
         savedReceipt = await this.ReceiptRepository.save(refundReceipt);
       }
-      if (order.status == OrderStatus.Refuneded) {
+      if (order.status == OrderStatus.Refunded) {
         await this.orderRepository.save(order);
         return order;
       }
-      order.status = OrderStatus.Refuneded;
+      order.status = OrderStatus.Refunded;
       await this.orderRepository.save(order);
       await this.actionService.createAction({
         actionEn: `order refunded`,
@@ -2406,7 +2406,7 @@ export class OrdersService {
 
       return {
         orderId: order.id,
-        status: OrderStatus.Refuneded,
+        status: OrderStatus.Refunded,
         originalPayment: totalPaid,
         refundAmount: refundAmount,
         remainingAmount: 0,

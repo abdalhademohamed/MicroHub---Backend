@@ -8,6 +8,7 @@ import {
   OneToMany,
   ManyToMany,
   JoinTable,
+  DeleteDateColumn,
 } from "typeorm";
 import { WorkingBranchEntity } from "../../working-branch/entities/working.branch.entity";
 import { SlotsEntity } from "../../slots/entities/slots.entity";
@@ -22,18 +23,22 @@ export class BranchEntity {
   name: string;
 
   @Column()
-  location: string; // Ensure this is not nullable
+  location: string;
 
   @Column()
-  image: string; // Store the URL of the image uploaded to Cloudinary
+  image: string;
 
-  // @Column()
-  // periods: string[];  // List of time periods like '09:00', '10:00'
+  @Column({ type: "boolean", default: true })
+  isActive: boolean;
+
+  @DeleteDateColumn({ name: "deleted_at", nullable: true })
+  deletedAt?: Date;
+
   @OneToMany(
     () => ReservationEntity,
     (ReservationEntity) => ReservationEntity.branch,
     { cascade: ["insert", "update"], onDelete: "CASCADE" },
-  ) // Define the relationship
+  )
   reservations: ReservationEntity[];
 
   @OneToMany(() => EmployeeEntity, (EmployeeEntity) => EmployeeEntity.branch)
@@ -48,6 +53,7 @@ export class BranchEntity {
     { cascade: true },
   )
   workingbranch: WorkingBranchEntity[];
+
   @OneToMany(() => SlotsEntity, (entity) => entity.branch)
   slots: SlotsEntity[];
 
@@ -56,6 +62,7 @@ export class BranchEntity {
     (SharableOfferEntity) => SharableOfferEntity.branches,
   )
   sharableOffers: SharableOfferEntity[];
+
   @Column({ name: "created_by", nullable: true })
   createdBy: string;
 

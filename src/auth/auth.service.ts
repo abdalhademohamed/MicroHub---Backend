@@ -102,7 +102,7 @@ export class AuthService {
 
       return newUser;
     } catch (error: any) {
-      this.logger.error("Failed to sign up user", error.stack);
+      this.logger.error("Failed to sign up user", (error as any).stack);
 
       if (error.code === "23505") {
         // Unique violation error code for PostgreSQL
@@ -162,7 +162,7 @@ export class AuthService {
             console.error("Error updating refresh token:", updateError.message);
             throw new InternalServerErrorException(
               "Failed to update the refresh token. Please try again later.",
-              updateError.stack,
+              (updateError as any).stack
             );
           }
         } catch (generateTokensError: any) {
@@ -172,7 +172,7 @@ export class AuthService {
           );
           throw new InternalServerErrorException(
             "Failed to generate tokens. Please try again later.",
-            generateTokensError.stack,
+            (generateTokensError as any).stack
           );
         }
       } catch (invalidateTokenError: any) {
@@ -182,14 +182,14 @@ export class AuthService {
         );
         throw new InternalServerErrorException(
           "Failed to invalidate the old refresh token. Please try again later.",
-          invalidateTokenError.stack,
+          (invalidateTokenError as any).stack
         );
       }
     } catch (validateUserError: any) {
       console.error("Error validating user:", validateUserError.message);
       throw new UnauthorizedException(
         this.i18nService.translate("test.auth.INVALID_CREDENTIALS"),
-        validateUserError.stack,
+        (validateUserError as any).stack
       );
     }
   }
@@ -206,7 +206,7 @@ export class AuthService {
       console.error("Error invalidating old refresh token:", error.message);
       throw new InternalServerErrorException(
         "Failed to invalidate old refresh token. Please try again later.",
-        error.stack,
+        (error as any).stack,
       );
     }
   }
@@ -509,7 +509,7 @@ export class AuthService {
       console.error("Error generating tokens:", error.message);
       throw new InternalServerErrorException(
         "Failed to generate tokens. Please try again later.",
-        error.stack,
+        (error as any).stack,
       );
     }
   }

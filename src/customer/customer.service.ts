@@ -120,7 +120,7 @@ export class CustomerService {
       // Log the detailed error information
       console.error("Error in getCustomerByPhoneNumber service method:", {
         message: error.message,
-        stack: error.stack,
+        stack: (error as any).stack,
         phoneNumber,
       });
 

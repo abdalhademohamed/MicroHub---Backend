@@ -1,4 +1,3 @@
-// import { ReservationEntity } from '../../reservation/entities/reservation.entity';
 import { UUID } from "crypto";
 import { ReservationEntity } from "../../reservation/entities/reservation.entity";
 import {
@@ -9,6 +8,7 @@ import {
   ManyToMany,
   JoinTable,
   ManyToOne,
+  DeleteDateColumn,
 } from "typeorm";
 import { RootoshEntity } from "../../rootosh/entities/rootosh.entity";
 import { CustomerEntity } from "../../customer/entities/customer.entity";
@@ -41,6 +41,12 @@ export class ServiceEntity {
   @Column("int", { nullable: true })
   months_To_Expire: number;
 
+  @Column({ type: "boolean", default: true })
+  isActive: boolean;
+
+  @DeleteDateColumn({ name: "deleted_at", nullable: true })
+  deletedAt?: Date;
+
   @ManyToMany(
     () => ReservationEntity,
     (ReservationEntity) => ReservationEntity.services,
@@ -50,7 +56,7 @@ export class ServiceEntity {
   reservations: ReservationEntity[];
 
   @OneToMany(() => RootoshEntity, (RootoshEntity) => RootoshEntity.service)
-  rootosh: RootoshEntity[]; // Include rootoshes with the service
+  rootosh: RootoshEntity[]; 
 
   @ManyToMany(() => CustomerEntity, (customer) => customer.lastServices)
   customers: CustomerEntity[];

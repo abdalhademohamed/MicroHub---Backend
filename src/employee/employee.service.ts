@@ -65,7 +65,7 @@ export class EmployeeService {
     private readonly UserRepository: Repository<UserEntity>,
     private readonly CloudinaryService: CloudinaryService,
     private readonly AuthService: AuthService,
-    private readonly entityManager: EntityManager, // Inject EntityManager for transactions
+    private readonly entityManager: EntityManager,
     private readonly slotService: SlotService,
     private readonly eventEmitter: EventEmitter2,
     @InjectRepository(SlotsEntity)
@@ -77,40 +77,36 @@ export class EmployeeService {
   ) {}
 
   async getOrderStatusCountByArtist(
-    userId: string, // User ID from the token
+    userId: string,
     fromDate: string,
     toDate: string,
   ) {
-    const queryBuilder = this.OrderRepository.createQueryBuilder("o") // Change "order" to "o"
+    const queryBuilder = this.OrderRepository.createQueryBuilder("o")
       .select("o.status", "status")
       .addSelect("COUNT(o.id)", "count")
-      .leftJoin("o.reservation", "reservation"); // Use "o" instead of "order"
+      .leftJoin("o.reservation", "reservation");
     queryBuilder
-      .innerJoin("o.artist", "artist") // Adjust to match your entity relation
-      .where("artist.id = :userId", { userId }); // Correct parameter name
+      .innerJoin("o.artist", "artist")
+      .where("artist.id = :userId", { userId });
 
-    // Filter by reservation start time if fromDate is provided
     if (fromDate) {
       const startOfDay = new Date(fromDate);
-      startOfDay.setHours(0, 0, 0, 0); // Set the time to the start of the day
+      startOfDay.setHours(0, 0, 0, 0);
       queryBuilder.andWhere("reservation.start_Time >= :fromDate", {
         fromDate: startOfDay,
       });
     }
 
-    // Filter by reservation end time if toDate is provided
     if (toDate) {
       const endOfDay = new Date(toDate);
-      endOfDay.setHours(23, 59, 59, 999); // Set the time to the end of the day
+      endOfDay.setHours(23, 59, 59, 999);
       queryBuilder.andWhere("reservation.end_Time <= :toDate", {
         toDate: endOfDay,
       });
     }
 
-    // Group by order status
-    const orders = await queryBuilder.groupBy("o.status").getRawMany(); // Use "o" instead of "order"
+    const orders = await queryBuilder.groupBy("o.status").getRawMany();
 
-    // Initialize the status count object with all possible statuses
     const orderStatusCounts: { [key in OrderStatus]: number } = {
       [OrderStatus.Pending]: 0,
       [OrderStatus.InQueue]: 0,
@@ -118,11 +114,10 @@ export class EmployeeService {
       [OrderStatus.Reviewed]: 0,
       [OrderStatus.Completed]: 0,
       [OrderStatus.Canceled]: 0,
-      [OrderStatus.Abscent]: 0,
-      [OrderStatus.Refuneded]: 0,
+      [OrderStatus.Absent]: 0,
+      [OrderStatus.Refunded]: 0,
     };
 
-    // Populate the orderStatusCounts object with the results from the query
     orders.forEach((order) => {
       orderStatusCounts[order.status] = parseInt(order.count, 10);
     });
@@ -130,40 +125,36 @@ export class EmployeeService {
     return orderStatusCounts;
   }
   async getOrderStatusCountForCoordinator(
-    userId: string, // User ID from the token
+    userId: string,
     fromDate: string,
     toDate: string,
   ) {
-    const queryBuilder = this.OrderRepository.createQueryBuilder("o") // Change "order" to "o"
+    const queryBuilder = this.OrderRepository.createQueryBuilder("o")
       .select("o.status", "status")
       .addSelect("COUNT(o.id)", "count")
-      .leftJoin("o.reservation", "reservation"); // Use "o" instead of "order"
+      .leftJoin("o.reservation", "reservation");
     queryBuilder
-      .innerJoin("o.createdBy", "employee") // Adjust to match your entity relation
-      .where("employee.id = :userId", { userId }); // Correct parameter name
+      .innerJoin("o.createdBy", "employee")
+      .where("employee.id = :userId", { userId });
 
-    // Filter by reservation start time if fromDate is provided
     if (fromDate) {
       const startOfDay = new Date(fromDate);
-      startOfDay.setHours(0, 0, 0, 0); // Set the time to the start of the day
+      startOfDay.setHours(0, 0, 0, 0);
       queryBuilder.andWhere("reservation.start_Time >= :fromDate", {
         fromDate: startOfDay,
       });
     }
 
-    // Filter by reservation end time if toDate is provided
     if (toDate) {
       const endOfDay = new Date(toDate);
-      endOfDay.setHours(23, 59, 59, 999); // Set the time to the end of the day
+      endOfDay.setHours(23, 59, 59, 999);
       queryBuilder.andWhere("reservation.end_Time <= :toDate", {
         toDate: endOfDay,
       });
     }
 
-    // Group by order status
-    const orders = await queryBuilder.groupBy("o.status").getRawMany(); // Use "o" instead of "order"
+    const orders = await queryBuilder.groupBy("o.status").getRawMany();
 
-    // Initialize the status count object with all possible statuses
     const orderStatusCounts: { [key in OrderStatus]: number } = {
       [OrderStatus.Pending]: 0,
       [OrderStatus.InQueue]: 0,
@@ -171,11 +162,10 @@ export class EmployeeService {
       [OrderStatus.Reviewed]: 0,
       [OrderStatus.Completed]: 0,
       [OrderStatus.Canceled]: 0,
-      [OrderStatus.Abscent]: 0,
-      [OrderStatus.Refuneded]: 0,
+      [OrderStatus.Absent]: 0,
+      [OrderStatus.Refunded]: 0,
     };
 
-    // Populate the orderStatusCounts object with the results from the query
     orders.forEach((order) => {
       orderStatusCounts[order.status] = parseInt(order.count, 10);
     });
@@ -189,10 +179,8 @@ export class EmployeeService {
   ): Promise<any> {
     try {
       return await this.AuthService.createEmployee(createEmployeeDto, userId);
-    } catch (error) {
-      // Log the error
+    } catch (error: any) {
       console.error("Error occurred while creating employee:", error);
-      // Categorize the error based on the instance
       if (error instanceof NotFoundException) {
         throw new NotFoundException({
           message: "Failed to create employee",
@@ -206,17 +194,15 @@ export class EmployeeService {
           statusCode: 400,
         });
       } else if (error instanceof ConflictException) {
-        // Directly specify the conflict error message
         throw new ConflictException({
           message: "Failed to create employee",
           error: "A user with this email already exists.",
           statusCode: 409,
         });
       } else {
-        // Handle unexpected errors
         throw new InternalServerErrorException({
           message: "Failed to create employee",
-          error: error.response.error,
+          error: error.response?.error || "Unknown error",
           statusCode: 500,
         });
       }
@@ -253,8 +239,6 @@ export class EmployeeService {
     return { data, total, page, limit };
   }
 
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
   async getAllEmployees(
     page: number = 1,
     limit: number = 10,
@@ -269,19 +253,16 @@ export class EmployeeService {
     page: number;
     limit: number;
   }> {
-    // Ensure page and limit are valid
     page = Math.max(page, 1);
     limit = Math.max(limit, 1);
 
     const filter: any = { isDeleted: false };
 
-    // Get the requesting user's details
     const requestingUser = await this.employeeRepository.findOne({
       where: { id: userId },
       relations: ["branch", "position"],
     });
 
-    // Only apply branch filter if requestingUser exists and is a receptionist
     if (requestingUser?.position?.postion === Postion.RECEPTIONIST) {
       filter.branch = { id: requestingUser.branch.id };
     } else if (branchId) {
@@ -294,7 +275,6 @@ export class EmployeeService {
       filter.branch = { id: branchId };
     }
 
-    // Handle employeeTypeName filter
     if (employeeTypeName) {
       const employeeTypes = await this.EmployeeTypeRepository.find({
         where: {
@@ -315,16 +295,14 @@ export class EmployeeService {
       }
     }
 
-    // Add role filter if provided and valid
     if (role) {
       if (!(role in Role)) {
         throw new BadRequestException(`Invalid role: ${role}`);
       }
-      filter.role = role; // Filter employees by role
+      filter.role = role;
     }
 
     try {
-      // Build query using query builder to handle OR condition for filterText
       const query = this.employeeRepository
         .createQueryBuilder("employee")
         .leftJoinAndSelect("employee.branch", "branch")
@@ -332,7 +310,6 @@ export class EmployeeService {
         .leftJoinAndSelect("employee.employeeType", "employeeType")
         .where(filter);
 
-      // Apply filterText to match email or english_Name (OR condition)
       if (filterText) {
         query.andWhere(
           new Brackets((qb) => {
@@ -356,19 +333,17 @@ export class EmployeeService {
         page,
         limit,
       };
-    } catch (error) {
-      // Handle other errors
+    } catch (error: any) {
       throw new BadRequestException(
         `Error fetching employees: ${error.message}`,
       );
     }
   }
 
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async getEmployeeById(id: string) {
     const employee = await this.employeeRepository.findOne({
       where: { id },
-      relations: ["branch", "position", "employeeType"], // Include related entities
+      relations: ["branch", "position", "employeeType"],
     });
 
     if (!employee) {
@@ -377,17 +352,14 @@ export class EmployeeService {
     return employee;
   }
 
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async updateEmployee(
     id: string,
     updateEmployeeDto: UpdateEmployeeDto,
-    // userId: string,
     image: Express.Multer.File,
   ): Promise<
     EmployeeEntity | { message: string; error: string; statusCode: number }
   > {
     try {
-      // Step 1: Find the employee by ID
       const employee = await this.employeeRepository.findOne({
         where: { id },
         relations: ["branch", "position", "employeeType"],
@@ -397,10 +369,6 @@ export class EmployeeService {
         throw new NotFoundException(`Employee with ID ${id} not found.`);
       }
 
-      // Step 2: Track original values for auditing purposes
-      const originalEmployee = { ...employee };
-
-      // Step 3: Destructure and update employee details from DTO
       const {
         english_Name,
         arabic_Name,
@@ -410,12 +378,11 @@ export class EmployeeService {
         available,
         email,
         password,
-        employeeType, // Update employee type
-        branchId, // Update branch
-        position, // Update position
+        employeeType,
+        branchId,
+        position,
       } = updateEmployeeDto;
 
-      // Check if updating to artist position
       if (position) {
         const newPosition = await this.positionRepository.findOne({
           where: { id: position },
@@ -425,10 +392,7 @@ export class EmployeeService {
             `Position with ID ${position} not found.`,
           );
         }
-        console.log(newPosition.postion);
-        console.log(employee.position.postion);
 
-        // If the new position is not "artist" and the employee is the only artist in the branch
         if (
           newPosition.postion !== Postion.ARTIST &&
           employee.position.postion === Postion.ARTIST
@@ -450,7 +414,7 @@ export class EmployeeService {
           }
         }
 
-        employee.position = newPosition; // Update the employee's position
+        employee.position = newPosition;
         employee.role = this.determineRoleFromPosition(newPosition);
       }
 
@@ -461,7 +425,6 @@ export class EmployeeService {
       employee.phoneNumber = phoneNumber ?? employee.phoneNumber;
       employee.available = available ?? employee.available;
 
-      // Update the branch if branchId is provided
       if (branchId) {
         const newBranch = await this.branchRepository.findOne({
           where: { id: branchId },
@@ -495,24 +458,9 @@ export class EmployeeService {
           }
         }
 
-        // const artistCount = await this.employeeRepository.count({
-        //   where: {
-        //     position: { postion: Postion.ARTIST },
-        //     branch: { id: employee.branch.id },
-        //   },
-        // });
-
-        // if (artistCount === 1) {
-        //   return {
-        //     message: "BadRequestException",
-        //     error: "Cannot change branch of artist as this employee is the only artist in the branch.",
-        //     statusCode: 400,
-        //   };
-        // }
-        employee.branch = newBranch; // Update the employee's branch
+        employee.branch = newBranch;
       }
 
-      // Step 4: Handle image upload
       if (image) {
         const folderName = "employee";
         try {
@@ -521,7 +469,7 @@ export class EmployeeService {
             folderName,
           );
           employee.image = uploadedImage.url;
-        } catch (error) {
+        } catch (error: any) {
           return {
             message: "Failed to upload image",
             error: "InternalServerErrorException",
@@ -530,7 +478,6 @@ export class EmployeeService {
         }
       }
 
-      // Step 5: Find and update user details
       const user = await this.UserRepository.findOne({ where: { id } });
       if (!user) {
         return {
@@ -540,7 +487,6 @@ export class EmployeeService {
         };
       }
 
-      // Step 6: Update user email and username if necessary
       let isUserUpdated = false;
 
       if (
@@ -551,16 +497,6 @@ export class EmployeeService {
         employee.email = email.trim();
         isUserUpdated = true;
       }
-      // if (
-      //   email &&
-      //   email.trim().toLowerCase() === user.email.trim().toLowerCase()
-      // ) {
-      //   return {
-      //     message: "BadRequestException",
-      //     error: "this is your current email",
-      //     statusCode: 400,
-      //   };
-      // }
 
       if (english_Name && english_Name !== user.username) {
         user.username = english_Name;
@@ -572,26 +508,20 @@ export class EmployeeService {
         isUserUpdated = true;
       }
 
-      // Save the user entity if any updates were made
       if (isUserUpdated) {
         await this.UserRepository.save(user);
       }
 
-      // Step 7: Save updated employee details
       const updatedEmployee = await this.employeeRepository.save(employee);
 
-      // Log the updated employee after saving
-      // console.log("Employee updated successfully:", updatedEmployee);
-
       return updatedEmployee;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Update Employee Error:", error);
 
-      // Directly return a formatted error response
       return {
         message: "Failed to update employee",
         error: error.message || "InternalServerErrorException",
-        statusCode: error.getStatus ? error.getStatus() : 500,
+        statusCode: error.status || 500,
       };
     }
   }
@@ -607,7 +537,6 @@ export class EmployeeService {
     if (currentWorkingHours == workingHours) {
       throw new HttpException("invalid working hours ", 400);
     }
-    // const sum = await this.employeeRepository.sum('workingHours', { branch: { id: employee.branch.id }, role: Role.ARTIST });
     if (currentWorkingHours < workingHours) {
       employee.workingHours = workingHours - currentWorkingHours;
       this.eventEmitter.emit("artist:created", employee);
@@ -642,7 +571,6 @@ export class EmployeeService {
   }
 
   private determineRoleFromPosition(position: PositionEntity): Role {
-    // Example mapping logic based on the Postion enum
     switch (position.postion) {
       case Postion.ADMIN:
         return Role.ADMIN;
@@ -664,7 +592,6 @@ export class EmployeeService {
         return Role.TABLEMANAGER;
     }
   }
-  // Helper method to track field changes
   private logChangedField(
     field: string,
     originalEmployee: EmployeeEntity,
@@ -681,8 +608,6 @@ export class EmployeeService {
     }
   }
 
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
   async softDeleteEmployeeByEmployeeId(
     employeeId: string,
     performingUserId: string,
@@ -692,7 +617,6 @@ export class EmployeeService {
 
     await this.entityManager.transaction(async (transactionalEntityManager) => {
       try {
-        // Load the employee associated with the employeeId
         employee = await transactionalEntityManager.findOne(EmployeeEntity, {
           where: { id: employeeId },
           relations: ["branch"],
@@ -701,7 +625,6 @@ export class EmployeeService {
           throw new NotFoundException("Employee not found");
         }
 
-        // Load the user entity
         user = await transactionalEntityManager.findOne(UserEntity, {
           where: { id: performingUserId },
         });
@@ -709,18 +632,16 @@ export class EmployeeService {
           throw new NotFoundException("User not found");
         }
 
-        // Perform the soft delete by setting the deletedAt field
         employee.deletedAt = new Date();
-        employee.isDeleted = true; // Set the isDeleted flag
+        employee.isDeleted = true;
 
         await transactionalEntityManager.save(EmployeeEntity, employee);
 
-        // Create an audit log entry for the deletion
         const auditLog = new AuditLogEntity();
-        auditLog.tableName = "employee"; // Log the employee table
+        auditLog.tableName = "employee";
         auditLog.action = "DELETE";
-        auditLog.entityId = employeeId; // Use the ID of the entity being deleted
-        auditLog.performedBy = performingUserId; // Set the user who performed the delete
+        auditLog.entityId = employeeId;
+        auditLog.performedBy = performingUserId;
         auditLog.changedColumns = ["deletedAt"];
         auditLog.changesDetails = {
           deletedAt: {
@@ -729,7 +650,6 @@ export class EmployeeService {
           },
         };
 
-        // Fetch user details if needed
         if (performingUserId) {
           const performingUser = await this.UserRepository.findOne({
             where: { id: performingUserId },
@@ -745,7 +665,7 @@ export class EmployeeService {
         }
 
         await transactionalEntityManager.save(AuditLogEntity, auditLog);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error performing soft delete on employee:", error);
         throw new InternalServerErrorException(
           "Failed to soft delete employee",
@@ -753,13 +673,10 @@ export class EmployeeService {
       }
     });
   }
-  async activeEmployeeByEmployeeId(employeeId: string): Promise<void> {
-    let employee: EmployeeEntity;
-
-    await this.entityManager.transaction(async (transactionalEntityManager) => {
+  async activeEmployeeByEmployeeId(employeeId: string): Promise<EmployeeEntity> {
+    return await this.entityManager.transaction(async (transactionalEntityManager) => {
       try {
-        // Load the employee associated with the employeeId
-        employee = await transactionalEntityManager.findOne(EmployeeEntity, {
+        const employee = await transactionalEntityManager.findOne(EmployeeEntity, {
           where: { id: employeeId },
           relations: ["branch"],
         });
@@ -767,28 +684,37 @@ export class EmployeeService {
           throw new NotFoundException("Employee not found");
         }
 
-        // Perform the soft delete by setting the deletedAt field
         employee.deletedAt = null;
-        employee.isDeleted = false; // Set the isDeleted flag
+        employee.isDeleted = false;
 
-        await transactionalEntityManager.save(EmployeeEntity, employee);
-        return employee;
-      } catch (error) {
-        console.error("Error performing soft delete on employee:", error);
+        return await transactionalEntityManager.save(EmployeeEntity, employee);
+      } catch (error: any) {
+        console.error("Error performing activation on employee:", error);
         throw new InternalServerErrorException(
-          "Failed to soft delete employee",
+          "Failed to activate employee",
         );
       }
     });
   }
+
+  async toggleEmployeeStatusByEmployeeId(employeeId: string, isActive: boolean): Promise<EmployeeEntity> {
+    const employee = await this.employeeRepository.findOne({
+      where: { id: employeeId },
+    });
+    if (!employee) {
+      throw new NotFoundException("Employee not found");
+    }
+    employee.isActive = isActive;
+    return await this.employeeRepository.save(employee);
+  }
+
   async uploadImage(
     file: Express.Multer.File,
     folderName: string,
   ): Promise<string> {
     const result = await this.CloudinaryService.uploadImage(file, folderName);
-    return result.url; // Return the URL of the uploaded image
+    return result.url;
   }
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   async getProfile(userId: string): Promise<GetUserProfileDto> {
     try {
@@ -826,7 +752,6 @@ export class EmployeeService {
         throw new NotFoundException("Employee profile not found");
       }
 
-      // Calculate average ratings and total reviews
       const reviews = employeeProfile.reviews || [];
       const totalReviews = reviews.length;
       const ratings = reviews.map((review) => review.rating);
@@ -834,7 +759,6 @@ export class EmployeeService {
       const newestAvgRating =
         ratings.length > 0 ? ratings[ratings.length - 1] : 0;
 
-      // Get user data
       const userData = await this.UserRepository.findOne({
         where: { id: userId },
         select: ["username", "email", "role"],
@@ -856,7 +780,7 @@ export class EmployeeService {
         oldestAvgRating,
         newestAvgRating,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error in getProfile:", error);
       throw new InternalServerErrorException(
         "Failed to retrieve profile data",
@@ -865,7 +789,6 @@ export class EmployeeService {
     }
   }
 
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   async countEmployees(branchId?: string): Promise<number> {
     const query = this.employeeRepository.createQueryBuilder("employee");
 
@@ -882,40 +805,28 @@ export class EmployeeService {
   ): Promise<any[]> {
     const queryBuilder = this.employeeRepository
       .createQueryBuilder("employee")
-      .leftJoinAndSelect("employee.orders", "order") // Join orders related to the employee
-      .leftJoinAndSelect("employee.position", "position") // Join position related to the employee
-      .leftJoinAndSelect("employee.branch", "branch") // Join branch
-      .leftJoinAndSelect("employee.employeeType", "employeeType") // Join employeeType
-      .where("position.postion = :position", { position: Postion.ARTIST }) // Filter by position
+      .leftJoinAndSelect("employee.orders", "order")
+      .leftJoinAndSelect("employee.position", "position")
+      .leftJoinAndSelect("employee.branch", "branch")
+      .leftJoinAndSelect("employee.employeeType", "employeeType")
+      .where("position.postion = :position", { position: Postion.ARTIST })
       .andWhere("order.status IN (:...statuses)", {
         statuses: [OrderStatus.Completed, OrderStatus.Reviewed],
-      }) // Filter by multiple order statuses
+      })
       .select([
         "employee",
         "branch",
         "position",
         "employeeType",
-        'COUNT(order.id) AS "completedOrdersCount"', // Explicitly alias the count
+        'COUNT(order.id) AS "completedOrdersCount"',
       ])
-      .groupBy("employee.id") // Group by employee ID
-      .addGroupBy("position.id") // Group by position ID
-      .addGroupBy("branch.id") // Group by branch ID
-      .addGroupBy("employeeType.id") // Group by employeeType ID
-      .orderBy('"completedOrdersCount"', "DESC") // Order by the count of completed orders
-      .limit(5); // Limit to the top 5 employees
+      .groupBy("employee.id")
+      .addGroupBy("position.id")
+      .addGroupBy("branch.id")
+      .addGroupBy("employeeType.id")
+      .orderBy('"completedOrdersCount"', "DESC")
+      .limit(5);
 
-    // // Add date filtering only if fromDate or toDate are provided
-    // if (fromDate) {
-    //   queryBuilder.andWhere("order.createdAt >= :fromDate", {
-    //     fromDate: fromDate.toISOString(),
-    //   });
-    // }
-    // if (toDate) {
-    //   queryBuilder.andWhere("order.createdAt <= :toDate", {
-    //     toDate: toDate.toISOString(),
-    //   });
-    // }
-    // Set time to start of day for fromDate
     if (fromDate) {
       const startOfDay = new Date(fromDate);
       startOfDay.setHours(0, 0, 0, 0);
@@ -924,7 +835,6 @@ export class EmployeeService {
       });
     }
 
-    // Set time to end of day for toDate
     if (toDate) {
       const endOfDay = new Date(toDate);
       endOfDay.setHours(23, 59, 59, 999);
@@ -933,9 +843,8 @@ export class EmployeeService {
       });
     }
 
-    const topArtists = await queryBuilder.getRawMany(); // Use getRawMany to get raw results
+    const topArtists = await queryBuilder.getRawMany();
 
-    // Transform the raw results into the desired structure
     return topArtists.map((raw) => {
       return {
         id: raw.employee_id,
@@ -970,7 +879,7 @@ export class EmployeeService {
           typeEnglish: raw.employeeType_typeEnglish,
           typeArabic: raw.employeeType_typeArabic,
         },
-        completedOrdersCount: parseInt(raw.completedOrdersCount, 10), // Convert count to a number
+        completedOrdersCount: parseInt(raw.completedOrdersCount, 10),
       };
     });
   }
@@ -978,9 +887,9 @@ export class EmployeeService {
   async getArtistsWithReviews() {
     return this.employeeRepository
       .createQueryBuilder("employee")
-      .leftJoinAndSelect("employee.position", "position") // Join position related to the employee
+      .leftJoinAndSelect("employee.position", "position")
       .leftJoinAndSelect("employee.reviews", "reviews")
-      .where("position.postion = :position", { position: Postion.ARTIST }) // Filter by position
+      .where("position.postion = :position", { position: Postion.ARTIST })
       .loadRelationCountAndMap("employee.totalReviews", "employee.reviews")
       .addSelect([
         "employee.oldestAvgRating",

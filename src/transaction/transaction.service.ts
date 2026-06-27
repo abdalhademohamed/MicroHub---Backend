@@ -217,7 +217,7 @@ export class TransactionService implements OnModuleInit {
         "orderPending",
       )
       .addSelect(
-        "SUM(CASE WHEN createdBy.id = user.id AND order.status IN ('Canceled', 'Abscent', 'Refuneded') AND transaction.type = 'refund'  THEN 1 ElSE 0 END )",
+        "SUM(CASE WHEN createdBy.id = user.id AND order.status IN ('Canceled', 'Absent', 'Refunded') AND transaction.type = 'refund'  THEN 1 ElSE 0 END )",
         "orderCancelled",
       )
       .addSelect(
@@ -410,7 +410,7 @@ export class TransactionService implements OnModuleInit {
         "orderPending",
       )
       .addSelect(
-        "SUM(CASE WHEN createdBy.id = user.id AND order.status IN ('Canceled', 'Abscent', 'Refuneded') AND transaction.type = 'refund'  THEN 1 ElSE 0 END )",
+        "SUM(CASE WHEN createdBy.id = user.id AND order.status IN ('Canceled', 'Absent', 'Refunded') AND transaction.type = 'refund'  THEN 1 ElSE 0 END )",
         "orderCancelled",
       )
       .addSelect(

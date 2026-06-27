@@ -597,7 +597,7 @@ export class AnalysisService {
       [OrderStatus.Pending]: 0,
       [OrderStatus.InQueue]: 0,
       [OrderStatus.Working]: 0,
-      [OrderStatus.Abscent]: 0,
+      [OrderStatus.Absent]: 0,
 
       // Add other statuses as needed
     };

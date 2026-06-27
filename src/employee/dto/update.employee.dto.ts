@@ -8,6 +8,7 @@ import {
   IsBoolean,
   IsNumber,
 } from "class-validator";
+import { Transform } from "class-transformer";
 import { CreateEmployeeDto } from "./create.employee.dto";
 
 export class UpdateEmployeeDto extends PartialType(CreateEmployeeDto) {
@@ -84,6 +85,7 @@ export class UpdateEmployeeDto extends PartialType(CreateEmployeeDto) {
   })
   @IsUUID()
   @IsOptional()
+  @Transform(() => undefined)
   employeeType?: string;
 
   @ApiProperty({
@@ -93,6 +95,7 @@ export class UpdateEmployeeDto extends PartialType(CreateEmployeeDto) {
   })
   @IsUUID()
   @IsOptional()
+  @Transform(() => undefined)
   branchId?: string;
 
   @ApiProperty({
