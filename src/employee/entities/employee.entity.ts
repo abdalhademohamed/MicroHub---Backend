@@ -18,8 +18,11 @@ import { ReviewEntity } from "../../reviews/entities/review.entity";
 import { UserEntity } from "../../user/entities/user.entity";
 import { TransactionEntity } from "src/transaction/entities/transaction.entity";
 
-@Entity({ name: "employees" })
+@Entity()
 export class EmployeeEntity extends UserEntity {
+  // @PrimaryGeneratedColumn("uuid")
+  // id: string;
+
   @Column()
   english_Name: string;
 
@@ -27,24 +30,24 @@ export class EmployeeEntity extends UserEntity {
   arabic_Name: string;
 
   @Column({ nullable: true, default: 8 })
-  workingHours: number;
+  workingHours: number; // Number of working hours
 
   @Column({ length: 10 })
-  countryCode: string;
+  countryCode: string; // Country code for the phone number
   @Column({ length: 15 })
-  phoneNumber: string;
+  phoneNumber: string; // Employee phone number
 
   @Column()
-  image: string;
+  image: string; // Store the URL of the image uploaded to Cloudinary
 
   @Column({ nullable: true })
-  speciality: string;
+  speciality: string; // Store the URL of the image uploaded to Cloudinary
 
   @Column({ default: true })
-  available: boolean;
+  available: boolean; // Indicates if the employee is available or not
 
   @Column({ type: "boolean", default: true })
-  isActive: boolean;
+  isActive: boolean; // New boolean for active/inactive status
 
   @ManyToOne(
     () => EmployeeTypeEntity,
@@ -52,11 +55,14 @@ export class EmployeeEntity extends UserEntity {
   )
   employeeType: EmployeeTypeEntity;
 
+  // @OneToMany(() => TransactionEntity, (tr) => tr.employee)
+  // transactions: TransactionEntity[];
+
   @Column({ default: 0 })
-  totalReviews: number;
+  totalReviews: number; // Total number of reviews for the employee
 
   @Column({ default: "working" })
-  status: "working" | "completed";
+  status: "working" | "completed"; // Status of the employee
 
   @ManyToOne(() => BranchEntity, (BranchEntity) => BranchEntity.employees, {
     onDelete: "SET NULL",
@@ -70,18 +76,21 @@ export class EmployeeEntity extends UserEntity {
     () => ReservationEntity,
     (ReservationEntity) => ReservationEntity.employee,
   )
-  @JoinTable()
+  @JoinTable() // Add this decorator to create the join table
   reservations: ReservationEntity[];
+  // @OneToMany(() => ReservationEntity, ReservationEntity => ReservationEntity.artist)
+  // reservations: ReservationEntity[];
 
   @OneToMany(() => OrderEntity, (OrderEntity) => OrderEntity.artist)
   orders: OrderEntity[];
 
   @OneToMany(() => CommentEntity, (CommentEntity) => CommentEntity.employee)
-  comments: CommentEntity[];
+  comments: CommentEntity[]; // Comments made by the employee
 
   @OneToMany(() => ReviewEntity, (ReviewEntity) => ReviewEntity.employee)
-  reviews: ReviewEntity[];
+  reviews: ReviewEntity[]; // Reviews made by the employee
 
+  // Add a soft delete column
   @DeleteDateColumn({ name: "deleted_at", nullable: true })
   deletedAt?: Date;
 
