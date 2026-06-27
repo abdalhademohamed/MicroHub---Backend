@@ -8,7 +8,7 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 export const AppDataSource = new DataSource({
   type: 'postgres',
   url: process.env.DATABASE_URL, // تأكد أن هذا المتغير موجود في .env ويحتوي رابط Neon
-  synchronize: false,
+  synchronize: true,
   entities: ['src/**/*.entity{.ts,.js}'],
   migrations: ['src/migrations/*{.ts,.js}'],
 });
