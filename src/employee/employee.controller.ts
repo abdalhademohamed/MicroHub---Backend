@@ -276,6 +276,21 @@ export class EmployeeController {
     );
   }
 
+  @Patch(":id/toggle")
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  async toggleEmployeeStatus(
+    @Param("id") id: string,
+    @Body('isActive') isActive: boolean,
+    @Request() req: any,
+  ) {
+    const userId = req.user.sub;
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
+    return this.employeeService.toggleEmployeeStatusByEmployeeId(id, isActive);
+  }
+
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN, Role.ADMIN)
   @Delete(":employeeId")

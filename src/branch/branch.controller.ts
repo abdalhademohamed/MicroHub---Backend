@@ -17,6 +17,7 @@ import {
   Request,
   Put,
   NotFoundException,
+  InternalServerErrorException,
 } from "@nestjs/common";
 import { BranchService } from "./branch.service";
 import { CreateBranchDto } from "./dto/create.branch.dto";
@@ -279,6 +280,24 @@ export class BranchController {
 
     // Call the service method with the updated DTO
     return this.branchService.updateBranch(id, updateBranchDto, userId, image);
+  }
+
+  @Patch(":id/toggle")
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  async toggleBranchStatus(
+    @Param("id") id: string,
+    @Request() req: any,
+  ) {
+    const userId = req.user.sub;
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
+    if (typeof this.branchService['toggleBranchStatus'] === 'function') {
+      return (this.branchService as any).toggleBranchStatus(id, userId);
+    } else {
+      throw new InternalServerErrorException("Toggle method not implemented in service yet");
+    }
   }
 
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first

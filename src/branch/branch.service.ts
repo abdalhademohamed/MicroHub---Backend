@@ -252,6 +252,7 @@ export class BranchService {
           "branch.name",
           "branch.location",
           "branch.image",
+          "branch.isActive", // Added isActive to selection
           "branch.createdBy",
           "branch.updatedBy",
           "branch.deletedBy",
@@ -437,7 +438,7 @@ export class BranchService {
           reservationYear,
         },
         order: {
-          start_Time: order, // Order reservations by start time
+          start_Time: order as any, // Order reservations by start time
         },
         skip: (page - 1) * limit,
         take: limit,
@@ -493,6 +494,10 @@ export class BranchService {
       branch.name = name ?? branch.name;
       branch.location = location ?? branch.location;
 
+      if ('isActive' in updateBranchDto) {
+        branch.isActive = (updateBranchDto as any).isActive;
+      }
+
       // Handle image upload and update
       const folderName = "branch";
       if (image) {
@@ -534,6 +539,13 @@ export class BranchService {
           newValue: updatedBranch.image,
         };
       }
+      if (originalBranch.isActive !== updatedBranch.isActive) {
+        changedColumns.push("isActive");
+        changesDetails["isActive"] = {
+          oldValue: originalBranch.isActive,
+          newValue: updatedBranch.isActive,
+        };
+      }
 
       // Debug statements
       console.log("Original Branch:", originalBranch);
@@ -567,6 +579,34 @@ export class BranchService {
     }
   }
 
+  async toggleBranchStatus(branchId: string, userId: string): Promise<BranchEntity> {
+    const branch = await this.BranchRepository.findOne({
+      where: { id: branchId },
+    });
+    if (!branch) {
+      throw new NotFoundException(this.i18n.translate("test.BRANCH.NOT_FOUND"));
+    }
+    
+    branch.isActive = !branch.isActive;
+    branch.updatedBy = userId;
+    
+    const updatedBranch = await this.BranchRepository.save(branch);
+    
+    const auditLog = new AuditLogEntity();
+    auditLog.tableName = "branch";
+    auditLog.action = "UPDATE";
+    auditLog.entityId = branchId;
+    auditLog.performedBy = userId;
+    auditLog.changedColumns = ["isActive"];
+    auditLog.changesDetails = {
+      isActive: { oldValue: !branch.isActive, newValue: branch.isActive }
+    };
+    
+    await this.AuditLogRepository.save(auditLog);
+    
+    return updatedBranch;
+  }
+
   async deleteBranch(branchId: string, userId: string): Promise<void> {
     try {
       // Find the branch by ID
@@ -582,6 +622,7 @@ export class BranchService {
       // Update the branch entity to record who deleted it
       branch.deletedBy = userId;
       await this.BranchRepository.save(branch);
+      
       // Log the deletion
       const auditLog = new AuditLogEntity();
       auditLog.tableName = "branch";
@@ -597,8 +638,9 @@ export class BranchService {
 
       // Save the audit log before performing the deletion
       await this.AuditLogRepository.save(auditLog);
-      // Delete the branch
-      await this.BranchRepository.delete(branchId);
+      
+      // Use SoftDelete instead of Delete
+      await this.BranchRepository.softDelete(branchId);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;

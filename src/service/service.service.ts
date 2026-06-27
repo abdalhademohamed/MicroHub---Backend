@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { CreateServiceDto } from "./dto/create.service.dto";
+import { UpdateServiceDto } from "./dto/update.service.dto";
 import { ServiceEntity } from "./entities/service.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
@@ -192,7 +193,7 @@ export class ServiceService {
 
   async updateService(
     id: string,
-    updateServiceDto: CreateServiceDto,
+    updateServiceDto: UpdateServiceDto,
     userId: string, // Pass the userId for audit logging
     image?: Express.Multer.File,
   ): Promise<ServiceEntity> {
@@ -219,6 +220,10 @@ export class ServiceService {
       updateServiceDto.rootosh_Number ?? service.rootosh_Number;
     service.months_To_Expire =
       updateServiceDto.months_To_Expire ?? service.months_To_Expire;
+
+    if ('isActive' in updateServiceDto) {
+      service.isActive = (updateServiceDto as any).isActive;
+    }
 
     // Handle image upload if a file is provided
     if (image) {
@@ -294,6 +299,11 @@ export class ServiceService {
         `imageUrl: ${originalService.imageUrl} -> ${updatedService.imageUrl}`,
       );
     }
+    if (originalService.isActive !== updatedService.isActive) {
+      changes.push(
+        `isActive: ${originalService.isActive} -> ${updatedService.isActive}`,
+      );
+    }
 
     // Create and save the audit log
     const auditLog = new AuditLogEntity();
@@ -317,7 +327,7 @@ export class ServiceService {
   async deleteService(id: string): Promise<void> {
     try {
       // Attempt to delete the service with the given ID
-      const result = await this.ServiceRepository.delete(id);
+      const result = await this.ServiceRepository.softDelete(id);
 
       // If no rows are affected, it means the service with the given ID does not exist
       if (result.affected === 0) {

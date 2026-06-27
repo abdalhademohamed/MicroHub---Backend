@@ -15,6 +15,8 @@ import {
   BadRequestException,
   Request,
   Res,
+  Patch,
+  InternalServerErrorException,
 } from "@nestjs/common";
 import { ServiceService } from "./service.service";
 import { CreateServiceDto } from "./dto/create.service.dto";
@@ -29,29 +31,30 @@ import { Role } from "../user/utils/user.enum";
 import { Roles } from "../auth/Roles.decorator";
 import { Response } from "express";
 import { FindServiceDto } from "./dto/find.service.dto";
+
 @ApiTags("service")
 @Controller("service")
 export class ServiceController {
   constructor(private readonly serviceService: ServiceService) {}
 
-  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @UseGuards(AccessTokenGuard, RolesGuard) 
   @Roles(Role.SUPERADMIN, Role.ACCOUNTANT, Role.ADMIN)
   @Get("/count")
   async getServiceCount(): Promise<{ count: number }> {
     const count = await this.serviceService.countServices();
     return { count };
   }
-  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @UseGuards(AccessTokenGuard, RolesGuard) 
   @Roles(Role.SUPERADMIN, Role.ADMIN)
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @UseInterceptors(FileInterceptor("image")) // Use the FileInterceptor to handle file uploads
+  @UseInterceptors(FileInterceptor("image")) 
   async createService(
     @Request() req: any,
     @Body() createServiceDto: CreateServiceDto,
     @UploadedFile() image: Express.Multer.File,
   ): Promise<ServiceEntity> {
-    const userId = req.user.sub; // Hardcoded user ID for now
+    const userId = req.user.sub; 
 
     if (!userId) {
       throw new BadRequestException("User not authenticated");
@@ -76,7 +79,7 @@ export class ServiceController {
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @UseGuards(AccessTokenGuard, RolesGuard) 
   @Roles(
     Role.SUPERADMIN,
     Role.COORDINATOR,
@@ -89,40 +92,56 @@ export class ServiceController {
   async getAllServices(
     @Query("page") page: number = 1,
     @Query("limit") limit: number = 10,
-    @Query("sortBy") sortBy: string = "english_Name", // Default sorting by 'englishName'
-    @Query("order") order: "ASC" | "DESC" = "ASC", // Default order 'ASC'
+    @Query("sortBy") sortBy: string = "english_Name", 
+    @Query("order") order: "ASC" | "DESC" = "ASC", 
   ): Promise<PaginateResultDto<ServiceEntity>> {
     return this.serviceService.getAllServices(page, limit, sortBy, order);
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @UseGuards(AccessTokenGuard, RolesGuard) 
   @Roles(Role.SUPERADMIN, Role.ADMIN)
   @Put(":id")
-  @UseInterceptors(FileInterceptor("image")) // Use interceptor for file uploads
+  @UseInterceptors(FileInterceptor("image")) 
   async updateService(
     @Request() req: any,
 
     @Param("id") id: string,
-    @Body() updateServiceDto: CreateServiceDto,
-    @UploadedFile() image: Express.Multer.File, // If uploading a file
+    @Body() updateServiceDto: UpdateServiceDto, 
+    @UploadedFile() image: Express.Multer.File, 
   ): Promise<ServiceEntity> {
-    const userId = req.user.sub; // Hardcoded user ID for now
+    const userId = req.user.sub; 
 
     if (!userId) {
       throw new BadRequestException("User not authenticated");
     }
-    return this.serviceService.updateService(
+    return await this.serviceService.updateService(
       id,
-      updateServiceDto,
+      updateServiceDto as any, 
       userId,
       image,
     );
   }
 
+  @Patch(":id/toggle")
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  async toggleServiceStatus(
+    @Param("id") id: string,
+    @Body('isActive') isActive: boolean,
+    @Request() req: any,
+  ) {
+    const userId = req.user.sub;
+    if (!userId) {
+      throw new BadRequestException("User not authenticated");
+    }
+    const updateDto = { isActive } as any;
+    return await this.serviceService.updateService(id, updateDto, userId);
+  }
+
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
+  @UseGuards(AccessTokenGuard, RolesGuard) 
   @Roles(Role.SUPERADMIN, Role.ADMIN)
   @Delete(":id")
   @HttpCode(HttpStatus.NO_CONTENT)

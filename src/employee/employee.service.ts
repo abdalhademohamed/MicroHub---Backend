@@ -425,6 +425,10 @@ export class EmployeeService {
       employee.phoneNumber = phoneNumber ?? employee.phoneNumber;
       employee.available = available ?? employee.available;
 
+      if ('isActive' in updateEmployeeDto) {
+        employee.isActive = (updateEmployeeDto as any).isActive;
+      }
+
       if (branchId) {
         const newBranch = await this.branchRepository.findOne({
           where: { id: branchId },
@@ -898,6 +902,7 @@ export class EmployeeService {
         "reviews.comment_Before",
         "reviews.comment_After",
         "reviews.orderFirstTime",
+        "reviews.createdAt",
       ])
       .addSelect((subQuery) => {
         return subQuery

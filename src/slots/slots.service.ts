@@ -15,6 +15,7 @@ import { DateTime } from 'luxon';
 import { Cron } from "@nestjs/schedule";
 import { ReservationEntity } from "src/reservation/entities/reservation.entity";
 import { OrderStatus } from "src/orders/utils/order.status.enum";
+import { ModuleRef } from "@nestjs/core";
 
 @Injectable()
 export class SlotService {
@@ -29,7 +30,7 @@ export class SlotService {
     private readonly WorkingRepository: Repository<WorkingEntity>,
     @InjectRepository(EmployeeEntity)
     private readonly EmployeeRepository: Repository<EmployeeEntity>,
-    private reservationService: ReservationService,
+    private moduleRef: ModuleRef,
     @InjectRepository(ReservationEntity)
     private readonly ReservationRepository: Repository<ReservationEntity>,
   ) {}
@@ -38,7 +39,7 @@ export class SlotService {
     const branchs = await this.BranchRepository.find();
     return branchs;
   }
-  @Cron('0 0 * * *') // Runs every day at midnight
+  @Cron('0 0 * * *')
   async handleCronJop() {
     const branchs = await this.getAllBranch();
     for(const branch of branchs ) {
@@ -65,7 +66,6 @@ export class SlotService {
         }
         const resultDates: { day: number; month: number; year: number }[] = [];
         
-        // التعديل: تكبير النطاق لـ 24 أسبوع (6 أشهر)
         for (let j = 0; j < 24; j++) {
           const nextDate = new Date();
           nextDate.setUTCHours(0,0,0,0);
@@ -110,7 +110,7 @@ export class SlotService {
     for (let i = 0; i < utcDateTimes.length; i += 2) {
       const toDate = new Date(utcDateTimes[i + 1]);
 
-      result.push(utcDateTimes[i]); // Always add the "from" timestamp
+      result.push(utcDateTimes[i]); 
 
       if (toDate.getUTCMinutes() === 59) {
         toDate.setUTCMinutes(toDate.getUTCMinutes() + 1);
@@ -118,7 +118,7 @@ export class SlotService {
         continue;
       }
 
-      result.push(utcDateTimes[i + 1]); // Always add the "to" timestamp
+      result.push(utcDateTimes[i + 1]); 
     }
 
     return result;
@@ -126,7 +126,6 @@ export class SlotService {
   }
 
   processTimes(times: string[]): string[] {
-    // Step 1: Sort times in ascending order
     const sortedTimes = [...times].sort();
   
     const result: string[] = [];
@@ -138,13 +137,11 @@ export class SlotService {
         continue;
       }
   
-      // If next element is duplicate, skip it and skip the next hour
       if (sortedTimes[i] === sortedTimes[i + 1]) {
-        skipNext = true; // Skip the next duplicate and the next element after it
+        skipNext = true; 
         continue;
       }
   
-      // Push the current time to the result
       result.push(sortedTimes[i]);
     }
   
@@ -158,7 +155,6 @@ export class SlotService {
 
     const workingTimes = this.processTimes(times);
 
-    // const workingTimes = times;
     console.log('working time is', workingTimes);
 
     const result = workingTimes.map(time => {
@@ -172,7 +168,6 @@ export class SlotService {
         },
         { zone: timeZone }
       );
-      // Convert to UTC
       return localDateTime.toUTC().toISO();
     });
 
@@ -205,7 +200,6 @@ export class SlotService {
     }
     const resultDates: { day: number; month: number; year: number }[] = [];
     
-    // التعديل السحري: تم تغيير النطاق من 4 أسابيع إلى 24 أسبوع (6 أشهر) ليتم توليدها عند الضغط على حفظ في لوحة الإدارة
     for (let i = 0; i < 24; i++) {
       const nextDate = new Date();
       nextDate.setUTCHours(0,0,0,0);
@@ -248,9 +242,7 @@ export class SlotService {
   }
 
   getLocalHour(utcTime: string, timeZone: string): string {
-    // Convert UTC time to local time
     const localTime = DateTime.fromISO(utcTime, { zone: 'utc' }).setZone(timeZone);
-    // Return the hour in HH:mm format
     return localTime.toFormat('HH:mm');
   }
 
@@ -274,7 +266,6 @@ export class SlotService {
         branch
       });
   
-      // Save the new slot entity
       slot = await this.SlotRepository.save(slot);
     }
     return slot;
@@ -282,7 +273,6 @@ export class SlotService {
 
 
   getLocalTime(day: number, month: number, year: number, timezone: string) {
-    // Create the date in the specified timezone
     console.log('day month year logs', day , month, year);
     const startOfDayLocal = DateTime.fromObject(
         { year, month, day, hour: 0, minute: 0, second: 0 },
@@ -291,9 +281,8 @@ export class SlotService {
 
     const endOfDayLocal = startOfDayLocal.set({ hour: 23, minute: 59, second: 59 });
 
-    // Convert to UTC in ISO format (best for databases)
-    const startOfDayUTC = startOfDayLocal.toUTC().toISO(); // "2025-03-06T00:00:00.000Z"
-    const endOfDayUTC = endOfDayLocal.toUTC().toISO(); // "2025-03-06T23:59:59.999Z"
+    const startOfDayUTC = startOfDayLocal.toUTC().toISO(); 
+    const endOfDayUTC = endOfDayLocal.toUTC().toISO(); 
 
     console.log(startOfDayUTC, endOfDayUTC);
     return { startOfDayUTC, endOfDayUTC };
@@ -366,15 +355,14 @@ export class SlotService {
   async addReservation(branch: string, startTime: Date, endTime: Date) {
     const workingDate = startTime;
     
-          // Get working hours for the branch on the specific date
-    const workingHours = await this.reservationService.getWorkingHoursAtSpecificDate(
+    const reservationService = await this.moduleRef.resolve(ReservationService, undefined, { strict: false });
+    const workingHours = await reservationService.getWorkingHoursAtSpecificDate(
       branch,
       workingDate,
     );
     
     console.log(workingHours);
     
-          // Check if the working hours allow the reservation
     const index = workingHours.findIndex(
       (w) => w.from <= startTime && w.to >= endTime,
     );
@@ -385,7 +373,7 @@ export class SlotService {
       return null;
     }
 
-    const newWorkingHours = this.reservationService.newAddedWorkingHours(
+    const newWorkingHours = reservationService.newAddedWorkingHours(
       {
         fromOriginal: workingHours[index].from,
         toOriginal: workingHours[index].to,
@@ -674,7 +662,7 @@ export class SlotService {
         }
       },
       order: {
-        createdAt: "ASC", // Sort by createdAt in ascending order (oldest first)
+        createdAt: "ASC", 
       },
       relations: {
         order: true,
@@ -692,23 +680,19 @@ export class SlotService {
       let currentStartTime =
         new Date(from) > new Date()
           ? new Date(from)
-          : new Date(Date.now() + 5 * 60 * 1000); // Start at the provided startTime
+          : new Date(Date.now() + 5 * 60 * 1000); 
 
-      const currentEndTime = new Date(to); // End at the provided endTime
+      const currentEndTime = new Date(to); 
 
-      // Loop through the interval and create slots of the given duration
       while (currentStartTime < currentEndTime) {
         const nextSlotEnd = new Date(
           currentStartTime.getTime() + duration * 1000 * 60,
         );
-        // console.log(nextSlotEnd , currentEndTime, currentStartTime, duration);
-
-        // Ensure that we don't exceed the endTime
 
         console.log(nextSlotEnd.getTime());
 
         if (nextSlotEnd > currentEndTime) {
-          break; // Stop if the next slot exceeds the endTime
+          break; 
         }
 
         const obj = {
@@ -724,9 +708,7 @@ export class SlotService {
         if (idx == -1) {
           result.push(obj);
         }
-        // console.log(result);
 
-        // Move the currentStartTime to the next slot's start time
         currentStartTime = nextSlotEnd;
       }
     });
@@ -764,7 +746,6 @@ export class SlotService {
     serviceIds?: string[],
     rootoshIds?: string[],
   ) {
-    // Check if both are provided
     if (serviceIds.length > 0 && rootoshIds.length > 0) {
       throw new HttpException(
         "Please provide either services or rootosh IDs, not both.",
@@ -772,7 +753,6 @@ export class SlotService {
       );
     }
 
-    // Check if neither is provided
     if (serviceIds.length === 0 && rootoshIds.length === 0) {
       throw new HttpException(
         "At least one of services or rootosh IDs must be provided.",
@@ -781,9 +761,9 @@ export class SlotService {
     }
 
     if (serviceIds.length > 0) {
-      // Calculate duration based on services
+      const reservationService = await this.moduleRef.resolve(ReservationService, undefined, { strict: false });
       const { duration } =
-        await this.reservationService.calculateTotalDuration(serviceIds);
+        await reservationService.calculateTotalDuration(serviceIds);
 
       const workingHour = await this.WorkingRepository.createQueryBuilder(
         "working",
@@ -818,9 +798,9 @@ export class SlotService {
     }
 
     if (rootoshIds.length > 0) {
-      // Calculate duration based on rootosh
+      const reservationService = await this.moduleRef.resolve(ReservationService, undefined, { strict: false });
       const { duration } =
-        await this.reservationService.calculateRootoshTotalDuration(rootoshIds);
+        await reservationService.calculateRootoshTotalDuration(rootoshIds);
 
       const workingHour = await this.WorkingRepository.createQueryBuilder(
         "working",
