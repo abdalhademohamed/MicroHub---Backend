@@ -17,6 +17,7 @@ import { CustomI18nService } from "../common/custom.18n.service";
 import { ExcelService } from "src/excel/excel.service";
 import { Response } from "express";
 import { FindServiceDto } from "./dto/find.service.dto";
+import { Cron, CronExpression } from "@nestjs/schedule";
 
 @Injectable()
 export class ServiceService {
@@ -353,5 +354,52 @@ export class ServiceService {
 
   async countServices(): Promise<number> {
     return await this.ServiceRepository.count();
+  }
+
+  async restoreService(id: string): Promise<ServiceEntity> {
+    const service = await this.ServiceRepository.findOne({
+      where: { id },
+      withDeleted: true,
+    });
+    
+    if (!service) {
+      throw new NotFoundException(
+        this.i18n.translate("test.SERVICE.NOT_FOUND", { args: { id } }),
+      );
+    }
+    
+    service.deletedAt = null;
+    return await this.ServiceRepository.save(service);
+  }
+
+  async hardDeleteService(id: string): Promise<void> {
+    try {
+      const result = await this.ServiceRepository.delete(id);
+      
+      if (result.affected === 0) {
+        throw new NotFoundException(
+          this.i18n.translate("test.SERVICE.NOT_FOUND", { args: { id } }),
+        );
+      }
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        this.i18n.translate("test.SERVICE.DELETE_FAILED"),
+      );
+    }
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async handleCleanTrash() {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    await this.ServiceRepository.createQueryBuilder()
+      .delete()
+      .from(ServiceEntity)
+      .where("deleted_at IS NOT NULL AND deleted_at < :thirtyDaysAgo", { thirtyDaysAgo })
+      .execute();
   }
 }

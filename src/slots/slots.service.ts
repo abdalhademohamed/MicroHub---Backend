@@ -36,7 +36,9 @@ export class SlotService {
   ) {}
 
   async getAllBranch() {
-    const branchs = await this.BranchRepository.find();
+    const branchs = await this.BranchRepository.find({
+      where: { isActive: true },
+    });
     return branchs;
   }
   @Cron('0 0 * * *')
@@ -222,6 +224,7 @@ export class SlotService {
     const artists = await this.EmployeeRepository.find({
       where: {
         role: Role.ARTIST,
+        isActive: true,
         branch: {
           id: branchId,
         },

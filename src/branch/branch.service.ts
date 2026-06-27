@@ -23,6 +23,7 @@ import { Role } from "../user/utils/user.enum";
 import { Postion } from "../postion/utils/postion.enum";
 import { EmployeeEntity } from "../employee/entities/employee.entity";
 import { CustomI18nService } from "../common/custom.18n.service";
+import { Cron, CronExpression } from "@nestjs/schedule";
 
 @Injectable()
 export class BranchService {
@@ -252,10 +253,10 @@ export class BranchService {
           "branch.name",
           "branch.location",
           "branch.image",
-          "branch.isActive", // Added isActive to selection
           "branch.createdBy",
           "branch.updatedBy",
           "branch.deletedBy",
+          "branch.isActive",
           "employeeAlias.id", // Use the alias here
           "employeeAlias.username",
           "employeeAlias.email",
@@ -622,7 +623,6 @@ export class BranchService {
       // Update the branch entity to record who deleted it
       branch.deletedBy = userId;
       await this.BranchRepository.save(branch);
-      
       // Log the deletion
       const auditLog = new AuditLogEntity();
       auditLog.tableName = "branch";
@@ -638,8 +638,7 @@ export class BranchService {
 
       // Save the audit log before performing the deletion
       await this.AuditLogRepository.save(auditLog);
-      
-      // Use SoftDelete instead of Delete
+      // Delete the branch safely
       await this.BranchRepository.softDelete(branchId);
     } catch (error) {
       if (error instanceof NotFoundException) {
@@ -670,5 +669,52 @@ export class BranchService {
 
     // Return true if there is at least one artist, otherwise false
     return artistCount > 0;
+  }
+
+  async restoreBranch(branchId: string): Promise<BranchEntity> {
+    const branch = await this.BranchRepository.findOne({
+      where: { id: branchId },
+      withDeleted: true,
+    });
+    
+    if (!branch) {
+      throw new NotFoundException(
+        this.i18n.translate("test.BRANCH.NOT_FOUND"),
+      );
+    }
+    
+    branch.deletedAt = null;
+    return await this.BranchRepository.save(branch);
+  }
+
+  async hardDeleteBranch(branchId: string): Promise<void> {
+    try {
+      const result = await this.BranchRepository.delete(branchId);
+      
+      if (result.affected === 0) {
+        throw new NotFoundException(
+          this.i18n.translate("test.BRANCH.NOT_FOUND"),
+        );
+      }
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        this.i18n.translate("test.BRANCH.DELETE_FAILED"),
+      );
+    }
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async handleCleanTrash() {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    await this.BranchRepository.createQueryBuilder()
+      .delete()
+      .from(BranchEntity)
+      .where("deleted_at IS NOT NULL AND deleted_at < :thirtyDaysAgo", { thirtyDaysAgo })
+      .execute();
   }
 }

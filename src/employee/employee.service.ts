@@ -39,6 +39,7 @@ import { WorkingEntity } from "../slots/entities/working.entity";
 import { OrderStatus } from "../orders/utils/order.status.enum";
 import { ReviewEntity } from "../reviews/entities/review.entity";
 import { OrderEntity } from "../orders/entities/order.entity";
+import { Cron, CronExpression } from "@nestjs/schedule";
 
 @Injectable()
 export class EmployeeService {
@@ -927,5 +928,31 @@ export class EmployeeService {
           .limit(1);
       }, "employee.oldestAvgRating")
       .getMany();
+  }
+
+  async hardDeleteEmployeeByEmployeeId(employeeId: string): Promise<void> {
+    try {
+      const result = await this.employeeRepository.delete(employeeId);
+      if (result.affected === 0) {
+        throw new NotFoundException("Employee not found");
+      }
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException("Failed to hard delete employee");
+    }
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async handleCleanTrash() {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    await this.employeeRepository.createQueryBuilder()
+      .delete()
+      .from(EmployeeEntity)
+      .where("deleted_at IS NOT NULL AND deleted_at < :thirtyDaysAgo", { thirtyDaysAgo })
+      .execute();
   }
 }
