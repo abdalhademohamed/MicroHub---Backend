@@ -41,7 +41,7 @@ export class ServiceEntity {
   @Column("int", { nullable: true })
   months_To_Expire: number;
 
-  @Column({ type: "boolean", default: true })
+  @Column({ name: "isactive", type: "boolean", default: true })
   isActive: boolean;
 
   @DeleteDateColumn({ name: "deleted_at", nullable: true })

@@ -26,7 +26,7 @@ export class OfferEntity {
   @Column({ type: "decimal", precision: 9, scale: 6 })
   discountPercentage: number;
 
-  @Column({ type: "boolean", default: true })
+  @Column({ name: "isactive", type: "boolean", default: true })
   isActive: boolean; // New boolean column
 
   @ManyToMany(() => ServiceEntity)

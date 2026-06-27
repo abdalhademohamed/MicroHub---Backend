@@ -42,7 +42,7 @@ export class SharableOfferEntity {
   @OneToMany(() => GiftCouponEntity, (coupon) => coupon.sharableOffer)
   giftCoupons: GiftCouponEntity[];
 
-  @Column({ type: "boolean", default: true })
+  @Column({ name: "isactive", type: "boolean", default: true })
   isActive: boolean; // Indicates if the offer is still active
 
   @DeleteDateColumn({ name: "deleted_at", nullable: true })

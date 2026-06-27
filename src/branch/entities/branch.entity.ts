@@ -7,7 +7,6 @@ import {
   PrimaryGeneratedColumn,
   OneToMany,
   ManyToMany,
-  JoinTable,
   DeleteDateColumn,
 } from "typeorm";
 import { WorkingBranchEntity } from "../../working-branch/entities/working.branch.entity";
@@ -28,7 +27,7 @@ export class BranchEntity {
   @Column()
   image: string;
 
-  @Column({ type: "boolean", default: true })
+  @Column({ name: "isactive", type: "boolean", default: true })
   isActive: boolean;
 
   @DeleteDateColumn({ name: "deleted_at", nullable: true })

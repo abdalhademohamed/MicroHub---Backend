@@ -46,7 +46,7 @@ export class EmployeeEntity extends UserEntity {
   @Column({ default: true })
   available: boolean; // Indicates if the employee is available or not
 
-  @Column({ type: "boolean", default: true })
+  @Column({ name: "isactive", type: "boolean", default: true })
   isActive: boolean; // New boolean for active/inactive status
 
   @ManyToOne(
