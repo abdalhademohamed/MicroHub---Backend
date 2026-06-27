@@ -6,10 +6,10 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   ManyToMany,
-  OneToMany,
   JoinTable,
   OneToOne,
   JoinColumn,
+  DeleteDateColumn,
 } from "typeorm";
 import { CustomerEntity } from "../../customer/entities/customer.entity";
 import { OrderEntity } from "../../orders/entities/order.entity";
@@ -74,6 +74,9 @@ export class ReservationEntity {
   @OneToOne(() => OrderEntity, (order) => order.reservation, { cascade: true })
   @JoinColumn() // Indicates the owning side of the OneToOne relationship
   order: OrderEntity;
+
+  @DeleteDateColumn({ name: "deleted_at", nullable: true })
+  deletedAt?: Date;
 
   @Column({ default: false })
   isDeleted: boolean;

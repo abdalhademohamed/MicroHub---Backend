@@ -1,13 +1,11 @@
 import { BranchEntity } from "../../branch/entities/branch.entity";
 import { ServiceEntity } from "../../service/entities/service.entity";
-import { CustomerEntity } from "../../customer/entities/customer.entity"; // Assuming you have a customer entity
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
   ManyToMany,
   JoinTable,
-  ManyToOne,
   OneToMany,
   DeleteDateColumn,
 } from "typeorm";

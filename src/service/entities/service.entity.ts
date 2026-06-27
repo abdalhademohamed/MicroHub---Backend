@@ -1,4 +1,3 @@
-import { UUID } from "crypto";
 import { ReservationEntity } from "../../reservation/entities/reservation.entity";
 import {
   Entity,
@@ -7,13 +6,11 @@ import {
   OneToMany,
   ManyToMany,
   JoinTable,
-  ManyToOne,
   DeleteDateColumn,
 } from "typeorm";
 import { RootoshEntity } from "../../rootosh/entities/rootosh.entity";
 import { CustomerEntity } from "../../customer/entities/customer.entity";
 import { OfferEntity } from "../../offer/entities/offer.entity";
-import { ReceiptEntity } from "../../receipt/entities/receipt.entity";
 
 @Entity()
 export class ServiceEntity {
