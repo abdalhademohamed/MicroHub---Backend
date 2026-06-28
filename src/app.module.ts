@@ -107,9 +107,6 @@ import { EnsureSchemaService } from "./ensure-schema.service";
         FileEntity,
       ],
       synchronize: false,
-      migrations: [path.join(__dirname, 'migrations/*.js')],
-      migrationsRun: true,
-      migrationsTransactionMode: 'each',
       ssl: true,
       extra: {
         ssl: {
