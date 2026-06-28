@@ -9,38 +9,43 @@ export class EnsureSchemaService implements OnApplicationBootstrap {
   constructor(@InjectDataSource() private readonly ds: DataSource) {}
 
   async onApplicationBootstrap() {
+    this.logger.log('EnsureSchemaService starting...');
+    await this.ensureColumns();
+    await this.ensureEnumValues();
+    await this.fixEnumData();
+    this.logger.log('EnsureSchemaService done.');
+  }
+
+  private async runSafe(label: string, sql: string) {
     try {
-      await this.ensureColumns();
-      await this.ensureEnumValues();
-      await this.fixEnumData();
-      this.logger.log('Schema verified successfully');
-    } catch (err) {
-      this.logger.error('Schema verification failed', err);
+      await this.ds.query(sql);
+      this.logger.log(`OK: ${label}`);
+    } catch (err: any) {
+      this.logger.warn(`SKIP (${label}): ${err?.message}`);
     }
   }
 
   private async ensureColumns() {
-    const stmts = [
-      // branch_entity
-      `ALTER TABLE "branch_entity" ADD COLUMN IF NOT EXISTS "isactive" boolean NOT NULL DEFAULT true`,
-      `ALTER TABLE "branch_entity" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP`,
-      `ALTER TABLE "branch_entity" ADD COLUMN IF NOT EXISTS "created_by" character varying`,
-      `ALTER TABLE "branch_entity" ADD COLUMN IF NOT EXISTS "updated_by" character varying`,
-      `ALTER TABLE "branch_entity" ADD COLUMN IF NOT EXISTS "deleted_by" character varying`,
-      // employee_entity
-      `ALTER TABLE "employee_entity" ADD COLUMN IF NOT EXISTS "isactive" boolean NOT NULL DEFAULT true`,
-      `ALTER TABLE "employee_entity" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP`,
-      // service_entity
-      `ALTER TABLE "service_entity" ADD COLUMN IF NOT EXISTS "isactive" boolean NOT NULL DEFAULT true`,
-      `ALTER TABLE "service_entity" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP`,
-      // reservation_entity
-      `ALTER TABLE "reservation_entity" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP`,
-      // customer_entity
-      `ALTER TABLE "customer_entity" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP`,
+    const cols: [string, string][] = [
+      ['branch isactive',    `ALTER TABLE "branch_entity"      ADD COLUMN IF NOT EXISTS "isactive"   boolean   NOT NULL DEFAULT true`],
+      ['branch deleted_at',  `ALTER TABLE "branch_entity"      ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP`],
+      ['branch created_by',  `ALTER TABLE "branch_entity"      ADD COLUMN IF NOT EXISTS "created_by" character varying`],
+      ['branch updated_by',  `ALTER TABLE "branch_entity"      ADD COLUMN IF NOT EXISTS "updated_by" character varying`],
+      ['branch deleted_by',  `ALTER TABLE "branch_entity"      ADD COLUMN IF NOT EXISTS "deleted_by" character varying`],
+      ['employee isactive',  `ALTER TABLE "employee_entity"    ADD COLUMN IF NOT EXISTS "isactive"   boolean   NOT NULL DEFAULT true`],
+      ['employee deleted_at',`ALTER TABLE "employee_entity"    ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP`],
+      ['service isactive',   `ALTER TABLE "service_entity"     ADD COLUMN IF NOT EXISTS "isactive"   boolean   NOT NULL DEFAULT true`],
+      ['service deleted_at', `ALTER TABLE "service_entity"     ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP`],
+      ['reservation del_at', `ALTER TABLE "reservation_entity" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP`],
+      ['customer deleted_at',`ALTER TABLE "customer_entity"    ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP`],
     ];
 
+    for (const [label, sql] of cols) {
+      await this.runSafe(label, sql);
+    }
+
     // offer_entity: rename isActive → isactive, or add if neither exists
-    const offerFix = `
+    await this.runSafe('offer isactive fix', `
       DO $$ BEGIN
         IF EXISTS (
           SELECT 1 FROM information_schema.columns
@@ -53,10 +58,10 @@ export class EnsureSchemaService implements OnApplicationBootstrap {
         ) THEN
           ALTER TABLE "offer_entity" ADD COLUMN "isactive" boolean NOT NULL DEFAULT true;
         END IF;
-      END $$;`;
+      END $$`);
 
     // sharable_offer_entity: same
-    const sharableFix = `
+    await this.runSafe('sharable_offer isactive fix', `
       DO $$ BEGIN
         IF EXISTS (
           SELECT 1 FROM information_schema.columns
@@ -69,22 +74,28 @@ export class EnsureSchemaService implements OnApplicationBootstrap {
         ) THEN
           ALTER TABLE "sharable_offer_entity" ADD COLUMN "isactive" boolean NOT NULL DEFAULT true;
         END IF;
-      END $$;`;
-
-    for (const sql of stmts) {
-      await this.ds.query(sql);
-    }
-    await this.ds.query(offerFix);
-    await this.ds.query(sharableFix);
+      END $$`);
   }
 
   private async ensureEnumValues() {
-    await this.ds.query(`ALTER TYPE "public"."order_entity_status_enum" ADD VALUE IF NOT EXISTS 'Absent'`);
-    await this.ds.query(`ALTER TYPE "public"."order_entity_status_enum" ADD VALUE IF NOT EXISTS 'Refunded'`);
+    await this.runSafe(
+      'enum Absent',
+      `ALTER TYPE "public"."order_entity_status_enum" ADD VALUE IF NOT EXISTS 'Absent'`,
+    );
+    await this.runSafe(
+      'enum Refunded',
+      `ALTER TYPE "public"."order_entity_status_enum" ADD VALUE IF NOT EXISTS 'Refunded'`,
+    );
   }
 
   private async fixEnumData() {
-    await this.ds.query(`UPDATE "order_entity" SET "status"='Absent'  WHERE "status"='Abscent'`);
-    await this.ds.query(`UPDATE "order_entity" SET "status"='Refunded' WHERE "status"='Refuneded'`);
+    await this.runSafe(
+      'fix Abscent→Absent',
+      `UPDATE "order_entity" SET "status"='Absent'   WHERE "status"='Abscent'`,
+    );
+    await this.runSafe(
+      'fix Refuneded→Refunded',
+      `UPDATE "order_entity" SET "status"='Refunded' WHERE "status"='Refuneded'`,
+    );
   }
 }
