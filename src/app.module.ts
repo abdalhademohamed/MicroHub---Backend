@@ -106,7 +106,7 @@ import { LoggerMiddleware } from "./middleware/logger_middleware";
         FileEntity,
       ],
       synchronize: false,
-      migrations: ['dist/migrations/*.js'],
+      migrations: [path.join(__dirname, 'migrations/*.js')],
       migrationsRun: true,
       migrationsTransactionMode: 'each',
       ssl: true,
