@@ -10,7 +10,7 @@
     "migration:generate": "npm run typeorm -- migration:generate -d src/data-source.ts",
     "migration:run": "npm run typeorm -- migration:run -d src/data-source.ts",
     "build": "nest build",
-    "postbuild": "cp -r src/i18n dist/i18n",
+    "postbuild": "node -e \"require('fs').cpSync('src/i18n', 'dist/i18n', {recursive: true})\"",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",

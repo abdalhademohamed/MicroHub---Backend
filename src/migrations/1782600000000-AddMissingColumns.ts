@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class UpdateSchema1782521962350 implements MigrationInterface {
-    name = 'UpdateSchema1782521962350'
+export class AddMissingColumns1782600000000 implements MigrationInterface {
+    name = 'AddMissingColumns1782600000000'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`ALTER TABLE "employee_entity" ADD COLUMN IF NOT EXISTS "isactive" boolean NOT NULL DEFAULT true`);

@@ -74,11 +74,7 @@ import { LoggerMiddleware } from "./middleware/logger_middleware";
 
     TypeOrmModule.forRoot({
       type: "postgres",
-      host: process.env.DB_HOST, // Neon host
-      port: parseInt(process.env.DB_PORT, 10),
-      username: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
+      url: process.env.DATABASE_URL,
       // entities: ["dist//*.entity.js"],
       entities: [
         OrderEntity,
@@ -109,11 +105,11 @@ import { LoggerMiddleware } from "./middleware/logger_middleware";
         TransactionEntity,
         FileEntity,
       ],
-      synchronize: false, // Set to false in production
-      ssl: false, // Neon typically requires SSL connections
+      synchronize: false,
+      ssl: true,
       extra: {
         ssl: {
-          rejectUnauthorized: false, // Required for self-signed certificates
+          rejectUnauthorized: false,
         },
       },
       // logging: false,
