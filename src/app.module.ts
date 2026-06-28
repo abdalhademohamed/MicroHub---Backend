@@ -106,6 +106,9 @@ import { LoggerMiddleware } from "./middleware/logger_middleware";
         FileEntity,
       ],
       synchronize: false,
+      migrations: ['dist/migrations/*.js'],
+      migrationsRun: true,
+      migrationsTransactionMode: 'each',
       ssl: true,
       extra: {
         ssl: {
