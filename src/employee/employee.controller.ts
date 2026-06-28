@@ -244,6 +244,30 @@ export class EmployeeController {
     );
   }
 
+  /* -------------------------------------------------------------------------- */
+  /* Trash Endpoints                                                            */
+  /* -------------------------------------------------------------------------- */
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  @Get("trash")
+  async getDeletedEmployees() {
+    return this.employeeService.getDeletedEmployees();
+  }
+
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  @Patch(":id/restore")
+  async restoreEmployee(@Param("id") id: string) {
+    return this.employeeService.restoreEmployee(id);
+  }
+
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  @Delete(":id/force")
+  async hardDeleteEmployee(@Param("id") id: string) {
+    return this.employeeService.hardDeleteEmployeeByEmployeeId(id);
+  }
+
   @UseGuards(AccessTokenGuard, RolesGuard) // Ensure AccessTokenGuard is first
   @Roles(Role.SUPERADMIN, Role.ARTISTMANAGER, Role.ACCOUNTANT, Role.ADMIN)
   @Get(":id")

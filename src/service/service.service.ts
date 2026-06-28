@@ -8,7 +8,7 @@ import { CreateServiceDto } from "./dto/create.service.dto";
 import { UpdateServiceDto } from "./dto/update.service.dto";
 import { ServiceEntity } from "./entities/service.entity";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { IsNull, Not, Repository } from "typeorm";
 import { PaginateResultDto } from "../branch/dto/paginate.result.dto";
 import { CloudinaryService } from "../cloudinary/cloudinary.service";
 import { AuditLogEntity } from "../audit-log/entities/audit.log.entity";
@@ -398,6 +398,13 @@ export class ServiceService {
         this.i18n.translate("test.SERVICE.DELETE_FAILED"),
       );
     }
+  }
+
+  async getDeletedServices(): Promise<ServiceEntity[]> {
+    return this.ServiceRepository.find({
+      withDeleted: true,
+      where: { deletedAt: Not(IsNull()) },
+    });
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)

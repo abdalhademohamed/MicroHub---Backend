@@ -8,7 +8,7 @@ import {
 import { CreateBranchDto } from "./dto/create.branch.dto";
 import { UpdateBranchDto } from "./dto/update.branch.dto";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { IsNull, Not, Repository } from "typeorm";
 import { BranchEntity } from "./entities/branch.entity";
 import { CloudinaryService } from "../cloudinary/cloudinary.service";
 import { ReservationEntity } from "../reservation/entities/reservation.entity";
@@ -704,6 +704,13 @@ export class BranchService {
         this.i18n.translate("test.BRANCH.DELETE_FAILED"),
       );
     }
+  }
+
+  async getDeletedBranches(): Promise<BranchEntity[]> {
+    return this.BranchRepository.find({
+      withDeleted: true,
+      where: { deletedAt: Not(IsNull()) },
+    });
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)

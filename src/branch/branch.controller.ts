@@ -228,6 +228,16 @@ export class BranchController {
     return this.branchService.getAllBranches(filterDto, userRole, userId);
   }
 
+  /* -------------------------------------------------------------------------- */
+  /* Trash Endpoints (must be before parameterized @Get(":branchId"))          */
+  /* -------------------------------------------------------------------------- */
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  @Get("trash")
+  async getDeletedBranches() {
+    return this.branchService.getDeletedBranches();
+  }
+
   // @UseGuards(AccessTokenGuard, RolesGuard)  // Ensure AccessTokenGuard is first
   // @Roles(Role.SUPERADMIN,Role.BRANCHMANAGER)
   @Get(":branchId")
@@ -312,5 +322,19 @@ export class BranchController {
       throw new BadRequestException("User not authenticated");
     }
     await this.branchService.deleteBranch(branchId, userId);
+  }
+
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  @Patch(":id/restore")
+  async restoreBranch(@Param("id") id: string) {
+    return this.branchService.restoreBranch(id);
+  }
+
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  @Delete(":id/force")
+  async hardDeleteBranch(@Param("id") id: string) {
+    return this.branchService.hardDeleteBranch(id);
   }
 }

@@ -141,11 +141,35 @@ export class ServiceController {
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  @UseGuards(AccessTokenGuard, RolesGuard) 
+  @UseGuards(AccessTokenGuard, RolesGuard)
   @Roles(Role.SUPERADMIN, Role.ADMIN)
   @Delete(":id")
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteService(@Param("id") id: string): Promise<void> {
     return this.serviceService.deleteService(id);
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /* Trash Endpoints                                                             */
+  /* -------------------------------------------------------------------------- */
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  @Get("trash")
+  async getDeletedServices() {
+    return this.serviceService.getDeletedServices();
+  }
+
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  @Patch(":id/restore")
+  async restoreService(@Param("id") id: string) {
+    return this.serviceService.restoreService(id);
+  }
+
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  @Delete(":id/force")
+  async hardDeleteService(@Param("id") id: string) {
+    return this.serviceService.hardDeleteService(id);
   }
 }

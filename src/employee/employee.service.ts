@@ -16,9 +16,11 @@ import {
   Brackets,
   EntityManager,
   In,
+  IsNull,
   Like,
   MoreThan,
   MoreThanOrEqual,
+  Not,
   Repository,
 } from "typeorm";
 import { EmployeeTypeEntity } from "../employetype/entities/employetype.entity";
@@ -942,6 +944,29 @@ export class EmployeeService {
       }
       throw new InternalServerErrorException("Failed to hard delete employee");
     }
+  }
+
+  async getDeletedEmployees(): Promise<EmployeeEntity[]> {
+    return this.employeeRepository.find({
+      withDeleted: true,
+      where: { deletedAt: Not(IsNull()) },
+      relations: ["branch", "position", "employeeType"],
+    });
+  }
+
+  async restoreEmployee(employeeId: string): Promise<EmployeeEntity> {
+    const employee = await this.employeeRepository.findOne({
+      where: { id: employeeId },
+      withDeleted: true,
+    });
+
+    if (!employee) {
+      throw new NotFoundException("Employee not found");
+    }
+
+    employee.deletedAt = null;
+    employee.isDeleted = false;
+    return this.employeeRepository.save(employee);
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
