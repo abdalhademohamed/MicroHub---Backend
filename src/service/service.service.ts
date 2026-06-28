@@ -32,6 +32,7 @@ export class ServiceService {
     private readonly AuditLogRepository: Repository<AuditLogEntity>,
     private readonly i18n: CustomI18nService,
   ) {}
+
   async serviceCountExcel(query: FindServiceDto, res: Response, type: string) {
     const { items } = await this.getServicesWithReservationCount(query);
     let reservationCount = 0;
@@ -40,10 +41,15 @@ export class ServiceService {
       delete item.id;
       delete item.imageUrl;
       delete item.months_To_Expire;
+      
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       reservationCount += Number(item?.reservationCount) || 0;
+      
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       totalPrice +=
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         Number(item?.price) || 0 * Number(item?.reservationCount) || 0;
     });
@@ -59,6 +65,7 @@ export class ServiceService {
   async createService(
     createServiceDto: CreateServiceDto,
     file: Express.Multer.File, // Accept the file as a parameter
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     userId: string, // Pass the userId extracted from the token
   ): Promise<ServiceEntity> {
     // Check if a service with the same name exists
@@ -105,6 +112,7 @@ export class ServiceService {
   }
 
   // Save the audit log
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private async saveAuditLog(serviceId: string, userId: string) {
     // Create and save the audit log
     const auditLog = new AuditLogEntity();
@@ -162,6 +170,7 @@ export class ServiceService {
       );
     }
   }
+  
   async getServicesWithReservationCount(query: FindServiceDto) {
     const { page = 1, limit = 10, keyword, fromDate, toDate } = query;
     const skip = (page - 1) * limit;

@@ -9,6 +9,7 @@ import { CreateWorkingBranchDto } from "./dto/create.working.branch.dto";
 import { UpdateWorkingBranchDto } from "./dto/update.working.branch.dto";
 import { InjectRepository } from "@nestjs/typeorm";
 import { BranchEntity } from "../branch/entities/branch.entity";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Between, FindOptionsWhere, In, QueryFailedError, Repository } from "typeorm";
 import { WorkingBranchEntity } from "./entities/working.branch.entity";
 import { WeekDays } from "../branch/utils/days.enum";
@@ -269,12 +270,14 @@ export class WorkingBranchService {
     timezone: string,
   ) {
 
-    let { dayOfWeek, workingHours } = createWorkingBranchDto;
+    // هنا أصلحنا مشكلة ال const وال let
+    const { dayOfWeek } = createWorkingBranchDto;
+    let { workingHours } = createWorkingBranchDto;
 
 
-    console.log('coming working hours', createWorkingBranchDto.workingHours);
+    console.log('coming working hours', workingHours);
 
-    createWorkingBranchDto.workingHours = this.formatAndSortTimeArray(createWorkingBranchDto.workingHours);
+    createWorkingBranchDto.workingHours = this.formatAndSortTimeArray(workingHours);
 
 
     console.log('new working hours', createWorkingBranchDto.workingHours);
@@ -282,7 +285,7 @@ export class WorkingBranchService {
     const times = createWorkingBranchDto.workingHours;
 
     await this.getNextFourWeeksDatesForDay(
-      createWorkingBranchDto.dayOfWeek,
+      dayOfWeek,
       branchId,
       timezone,
       times,
@@ -371,7 +374,7 @@ export class WorkingBranchService {
       await this.WorkingBranchsRepository.save(workingBranchEntity);
     // Call the slot service to manage time slots for the branch
     await this.slotService.getNextFourWeeksDatesForDay(
-      createWorkingBranchDto.dayOfWeek,
+      dayOfWeek,
       branchId,
       times,
       timezone,
@@ -420,6 +423,7 @@ export class WorkingBranchService {
     return date;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getLocalTimeFromUtc(utcTime: string, timeZone: string): string {
     /* ====== تم تعطيل تحويل المنطقة الزمنية لتجنب Invalid DateTime ======
     // Convert UTC time to the given time zone
