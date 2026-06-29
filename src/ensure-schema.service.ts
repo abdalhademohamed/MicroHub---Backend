@@ -17,11 +17,20 @@ export class EnsureSchemaService implements OnApplicationBootstrap {
   }
 
   private async runSafe(label: string, sql: string) {
-    try {
-      await this.ds.query(sql);
-      this.logger.log(`OK: ${label}`);
-    } catch (err: any) {
-      this.logger.warn(`SKIP (${label}): ${err?.message}`);
+    const maxAttempts = 3;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        await this.ds.query(sql);
+        this.logger.log(`OK: ${label}`);
+        return;
+      } catch (err: any) {
+        if (attempt < maxAttempts) {
+          this.logger.warn(`RETRY ${attempt}/${maxAttempts} (${label}): ${err?.message}`);
+          await new Promise((r) => setTimeout(r, 2000 * attempt));
+        } else {
+          this.logger.warn(`SKIP (${label}): ${err?.message}`);
+        }
+      }
     }
   }
 

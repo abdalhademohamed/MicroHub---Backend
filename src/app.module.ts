@@ -65,6 +65,7 @@ import { ExcelModule } from "./excel/excel.module";
 import { ScheduleModule } from "@nestjs/schedule";
 import { LoggerMiddleware } from "./middleware/logger_middleware";
 import { EnsureSchemaService } from "./ensure-schema.service";
+import { MigrateController } from "./internal/migrate.controller";
 
 @Module({
   imports: [
@@ -157,7 +158,7 @@ import { EnsureSchemaService } from "./ensure-schema.service";
     TransactionModule,
     ExcelModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, MigrateController],
   providers: [AppService, CloudinaryProvider, EnsureSchemaService],
 })
 export class AppModule implements NestModule {
