@@ -297,24 +297,23 @@ export class OrdersService {
           }
 
           await transactionalEntityManager.save(AuditLogEntity, auditLog);
-          // Fetch users with roles 'Branch Manager' and 'Admin'
+          // Notify coordinators and admins of the new booking
           const usersToNotify = await transactionalEntityManager.find(
             UserEntity,
             {
               where: [
-                { role: Role.BRANCHMANAGER },
+                { role: Role.COORDINATOR },
                 { role: Role.SUPERADMIN },
-                { role: Role.SUPERADMIN },
+                { role: Role.ADMIN },
               ],
             },
           );
 
-          // Send notifications to each user
           for (const user of usersToNotify) {
             await this.notificationService.createNotification(
               user.id,
-              "new order created",
-              `A new order has been created: ${savedOrder.id}`,
+              "حجز جديد",
+              `تم إنشاء حجز جديد`,
             );
           }
           // return savedOrder;
@@ -941,6 +940,23 @@ export class OrdersService {
           order.customer.id,
           order.reservation.id,
         );
+        // Notify all roles that a booking has been canceled
+        const cancelUsersToNotify = await this.userRepository.find({
+          where: [
+            { role: Role.COORDINATOR },
+            { role: Role.SUPERADMIN },
+            { role: Role.ADMIN },
+            { role: Role.BRANCHMANAGER },
+            { role: Role.ARTISTMANAGER },
+          ],
+        });
+        for (const u of cancelUsersToNotify) {
+          await this.notificationService.createNotification(
+            u.id,
+            "تم إلغاء الحجز",
+            `تم إلغاء الحجز`,
+          );
+        }
         return { order, paymentAmount };
       } catch (error) {
         console.error("Error processing payment details:", error);
@@ -1167,41 +1183,19 @@ export class OrdersService {
           }
 
           await transactionalEntityManager.save(AuditLogEntity, log);
-          if (order.status === OrderStatus.Canceled) {
-            const usersToNotify = await transactionalEntityManager.find(
-              UserEntity,
-              {
-                where: [
-                  { role: Role.BRANCHMANAGER },
-                  { role: Role.SUPERADMIN },
-                  { role: Role.SUPERADMIN },
-                ],
-              },
-            );
-
-            // Send notifications to each user
-            for (const user of usersToNotify) {
-              await this.notificationService.createNotification(
-                user.id,
-                " order canceled",
-                `A order has been canceled: ${updatedOrder.id} by : ${userId}`,
-              );
-            }
-          }
           if (order.status === OrderStatus.Completed) {
             const usersToNotify = await transactionalEntityManager.find(
               UserEntity,
               {
-                where: [{ role: Role.ARTISTMANAGER }],
+                where: [{ role: Role.COORDINATOR }],
               },
             );
 
-            // Send notifications to each user
             for (const user of usersToNotify) {
               await this.notificationService.createNotification(
                 user.id,
-                " order completed",
-                `A order has been completed: ${updatedOrder.id} by : ${userId}`,
+                "تم تنفيذ الحجز",
+                `تم تنفيذ الحجز`,
               );
             }
           }
@@ -1217,6 +1211,13 @@ export class OrdersService {
       if (newStatus == OrderStatus.Working) {
         updatedOrder.startWorkingAt = new Date();
         await this.orderRepository.save(updatedOrder);
+        if (order.artist?.id) {
+          await this.notificationService.createNotification(
+            order.artist.id,
+            "العميلة وصلت",
+            "العميلة في انتظارك",
+          );
+        }
       }
 
       return updatedOrder;
@@ -1304,9 +1305,9 @@ export class OrdersService {
       order.assignedAt = new Date(); // Set the assignedAt timestamp
       // Save the updated order
       const updatedOrder = await this.orderRepository.save(order);
-      // Send notification to the artist
-      const notificationTitle = "New Order Assigned";
-      const notificationMessage = `You have been assigned a new order with ID ${orderId}.`;
+      // Notify assigned artist
+      const notificationTitle = "طلب جديد تم تعيينه";
+      const notificationMessage = `تم تعيينك على حجز جديد`;
       await this.notificationService.createNotification(
         artist.id,
         notificationTitle,
