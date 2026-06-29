@@ -38,6 +38,7 @@ export class EnsureSchemaService implements OnApplicationBootstrap {
       ['service deleted_at', `ALTER TABLE "service_entity"     ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP`],
       ['reservation del_at', `ALTER TABLE "reservation_entity" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP`],
       ['customer deleted_at',`ALTER TABLE "customer_entity"    ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMP`],
+      ['order colorCode',    `ALTER TABLE "order_entity"       ADD COLUMN IF NOT EXISTS "colorCode" character varying`],
     ];
 
     for (const [label, sql] of cols) {
