@@ -104,6 +104,7 @@ export class OrdersService {
     offerId?: string,
     sharableOfferId?: string,
     couponCode?: string,
+    colorCode?: string,
   ): Promise<OrderEntity> {
     let payment;
     let coupon;
@@ -209,6 +210,7 @@ export class OrdersService {
       offerId,
       sharableOfferId,
       couponId: coupon ? coupon.id : null,
+      colorCode: colorCode || null,
     });
 
     try {

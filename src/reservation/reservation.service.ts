@@ -532,6 +532,7 @@ export class ReservationService {
           body.offerId,
           body.sharableOfferId,
           body.couponCode,
+          body.colorCode,
         );
         if (!orderId) {
           throw new InternalServerErrorException("Failed to create order.");

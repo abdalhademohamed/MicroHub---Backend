@@ -133,4 +133,7 @@ export class OrderEntity {
 
   @Column({ nullable: true })
   startWorkingAt: Date;
+
+  @Column({ nullable: true })
+  colorCode: string;
 }

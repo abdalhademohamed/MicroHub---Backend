@@ -90,4 +90,8 @@ export class CreateReservationDto {
   @IsOptional()
   @IsString()
   couponCode?: string; // New property for offer ID
+
+  @IsOptional()
+  @IsString()
+  colorCode?: string;
 }
