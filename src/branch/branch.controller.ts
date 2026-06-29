@@ -292,6 +292,19 @@ export class BranchController {
     return this.branchService.updateBranch(id, updateBranchDto, userId, image);
   }
 
+  @Patch(":id/active")
+  @UseGuards(AccessTokenGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  async setBranchActive(
+    @Param("id") id: string,
+    @Body("isActive") isActive: boolean,
+    @Request() req: any,
+  ) {
+    const userId = req.user?.sub;
+    if (!userId) throw new BadRequestException("User not authenticated");
+    return this.branchService.setBranchActive(id, isActive, userId);
+  }
+
   @Patch(":id/toggle")
   @UseGuards(AccessTokenGuard, RolesGuard)
   @Roles(Role.SUPERADMIN, Role.ADMIN)

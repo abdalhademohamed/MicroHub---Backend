@@ -580,6 +580,16 @@ export class BranchService {
     }
   }
 
+  async setBranchActive(branchId: string, isActive: boolean, userId: string): Promise<BranchEntity> {
+    const branch = await this.BranchRepository.findOne({ where: { id: branchId } });
+    if (!branch) {
+      throw new NotFoundException(this.i18n.translate("test.BRANCH.NOT_FOUND"));
+    }
+    branch.isActive = isActive;
+    branch.updatedBy = userId;
+    return this.BranchRepository.save(branch);
+  }
+
   async toggleBranchStatus(branchId: string, userId: string): Promise<BranchEntity> {
     const branch = await this.BranchRepository.findOne({
       where: { id: branchId },
